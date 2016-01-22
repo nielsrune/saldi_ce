@@ -1360,7 +1360,7 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 	if ($db_encode=="UTF8") $FromCharset = "UTF-8";
 	else $FromCharset = "iso-8859-15";
 	$ToCharset = "cp865";
-	$convert = new ConvertCharset();
+	$convert = new ConvertCharset($FromCharset, $ToCharset);
 
 	$pfnavn="../temp/".$db."/".$bruger_id.".txt";
 	$fp=fopen("$pfnavn","w");
@@ -1374,14 +1374,14 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 	$cvrnr=$r['cvrnr'];
 	$belob="beløb";
 
-	if ($firmanavn) $firmanavn = $convert ->Convert($firmanavn, $FromCharset, $ToCharset);
-	if ($addr1) $addr1 = $convert ->Convert($addr1, $FromCharset, $ToCharset);
-	if ($addr2) $addr2 = $convert ->Convert($addr2, $FromCharset, $ToCharset);
-	if ($bynavn) $bynavn = $convert ->Convert($bynavn, $FromCharset, $ToCharset);
-	if ($tlf) $tlf = $convert ->Convert($tlf, $FromCharset, $ToCharset);
-	if ($cvrnr) $cvrnr = $convert ->Convert($cvrnr, $FromCharset, $ToCharset);
+	if ($firmanavn) $firmanavn = $convert ->Convert($firmanavn);
+	if ($addr1) $addr1 = $convert ->Convert($addr1);
+	if ($addr2) $addr2 = $convert ->Convert($addr2);
+	if ($bynavn) $bynavn = $convert ->Convert($bynavn);
+	if ($tlf) $tlf = $convert ->Convert($tlf);
+	if ($cvrnr) $cvrnr = $convert ->Convert($cvrnr);
 
-	if ($belob) $belob = $convert ->Convert($belob, $FromCharset, $ToCharset);
+	if ($belob) $belob = $convert ->Convert($belob);
 
 	$r=db_fetch_array(db_select("select * from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__));
 	$konto_id=$r['konto_id'];
@@ -1420,10 +1420,10 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 	if (strpos($betaling,"|")) list($tmp,$betaling)=explode("|",$betaling);
 	if (strpos($betaling2,"|")) list($tmp,$betaling2)=explode("|",$betaling2);
 	
-	if ($kundenavn) $kundenavn = $convert ->Convert($kundenavn, $FromCharset, $ToCharset);
-	if ($kundeaddr1) $kundeaddr1 = $convert ->Convert($kundeaddr1, $FromCharset, $ToCharset);
-	if ($kundeby) $kundeby = $convert ->Convert($kundeby, $FromCharset, $ToCharset);
-	if ($ref) $ref = $convert ->Convert($ref, $FromCharset, $ToCharset);
+	if ($kundenavn) $kundenavn = $convert ->Convert($kundenavn);
+	if ($kundeaddr1) $kundeaddr1 = $convert ->Convert($kundeaddr1);
+	if ($kundeby) $kundeby = $convert ->Convert($kundeby);
+	if ($ref) $ref = $convert ->Convert($ref);
 
 	$r = db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 	$printer_ip=explode(chr(9),$r['box3']);
@@ -1446,7 +1446,7 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 		$rabat[$x]=$r['rabat']*1;
 		$rabatart[$x]=$r['rabatart'];
 		$beskrivelse[$x]=$r['beskrivelse'];
-		if ($beskrivelse[$x]) $beskrivelse[$x]= $convert ->Convert($beskrivelse[$x], $FromCharset, $ToCharset);
+		if ($beskrivelse[$x]) $beskrivelse[$x]= $convert ->Convert($beskrivelse[$x]);
 		$antal[$x]=$r['antal']*1;
 		$dkkpris[$x]=dkdecimal($pris*$antal[$x]);
 		while(strlen($dkkpris[$x])<9){
@@ -1738,33 +1738,33 @@ function tastatur($status) {
 	print "<TR>\n";
 	if ($status < 3) {
 		$stil="STYLE=\"width: 4.5em;height: 2em;font-size:150%;\"";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"one\"   VALUE=\"1\" OnClick=\"pos_ordre.$fokus.value += '1';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"two\"   VALUE=\"2\" OnCLick=\"pos_ordre.$fokus.value += '2';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"three\" VALUE=\"3\" OnClick=\"pos_ordre.$fokus.value += '3';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"plus\"  VALUE=\"+\" OnClick=\"pos_ordre.$fokus.value += '+';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"one\"   VALUE=\"1\" onclick=\"pos_ordre.$fokus.value += '1';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"two\"   VALUE=\"2\" onclick=\"pos_ordre.$fokus.value += '2';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"three\" VALUE=\"3\" onclick=\"pos_ordre.$fokus.value += '3';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"plus\"  VALUE=\"+\" onclick=\"pos_ordre.$fokus.value += '+';pos_ordre.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"four\"  VALUE=\"4\" OnClick=\"pos_ordre.$fokus.value += '4';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"five\"  VALUE=\"5\" OnCLick=\"pos_ordre.$fokus.value += '5';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"six\"   VALUE=\"6\" OnClick=\"pos_ordre.$fokus.value += '6';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"minus\" VALUE=\"-\" OnClick=\"pos_ordre.$fokus.value += '-';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"four\"  VALUE=\"4\" onclick=\"pos_ordre.$fokus.value += '4';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"five\"  VALUE=\"5\" onclick=\"pos_ordre.$fokus.value += '5';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"six\"   VALUE=\"6\" onclick=\"pos_ordre.$fokus.value += '6';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"minus\" VALUE=\"-\" onclick=\"pos_ordre.$fokus.value += '-';pos_ordre.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"seven\" VALUE=\"7\" OnClick=\"pos_ordre.$fokus.value += '7';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"eight\" VALUE=\"8\" OnCLick=\"pos_ordre.$fokus.value += '8';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"nine\"  VALUE=\"9\" OnClick=\"pos_ordre.$fokus.value += '9';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"times\" VALUE=\"x\" OnClick=\"pos_ordre.$fokus.value += '*'\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"seven\" VALUE=\"7\" onclick=\"pos_ordre.$fokus.value += '7';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"eight\" VALUE=\"8\" onclick=\"pos_ordre.$fokus.value += '8';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"nine\"  VALUE=\"9\" onclick=\"pos_ordre.$fokus.value += '9';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"times\" VALUE=\"x\" onclick=\"pos_ordre.$fokus.value += '*'\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\",\" OnClick=\"pos_ordre.$fokus.value += ',';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\"0\" OnClick=\"pos_ordre.$fokus.value += '0';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"DoIt\"  VALUE=\"=\" OnClick=\"pos_ordre.$fokus.value = eval(pos_ordre.$fokus.value);pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"div\"   VALUE=\"/\" OnClick=\"pos_ordre.$fokus.value += '/';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\",\" onclick=\"pos_ordre.$fokus.value += ',';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\"0\" onclick=\"pos_ordre.$fokus.value += '0';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"DoIt\"  VALUE=\"=\" onclick=\"pos_ordre.$fokus.value = eval(pos_ordre.$fokus.value);pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"div\"   VALUE=\"/\" onclick=\"pos_ordre.$fokus.value += '/';pos_ordre.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"clear\" VALUE=\"Ryd\" OnClick=\"pos_ordre.$fokus.value = '';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"clear\" VALUE=\"Ryd\" onclick=\"pos_ordre.$fokus.value = '';pos_ordre.$fokus.focus();\"></TD>\n";
 		if ($id) {
-			print "<TD><INPUT TYPE=\"submit\" $stil NAME=\"afslut\"VALUE=\"Afslut\" OnClick=\"pos_ordre.$fokus.value += 'a';pos_ordre.$fokus.focus();\"></TD>\n";
-			print "<TD onclick=\"return confirm('Slet alt og start forfra')\"><INPUT TYPE=\"submit\" $stil NAME=\"forfra\"VALUE=\"Forfra\" OnClick=\"pos_ordre.$fokus.value += 'f';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD><INPUT TYPE=\"submit\" $stil NAME=\"afslut\"VALUE=\"Afslut\" onclick=\"pos_ordre.$fokus.value += 'a';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD onclick=\"return confirm('Slet alt og start forfra')\"><INPUT TYPE=\"submit\" $stil NAME=\"forfra\"VALUE=\"Forfra\" onclick=\"pos_ordre.$fokus.value += 'f';pos_ordre.$fokus.focus();\"></TD>\n";
 		} else print "<TD COLSPAN=\"2\"></TD>\n";
 		if ($fokus=='modtaget') {
-			print "<TD onclick=\"return confirm('Tilbage til varescanning')\"><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\"VALUE=\"Tilbage\" OnClick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD onclick=\"return confirm('Tilbage til varescanning')\"><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\"VALUE=\"Tilbage\" onclick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\"></TD>\n";
 			print "</TR><TR>\n";
 			print "<TD COLSPAN=\"3\"></TD>\n";
 		}
@@ -1772,39 +1772,39 @@ function tastatur($status) {
 		$stil2="STYLE=\"width: 9.5em;height: 2em;font-size:150%;\"";
 		print "<TR>\n";
 #cho "$fokus=='modtaget' && $modtaget>=$sum && !$indbetaling<br>\n";
-		if ($fokus=='varenr_ny') print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"varer\"VALUE=\"Varer\" OnClick=\"pos_ordre.$fokus.value += 'v';pos_ordre.$fokus.focus();\"></TD>\n";
+		if ($fokus=='varenr_ny') print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"varer\"VALUE=\"Varer\" onclick=\"pos_ordre.$fokus.value += 'v';pos_ordre.$fokus.focus();\"></TD>\n";
 		elseif ($fokus=='antal_ny' || $fokus=='pris_ny') { #20130310 Tilføjet: || $fokus=='pris_ny' 
-			if ($fokus=='antal_ny') print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\"VALUE=\"Pris\" OnClick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
+			if ($fokus=='antal_ny') print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\"VALUE=\"Pris\" onclick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
 			else print "<TD COLSPAN=\"1\"></TD>\n";
-			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"Rabat\" OnClick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"Rabat\" onclick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
 		} elseif ($fokus=='modtaget' && $modtaget>=$sum && !$indbetaling && $betalingsbet != 'Kontant') {
-			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" OnClick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" onclick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
 		} elseif ($fokus=='modtaget2' && $modtaget+$modtaget2>=$sum && !$indbetaling) {
-			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling2\" VALUE=\"Konto\" OnClick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling2\" VALUE=\"Konto\" onclick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
 		}	elseif ($indbetaling && $modtaget >= $indbetaling) {
-			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
 		} else print "<TD colspan=2></TD>\n";
 		print "<TD colspan=2><INPUT TYPE=\"submit\" $stil2 NAME=\"OK\"  VALUE=\"Enter\"></TD></tr>\n";
-		if ($vis_hurtigknap && $fokus=='antal_ny') print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant p&aring; bel&oslash;b\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
+		if ($vis_hurtigknap && $fokus=='antal_ny') print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant p&aring; bel&oslash;b\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
 		if ($vis_kontoopslag && !$varenr_ny && !$indbetaling) print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"kontoopslag\" VALUE=\"Kontoopslag\"></TD></tr>\n";
 		if ((($fokus=='modtaget' || $fokus=='modtaget2') && (!$kontonr || $betalingsbet=='Kontant')) || ($indbetaling && $modtaget>=$indbetaling && $kontonr)) {
 			if ($div_kort_kto) { #20140129
 				($fokus=='modtaget2')?$tmp="betaling2":$tmp="betaling";
-				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Betalingskort\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Betalingskort\" onclick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 			} else {
 				for($x=0;$x<$kortantal;$x++) {
 					($fokus=='modtaget2')?$tmp="betaling2":$tmp="betaling";
-					print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"$korttyper[$x]\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+					print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"$korttyper[$x]\" onclick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 				}
 			}
 			if (!$indbetaling) {
 				if ($fokus=='modtaget2') $tmp="betaling2";
 				else $tmp="betaling";
-				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Kontant\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Kontant\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 			}
-#			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" OnClick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+#			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" onclick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 		} elseif ($id && $kontonr && !$varelinjer && !$indbetaling)
-		if ($vis_indbetaling) print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"indbetaling\" VALUE=\"Indbetaling\" OnClick=\"pos_ordre.$fokus.value += 'i';pos_ordre.$fokus.focus();\"></TD>\n";
+		if ($vis_indbetaling) print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"indbetaling\" VALUE=\"Indbetaling\" onclick=\"pos_ordre.$fokus.value += 'i';pos_ordre.$fokus.focus();\"></TD>\n";
 	} else {
 #		print "<input type=\"hidden\" name=\"bon\" value = \"\">\n";
 		$stil2="STYLE=\"width: 9.5em;height: 2em;font-size:150%;\"";
@@ -2087,17 +2087,17 @@ function kassebeholdning ($kasse,$optalt,$godkendt,$cookievalue) {
 	if ($db_encode=="UTF8") $FromCharset = "UTF-8";
 	else $FromCharset = "iso-8859-15";
 	$ToCharset = "cp865";
-	$convert = new ConvertCharset();
+	$convert = new ConvertCharset($FromCharset, $ToCharset);
 
 	$pfnavn="../temp/".$db."/".$bruger_id.".txt";
 	$fp=fopen("$pfnavn","w");
 	$kassopgorelse="KASSEOPGØRELSE";
-	$tmp = $convert ->Convert($kassopgorelse, $FromCharset, $ToCharset);
+	$tmp = $convert ->Convert($kassopgorelse);
 
 	fwrite($fp,"\n\n$tmp\n\n");
 	fwrite($fp,"Den $dd kl. $tid\n");
 	fwrite($fp,"Kasse nr: $kasse\n");
-	$tmp = $convert ->Convert($brugernavn, $FromCharset, $ToCharset);
+	$tmp = $convert ->Convert($brugernavn);
 	fwrite($fp,"Optalt af: $tmp\n");
 	
 	if ($optalassist) {
@@ -2112,7 +2112,7 @@ function kassebeholdning ($kasse,$optalt,$godkendt,$cookievalue) {
 #		fwrite($fp,"Optalt kassebeholdning: ".dkdecimal($optalt)."\n\n");
 #		fwrite($fp,"Differece $prefix".dkdecimal($diff)."\n\n");
 #		fwrite($fp,"Optalt tilgang i kasse: ".dkdecimal($optalt-$byttepenge)."\n\n");
-		$tmp = $convert ->Convert('50 øre', $FromCharset, $ToCharset);
+		$tmp = $convert ->Convert('50 øre');
 		fwrite($fp,"  $tmp:  $ore_50\n");
 		fwrite($fp,"    1 kr:  $kr_1\n");
 		fwrite($fp,"    2 kr:  $kr_2\n");

@@ -583,7 +583,7 @@ function oioxml_kontaktinfo ($l_id="", $l_type) { # $l_type = BuyerContact
 			$l_retur.="\t\t\t<com:ID>".$l_kontaktid."</com:ID>\n";
 			$l_retur.=$l_kontaktinfo;
 		} else {
-			if (eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $l_id)) $l_retur.="\t\t\t<com:E-Mail>".$l_id."</com:E-Mail>\n";
+			if (preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/i", $l_id)) $l_retur.="\t\t\t<com:E-Mail>".$l_id."</com:E-Mail>\n";
 			$l_retur.="\t\t\t<com:ID>".$l_id."</com:ID>\n";
 			if (!strtolower($l_id)=="n/a") $l_retur.="\t\t\t<com:Name>".$l_id."</com:Name>\n";
 		}
@@ -600,20 +600,20 @@ function oioxml_tlfnr($l_tlf="") {
 
 	$l_retur=trim($l_tlf);
 	
-	if (ereg("^(\+[0-9][0-9]*)", $l_retur, $l_regs)) {
+	if (preg_match("/^(\+[0-9][0-9]*)/", $l_retur, $l_regs)) {
 	        $l_prefix=$l_regs[1];
 	        $l_retur=substr($l_retur, strlen($l_prefix));
 	}
 	
-	$l_retur=ereg_replace("[. -]","",$l_retur);
+	$l_retur=preg_replace("/[. -]/","",$l_retur);
 	
 	if ((strlen($l_retur)==8)&&(!$l_prefix)) {
 	        $l_prefix="+45";
 	} elseif (!$l_prefix) {
-	        if (ereg("^([0-9][0-9]*)", $l_tlf, $l_regs)) {
+	        if (preg_match("/^([0-9][0-9]*)/", $l_tlf, $l_regs)) {
 	                $l_prefix="+".$l_regs[1];
 	                $l_retur=substr($l_tlf, strlen($l_regs[1]));
-	                $l_retur=ereg_replace("[. -]","",$l_retur);
+	                $l_retur=preg_replace("/[. -]/","",$l_retur);
 	        }
 	}
 
@@ -626,7 +626,7 @@ function oioxml_vej ($l_addr1="", $l_del="vejnavn") {
 
 	if (!$l_addr1) return "";
 
-	if (ereg("^([^0-9]*) ([0-9].*)$", $l_addr1, $regs)) { # Antager at foerste mellemrum efterfulgt af et tal er husnummeret
+	if (preg_match("/^([^0-9]*) ([0-9].*)$/", $l_addr1, $regs)) { # Antager at foerste mellemrum efterfulgt af et tal er husnummeret
 		if ($l_del=="vejnavn") $l_retur=$regs[1];
 		if ($l_del=="husnummer") $l_retur=$regs[2];
 	} else {

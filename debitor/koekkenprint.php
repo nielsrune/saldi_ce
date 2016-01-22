@@ -124,7 +124,7 @@ if ($_POST['linje_id']) {
 		if ($db_encode=="UTF8") $FromCharset = "UTF-8";
 		else $FromCharset = "iso-8859-15";
 		$ToCharset = "cp865";
-		$convert = new ConvertCharset();
+		$convert = new ConvertCharset($FromCharset, $ToCharset);
 		$skriv=0;
 
 		for ($x=0;$x<count($linje_id);$x++) {
@@ -133,8 +133,8 @@ if ($_POST['linje_id']) {
 			if ($tmp || $tmp=='0') $bestil[$x]=$tmp;
 			if ($bestil[$x]) {
 				$skriv=1;
-				$bestil[$x]=$convert ->Convert("$bestil[$x]", $FromCharset, $ToCharset);
-				$beskrivelse[$x]=$convert ->Convert("$beskrivelse[$x]", $FromCharset, $ToCharset);
+				$bestil[$x]=$convert ->Convert("$bestil[$x]");
+				$beskrivelse[$x]=$convert ->Convert("$beskrivelse[$x]");
 				if (strlen($bestil[$x])>5) $bestil[$x]=substr($bestil[$x],-5);
 				while(strlen($bestil[$x])<5) $bestil[$x]=' '.$bestil[$x];
 				if (strlen($beskrivelse[$x])>35) $b=substr($beskrivelse[$x],0,34);
@@ -202,24 +202,24 @@ if ($_POST['linje_id']) {
 				$fp=fopen("$pfnavn","w");
 				if ($y) fwrite($fp,"$kp[$y]\n");
 				if ($udskrives[$y]) {
-					$txt=$convert ->Convert("******   BESTILLING   ******", $FromCharset, $ToCharset);
+					$txt=$convert ->Convert("******   BESTILLING   ******");
 					while (strlen($txt)<40) $txt=" ".$txt." ";
 					fwrite($fp,"$txt\n");
 					if (count($kp)) {
 						$txt="Køkken ";
 						$txt.= $y+1;
-						$txt=$convert ->Convert($txt, $FromCharset, $ToCharset);
+						$txt=$convert ->Convert($txt);
 						while (strlen($txt)<40) $txt=" ".$txt." ";
 						fwrite($fp,"$txt\n");
 					}
 					fwrite($fp,"\nD. ".date("d.m.Y")." kl. ".(date("H:i"))."\n\n");  
-					$txt=$convert ->Convert("Bord:       $bordnavn", $FromCharset, $ToCharset);
+					$txt=$convert ->Convert("Bord:       $bordnavn");
 					fwrite($fp,"$txt\n\n");
-					$txt=$convert ->Convert("Bestilt af: $brugernavn", $FromCharset, $ToCharset);
+					$txt=$convert ->Convert("Bestilt af: $brugernavn");
 					fwrite($fp,"$txt\n\n");
 					if ($besked) {
 						fwrite($fp,"----------------------------------------\n");
-						$txt=$convert ->Convert("BESKED YIL KØKKEN!", $FromCharset, $ToCharset);
+						$txt=$convert ->Convert("BESKED TIL KØKKEN!");
 						while (strlen($txt)<40) $txt=" ".$txt." ";
 						fwrite($fp,"$txt\n\n");
 						$ord=explode(' ',$besked);
@@ -234,7 +234,7 @@ if ($_POST['linje_id']) {
 							}
 						}
 						for ($l=0;$l<count($linje);$l++) {
-							$txt=$convert ->Convert($linje[$l], $FromCharset, $ToCharset);
+							$txt=$convert ->Convert($linje[$l]);
 #							while (strlen($txt)<40) $txt=" ".$txt." ";
 							fwrite($fp,"$txt\n");
 						}
@@ -249,7 +249,7 @@ if ($_POST['linje_id']) {
 								$tfv=explode(chr(9),$tilfravalg[$x]);
 								for ($t=0;$t<count($tfv);$t++){
 									$r=db_fetch_array(db_select("select beskrivelse from varer where id = '$tfv[$t]'",__FILE__ . " linje " . __LINE__));
-									$txt=$convert ->Convert("$r[beskrivelse]", $FromCharset, $ToCharset);
+									$txt=$convert ->Convert("$r[beskrivelse]");
 									fwrite($fp,"     $txt\n");
 								}
 							}
