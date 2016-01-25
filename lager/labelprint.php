@@ -28,7 +28,7 @@
 @session_start();
 $s_id=session_id();
 $title="Labelprint";
-$modulnr=1;
+$modulnr=9;
 $css="../css/standard.css";
 
 $diffkto=NULL;
@@ -85,6 +85,7 @@ $txt=str_replace('$img',$img,$txt);
 $txt=str_replace('$pris',dkdecimal($salgspris),$txt);
 $txt=str_replace('$dkkpris',$dkkpris,$txt);
 $txt=str_replace('$enhed',$r['enhed'],$txt);
+$txt=str_replace('$varemrk',$r['trademark'],$txt);
 $txt=str_replace('$indhold',$r['indhold'],$txt);
 $txt=str_replace('$special_pris',$special_price,$txt);
 $txt=str_replace('$special_fra_dato',dkdato($r['special_from_date']),$txt);

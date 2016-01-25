@@ -998,7 +998,7 @@ function prislister()
 
         print "<tr bgcolor='$bgcolor5'><td colspan='6'><b><u>Prislister</u></b></td></tr>\n";
         print "<tr><td colspan='6'>\n";
-echo $q;
+#cho $q;
 	print "<p>Prislisterne er lister med priser, som hentes fra en anden ressource eksempelvis en fil på en hjemmeside eller et ftp-sted.</p>\n";
 	print "</td></tr>\n";
 
@@ -1542,7 +1542,7 @@ function pos_valg () {
 	$terminal_ip=explode(chr(9),$r['box4']);
 	$betalingskort=explode(chr(9),$r['box5']); #20131210
 	$div_kort_kto=$r['box6']; #20140129
-	echo $r[box7];
+#cho $r[box7];
 	if ($r['box7']) $bord=explode(chr(9),str_replace("\n","  ",$r['box7'])); #20140506
 	$mellemkonti=explode(chr(9),$r['box8']);
 	$diffkonti=explode(chr(9),$r['box9']);

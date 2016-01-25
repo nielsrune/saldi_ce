@@ -1817,6 +1817,7 @@ include("../includes/genberegn.php");
 		$transdate=($r['fakturadate']);
 		$fakturanr=$r['fakturanr'];
 		$ordrenr=$r['ordrenr'];
+		$momssats=$r['momssats']*1; 
 #cho "$firmanavn | $ordrenr<br>";
 		$valuta=$r['valuta'];
 		$kred_ord_id=$r['kred_ord_id'];
@@ -1864,7 +1865,7 @@ include("../includes/genberegn.php");
 			} 
 		} else $kasse=0;
 #		$refnr;
-		$moms+=$r['moms']*1;
+		if ($momssats) $moms+=$r['moms']*1;
 #		else {$moms=afrund($r['sum']*$r['momssats']/100,2);}
 		$sum+=$r['sum']+$r['moms'];
 		$ordreantal=$x;

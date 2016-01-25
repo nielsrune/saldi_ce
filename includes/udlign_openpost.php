@@ -274,13 +274,12 @@ if (isset($submit) && $submit=='udlign') {
 		$ym=$year.$month;
 
 		if (($ym<$aarstart || $ym>$aarslut))	{ #20140505
-#			print "<BODY onLoad=\"javascript:alert('Udligningsdato udenfor regnskabs&aring;r')\">";
-#			print "<meta http-equiv=\"refresh\" content=\"0;../includes/udlign_openpost.php?post_id=$post_id[0]&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=$retur\">";
-#			exit;
+			print "<BODY onLoad=\"javascript:alert('Udligningsdato udenfor regnskabs&aring;r')\">";
+			print "<meta http-equiv=\"refresh\" content=\"0;../includes/udlign_openpost.php?post_id=$post_id[0]&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=$retur\">";
+			exit;
 			$udlign_date=date("Y-m-d");
 	}
 	// <- 20121106
-		
 		if ($basisvaluta!='DKK') {
 			$r=db_fetch_array(db_select("select box3 from grupper where art='VK' and box1='$basisvaluta'",__FILE__ . " linje " . __LINE__));
 			$diffkto=$r['box3']; 
