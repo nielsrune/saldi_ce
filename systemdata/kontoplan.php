@@ -1,5 +1,5 @@
 <?php
-// ------------------systemdata/kontoplan.php-----lap 3.6.1-----2016-01-16----
+// ------------------systemdata/kontoplan.php-----lap 3.6.2-----2016-01-16----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -20,7 +20,9 @@
 //
 // Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
+//
 // 20160116 Tilføjet valuta  
+// 20160129	Valutakode og kurs blev ikke sat ved oprettelse af ny driftskonti.
 
 @session_start();
 $s_id=session_id();
@@ -88,6 +90,11 @@ print "</tr>\n";
 	$query = db_select("select * from kontoplan where regnskabsaar='$regnaar' order by kontonr",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)){
 		$valuta=$row['valuta'];
+		if ($valuta == '') { # 20160129
+			$valuta=0;
+			$valutakurs=100;
+			db_modify("update kontoplan set valuta='$valuta',valutakurs='$valutakurs' where id='$row[id]'",__FILE__ . " linje " . __LINE__);
+		}
 		if ($row['lukket']=='on') $beskrivelse="Lukket ! - ".stripslashes($row['beskrivelse']);
 		else $beskrivelse=stripslashes($row['beskrivelse']);
 		if ($linjebg!=$bgcolor) {$linjebg=$bgcolor; $color='#000000';}
@@ -103,7 +110,7 @@ print "</tr>\n";
 		elseif ($row['kontotype']=='R') print "<td><span style=\"color:$color;\">Resultat = $row[fra_kto]<br></span></td>\n";
 		else print "<td><span style=\"color:$color;\">Sideskift<br></span></td>\n";
 		print "<td align=\"center\"><span style=\"color:$color;\">$row[moms]<br></span></td>\n";
-		if (($row['kontotype']!='H')&&($row['kontotype']!='X'))print "<td align=\"right\" title=\"DKK ".dkdecimal($row['saldo'])."\"><span style=\"color:$color;\">".dkdecimal($row['saldo']*100/$row['valutakurs'])."<br></span></td>\n";
+		if (($row['kontotype']!='H')&&($row['kontotype']!='X'))print "<td align=\"right\" title=\"DKK ".dkdecimal($row['saldo']*1)."\"><span style=\"color:$color;\">".dkdecimal($row['saldo']*100/$row['valutakurs'])."<br></span></td>\n";
 		else print "<td><br></td>\n";
 		print "<td align=\"center\"><span style=\"color:$color;\">$valutanavn[$valuta]<br></span></td>\n";		
 		print "<td align=\"center\"><span style=\"color:$color;\">$row[genvej]<br></span></td>\n";		

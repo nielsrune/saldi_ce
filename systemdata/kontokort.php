@@ -1,5 +1,5 @@
 <?php
-// ---------systemdata/kontokort.php-----lap 3.2.9----2013-02-10 --------
+// ---------systemdata/kontokort.php-----lap 3.6.2----2016-01-29 --------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -16,12 +16,14 @@
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2013 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 //
 // 2013.02.10 Break ændret til break 1
+// 20160116 Tilføjet valuta  
+// 20160129	Valutakode og kurs blev ikke sat ved oprettelse af ny driftskonti.
 
 @session_start();
 $s_id=session_id();
@@ -141,7 +143,7 @@ if (isset($_POST['slet'])){
 			for ($y=$regnaar; $y<=$x; $y++) {
 				$query = db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$y'",__FILE__ . " linje " . __LINE__);
 				if(!$row = db_fetch_array($query)) {
-					db_modify("insert into kontoplan (kontonr, beskrivelse, kontotype, primo, regnskabsaar, genvej) values ($kontonr, '$beskrivelse', '$kontotype', '0', '$y', '$genvej')",__FILE__ . " linje " . __LINE__);
+					db_modify("insert into kontoplan (kontonr, beskrivelse, kontotype, primo, regnskabsaar, genvej,valuta,valutakurs) values ($kontonr, '$beskrivelse', '$kontotype', '0', '$y', '$genvej','0','100')",__FILE__ . " linje " . __LINE__);
 				}
 			}
 			$query = db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar'",__FILE__ . " linje " . __LINE__);
@@ -171,9 +173,10 @@ if ($id > 0){
 #		$til_kto=$row['til_kto'];
 		$genvej=$row['genvej'];
 		$lukket=$row['lukket'];
-		$saldo=$row['saldo'];
+		$saldo=$row['saldo']*1;
 		$valutakode=$row['valuta'];
 		$valutakurs=$row['valutakurs'];
+		if (!$valutakurs)$valutakurs=100;
 		if ($valutakode) {
 #cho "select box1 from grupper where art='VK' and kodenr = '$valutakode'<br>";
 			$r=db_fetch_array(db_select("select box1 from grupper where art='VK' and kodenr = '$valutakode'",__FILE__ . " linje " . __LINE__));
