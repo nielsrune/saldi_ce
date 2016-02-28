@@ -32,6 +32,7 @@
 // 2015.11.05 lagerreguleringer blev trukket fra i til-/afgang. Skal lægges til. #20151105  
 // 2015.11.06 Ikke lagerførte samlevarer (sæt) medtages nu ikke da disse er repræsenteret af de varer som indgår i sættet. #20151106  
 // 2015.12.10 Kostpriser blev altid trukket fra varekort - se også find_kostpriser i ordrefunc.php #21051210
+// 2016.02.01 # Flyttet db *-1 under sammentælling da sammentælling af db blev forkert ved negativt salg.
 
 	@session_start();
 	$s_id=session_id();
@@ -241,8 +242,8 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 		} 
 		$low=strtolower($varenr);
 		$upp=strtoupper($varenr);
-		if ($tmp) $tmp.=" and (varenr LIKE '$varenr' or lower(varenr) LIKE '$low' or upper(varenr) LIKE '$upp')";
-		else $tmp =  "where (varenr LIKE '$varenr' or lower(varenr) LIKE '$low' or upper(varenr) LIKE '$upp')";
+		if ($tmp) $tmp.=" and (varenr LIKE '".db_escape_string($varenr)."' or lower(varenr) LIKE '".db_escape_string($low)."' or upper(varenr) LIKE '".db_escape_string($upp)."')";
+		else $tmp =  "where (varenr LIKE '".db_escape_string($varenr)."' or lower(varenr) LIKE '".db_escape_string($low)."' or upper(varenr) LIKE '".db_escape_string($upp)."')";
 	}
 	if ($varenavn && $varenavn != '*') {
 		if (strstr($varenavn, "*")) {
@@ -251,12 +252,10 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 		} 
 		$low=strtolower($varenavn);
 		$upp=strtoupper($varenavn);
-		if ($tmp) $tmp.=" and (beskrivelse LIKE '$varenavn' or lower(beskrivelse) LIKE '$low' or upper(beskrivelse) LIKE '$upp')";
-		else $tmp =  "where (beskrivelse LIKE '$varenavn' or lower(beskrivelse) LIKE '$low' or upper(beskrivelse) LIKE '$upp')";
+		if ($tmp) $tmp.=" and (beskrivelse LIKE '".db_escape_string($varenavn)."' or lower(beskrivelse) LIKE '".db_escape_string($low)."' or upper(beskrivelse) LIKE '".db_escape_string($upp)."')";
+		else $tmp =  "where (beskrivelse LIKE '".db_escape_string($varenavn)."' or lower(beskrivelse) LIKE '".db_escape_string($low)."' or upper(beskrivelse) LIKE '".db_escape_string($upp)."')";
 	}
 	$qtxt="select id,gruppe,samlevare from varer $tmp order by beskrivelse";
-#cho "$qtxt<br>";
-#xit;
 	$x=0;
 	$query = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
@@ -468,9 +467,9 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 						$t_kost+=$kostpris[$y]*$s_antal[$y];
 						$tt_kost+=$kostpris[$y]*$s_antal[$y];
 						$db[$y]=$pris[$y]-$kostpris[$y];
-						if ($s_antal[$y]<0)$db[$y]*=-1;
 						$t_db+=$db[$y]*$s_antal[$y];
 						$tt_db+=$db[$y]*$s_antal[$y];
+						if ($s_antal[$y]<0)$db[$y]*=-1; # 20160201 # Flyttet under sammentælling
 						if ($pris[$y]!=0) {
 							$dg[$y]=$db[$y]*100/$pris[$y];
 						} else $dg[$y]=0;

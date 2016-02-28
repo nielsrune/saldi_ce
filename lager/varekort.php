@@ -1,7 +1,7 @@
 <?php 
 ob_start(); //Starter output buffering
 
-// ----------/lager/varekort.php---------lap 3.5.1---2015-10-28	-----
+// ----------/lager/varekort.php---------lap 3.6.3---2016-01-30	-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -20,7 +20,7 @@ ob_start(); //Starter output buffering
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2013.10.07	Kontrol for cirkulær reference indsat. Søg 20131007
@@ -30,7 +30,8 @@ ob_start(); //Starter output buffering
 // 2015.02.10 Beholdninger og lokationer vises nu fra hvert lager.
 // 2015.05.21 Shopurl tilrettet til "nyt api". Søg shopurl
 // 2015.10.28 understøtter ny også tbarcode
-// 2016.01.19	Tilføjet varefoto og regulering af varebeholdning ved gruppeændring fra ikke lagerført til lagerført og vice versa
+// 2016.01.19 PHR Tilføjet varefoto og regulering af varebeholdning ved gruppeændring fra ikke lagerført til lagerført og vice versa
+// 2016.01.30 PHR Tilføjet "tilbudsdage" så man kan vælge hvilke ugedage et tilbud skal være aktivt.
 
 @session_start();
 $s_id=session_id();
@@ -349,7 +350,6 @@ if ($_POST){
 		if ($r['box3']*1) $retail_price=$r['box3']*1;
 		if ($r['box4']*1) $tier_price=$r['box4']*1;
 	}
-		
 ######## Styklister ->
 	$delvare=$_POST['delvare'];
 	$samlevare=$_POST['samlevare'];
@@ -475,12 +475,16 @@ if ($_POST){
 			if ($m<59) $s='00';
 			else $s=59;
 			$special_to_time=$t.":".$m.":".$s;
-			db_modify("update varer set beskrivelse = '".db_escape_string($beskrivelse[0])."',stregkode = '$stregkode',enhed='$enhed',enhed2='$enhed2',indhold='$indhold',forhold='$forhold',salgspris = '$salgspris',
-				kostpris = '$kostpris[0]',provisionsfri = '$provisionsfri',gruppe = '$gruppe',prisgruppe = '$prisgruppe',tilbudgruppe = '$tilbudgruppe',rabatgruppe = '$rabatgruppe',serienr = '$serienr',lukket = '$lukket',notes = '$notes',
-				samlevare='$samlevare',min_lager='$min_lager',max_lager='$max_lager',trademark='$trademark',retail_price='$retail_price',
-				special_price='$special_price',tier_price='$tier_price',special_from_date='$special_from_date',special_to_date='$special_to_date',special_from_time='$special_from_time',special_to_time='$special_to_time',
-				colli='$colli',outer_colli='$outer_colli',open_colli_price='$open_colli_price',outer_colli_price='$outer_colli_price',
-				campaign_cost='$campaign_cost',location='$location',folgevare='$folgevare',m_type='$m_type',m_antal='$m_antal',m_rabat='$m_rabat',dvrg='$dvrg_nr[0]',kategori='$kategori',varianter='$variant',publiceret='$publiceret' where id = '$id'",__FILE__ . " linje " . __LINE__);
+			$qtxt="update varer set beskrivelse = '".db_escape_string($beskrivelse[0])."',stregkode = '$stregkode',enhed='$enhed',enhed2='$enhed2',";
+			$qtxt.="indhold='$indhold',forhold='$forhold',salgspris = '$salgspris',kostpris = '$kostpris[0]',provisionsfri = '$provisionsfri',";
+			$qtxt.="gruppe = '$gruppe',prisgruppe = '$prisgruppe',tilbudgruppe = '$tilbudgruppe',rabatgruppe = '$rabatgruppe',serienr = '$serienr',";
+			$qtxt.="lukket = '$lukket',notes = '$notes',samlevare='$samlevare',min_lager='$min_lager',max_lager='$max_lager',trademark='$trademark',";
+			$qtxt.="retail_price='$retail_price',special_price='$special_price',tier_price='$tier_price',special_from_date='$special_from_date',";
+			$qtxt.="special_to_date='$special_to_date',special_from_time='$special_from_time',special_to_time='$special_to_time',";
+			$qtxt.="colli='$colli',outer_colli='$outer_colli',open_colli_price='$open_colli_price',outer_colli_price='$outer_colli_price',";
+			$qtxt.="campaign_cost='$campaign_cost',location='$location',folgevare='$folgevare',m_type='$m_type',m_antal='$m_antal',m_rabat='$m_rabat',";
+			$qtxt.="dvrg='$dvrg_nr[0]',kategori='$kategori',varianter='$variant',publiceret='$publiceret' where id = '$id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$dd=date("Y-m-d");
 			$qtxt=NULL;
 			$r=db_fetch_array(db_select("select id,kostpris,transdate from kostpriser where vare_id='$id' order by transdate desc limit 1",__FILE__ . " linje " . __LINE__));
@@ -624,8 +628,8 @@ if ($id > 0) {
 	$notes=htmlentities($row['notes'],ENT_COMPAT,$charset);
 	$delvare=$row['delvare'];
 	$samlevare=$row['samlevare'];
-	$min_lager=dkdecimal($row['min_lager']);
-	$max_lager=dkdecimal($row['max_lager']);
+	$min_lager=dkdecimal($row['min_lager'],2);
+	$max_lager=dkdecimal($row['max_lager'],2);
 	$beholdning=$row['beholdning']*1;
 	$operation=$row['operation']*1;
 	$trademark=htmlentities($row['trademark'],ENT_COMPAT,$charset);
@@ -804,7 +808,7 @@ if (!$varenr) {
 			}
 			print "<input type=\"hidden\" name=\"variant_vare_id[$x]\" value=\"$r[id]\">";
 			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"variant_vare_stregkode[$x]\" value=\"$r[variant_stregkode]\" onchange=\"javascript:docChange = true;\"></td>";
-			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"variant_vare_beholdning[$x]\" value=\"".dkdecimal($r['variant_beholdning'])."\" onchange=\"javascript:docChange = true;\"></td>";
+			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"variant_vare_beholdning[$x]\" value=\"".dkdecimal($r['variant_beholdning'],2)."\" onchange=\"javascript:docChange = true;\"></td>";
 			print "<td title=\"".findtekst(397,$sprog_id)."\"><!--tekst 396--><a href=\"varekort.php?id=$id&delete_var_type=$r[id]\" onclick=\"return confirm('Vil du slette denne variant fra listen?')\"><img src=../ikoner/delete.png border=0></a></td>\n";
 			print "</tr>";
 		}
@@ -859,28 +863,28 @@ if (!$varenr) {
 	print "<tr><td height=\"20%\"><b>Priser</b></td><td width=\"33%\" align=\"center\">$enhed</td><td width=\"33%\" align=\"center\">$enhed2</td></tr>";
 	if ($p_grp_salgspris) $type="readonly=readonly";
 	else $type="type=text";
-	$tmp=dkdecimal($salgspris);
+	$tmp=dkdecimal($salgspris,2);
 	print "<tr><td>Salgspris</td><td><input $type style=text-align:right size=\"8\" name=\"salgspris\" value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
 	if ($enhed2) {
-		$tmp=dkdecimal($salgspris/$forhold);
+		$tmp=dkdecimal($salgspris/$forhold,2);
 		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
 	} elseif($incl_moms) print "<td>(incl moms)</td>";
 	print "</tr>";
 	if ($p_grp_tier_price) $type="readonly=readonly";
 	else $type="type=text";
- $tmp=dkdecimal($tier_price);
+ $tmp=dkdecimal($tier_price,2);
 	print "<tr><td>B2B salgspris</td><td><input $type style=text-align:right size=8 name=tier_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
 	if ($enhed2) {
-		$tmp=dkdecimal($tier_price/$forhold);
+		$tmp=dkdecimal($tier_price/$forhold,2);
 		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
 	}
 	print "</tr>";
 	if ($p_grp_retail_price) $type="readonly=readonly";
 	else $type="type=text";
-	$tmp=dkdecimal($retail_price);
+	$tmp=dkdecimal($retail_price,2);
 	print "<tr><td>Vejl.pris</td><td><input $type style=text-align:right size=8 name=retail_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
 	if ($enhed2) {
-		$tmp=dkdecimal($retail_price/$forhold);
+		$tmp=dkdecimal($retail_price/$forhold,2);
 		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
 	}
 	print "</tr>";
@@ -893,7 +897,7 @@ if (!$varenr) {
 	if ($p_grp_kostpris || $samlevare) $type="readonly=readonly";
 	elseif ($fifo && $beholdning != 0) $type="readonly=readonly";
 	else $type="type=text";
-	$tmp=dkdecimal($kostpris[0]);	
+	$tmp=dkdecimal($kostpris[0],2);	
 	print "<tr><td> Kostpris</td><td><input $type style=text-align:right size=8 name=kostpris[0] value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
 #} else print "<tr><td> Kostpris</td><td><br></td><td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 name=kostpris[0] value=\"$x\"></td>";
 #if ($enhed2) {
@@ -904,12 +908,18 @@ if (!$varenr) {
 
 	print "</tbody></table></td>"; #<- Pris enhedstabel
 	print "<td width=33% valign=top><table border=0 width=100%><tbody>"; # Tilbudstabel ->
-	print "<tr><td colspan=\"3\" height=\"20%\"><b>Tilbud</b></td></tr>";
-	$tmp=dkdecimal($special_price);
-	($incl_moms)?$tekst="(incl moms)":$tekst="";
-	print "<tr><td>Salgspris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td><td colspan=\"2\">$tekst<br></td></tr>";
-	$tmp=dkdecimal($campaign_cost);
-	print "<tr><td height=20%>Kostpris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=campaign_cost value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<tr><td colspan=\"2\" height=\"20%\"><b>Tilbud</b></td><td colspan=\"2\"><a href=\"happyhour.php?vare_id=$id\">Avanceret</a></td></tr>";
+	$tmp=dkdecimal($special_price,2);
+	if ($incl_moms) {
+		$tekst="(i/m)";
+		$title="Incl. moms";
+	} else {
+		$tekst="";
+		$title="";
+	}
+	print "<tr><td>Salgspris</td><td title=\"$title\"><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_price value=\"$tmp\" onchange=\"javascript:docChange = true;\">$tekst</td>";
+	$tmp=dkdecimal($campaign_cost,2);
+	print "<td height=20%>Kostpris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=campaign_cost value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	if ($special_price!=0) $tmp=dkdato($special_from_date);
 	else $tmp='';
 	print "<tr><td height=20%>Dato start</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_from_date value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
@@ -921,13 +931,13 @@ if (!$varenr) {
 	print "</tbody></table></td>";# <- Tilbudstabel 
 	print "<td valign=top width=33%><table border=0 width=100%><tbody>"; # Collitabel ->
 	print "<tr><td colspan=3 height=20%><b>Colli</b></td></tr>";
-	$tmp=dkdecimal($colli);
+	$tmp=dkdecimal($colli,2);
 	print "<tr><td width=34%>St&oslash;rrelse</td><td width=33%><input class=\"inputbox\" type=text style=text-align:right size=8 name=colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td><td width=33%><br></td></tr>";
-	$tmp=dkdecimal($outer_colli);
+	$tmp=dkdecimal($outer_colli,2);
 	print "<tr><td height=20%>Yder st&oslash;rrelse</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	$tmp=dkdecimal($open_colli_price);
+	$tmp=dkdecimal($open_colli_price,2);
 	print "<tr><td height=20%>Anbruds kostpris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=open_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	$tmp=dkdecimal($outer_colli_price);
+	$tmp=dkdecimal($outer_colli_price,2);
 	print "<tr><td height=20%>Kostpris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	print "</tbody></table></td></tr>";# <- Collitabel 
 	print "<tr><td valign=top><table border=0 width=100%><tbody>"; # Enhedstabel ->
@@ -953,14 +963,14 @@ if (!$varenr) {
 		if ($enhed2!=$betegnelse[$x]) {print "<option>$betegnelse[$x]</option>";}	
 		}
 		print "</SELECT></td></tr>";
-		if ($forhold > 0){$x=dkdecimal($forhold);}
+		if ($forhold > 0){$x=dkdecimal($forhold,2);}
 		else {$x='';}
 		if (($enhed)&&($enhed2)) print "<tr><td> $enhed2/$enhed</td><td width=100><input class=\"inputbox\" type=text style=text-align:right size=8 name=forhold value=\"$x\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	}
 #print "<td width=100><input class=\"inputbox\" type=text size=2 name=enhed value='$enhed'>&nbsp; Alternativ enhed&nbsp;<input class=\"inputbox\" type=text size=2 name=enhed2 value='$enhed2'></td></tr>";
 	if ($enhed) {
-		print "<tr><td height=20%>Indhold  ($enhed)</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=indhold value=\"".dkdecimal($indhold)."\" onchange=\"javascript:docChange = true;\"></td></tr>";
-		print "<tr><td height=20%>Pris pr $enhed</td><td><input class=\"inputbox\" type=text readonly=readonly style=text-align:right size=8 value=\"".dkdecimal($salgspris/$indhold)."\" onchange=\"javascript:docChange = true;\"></td></tr>";
+		print "<tr><td height=20%>Indhold  ($enhed)</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=indhold value=\"".dkdecimal($indhold,2)."\" onchange=\"javascript:docChange = true;\"></td></tr>";
+		print "<tr><td height=20%>Pris pr $enhed</td><td><input class=\"inputbox\" type=text readonly=readonly style=text-align:right size=8 value=\"".dkdecimal($salgspris/$indhold,2)."\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	}
 	print "</tbody></table></td>";# <- Enhedstabel 
 	print "<td valign=top><table border=0 width=100%><tbody>"; # Gruppe tabel ->
@@ -1056,11 +1066,11 @@ if (!$varenr) {
 		if ($m_antal_array[$x]) {
 			if ($incl_moms && $m_type!="%") $m_rabat_array[$x]*=(100+$incl_moms)/100;
 			($rabatgruppe)? $inputtype="readonly=\"readonly\"":$inputtype="type=\"text\"";
-			print "<tr><td>Stk.rabat v. antal</td><td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_rabat_array[$x]\" value=".dkdecimal($m_rabat_array[$x])."></td><td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_antal_array[$x]\" value=\"".dkdecimal($m_antal_array[$x])."\"></td></tr>";
+			print "<tr><td>Stk.rabat v. antal</td><td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_rabat_array[$x]\" value=".dkdecimal($m_rabat_array[$x],3)."></td><td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_antal_array[$x]\" value=\"".dkdecimal($m_antal_array[$x],3)."\"></td></tr>";
 		}
 	}
 	#$x++;
-	if (!$rabatgruppe) print "<tr><td>Stk.rabat v. antal</td><td><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"m_rabat_array[$x]\" value=\"".dkdecimal($m_rabat_array[$x])."\"></td><td><input class=\"inputbox\" type=\"text\" size=\"5\" style=text-align:right name=\"m_antal_array[$x]\" value=\"".dkdecimal($m_antal_array[$x])."\"></td></tr>";
+	if (!$rabatgruppe) print "<tr><td>Stk.rabat v. antal</td><td><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"m_rabat_array[$x]\" value=\"".dkdecimal($m_rabat_array[$x],3)."\"></td><td><input class=\"inputbox\" type=\"text\" size=\"5\" style=text-align:right name=\"m_antal_array[$x]\" value=\"".dkdecimal($m_antal_array[$x],3)."\"></td></tr>";
 	print "</tbody></table></td></tr>";# <- M-rabat tabel 
 	print "<tr><td valign=\"top\" height=\"200px\"><table border=\"0\" width=\"100%\"><tbody>"; # Diverse tabel ->
 	print "<tr><td colspan=\"2\"><b>Diverse</b></td></tr>";
@@ -1347,10 +1357,10 @@ if ($samlevare!='on') {
 		for ($x=1; $x<=$lev_ant; $x++) {
 			$query = db_select("select kontonr, firmanavn from adresser where id='$lev_id[$x]'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
-			$y=dkdecimal($kostpris[$x]);
+			$y=dkdecimal($kostpris[$x],2);
 			print "<td><span title='Pos = minus sletter leverand&oslash;ren';><input class=\"inputbox\" type=text size=1 name=lev_pos[$x] value=$x onchange=\"javascript:docChange = true;\"></span></td><td> $row[kontonr]:".htmlentities($row['firmanavn'],ENT_COMPAT,$charset)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=9 name=lev_varenr[$x] value=\"$lev_varenr[$x]\" onchange=\"javascript:docChange = true;\"></td><td style=text-align:right><input class=\"inputbox\" type=text style=text-align:right size=9 name=kostpris[$x] value=\"$y\" onchange=\"javascript:docChange = true;\"></td>";
 			if (($enhed2)&&($forhold>0)) {
-				$y=dkdecimal($kostpris[$x]/$forhold);
+				$y=dkdecimal($kostpris[$x]/$forhold,2);
 				print "<td><input class=\"inputbox\" type=text style=text-align:right size=9 name=kostpris2[$x] value=\"$y\" onchange=\"javascript:docChange = true;\"></td>";
 			}
 			print "</td></tr>";
@@ -1419,7 +1429,7 @@ if ($samlevare=='on') {
 	print "<td></td><td><table border=0 width=80%><tbody>";
 	print "<tr><td> Pos.</td><td width=80> V.nr.</td><td width=300> Beskrivelse</td><td> Antal</td></tr>";
 	for ($x=1; $x<=$ant_be_af; $x++){
-		$dkantal=dkdecimal($be_af_ant[$x]);
+		$dkantal=dkdecimal($be_af_ant[$x],2);
 		if (substr($dkantal,-1)=='0') $dkantal=substr($dkantal,0,-1);
 		if (substr($dkantal,-1)=='0') $dkantal=substr($dkantal,0,-2);
 		print "<tr><td><input class=\"inputbox\" type=\"text\" size=2 style=\"text-align:right\" name=\"be_af_pos[$x]\" value=\"$x\" $readonly></td><td>$be_af_vnr[$x]</td><td>$be_af_beskrivelse[$x]</td><td><input class=\"inputbox\" type=\"text\" size=\"2\" style=\"text-align:right\" name=\"be_af_ant[$x]\" value=\"$dkantal\" $readonly>&nbsp;$be_af_enhed[$x]</td></tr>";

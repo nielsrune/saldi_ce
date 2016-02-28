@@ -84,12 +84,14 @@ fclose($fp);
 $gruppeantal=$x;
 sort($prisgrupper);
 
+# Skal ændres til noget mere generel håndtering senere end pr. datafil
 $fp=fopen("$prisfil","r");
 if ($fp) {
 	$x=0;
 	while (!feof($fp)) {
 		$linje=fgets($fp);
 #		if (substr($linje,0,1)>=5) {
+		if ( stristr($prisfil, "solar") ) {
 			$x++;
 			if (substr($linje,0,1)==5) $lukket[$x]='on';
 			else $lukket[$x]=NULL;
@@ -151,10 +153,70 @@ if ($fp) {
 				$x=udvaelg($x,$kostpris[0],$kostpris[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {
 			}
 			if ($x>$slut) break 1;
+		# Slut solar (fast format)
+		} elseif  ( stristr($prisfil, "maxmc") ) {
+			$x++;
+			$splitter=",";
+                        if ($charset=='UTF-8' && $tegnset!='UTF-8') $linje=utf8_encode($linje);
+                        elseif ($charset!='UTF-8' && $tegnset=='UTF-8') $linje=utf8_decode($linje);
+                        $felt=array();
+                        $felt = opdel($splitter, $linje);
+			$varenr[$x]=$felt['1'];
+			$salgspris[$x]=$felt[3];
+			$beskrivelse[$x]=$felt[2];
+			#$enhed[$x]=$felt[?];
+			$prisgruppe[$x]=$felt[0];
+			if (strstr($rabatter,$prisgruppe[$x])) {
+				$rabat[$x]=-1;
+	#if ($prisgruppe[$x]=='0004') echo "A1 rabat $rabat[$x]<br>";
+				$rabatarray=array();
+	#if ($prisgruppe[$x]=='0004') echo "A2 rabat $rabat[$x]<br>";
+				$rabatarray=explode(chr(9),$rabatter);
+	#if ($prisgruppe[$x]=='0004') echo "A3 rabat $rabat[$x]<br>";
+				for ($y=0;$y<=count($rabatarray);$y++) {
+	#if ($prisgruppe[$x]=='0004') echo "A4 rabat $rabat[$x]<br>";
+					list($a,$b)=explode("|",$rabatarray[$y]);	
+	#if ($prisgruppe[$x]=='0004') echo "A5 rabat $rabat[$x]<br>";
+					if ($prisgruppe[$x]==$a) $rabat[$x]=$b*1;
+	#if ($prisgruppe[$x]=='0004') echo "A6 rabat $rabat[$x]<br>";
 		}
+				if ($rabat[$x]==-1) $rabat[$x]=$std_rabat;
+			} else $rabat[$x]=$std_rabat;
+	#if ($prisgruppe[$x]=='0004') echo "A7 rabat $rabat[$x]<br>";
+			#$kostpris[$x]=$salgspris[$x]-($salgspris[$x]*$rabat[$x]/100);
+			$kostpris[$x]=$felt[5];
+
+# CA kan ikke lige gennemskue nedenstående 20151210 - udkommenteret
+#			if ($varenr[0]) {
+#				$x=udvaelg($x,$varenr[0],$varenr[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {	
 #	}
-	fclose($fp);
+#			if ($prisgruppe[0]) {
+#				$x=udvaelg($x,$prisgruppe[0],$prisgruppe[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {
+#			}
+#			if ($ean[0]) {
+#				$x=udvaelg($x,$ean[0],$ean[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {
+#			}
+#			if ($beskrivelse[0]) {
+#				$x=udvaelg($x,$beskrivelse[0],$beskrivelse[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {
+#			}
+#			if ($enhed[0]) {
+#				$x=udvaelg($x,$enhed[0],$enhed[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {
+#			}
+#			if ($salgspris[0]) {
+#				$a=usdecimal($salgspris[0]);
+#				$x=udvaelg($x,$a,$salgspris[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {
+#			}
+#			if ($kostpris[0]) {
+#				$x=udvaelg($x,$kostpris[0],$kostpris[$x]); #|| $ean[0] || $prisgruppe[0] || $beskrivelse[0] || $enhed[0] || $salgspris[0] || $kostpris[0]) {
+#			}
+#			if ($x>$slut) break 1;
+# CA kan ikke lige gennemskue ovenstående 20151210 - udkommenteret
+		} # Bør give fejl, når der ikke er nogen prislister, der passer (håndteres)
+	}
 }
+
+fclose($fp);
+
 $vareantal=$x;
 
 while ($vareantal<$start) {
@@ -324,4 +386,34 @@ $std_varegruppe=$r['box8'];
 	}	
 	return($vare_id);
 }
+
+# Opdeler en linje i et array i felter mht. dobbelte anførselstegn eksempelvis til .csv-filer
+function opdel ($splitter,$linje){
+        global $feltantal;
+        $anftegn=0;
+        $xx=0;
+        $yy=0;
+
+        if (substr($linje,0,1)==chr(34)) {
+                $anftegn=1;
+                $xx++;
+ }
+        for($zz=$xx;$zz<=strlen($linje);$zz++) {
+                $tegn=substr($linje,$zz,1);
+                if (!$anftegn && substr($linje,$zz-1,1)==$splitter && $tegn==chr(34)) {
+                        $anftegn=1;
+                }
+                if ($anftegn && $tegn==chr(34) && substr($linje,$zz+1,1)==$splitter) {
+                        $yy++;
+                        $zz++;
+                        $anftegn=0;
+                } elseif (!$anftegn && substr($linje,$zz,1)==$splitter) {
+#                       echo "$yy B $var[$yy]<br>";
+                        $yy++;
+                } elseif ($tegn!=chr(34)) {
+                        $var[$yy]=$var[$yy].substr($linje,$zz,1);
+                }
+        }
+        return $var;
+} # function opdel
 ?>

@@ -1,5 +1,5 @@
 <?php
-// ----------finans/bankimport.php------------patch 3.5.9------2015.09.04-----------
+// ----------finans/bankimport.php------------patch 3.6.4------2016.02.12-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,7 +18,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2015 DANOSOFT ApS
+// Copyright (c) 2003-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 
 // 2012.11.10 Indsat mulighed for valutavalg ved import - søg: valuta
@@ -31,7 +31,8 @@
 // 2014.07.08 Genkendelse af dankort betalinger 20140708
 // 2014.10.05 Indsat "auto_detect_line_endings", eller kan den ikke altid genkende filer genereret på MAC 
 // 2015.09.04 Genkendelse af dankort krediteringer 20150904
-
+// 2016.02.12 Genkendelse af kortbetalinger gennem SparNord. Søg SparNord
+// 2016.02.15 Ved Kortbetalinger fra SparNord registreres gortgenyrer på separat linje. Søg kortgebyr. 
 
 ini_set("auto_detect_line_endings", true);
 
@@ -432,6 +433,7 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $kont
 	$fp=fopen($filnavn."2","r");
 	if ($fp) {
 		$x=0;
+		$kortgebyr=0;
 		while (!feof($fp)) {
 			$skriv_linje=0;
 			if ($linje=trim(fgets($fp))) {
@@ -488,10 +490,21 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $kont
 						$kredit=substr($beskrivelse,22,7)*1;
 						$faktura=substr($beskrivelse,29,5)*1;
 						$k_type='D';
-					} elseif (strlen($beskrivelse)==30 && substr($beskrivelse,0,2)=='DK' && is_numeric(substr($beskrivelse,4,7)) && is_numeric(substr($beskrivelse,12,9)) && is_numeric(substr($beskrivelse,25,5))) { # Dankort betaling 20140708 
-						$betalings_id="%".substr($beskrivelse,12,9);
-						$r=db_fetch_array(db_select("select fakturanr,kontonr from ordrer where betalings_id LIKE '$betalings_id' and sum = '$amount'",__FILE__ . " linje " . __LINE__));
+					} elseif (strlen($beskrivelse)==40 && substr($beskrivelse,0,6)=='DK-IND' && is_numeric(substr($beskrivelse,22,14))) { # SparNord
+						$felt_1="%".substr($beskrivelse,-10);
+						$tmp=$amount-3;
+						# fungerer med op til 2 kr i kortgebyr
+						$qtxt= "select fakturanr,kontonr from ordrer where felt_1 LIKE '$felt_1' and sum <= '$amount' and sum >= '$tmp'";
+						$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 						$faktura=$r['fakturanr'];
+						$kredit=$r['kontonr']*1;
+						$k_type='D';
+					} elseif (c==30 && substr($beskrivelse,0,2)=='DK' && is_numeric(substr($beskrivelse,4,7)) && is_numeric(substr($beskrivelse,12,9)) && is_numeric(substr($beskrivelse,25,5))) { # Dankort betaling 20140708 
+						$betalings_id="%".substr($beskrivelse,12,9);
+						$r=db_fetch_array(db_select("select fakturanr,kontonr,sum,moms from ordrer where betalings_id LIKE '$betalings_id' and sum = '$amount'",__FILE__ . " linje " . __LINE__));
+						$faktura=$r['fakturanr'];
+						$fakturasum=$r['sum']+$r['moms'];
+						$kortgebyr=$amount-$fakturasum;
 						$kredit=$r['kontonr']*1;
 						$k_type='D';
 					} elseif (substr($beskrivelse,0,6)=='DKSSL ') { #20131119
@@ -511,8 +524,25 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $kont
 						$faktura='';
 						$k_type='';
 					}
-#cho "insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta) values ('$bilag','$transdate','$beskrivelse','F','$kontonr','$k_type','$kredit','$faktura','$amount','$kladde_id','$valutakode')<br>";
-					db_modify("insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta) values ('$bilag','$transdate','$beskrivelse','F','$kontonr','$k_type','$kredit','$faktura','$amount','$kladde_id','$valutakode')",__FILE__ . " linje " . __LINE__);
+					if ($kortgebyr) {
+						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
+						$qtxt.="  values ";
+						$qtxt.="('$bilag','$transdate','$beskrivelse','F','$kontonr','F','','$faktura','$amount','$kladde_id','$valutakode')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
+						$qtxt.="  values ";
+						$qtxt.="('$bilag','$transdate','$beskrivelse','F','','$k_type','$kredit','$faktura','$fakturasum','$kladde_id','$valutakode')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
+						$qtxt.="  values ";
+						$qtxt.="('$bilag','$transdate','$beskrivelse','F','','F','','$faktura','$kortgebyr','$kladde_id','$valutakode')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					} else {
+						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
+						$qtxt.="  values ";
+						$qtxt.="('$bilag','$transdate','$beskrivelse','F','$kontonr','$k_type','$kredit','$faktura','$amount','$kladde_id','$valutakode')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					}
 					$bilag++;
 				} elseif ($amount<0) {
 					$amount=$amount*-1;

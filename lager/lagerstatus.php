@@ -1,5 +1,5 @@
 <?php
-// -----------------lager/lagerstatus.php----lap 3.3.9-----2014-01-28--
+// -----------------lager/lagerstatus.php----lap 3.6.3-----2016-02-05--
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -16,9 +16,9 @@
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2014 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2014.01.28 Ved søgning på modtaget / leveret tjekkes ikke for dato hvis angivet dato = dags dato da det gav forkert lagerantal for 
 //          leverancer med leveringsdato > dd. Søg 20140128   
@@ -43,6 +43,7 @@ $returside="rapport.php";
 if (isset($_GET['vare_id']) && isset($_GET['opdater']) && isset($_GET['beholdning'])) {
 	db_modify("update varer set beholdning='$_GET[beholdning]' where id = '$_GET[vare_id]'",__FILE__ . " linje " . __LINE__);
 }
+$ret_behold=if_isset($_GET['ret_behold']);
 $varegruppe=if_isset($_GET['varegruppe']);
 if ($varegruppe=="0:Alle") $varegruppe=NULL;
 else {
@@ -72,6 +73,16 @@ while ($r1=db_fetch_array($q1)) {
 	$x++;
 	$lagervare[$x]=$r1['kodenr'];
 	$batchvare[$x]=$r1['box9'];
+}
+$x=0;
+$q1= db_select("select kodenr from grupper where art = 'LG'",__FILE__ . " linje " . __LINE__);
+while ($r1=db_fetch_array($q1)) {
+	$x++;
+	$lager[$x]=$r1['kodenr'];
+}
+if (count($lager) >=1) {
+	db_modify("update batch_kob set lager='1' where lager='0' or lager is NULL",__FILE__ . " linje " . __LINE__);
+	db_modify("update batch_salg set lager='1' where lager='0' or lager is NULL",__FILE__ . " linje " . __LINE__);
 }
 	
 $x=0;
@@ -125,7 +136,6 @@ if ($csv) {
 	fwrite($fp,"Varenr".chr(9)."Enhed".chr(9)."Beskrivelse".chr(9)."Købt".chr(9)."Solgt".chr(9)."Antal".chr(9)."Købspris".chr(9)."Kostpris".chr(9)."Salgspris\n");
 }
  
-
 for($x=1; $x<=$vareantal; $x++) {
 	$handlet[$x]=0;
 	$batch_k_antal[$x]=0;$batch_t_antal[$x]=0;$batch_pris[$x]=0;$batch_s_antal[$x]=0;
@@ -172,8 +182,24 @@ for($x=1; $x<=$vareantal; $x++) {
 		else print "<td><a href=varespor.php?vare_id=$vare_id[$x]>$varenr[$x]<br></td>";
 		print	"<td>$enhed[$x]<br></td><td>$beskrivelse[$x]<br></td>
 		<td align=right>$batch_k_antal[$x]<br></td><td align=right>$batch_s_antal[$x]<br></td>";
-		if ($date==$dd && $batch_t_antal[$x]!=$beholdning[$x]) print "<td align=right title=\"Beholdning (".$beholdning[$x]*1 .") stemmer ikke med det antal som er k&oslash;bt og solgt. Klik her for at opdatere beholdning\"><a href=".$_SERVER['PHP_SELF']."?vare_id=$vare_id[$x]&beholdning=$batch_t_antal[$x]&opdater=on onclick=\"return confirm('Opdater lagerbeholdning fra $beholdning[$x] til $batch_t_antal[$x] for denne vare?')\"><span style=\"color: rgb(255, 0, 0);\">$batch_t_antal[$x]</span></a><br></td>";
-		else print "<td align=right>$batch_t_antal[$x]<br></td>";
+		if ($date==$dd && $batch_t_antal[$x]!=$beholdning[$x]) {
+			if ($ret_behold==2) {
+				$ny_beholdning[$x]=0;
+					for ($y=1;$y<=count($lager);$y++) {
+					$r2=db_fetch_array(db_select("select sum(antal) as antal from batch_kob where vare_id='$vare_id[$x]' and lager='$lager[$y]'",__FILE__ . " linje " . __LINE__));
+					$lagerbeh[$y]=$r2['antal'];
+					$r2=db_fetch_array(db_select("select sum(antal) as antal from batch_salg where vare_id='$vare_id[$x]' and lager='$lager[$y]'",__FILE__ . " linje " . __LINE__));
+					$lagerbeh[$y]-=$r2['antal'];
+					$ny_beholdning[$x]+=$lagerbeh[$y];
+					db_modify("update lagerstatus set beholdning = '$lagerbeh[$y]' where lager='$lager[$y]' and vare_id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
+				}	
+				db_modify("update varer set beholdning = '$ny_beholdning[$x]' where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
+				$behlodning[$x]=$ny_beholdning[$x];
+				} else {
+				print "<td align=right title=\"Beholdning (".$beholdning[$x]*1 .") stemmer ikke med det antal som er k&oslash;bt og solgt. Klik her for at opdatere beholdning\"><a href=".$_SERVER['PHP_SELF']."?vare_id=$vare_id[$x]&beholdning=$batch_t_antal[$x]&opdater=on onclick=\"return confirm('Opdater lagerbeholdning fra $beholdning[$x] til $batch_t_antal[$x] for denne vare?')\"><span style=\"color: rgb(255, 0, 0);\">$batch_t_antal[$x]</span></a><br></td>";
+				$ret_behold=1;
+			}
+		} else print "<td align=right>$batch_t_antal[$x]<br></td>";
 		print "<td align=right>".dkdecimal($batch_pris[$x])."<br></td>
 		<td align=right title='stkpris:".dkdecimal($kostpris[$x])."'>".dkdecimal($kostpris[$x]*$batch_t_antal[$x])."<br></td>
 		<td align=right>".dkdecimal($salgspris[$x]*$batch_t_antal[$x])."<br></td></tr>";
@@ -190,7 +216,7 @@ print "<tr><td colspan=2><br></td><td>Samlet lagerv&aelig;rdi pr. $dato<br></td>
 <td align=right><br></td><td align=right>".dkdecimal($lagervalue)."<br></td>
 <td align=right>".dkdecimal($kostvalue)."<br></td>
 <td align=right>".dkdecimal($salgsvalue)."<br></td></tr>";
-
+if ($ret_behold==1) print "<tr><td><a href=\"lagerstatus.php?varegruppe=$varegruppe&ret_behold=2\">Ret skæve lagertal</a></td></tr>";
 ?>
 </tbody></table>
 </body></html>

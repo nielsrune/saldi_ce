@@ -1,24 +1,29 @@
 <?php
-// --------includes/openpost.php ----- lap 3.5.9 ---- 2015.11.04 ---------------------------
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+
+// --------includes/rapportfunc.php ----- lap 3.6.4 ---- 2016.02.26 ---------------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
 // i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 
 // 2012.11.06 Kontrol for aktivt regnskabsaar v. bogføring af rykker.Søg 20121106  
@@ -32,6 +37,7 @@
 // 2015.10.19	Fjernet ";" fra tekst da den gav falsk SQL injektion fejl
 // 2015.10.26	indsat mulighed for at ophæve udligning. søg "uudlign"
 // 2015.11.04	Betalingslister v debitor
+// 2016.02.26	Rettet så link til ret_valutadiff.php kun vises for posteringer i aktivt regnskabsår. Søg område ver ret_valutadiff.php 
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 #cho "A $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart<br>";
@@ -1120,6 +1126,10 @@ $luk= "<a accesskey=L href=\"$returside\">";
 		$dkksum=0;
 		
 		$y=0;
+		$qtxt="select max(id) as max_valdif_id from openpost where konto_id='$kto_id[$x]' and abs(amount) = '0.001'";
+		$r2 = db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__));
+		$max_valdif_id=$r2['max_valdif_id'];
+						
 		if ($todate) $qtxt="select * from openpost where konto_id='$kto_id[$x]' and transdate<='$todate' order by transdate, faktnr, refnr";
 		else $qtxt= "select * from openpost where konto_id='$kto_id[$x]' order by transdate, faktnr, refnr";
 		$q2 = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
@@ -1326,21 +1336,23 @@ if ($diff && !$difflink && $oppvaluta!='DKK') {
 #cho "($diff>0.005 && !$difflink && $valuta!='DKK' && $oppvaluta[$y]!='-')<br>";
 				$regulering=afrund($diff,2);
 #				else $regulering=afrund($dkksum+$diff,2)-afrund($dkksum,2);
-				if($regulering && !$difflink && $valuta!='DKK' && !$pre_openpost && ($oppvaluta[$y]!='-' || $y==count($oppid))) { # && $transdate>=$regnstart && $transdate<=$regnslut
+				if($regulering && !$difflink && $valuta!='DKK' && ($oppvaluta[$y]!='-' || $y==count($oppid)) && $transdate[$y]>=usdate($regnstart) && $transdate[$y]<=usdate($regnslut)) { # && $transdate>=$regnstart && $transdate<=$regnslut
 					$vis_difflink=1;
 					for ($i=1;$i<=count($oppid);$i++){
 						if ($transdate[$i]==$transdate[$y] && $oppvaluta[$i]=='-') $vis_difflink=0;
 					}
 					if ($y==count($oppid) && !$kontosum) $vis_difflink=1;
 					#						$vis_difflink=0; #
-#cho "$transdate[$y] $regulering<br>";
-					if ($vis_difflink && (abs($regulering)>0.01 || $y==count($oppid))) {
+						if ($oppid[$y]>=$max_valdif_id && ($vis_difflink && (abs($regulering)>0.01 || $y==count($oppid)))) {
 						$difflink=1;
-echo $regnstart.">".date("Y-m-d"." || ".$regnslut."<".date("Y-m-d"))."<br>";						
+						if ($regnstart<=date("Y-m-d") && $regnslut>=date("Y-m-d")) {
 						$title.="Klik for at regulere værdien i DKK fra ".dkdecimal($dkksum)." til ".dkdecimal($dkksum+$regulering)." pr. ".dkdato($transdate[$y]);
-						if ($regnstart>date("Y-m-d") || $regnslut<date("Y-m-d")) $confirm="Obs, hvis du klikker OK vil reguleringen blive bogført i et ikke aktivt regnskabsår";
-#cho "diff=$regulering<br>";
-						$tmp="<a href=\"../includes/ret_valutadiff.php?valuta=$valuta&diff=$regulering&post_id=$oppid[$y]&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=".$returnpath."rapport.php\" onclick=\"confirmSubmit($confirm)\">$tmp</a>";
+							$tmp2="<a href=\"../includes/ret_valutadiff.php?";
+							$tmp2.="valuta=$valuta&diff=$regulering&post_id=$oppid[$y]&dato_fra=$dato_fra&dato_til=$dato_til&";
+							$tmp2.="konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=".$returnpath."rapport.php\" ";
+							$tmp2.="onclick=\"confirmSubmit($confirm)\">$tmp</a>";
+							$tmp=$tmp2;
+						} else $title=NULL;
 					}
 				}
 				print "<td valign=\"top\" align=right title=\"$title\">$tmp<br></td>";

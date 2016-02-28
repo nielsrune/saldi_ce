@@ -1,24 +1,24 @@
 <?php
-// -------includes/oioublfunk.php-----patch 3.5.6-----2015-05-25--------
+// -------includes/oioublfunk.php-----patch 3.6.3-----2016-02-08--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
 // i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 //
 // 20140206 Afrundingsfejl,saldi_390 ordre id 16090 differ 1 øre på linjesum. 
@@ -28,6 +28,7 @@
 // 20150525 - Procent fakturering fungerer nu også. 20150525
 // 20150825 - Forkert tjeksum v. kreditnota og fortegn blev ikke sat på momsberegning.
 // 20150922 - Div elimineringer af fejl og kommentarer medtages nu til kr. 0,00
+// 20160208 - PHR Ordredato blev skrevet som fakturadato Søn 20160208
 
 $oioxmlubl="OIOUBL";
 
@@ -174,7 +175,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="<cbc:ProfileID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:profileid-1.2\">urn:www.nesubl.eu:profiles:profile5:ver2.0</cbc:ProfileID>\n";
 	$l_retur.="<cbc:ID>".$r_faktura['fakturanr']."</cbc:ID>\n";
 	$l_retur.="<cbc:CopyIndicator>false</cbc:CopyIndicator>\n";
-	$l_retur.="<cbc:IssueDate>".$r_faktura['ordredate']."</cbc:IssueDate>\n";
+	$l_retur.="<cbc:IssueDate>".$r_faktura['fakturadate']."</cbc:IssueDate>\n"; #20160208
 	if ($l_doctype == "Invoice") $l_retur.="<cbc:".$l_doctype."TypeCode listAgencyID=\"320\" listID=\"urn:oioubl:codelist:invoicetypecode-1.1\">380</cbc:".$l_doctype."TypeCode>\n";
 #	$l_retur.="<cbc:Note>".$l_doctype." note</cbc:Note>\n";
 	$l_retur.="<cbc:DocumentCurrencyCode>$l_valutakode</cbc:DocumentCurrencyCode>\n";

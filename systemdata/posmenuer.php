@@ -26,6 +26,8 @@
 // 2015.09.25 Kolonner og rækker kan nu flyttes. Søg flyt_col & flyt_row
 // 2015.10.23	Tilføjet knap Enter+Menu. Efter knaptekst skrives +x, hvor x er den menu der skal kaldes.
 // 2015.11.29	Tilføjet knap Konant på beløb & Betalingskort på beløb. 
+// 2016.01.28 Tilføjet systemknap Stamkunder. Se funktion stamkunder i ordrefunc.php
+// 2016.01.31 Tilføjet systemknap Kontoudtog & Udskriv sidste. 
 
 @session_start();
 $s_id=session_id();
@@ -259,12 +261,14 @@ if (($menu_id) && $ret_col && $ret_row) {
 		print "<SELECT CLASS=\"inputbox\" style=\"width:100px;\" name=\"buttxt\">\n";
 		if($a=='Kontant') print "<OPTION>Kontant</OPTION>\n";
 		elseif($a=='Kontant på beløb') print "<OPTION>Kontant på beløb</OPTION>\n";
+		elseif($a=='Konto') print "<OPTION>Konto</OPTION>\n";
 		for($x=0;$x<$kortantal;$x++) {
 			if ($a==$korttyper[$x]) print "<OPTION>$korttyper[$x]</OPTION>\n";
 			elseif ($a==$korttyper[$x].' på beløb') print "<OPTION>$korttyper[$x] på beløb</OPTION>\n";
 		}
 		if($a!='Kontant') print "<OPTION>Kontant</OPTION>\n";
 		if($a!='Kontant på beløb') print "<OPTION>Kontant på beløb</OPTION>\n";
+		if($a!='Konto') print "<OPTION>Konto</OPTION>\n";
 		for($x=0;$x<$kortantal;$x++) {
 			if ($buttxt!=$korttyper[$x]) print "<OPTION>$korttyper[$x]</OPTION>\n";
 			if ($buttxt!=$korttyper[$x].' på beløb') print "<OPTION>$korttyper[$x] på beløb</OPTION>\n";
@@ -303,6 +307,9 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c==27) print "<OPTION value=\"27\">Konto</OPTION>\n";
 		if ($c==28) print "<OPTION value=\"28\">Enter+Menu</OPTION>\n";
 		if ($c==29) print "<OPTION value=\"29\">Vareopslag</OPTION>\n";
+		if ($c==30) print "<OPTION value=\"30\">Stamkunder</OPTION>\n";
+		if ($c==31) print "<OPTION value=\"31\">Kontoudtog</OPTION>\n";
+		if ($c==32) print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
 		if ($c!=16) print "<OPTION value=\"16\">Afslut</OPTION>\n";
 		if ($c!=1) print "<OPTION value=\"1\">Bordvalg</OPTION>\n";
 		if ($c!=2) print "<OPTION value=\"2\">Brugervalg</OPTION>\n";
@@ -318,6 +325,7 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c!=8) print "<OPTION value=\"8\">Kassevalg</OPTION>\n";
 		if ($c!=27) print "<OPTION value=\"27\">Konto</OPTION>\n";
 		if ($c!=25) print "<OPTION value=\"25\">Kontoopslag</OPTION>\n";
+		if ($c!=31) print "<OPTION value=\"31\">Kontoudtog</OPTION>\n";
 		if ($c!=21) print "<OPTION value=\"21\">Korrektion</OPTION>\n";
 		if ($c!=22) print "<OPTION value=\"22\">Kortterminal</OPTION>\n";
 		if ($c!=9) print "<OPTION value=\"9\">Køkkenprint</OPTION>\n";
@@ -329,8 +337,10 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c!=15) print "<OPTION value=\"15\">Ryd</OPTION>\n";
 		if ($c!=23) print "<OPTION value=\"23\">Send til køkken</OPTION>\n";
 		if ($c!=11) print "<OPTION value=\"11\">Skuffe</OPTION>\n";
+		if ($c!=30) print "<OPTION value=\"30\">Stamkunder</OPTION>\n";
 		if ($c!=19) print "<OPTION value=\"19\">Tilbage</OPTION>\n";
 		if ($c!=12) print "<OPTION value=\"12\">Udskriv</OPTION>\n";
+		if ($c!=32) print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
 		if ($c!=29) print "<OPTION value=\"29\">Vareopslag</OPTION>\n";
 		print	"</SELECT>\n";
 	} else print "<INPUT CLASS=\"inputbox\" TYPE=\"text\" style=\"width:100px;text-align:center\" name=\"butvnr\" value=\"$c\"><br>\n";
@@ -570,6 +580,7 @@ function output ($menu_id,$rows,$cols,$radius,$width,$height,$fontsize,$bgcolor2
 				vertical-align:middle;
 				font-size:".$fontsize."px; 
 				border: 1px solid #$bgcolor2;
+				white-space: normal;
 				background-color:#$b;
 			";
 /*
@@ -581,6 +592,7 @@ function output ($menu_id,$rows,$cols,$radius,$width,$height,$fontsize,$bgcolor2
 */			
 #			style=\"width:".$width."px;height:".$height."px;text-align:center;font-size:".$fontsize."px; background-color:#$b;\"
 			$a=str_replace(" på beløb","\npå beløb",$a);
+			$a=str_replace('<br>','&#x00A;',$a);
 			print "<td><a href=\"posmenuer.php?menu_id=$menu_id&ret_row=$x&ret_col=$y\" style=\"text-decoration: none\"><input type=\"button\" style=\"$style\" value= \"$a\"></a></td>";
 #&buttxt=$a&butcolor=$b&butvnr=$c&butfunc=$d
 #			print "<td style=\"width:".$width."px;height:".$height."px;text-align:center;font-size:".$fontsize."px;\" bgcolor=\"#$b\">$a</td>";

@@ -1,5 +1,9 @@
 <?php
-
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
 // ----------debitor/ordre.php----------lap 3.5.0-----2015-03-17-------
 // LICENS
 //
@@ -83,6 +87,8 @@
 // 2015.09.17 PHR - Linjepriser blev vist incl. moms på faktureredet ordrer med samlevare. indsat $incl_moms i if sætning. 
 // 2015.10.19	PHR - Ved indsættelse af varenummer hopper cursor nu til antal og hvis pris=0 til pris, ellers til varenummer på ny linje 20151019
 // 2016.01.12	PHR - Lidt designrettelser vedr vis_projekt og kdo på ordrelinjer. Tak til Asbjørn, Musalk.
+// 2016.01.29	PK  - Har tilføjet kontakt_tlf. Tlf hentes fra kontakt ved valg fra select, ellers indtastes tlf i felt. Søg. #20160129
+// 2016.02.17	PHR	- Fejl v. kreditering hvis kundes kontonr er blevet ændret. Søg #20160217
 
 @session_start();
 $s_id=session_id();
@@ -467,6 +473,7 @@ if ($submit) {
 	$postnr = db_escape_string($postnr);
 	$land = db_escape_string(trim($_POST['land']));
 	$kontakt = db_escape_string(trim($_POST['kontakt']));
+	$kontakt_tlf = db_escape_string(trim($_POST['kontakt_tlf']));
 	$kundeordnr =	db_escape_string(trim($_POST['kundeordnr']));
 	$lev_navn = db_escape_string(trim($_POST['lev_navn']));
 	$lev_addr1 = db_escape_string(trim($_POST['lev_addr1']));
@@ -619,7 +626,7 @@ if ($submit) {
 				$nextfakt_value = NULL;
 			}
 			
-			db_modify("insert into ordrer (konto_id,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,email,mail_fakt,udskriv_til,kundeordnr,lev_navn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,lev_kontakt,ean,institution,betalingsbet,betalingsdage,kontonr,cvrnr,art,valuta,$valutakurs sprog,projekt,ordredate,$levdate $fakturadate notes,ordrenr,sum,momssats,status,ref,fakturanr,$modtagelse $kred_ord_id lev_adr,kostpris,moms,hvem,tidspkt,betalt,$nextfakt pbs,afd,mail,mail_cc,mail_bcc,mail_subj,mail_text,felt_1,felt_2,felt_3,felt_4,felt_5,vis_lev_addr,restordre,sag_id,tilbudnr,datotid,nr,returside,sagsnr,betalings_id,mail_bilag,dokument,procenttillag) values ('$r[konto_id]','$r[firmanavn]','$r[addr1]','$r[addr2]','$r[postnr]','$r[bynavn]','$r[land]','$r[kontakt]','$r[email]','$r[mail_fakt]','$r[udskriv_til]','$r[kundeordnr]','$r[lev_navn]','$r[lev_addr1]','$r[lev_addr2]','$r[lev_postnr]','$r[lev_bynavn]','$r[lev_kontakt]','$r[ean]','$r[institution]','$r[betalingsbet]','$r[betalingsdage]','$r[kontonr]','$r[cvrnr]','OT','$r[valuta]',$valutakurs_value '$r[sprog]','$r[projekt]','$r[ordredate]',$levdate_value $fakturadate_value '$r[notes]','$r[ordrenr]','$r[sum]','$r[momssats]','0','$r[ref]','$r[fakturanr]',$modtagelse_value $kred_ord_id_value '$r[lev_adr]','$r[kostpris]','$r[moms]','$r[hvem]','$r[tidspkt]','$r[betalt]',$nextfakt_value '$r[pbs]','$r[afd]','$r[mail]','$r[mail_cc]','$r[mail_bcc]','$r[mail_subj]','$r[mail_text]','$r[felt_1]','$r[felt_2]','$r[felt_3]','$r[felt_4]','$r[felt_5]','$r[vis_lev_addr]','$r[restordre]','$r[sag_id]','$r[tilbudnr]','$r[datotid]','$r[nr]','$r[returside]','$r[sagsnr]','$r[betalings_id]','$r[mail_bilag]','$r[dokument]','$r[procenttillag]')",__FILE__ . " linje " . __LINE__);
+			db_modify("insert into ordrer (konto_id,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,kontakt_tlf,email,mail_fakt,udskriv_til,kundeordnr,lev_navn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,lev_kontakt,ean,institution,betalingsbet,betalingsdage,kontonr,cvrnr,art,valuta,$valutakurs sprog,projekt,ordredate,$levdate $fakturadate notes,ordrenr,sum,momssats,status,ref,fakturanr,$modtagelse $kred_ord_id lev_adr,kostpris,moms,hvem,tidspkt,betalt,$nextfakt pbs,afd,mail,mail_cc,mail_bcc,mail_subj,mail_text,felt_1,felt_2,felt_3,felt_4,felt_5,vis_lev_addr,restordre,sag_id,tilbudnr,datotid,nr,returside,sagsnr,betalings_id,mail_bilag,dokument,procenttillag) values ('$r[konto_id]','$r[firmanavn]','$r[addr1]','$r[addr2]','$r[postnr]','$r[bynavn]','$r[land]','$r[kontakt]','$r[kontakt_tlf]','$r[email]','$r[mail_fakt]','$r[udskriv_til]','$r[kundeordnr]','$r[lev_navn]','$r[lev_addr1]','$r[lev_addr2]','$r[lev_postnr]','$r[lev_bynavn]','$r[lev_kontakt]','$r[ean]','$r[institution]','$r[betalingsbet]','$r[betalingsdage]','$r[kontonr]','$r[cvrnr]','OT','$r[valuta]',$valutakurs_value '$r[sprog]','$r[projekt]','$r[ordredate]',$levdate_value $fakturadate_value '$r[notes]','$r[ordrenr]','$r[sum]','$r[momssats]','0','$r[ref]','$r[fakturanr]',$modtagelse_value $kred_ord_id_value '$r[lev_adr]','$r[kostpris]','$r[moms]','$r[hvem]','$r[tidspkt]','$r[betalt]',$nextfakt_value '$r[pbs]','$r[afd]','$r[mail]','$r[mail_cc]','$r[mail_bcc]','$r[mail_subj]','$r[mail_text]','$r[felt_1]','$r[felt_2]','$r[felt_3]','$r[felt_4]','$r[felt_5]','$r[vis_lev_addr]','$r[restordre]','$r[sag_id]','$r[tilbudnr]','$r[datotid]','$r[nr]','$r[returside]','$r[sagsnr]','$r[betalings_id]','$r[mail_bilag]','$r[dokument]','$r[procenttillag]')",__FILE__ . " linje " . __LINE__);
 		
 			$r=db_fetch_array(db_select("select max(id) as id from ordrer where sag_id = '$sag_id'",__FILE__ . " linje " . __LINE__));
 			$ordre_id=$r['id'];
@@ -834,9 +841,7 @@ if ($status<3 && $submit) {
 	$r = db_fetch_array(db_select("select grupper.box6 as box6 from adresser,grupper where adresser.kontonr='$kontonr' and adresser.art='D' and grupper.art='DG' and ".nr_cast("grupper.kodenr")."=adresser.gruppe",__FILE__ . " linje " . __LINE__));
 	$rabatsats=$r['box6']*1;
 	if (strstr($submit,'Slet')) {
-		db_modify("delete from ordrelinjer where ordre_id=$id",__FILE__ . " linje " . __LINE__);
-		db_modify("delete from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
-		db_modify("delete from shop_ordrer where saldi_id='$id'",__FILE__ . " linje " . __LINE__);
+		slet_ordre($id);
 		if ($sag_id) { #20140507-2
 			header("location:../sager/sager.php?funktion=vis_sag&sag_id=$sag_id");
 		} else {
@@ -1154,7 +1159,7 @@ if ($status<3 && $submit) {
 				if (strlen($fakturadate)>6) $tmp=$tmp.",fakturadate='$fakturadate'";
 				if ($genfakt) $tmp=$tmp.",nextfakt='".usdate($genfakt)."'";
 				$afd*=1;
-				$opdat="update ordrer set kontonr='$kontonr',kundeordnr='$kundeordnr',firmanavn='$firmanavn',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',land='$land',kontakt='$kontakt',lev_navn='$lev_navn',lev_addr1='$lev_addr1',lev_addr2='$lev_addr2',lev_postnr='$lev_postnr',lev_bynavn='$lev_bynavn',lev_kontakt='$lev_kontakt',vis_lev_addr='$vis_lev_addr',felt_1='$felt_1',felt_2='$felt_2',felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',betalingsdage='$betalingsdage',betalingsbet='$betalingsbet',cvrnr='$cvrnr',momssats='$momssats',procenttillag='$procenttillag',ean='$ean',institution='$institution',email='$email',mail_fakt='$mail_fakt',udskriv_til='$udskriv_til',notes='$notes',ordredate='$ordredate',status=$status,ref='$ref',fakturanr='$fakturanr',lev_adr='$lev_adr',hvem = '$brugernavn',tidspkt='$tidspkt',projekt='$projekt[0]',sprog='$formularsprog',pbs='$pbs',afd='$afd',restordre='$restordre',mail_subj='$mail_subj',mail_text='$mail_text' $tmp where id=$id";
+				$opdat="update ordrer set kontonr='$kontonr',kundeordnr='$kundeordnr',firmanavn='$firmanavn',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',land='$land',kontakt='$kontakt',kontakt_tlf='$kontakt_tlf',lev_navn='$lev_navn',lev_addr1='$lev_addr1',lev_addr2='$lev_addr2',lev_postnr='$lev_postnr',lev_bynavn='$lev_bynavn',lev_kontakt='$lev_kontakt',vis_lev_addr='$vis_lev_addr',felt_1='$felt_1',felt_2='$felt_2',felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',betalingsdage='$betalingsdage',betalingsbet='$betalingsbet',cvrnr='$cvrnr',momssats='$momssats',procenttillag='$procenttillag',ean='$ean',institution='$institution',email='$email',mail_fakt='$mail_fakt',udskriv_til='$udskriv_til',notes='$notes',ordredate='$ordredate',status=$status,ref='$ref',fakturanr='$fakturanr',lev_adr='$lev_adr',hvem = '$brugernavn',tidspkt='$tidspkt',projekt='$projekt[0]',sprog='$formularsprog',pbs='$pbs',afd='$afd',restordre='$restordre',mail_subj='$mail_subj',mail_text='$mail_text' $tmp where id=$id";
 				db_modify($opdat,__FILE__ . " linje " . __LINE__);
 				if ($vis_saet) db_modify("update ordrer set felt_5 = '$afd' where id = '$id'",__FILE__ . " linje " . __LINE__);
 			}
@@ -1217,20 +1222,35 @@ if ((strstr($submit,'Kopi'))||(strstr($submit,'Kred')))	{
 		$status=0;
 	}
 	if ((!$id)&&($konto_id)&&($firmanavn)){
-		$query = db_select("select ordrenr from ordrer where art='DO' or art='DK' order by ordrenr desc",__FILE__ . " linje " . __LINE__);
-		if ($row = db_fetch_array($query)) $ordrenr=$row['ordrenr']+1;
+		$qtxt="select kontonr from adresser where id='$konto_id'"; #20160217
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$kontonr=$r['kontonr'];
+		
+		$qtxt="select ordrenr from ordrer where art='DO' or art='DK' order by ordrenr desc limit 1";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $ordrenr=$r['ordrenr']+1;
 		else $ordrenr=1;
+		
 		(!$sag_id)?$tilbudnr*=1:$tilbudnr;
-		$qtext="insert into ordrer (ordrenr,konto_id,kontonr,kundeordnr,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,lev_navn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,lev_kontakt,betalingsdage,betalingsbet,cvrnr,ean,institution,email,mail_fakt,notes,art,ordredate,momssats,status,ref,lev_adr,valuta,projekt,sprog,pbs,afd,restordre,procenttillag,sag_id,sagsnr,tilbudnr,datotid,nr,returside,omvbet) values ($ordrenr,'$konto_id','$kontonr','$kundeordnr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$land','$kontakt','$lev_navn','$lev_addr1','$lev_addr2','$lev_postnr','$lev_bynavn','$lev_kontakt','$betalingsdage','$betalingsbet','$cvrnr','$ean','$institution','$email','$mail_fakt','$notes','$art','$ordredate','$momssats',$status,'$ref','$lev_adr','$valuta','$projekt[0]','$formularsprog','$pbs','$afd','0','$procenttillag','$sag_id','$sagsnr','$tilbudnr','$datotid','$nr','$returside','$omkunde')";
-		db_modify($qtext,__FILE__ . " linje " . __LINE__);
-		$query = db_select("select id from ordrer where kontonr='$kontonr' and ordredate='$ordredate' order by id desc",__FILE__ . " linje " . __LINE__);
-		if ($row = db_fetch_array($query)) {
-			$id=$row['id'];
+		$qtxt="insert into ordrer"; 
+		$qtxt.="(ordrenr,konto_id,kontonr,kundeordnr,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,lev_navn,";
+		$qtxt.="lev_addr1,lev_addr2,lev_postnr,lev_bynavn,lev_kontakt,betalingsdage,betalingsbet,cvrnr,ean,institution,";
+		$qtxt.="email,mail_fakt,notes,art,ordredate,momssats,status,ref,lev_adr,valuta,projekt,sprog,";
+		$qtxt.="pbs,afd,restordre,procenttillag,sag_id,sagsnr,tilbudnr,datotid,nr,returside,omvbet)";
+		$qtxt.=" values "; $qtxt.="($ordrenr,'$konto_id','$kontonr','$kundeordnr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$land','$kontakt','$lev_navn',";
+		$qtxt.="'$lev_addr1','$lev_addr2','$lev_postnr','$lev_bynavn','$lev_kontakt','$betalingsdage','$betalingsbet','$cvrnr','$ean','$institution',";
+		$qtxt.="'$email','$mail_fakt','$notes','$art','$ordredate','$momssats','$status','$ref','$lev_adr','$valuta','$projekt[0]','$formularsprog',";
+		$qtxt.="'$pbs','$afd','0','$procenttillag','$sag_id','$sagsnr','$tilbudnr','$datotid','$nr','$returside','$omkunde')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$qtxt="select id from ordrer where kontonr='$kontonr' and ordredate='$ordredate' order by id desc";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			$id=$r['id'];
 			if ($gl_id) {
-				$r=(db_fetch_array(db_select("select levdate,ordredate,fakturadate,nextfakt from ordrer where id='$gl_id'",__FILE__ . " linje " . __LINE__)));
+				$qtxt="select levdate,ordredate,fakturadate,nextfakt from ordrer where id='$gl_id'";
+				$r=(db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)));
 				if ($r['nextfakt']) {
 					$nextfakt=find_nextfakt($r['fakturadate'],$r['nextfakt']);
-					db_modify("update ordrer set levdate='$r[nextfakt]',fakturadate='$r[nextfakt]',nextfakt='$nextfakt',ordredate='$r[ordredate]' where id = $id",__FILE__ . " linje " . __LINE__);
+					$qtxt="update ordrer set levdate='$r[nextfakt]',fakturadate='$r[nextfakt]',nextfakt='$nextfakt',ordredate='$r[ordredate]' where id = $id";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 			}
 		}
@@ -1509,7 +1529,7 @@ function ordreside($id,$regnskab) {
 	$cvrnr=NULL;$ean=NULL;$email=NULL;
 	$felt_1=NULL;$felt_2=NULL;$felt_3=NULL;$felt_4=NULL;$felt_5=NULL;$firmanavn=NULL;
 	$institution=NULL;
-	$ko_ant=array();$kontakt=NULL;$konto_id=NULL;$kontonr=NULL;$kostsum=NULL;$kred_ord_id=NULL;$krediteret=NULL;$kundeordnr=NULL;
+	$ko_ant=array();$kontakt=NULL;$kontakt_tlf=NULL;$konto_id=NULL;$kontonr=NULL;$kostsum=NULL;$kred_ord_id=NULL;$krediteret=NULL;$kundeordnr=NULL;
 	$land=NULL;$levdato=NULL;$levdiff=NULL;$lev_addr1=NULL;$lev_addr2=NULL;$lev_bynavn=NULL;$lev_kontakt=NULL;$lev_max=NULL;$lev_navn=NULL;$lev_postnr=NULL;$lev_pbs=NULL;$lev_pbs_nr=NULL;$linjebg=NULL;
 	$mail_fakt=NULL;$momsfri=NULL;$momssats=NULL;$momssum=NULL;
 	$oio_fakt=NULL;$ordredato=NULL;$ordrenr=NULL;
@@ -1533,6 +1553,7 @@ function ordreside($id,$regnskab) {
 		$bynavn = HtmlEntities($row['bynavn'],ENT_COMPAT,$charset);
 		$land = HtmlEntities($row['land'],ENT_COMPAT,$charset);
 		$kontakt = HtmlEntities($row['kontakt'],ENT_COMPAT,$charset);
+		$kontakt_tlf = HtmlEntities($row['kontakt_tlf'],ENT_COMPAT,$charset);
 		$kundeordnr = HtmlEntities($row['kundeordnr'],ENT_COMPAT,$charset);
 		$lev_navn = HtmlEntities($row['lev_navn'],ENT_COMPAT,$charset);
 		$lev_addr1 = HtmlEntities($row['lev_addr1'],ENT_COMPAT,$charset);
@@ -1596,7 +1617,7 @@ function ordreside($id,$regnskab) {
 		if (!$returside && $row['returside']) $returside=$row['returside'];
 		($row['omvbet'])?$omkunde='on':$omkunde='';
 
-		if ($brugernavn && !$ref) $ref=$brugernavn;
+#		if ($brugernavn && !$ref) $ref=$brugernavn; #flyttet til efter 'ikke faktureret'
 
 #		if ($returside=='../includes/luk.php' && !$popup) $returside='';  
 		$x=0;
@@ -1686,6 +1707,7 @@ function ordreside($id,$regnskab) {
 		print "<input type=\"hidden\" name=\"bynavn\" value=\"$bynavn\">";
 		print "<input type=\"hidden\" name=\"land\" value=\"$land\">";
 		print "<input type=\"hidden\" name=\"kontakt\" value=\"$kontakt\">";
+		print "<input type=\"hidden\" name=\"kontakt_tlf\" value=\"$kontakt_tlf\">";
 		print "<input type=\"hidden\" name=\"kundeordnr\" value=\"$kundeordnr\">\n";
 		print "<input type=\"hidden\" name=\"lev_navn\" value=\"$lev_navn\">";
 		print "<input type=\"hidden\" name=\"lev_addr1\" value=\"$lev_addr1\">";
@@ -2135,6 +2157,8 @@ function ordreside($id,$regnskab) {
 		print "</form>\n";
 
 	} else { ############################# ordren er ikke faktureret #################################
+		if ($brugernavn && !$ref) $ref=$brugernavn;
+
 		if (!$konto_id) { #20150302
 			if ($incl_moms) $momssats=25;
 			$status=0;
@@ -2224,9 +2248,12 @@ function ordreside($id,$regnskab) {
 		$q=db_select("select * from ansatte where konto_id='$konto_id' order by posnr",__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)) {
 			$k_kontakt[$x]=htmlspecialchars($r['navn']);
+			$k_mobil[$x]=$r['mobil'];
 			$x++;
 		}
-
+		//echo "kontakt: $kontakt<br>";
+		//echo "konto id: $konto_id<br>";
+		//echo "kontakt_tlf: $kontakt_tlf<br>";
 ##### pile ########	tilfoejet 20080210
 		$alerttekst=findtekst(154,$sprog_id);
 		$spantekst=findtekst(198,$sprog_id);
@@ -2268,15 +2295,27 @@ function ordreside($id,$regnskab) {
 		if (!$sag_id) { #20140826
 			print "<tr><td>Att.</td><td colspan=\"2\"><input class=\"inputbox\" type=\"text\" style=\"width:200px\" name=\"kontakt\" onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontakt\" onchange=\"javascript:docChange = true;\" $disabled></td></tr>\n";
 		} else {
-			print "<tr><td>Att.</td><td colspan=\"2\"><div class=\"ddbox\"><input class=\"inputbox ddtext\" type=\"text\" name=\"kontakt\" id=\"Textbox\" onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontakt\" onchange=\"javascript:docChange = true;DropDownIndexClear('DropDownExTextbox');\" $disabled>\n";
-			print "<select name=\"DropDownExTextbox\" id=\"DropDownExTextbox\" tabindex=\"1000\" onchange=\"DropDownTextToBox(this,'Textbox');\" class=\"inputbox ddselect\" $disabled>\n";
+			print "<tr><td>Att.</td><td colspan=\"2\"><div class=\"ddbox\"><input class=\"inputbox ddtext\" type=\"text\" name=\"kontakt\" id=\"Textbox\" onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontakt\" onchange=\"javascript:docChange = true;\" $disabled>\n"; // DropDownIndexClear('DropDownExTextbox');
+			print "<select name=\"DropDownExTextbox\" id=\"DropDownExTextbox\" tabindex=\"1000\" class=\"inputbox ddselect\" $disabled>\n"; // onchange=\"DropDownTextToBox(this,'Textbox');\"
 			for ($y=0;$y<=count($k_kontakt);$y++) {
-        print "<option value=\"$k_kontakt[$y]\">$k_kontakt[$y]</option>\n";
+        print "<option value=\"$k_kontakt[$y]\" data-kontakt_tlf=\"$k_mobil[$y]\">$k_kontakt[$y]</option>\n";
 			}
 			print "</select></div></td></tr>\n";
+			print "<tr><td>Att. tlf</td><td colspan=\"2\"><input class=\"inputbox\" type=\"text\" style=\"width:200px\" name=\"kontakt_tlf\" id=\"kontakt_tlf\" onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontakt_tlf\" onchange=\"javascript:docChange = true;\" $disabled></td></tr>\n"; #20160129
 			
 			print "<script language=\"javascript\" type=\"text/javascript\">
+			
 							DropDownIndexClear(\"DropDownExTextbox\");
+							
+							$('#DropDownExTextbox').on('change', function () {
+									
+									var select = $(this).find('option:selected').val()
+									var selectTlf = $(this).find('option:selected').attr('data-kontakt_tlf')
+									$('#Textbox').val(select)
+									$('#kontakt_tlf').val(selectTlf)
+							DropDownIndexClear(\"DropDownExTextbox\");
+							});
+							
 						</script>\n";
 		}
 		print "<tr><td title=\"Kundens ordrenummer som refererence\">Kundeordre</td><td colspan=\"2\"><input class=\"inputbox\" type=\"text\" style=\"width:200px\" name=\"kundeordnr\" onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kundeordnr\" onchange=\"javascript:docChange = true;\" $disabled></td></tr>\n";
@@ -3044,7 +3083,7 @@ function ordreside($id,$regnskab) {
 	}# end else for (if ($status>=3))
 	
 	# ADD LINK TO GLS!! 
-	if ($db_id=='390' || $db_id=='2') {
+	if ($db_id=='390') { # || $db_id=='2'
 		print "<tr><td align=\"center\"><br>";
 		print "<form name=\"glslabel_form\" action=\"../includes/gls.php\" target=\"_blank\" method=\"POST\">".
 		"\n<input type=\"hidden\" name=\"txtAction\" value=\"70120\">".			//this is a must!

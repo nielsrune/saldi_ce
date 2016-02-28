@@ -428,6 +428,8 @@ if ($_GET['vare_id']) {
 		}	elseif(($konto_id)&&($firmanavn)) {
 			$sum=0;
 			for($x=1; $x<=$linjeantal; $x++) {
+				$antal[$x]=afrund($antal[$x],2);
+				
 				if (!$varenr[$x]) {$antal[$x]=0; $pris[$x]=0; $rabat[$x]=0;}
 				elseif ($antal[$x]<0 && $art!='KK' && !$negativt_lager) {
 					$query = db_select("select gruppe, beholdning from varer where varenr = '$varenr[$x]' or stregkode = '$varenr[$x]'",__FILE__ . " linje " . __LINE__);
@@ -519,6 +521,7 @@ if ($_GET['vare_id']) {
 							$reserveret[$x]=0;
 							$query = db_select("select * from reservation where linje_id = $linje_id[$x] and batch_salg_id!=0",__FILE__ . " linje " . __LINE__);
 							while ($row = db_fetch_array($query))$reserveret[$x]=$reserveret[$x]+$row['antal'];
+							$reserveret[$x]=afrund($reserveret[$x],2);
 							if ($antal[$x]>=0 && $antal[$x]<$reserveret[$x]) {
 								print "<BODY onLoad=\"javascript:alert('Der er $reserveret[$x] reservationer p&aring; varenr. $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $reserveret[$x]!')\">";
 								$antal[$x]=$reserveret[$x]; $submit="Gem"; $status=1;
@@ -533,6 +536,7 @@ if ($_GET['vare_id']) {
 								$solgt[$x]=$solgt[$x]-$row['rest'];
 #cho __LINE__." $solgt[$x]<br>";
 							}
+							$tidl_lev[$x]=afrund($tidl_lev[$x],2);
 							if ($posnr_ny[$x]=="-") {
 								if ($tidl_lev[$x]!=0) $posnr_ny[$x]=0;
 								elseif ($solgt[$x]!=0) $posnr_ny[$x]=0;
@@ -555,7 +559,6 @@ if ($_GET['vare_id']) {
 									$antal[$x]=$solgt[$x]; $submit="Gem"; $status=1;
 								} */
 								if ($antal[$x]<$tidl_lev[$x]) {
-#cho "$antal[$x]<$tidl_lev[$x]<br>";								
 									print "<BODY onLoad=\"javascript:alert('Varenr $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $tidl_lev[$x]!')\">";
 									$antal[$x]=$tidl_lev[$x]; $submit="Gem"; $status=1;
 								}
