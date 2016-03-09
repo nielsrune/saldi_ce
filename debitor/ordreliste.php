@@ -603,11 +603,11 @@ while ($row=db_fetch_array($query)) {
 					$sum_m_moms=$sum_m_moms*$valutakurs/100;
 					$kostpris=$kostpris*$valutakurs/100;
 #					$sum=bidrag($sum, $kostpris,'1');
-#					print "a".dkdecimal($sum);
-#					$tmp=dkdecimal($sum);
+#					print "a".dkdecimal($sum,2);
+#					$tmp=dkdecimal($sum,2);
 				} elseif ($valg!='faktura') {
-					 if($vis_felt[$x]=="sum") print dkdecimal($sum);
-					 else print dkdecimal($sum_m_moms);
+					 if($vis_felt[$x]=="sum") print dkdecimal($sum,2);
+					 else print dkdecimal($sum_m_moms,2);
 				}
 				if ($valg=='faktura') {
 					$sum=bidrag($vis_felt[$x],$sum,$sum_m_moms,$kostpris,$udlignet);
@@ -717,10 +717,10 @@ if ($r=db_fetch_array(db_select("select id from grupper where art = 'OLV' and ko
 #if ($vis_projekt) $cols++;
 print "<tr><td colspan=$colspan><hr></td></tr>\n";
 #$cols=$cols-4;
-$dk_db=dkdecimal($ialt-$totalkost);		
-if ($ialt!=0) {$dk_dg=dkdecimal(($ialt-$totalkost)*100/$ialt);}		
-$ialt=dkdecimal($ialt);
-$ialt_m_moms=dkdecimal($ialt_m_moms);
+$dk_db=dkdecimal($ialt-$totalkost,2);		
+if ($ialt!=0) {$dk_dg=dkdecimal(($ialt-$totalkost)*100/$ialt,2);}		
+$ialt=dkdecimal($ialt,2);
+$ialt_m_moms=dkdecimal($ialt_m_moms,2);
 #$cols--;
 print "<tr><td colspan=$colspan width=100%>";
 print "<table border=0 width=100%><tbody>";
@@ -744,17 +744,43 @@ if ($r['box1'] && $ialt!="0,00") {
 } else print "<tr><td colspan=\"3\"><span title='Klik her for at importere en csv fil (OBS beta !!)'><a href=csv2ordre.php target=\"_blank\">CSV import</a></span></td></tr>";
 $r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));
 if ($apifil=$r['box2']) {
+	(strpos($r['box2'],'opdat_status=1'))?$opdat_status=1:$opdat_status=0;
+	(strpos($r['box2'],'shop_fakt=1'))?$shop_fakt=1:$shop_fakt=0;
+	(strpos($r['box2'],'betaling=kort'))?$kortbetaling=1:$kortbetaling=0;
+	($kortbetaling)?$betalingsbet='betalingskort':$betalingsbet='netto+8';
+	
 	if (substr($apifil,0,4)=='http') {
 		$apifil=str_replace("/?","/hent_ordrer.php?",$apifil);
+		
 		$apifil=$apifil."&saldi_db=$db";
 		$saldiurl="://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 		if ($_SERVER['HTTPS']) $saldiurl="s".$saldiurl;
 		$saldiurl="http".$saldiurl;
+		if ($shop_fakt) {
+			$r=db_fetch_array(db_select("select max(shop_id) as shop_id from shop_ordrer",__FILE__ . " linje " . __LINE__));
+			$next_id=$r['shop_id']+1;
+#			$next_id=1;
+			$apifil.="&next_id=$next_id";
+		}
+		if ($shop_fakt) $apifil.="&shop_fakt=$shop_fakt&popup=1";
 		$apifil.="&saldiurl=$saldiurl";
-		print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop'><a href=$apifil target=\"_blank\">SHOP import</a</span></td></tr>";	
+		$apifil.="&random=".rand();
+		if ($shop_fakt) {
+			if (file_exists("../temp/$db/shoptidspkt.txt")) {
+				$fp=fopen("../temp/$db/shoptidspkt.txt","r");
+				$tidspkt=fgets($fp);
+			} else $tidspkt = date('U')-61;
+			fclose ($fp);
+			if ($tidspkt < date("U")-6) {
+				$fp=fopen("../temp/$db/shoptidspkt.txt","w");
+				fwrite($fp,date("U"));
+				fclose ($fp);
+				print "<BODY onLoad=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
 	}
+		} else print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop' onclick=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">SHOP import</span></td></tr>";	
 }
-
+}
+#print "<body onload=\"javascript:window.open('$url','opdat:beholdning');\">";
 function genberegn($id) {
 	$kostpris=0;
 	$q0 = db_select("select id,vare_id,antal,pris,kostpris,saet,samlevare from ordrelinjer where ordre_id = $id and posnr>0 and vare_id > 0",__FILE__ . " linje " . __LINE__);
@@ -802,13 +828,13 @@ function bidrag ($feltnavn,$sum,$sum_m_moms,$kostpris,$udlignet){
 
 	$ialt=$ialt+$sum;
 	$totalkost=$totalkost+$kostpris;
-	$dk_db=dkdecimal($sum-$kostpris);		
+	$dk_db=dkdecimal($sum-$kostpris,2);		
 	$sum=round($sum,2);
 	$kostpris=round($kostpris,2);
-	if ($sum) $dk_dg=dkdecimal(($sum-$kostpris)*100/$sum);		
+	if ($sum) $dk_dg=dkdecimal(($sum-$kostpris)*100/$sum,2);		
 	else $dk_dg='0,00';
 	($feltnavn=='sum')?$tmp=$sum:$tmp=$sum_m_moms;
-	$tmp=dkdecimal($tmp);
+	$tmp=dkdecimal($tmp,2);
 	if ($genberegn) {print "<span title= 'db: $dk_db - dg: $dk_dg%'>$tmp/$dk_db/$dk_dg%<br></span>";}
 	else {
 		if ($udlignet) $span="style='color: #000000;' title='db: $dk_db - dg: $dk_dg%'";

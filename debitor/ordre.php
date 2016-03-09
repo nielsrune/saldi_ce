@@ -89,6 +89,7 @@
 // 2016.01.12	PHR - Lidt designrettelser vedr vis_projekt og kdo på ordrelinjer. Tak til Asbjørn, Musalk.
 // 2016.01.29	PK  - Har tilføjet kontakt_tlf. Tlf hentes fra kontakt ved valg fra select, ellers indtastes tlf i felt. Søg. #20160129
 // 2016.02.17	PHR	- Fejl v. kreditering hvis kundes kontonr er blevet ændret. Søg #20160217
+// 2016.03.03	PK	- Har ændret E-mail til dropdown + textfield. E-mail fra kunde vises stadig, mens e-mails fra kundekontakter vises i dropdown. Kan stadig skrive e-mail i textfield. Søg. #20160303
 
 @session_start();
 $s_id=session_id();
@@ -2247,8 +2248,9 @@ function ordreside($id,$regnskab) {
 		$x=0; #20140826
 		$q=db_select("select * from ansatte where konto_id='$konto_id' order by posnr",__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)) {
-			$k_kontakt[$x]=htmlspecialchars($r['navn']);
-			$k_mobil[$x]=$r['mobil'];
+			$a_kontakt[$x]=htmlspecialchars($r['navn']);
+			$a_mobil[$x]=$r['mobil'];
+			$a_email[$x]=HtmlEntities($r['email']);
 			$x++;
 		}
 		//echo "kontakt: $kontakt<br>";
@@ -2297,8 +2299,8 @@ function ordreside($id,$regnskab) {
 		} else {
 			print "<tr><td>Att.</td><td colspan=\"2\"><div class=\"ddbox\"><input class=\"inputbox ddtext\" type=\"text\" name=\"kontakt\" id=\"Textbox\" onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontakt\" onchange=\"javascript:docChange = true;\" $disabled>\n"; // DropDownIndexClear('DropDownExTextbox');
 			print "<select name=\"DropDownExTextbox\" id=\"DropDownExTextbox\" tabindex=\"1000\" class=\"inputbox ddselect\" $disabled>\n"; // onchange=\"DropDownTextToBox(this,'Textbox');\"
-			for ($y=0;$y<=count($k_kontakt);$y++) {
-        print "<option value=\"$k_kontakt[$y]\" data-kontakt_tlf=\"$k_mobil[$y]\">$k_kontakt[$y]</option>\n";
+			for ($y=0;$y<=count($a_kontakt);$y++) {
+        print "<option value=\"$a_kontakt[$y]\" data-kontakt_tlf=\"$a_mobil[$y]\">$a_kontakt[$y]</option>\n";
 			}
 			print "</select></div></td></tr>\n";
 			print "<tr><td>Att. tlf</td><td colspan=\"2\"><input class=\"inputbox\" type=\"text\" style=\"width:200px\" name=\"kontakt_tlf\" id=\"kontakt_tlf\" onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontakt_tlf\" onchange=\"javascript:docChange = true;\" $disabled></td></tr>\n"; #20160129
@@ -2332,7 +2334,34 @@ function ordreside($id,$regnskab) {
 		($ean==$k_ean)?$tekstcolor="#444444":$tekstcolor="#ff0000";
 		print "<td>&nbsp;</td><td style=\"color:$tekstcolor;\">EAN-nr.</td><td><input class=\"inputbox\" type=\"text\" style=\"width:130px\" name=\"ean\" value=\"$ean\" onchange=\"javascript:docChange = true;\" $disabled></td></tr>\n";
 		($email==$k_email)?$tekstcolor="#444444":$tekstcolor="#ff0000";
+		if (!$sag_id) { #20160303
 		print "<tr><td style=\"color:$tekstcolor;\" title=\"$k_email\">E-mail</td><td><input class=\"inputbox\" type=\"text\" style=\"width:130px\" name=\"email\" value=\"$email\" onchange=\"javascript:docChange = true;\"></td>\n";
+		} else {
+			print "<tr><td style=\"color:$tekstcolor;\" title=\"$k_email\">E-mail</td><td><div class=\"ddbox2\"><input class=\"inputbox ddtext2\" type=\"text\" name=\"email\" id=\"Textbox2\" value=\"$email\" onchange=\"javascript:docChange = true;\">\n";
+			print "<select name=\"DropDownExTextbox2\" id=\"DropDownExTextbox2\" tabindex=\"1000\" class=\"inputbox ddselect2\">\n";
+			if ($k_email) {
+				print "<option value=\"$k_email\">Kunde:&nbsp;&nbsp;$k_email</option>\n";
+				print "<option style=\"font-size: 1px; background-color: #cccccc;\" disabled></option>";
+			}
+			for ($y=0;$y<count($a_email);$y++) {
+        print "<option value=\"$a_email[$y]\">$a_kontakt[$y]:&nbsp;&nbsp;$a_email[$y]</option>\n";
+			}
+			print "<option>&nbsp;</option>\n";
+			print "</select></div></td>\n";
+			
+			print "<script language=\"javascript\" type=\"text/javascript\">
+			
+							DropDownIndexClear(\"DropDownExTextbox2\");
+							
+							$('#DropDownExTextbox2').on('change', function () {
+									
+									var select = $(this).find('option:selected').val()
+									$('#Textbox2').val(select)
+									DropDownIndexClear(\"DropDownExTextbox2\");
+							});
+							
+						</script>\n";
+		}
 		($institution==$k_institution)?$tekstcolor="#444444":$tekstcolor="#ff0000";
 		print "<td></td><td style=\"color:$tekstcolor;\" title=\"$k_institution\">Institution</td><td colspan=\"2\"><input class=\"inputbox\" type=\"text\" style=\"width:130px\" name=\"institution\" value=\"$institution\" onchange=\"javascript:docChange = true;\" $disabled></td></tr>\n";
 		print "<tr><td>Udskriv&nbsp;til</td>\n";
@@ -2383,7 +2412,7 @@ function ordreside($id,$regnskab) {
 		} else print "</tr>\n";
 */
 		($mail_bilag=='on')?$checked="checked='checked'":$checked=NULL;
-		if ($udskriv_til=="email" && (strpos($_SERVER['SERVER_NAME'],'ateway') || strpos($_SERVER['SERVER_NAME'],'sl3'))) print "<tr><td>Mail bilag</td><td><input type=\"checkbox\" name=\"mail_bilag\" $checked></td>"; #20131122 Checkbox til mail_bilag
+		if ($udskriv_til=="email" && (strpos($_SERVER['SERVER_NAME'],'ackup') || strpos($_SERVER['SERVER_NAME'],'sl3'))) print "<tr><td>Mail bilag</td><td><input type=\"checkbox\" name=\"mail_bilag\" $checked></td>"; #20131122 Checkbox til mail_bilag
 		else print "<tr><td colspan=\"2\"><input type=\"hidden\" name=\"mail_bilag\" value=\"$mail_bilag\"></td>";
 		if ($procentvare) print "<td>&nbsp;</td><td>Procenttillæg</td><td><input class=\"inputbox\" style=\"text-align:right;width:40px\" type=\"text\" name=\"procenttillag\" value=\"".dkdecimal($procenttillag)."\" onchange=\"javascript:docChange = true;\" $disabled>%</td></tr>\n";
 		else print "</tr>\n";

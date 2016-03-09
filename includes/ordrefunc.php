@@ -3306,10 +3306,12 @@ function vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find) {
 		print "<td colspan=\"5\" $rowheight align=\"center\"><big><big>Tilbage</big></big></td></tr>\n";
 	}
 	$x=0;
+	echo "$qtxt<br>";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($q)) {
 		$vare_id=$row['id']*1;
 		$beholdning=$row['beholdning']*1;
+		if ($row['samlevare']) $beholdning=find_samlebeholdning($vare_id);
 		$x++;
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
@@ -4253,6 +4255,29 @@ function slet_ordre ($ordre_id) {
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}	
 	transaktion('commit');
+}
+
+function find_samlebeholdning($id) {
+echo "select vare_id,antal from styklister where indgaar_i='$id' order by posnr<br>";
+	$x=0;
+	$q = db_select("select  vare_id,antal from styklister where indgaar_i='$id' order by posnr");
+	while ($r = db_fetch_array($q)) {
+		$vare_id[$x]=$row['vare_id'];
+echo "V id $vare_id[$x]<br>";		
+		$antal[$x]=$row['antal'];
+		$x++;
+	}
+	$reel_beholdning=0;
+	for ($x=0;$x<count($vare_id);$x++) {
+echo "select beholdning from varer where id='$vare_id[$x]'<br>";
+		$q = db_select("select beholdning from varer where id='$vare_id[$x]'");
+		$beholdning[$x]=$r['beholdning']/$antal[$x];
+		if ($beholdning[$x]>$reel_beholdning) $reel_beholdning=$beholdning[$x];
+	}
+	for ($x=0;$x=count($vare_id);$x++) {
+		if ($beholdning[$x]<$reel_beholdning) $reel_beholdning=$beholdning[$x];
+	}	
+	return("$reel_beholdning");
 }
 
 ?>

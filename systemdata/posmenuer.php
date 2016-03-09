@@ -1,5 +1,10 @@
 <?php
-// -------------------- systemdata/posmenuer.php ------ patch 3.4.9--2015-11-29--------
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// -------------------- systemdata/posmenuer.php ------ patch 3.6.4--2016-03-07--------
 // LICENS..
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2013.10.17 Ku max ha' 10 menuer.
 // 2014.11.11 Tilføjet knapdesign på menu 0: Tastatur og tilføjet radius på knapper.
@@ -28,6 +33,8 @@
 // 2015.11.29	Tilføjet knap Konant på beløb & Betalingskort på beløb. 
 // 2016.01.28 Tilføjet systemknap Stamkunder. Se funktion stamkunder i ordrefunc.php
 // 2016.01.31 Tilføjet systemknap Kontoudtog & Udskriv sidste. 
+// 2016.02.18 Kontrol for strenglængde for butcolor. Søg 20160218  
+// 2016.03.07 Man kunne ikke lave tastaturknapper med '-'Søg 20160307
 
 @session_start();
 $s_id=session_id();
@@ -125,7 +132,7 @@ if ($menuvalg=='ny') {
 } else {
 	list($m_id,$tmp)=explode(":",$menuvalg);
 	$menu_id*=1;
-	if ($menu_id && $beskrivelse=='-') {
+	if ($menu_id && $beskrivelse=='-' && $butfunc != '5') { #20160307
 		$qtxt="delete from pos_buttons where menu_id=$menu_id";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$qtxt="delete from grupper where art='POSBUT' and kodenr='$menu_id'";
@@ -147,9 +154,11 @@ if ($menuvalg=='ny') {
 			$butvnr=$butvnr*1;
 		} else $butvnr=$butvnr*1;
 		$qtxt="select id from pos_buttons where menu_id='$menu_id' and row='$ret_row' and col='$ret_col'";
+		if (strlen($butcolor)>6) $butcolor=substr($butcolor,-6); #20160218
 		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				$but_id=$r['id'];
-				if ($buttxt=='-') $qtxt="delete from pos_buttons where id='$but_id'";
+				#cho "$buttxt && $butfunc<br>";
+				if ($buttxt=='-' && $butfunc != '5') $qtxt="delete from pos_buttons where id='$but_id'"; # 20160307
 				else $qtxt="update pos_buttons set beskrivelse='$buttxt',color='$butcolor',funktion='$butfunc',vare_id='$butvnr' where id='$r[id]'";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} elseif ($buttxt || $butcolor || $butfunc || $butvnr) {

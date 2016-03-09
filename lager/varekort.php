@@ -32,6 +32,7 @@ ob_start(); //Starter output buffering
 // 2015.10.28 understøtter ny også tbarcode
 // 2016.01.19 PHR Tilføjet varefoto og regulering af varebeholdning ved gruppeændring fra ikke lagerført til lagerført og vice versa
 // 2016.01.30 PHR Tilføjet "tilbudsdage" så man kan vælge hvilke ugedage et tilbud skal være aktivt.
+// 2016.03.08 PHR Tilføjet "link til slet shop id dom fjerner binding til shop vare. Søg slet_shopbinding.php og fjernet mulighed for publicering.
 
 @session_start();
 $s_id=session_id();
@@ -381,7 +382,6 @@ if ($_POST){
 			} elseif (!$lev_pos[$x]) {print "<BODY onLoad=\"javascript:alert('Hint! Du skal s&aelig;tte et - (minus) som pos nr for at slette en leverand&oslash;r!')\">";}
 			else {db_modify("delete from vare_lev where id = '$vare_lev_id[$x]'",__FILE__ . " linje " . __LINE__);}
 		}
-		
 		for ($x=1;$x<=$vare_sprogantal;$x++) {
 			$tmp=db_escape_string($beskrivelse[$x]);
 			if ($vare_tekst_id[$x]) db_modify("update varetekster set tekst='$tmp' where id='$vare_tekst_id[$x]'",__FILE__ . " linje " . __LINE__);
@@ -389,15 +389,12 @@ if ($_POST){
 				db_modify("insert into varetekster(vare_id,sprog_id,tekst) values ('$id','$vare_sprog_id[$x]','$tmp')",__FILE__ . " linje " . __LINE__); 
 			}
 		}
-		
 		if (!$min_lager)$min_lager='0';
 		else $min_lager=usdecimal($min_lager);
 		if (!$max_lager) $max_lager='0';
 		else $max_lager=usdecimal($max_lager);
-		
-		if (!$lukket){$lukket='0';}
-		else {$lukket='1';}
-
+		if (!$lukket) $lukket='0';
+		else $lukket='1';
 		 if (strlen(trim($indg_i_ant[0]))>1) {
 			list ($x) = explode(':',$indg_i_ant[0]);
 #			$fejl=cirkeltjek($x, 'vare_id');
@@ -405,17 +402,8 @@ if ($_POST){
 		if (strlen(trim($be_af_ant[0]))>1) {
 			list ($x) = explode(':',$be_af_ant[0]);
 		}
-
-#		if (($samlevare=='on')&&($id)) samletjek($id);
-#		if ((($samlevare=='on')||($delvare=='on'))&&($id)) {
-#			samletjek($id);
-#	}
-	# if ($samlevare=='on'){$kostpris=0;}
 		if (($delvare=='on')&&($gl_kostpris-$kostpris[0]!=0)) {
-#				print "<BODY onLoad=\"javascript:alert('Opdater priser p&aring; alle vare som denne vare indg&aring;r i - Det kan vare flere minutter!')\">";
 			$diff=$kostpris[0]-$gl_kostpris;
-#cho "prisopdat($id, $diff)<br>";
-			prisopdat($id, $diff);
 			prisopdat($id, $diff);
 		}	
 
@@ -424,11 +412,6 @@ if ($_POST){
 			print "Du skal s&aelig;tte antal til 0 p&aring; samtlige varer som denne vare best&aring;r af, f&oslash;r du fjerner fluebenet i \"samlevare\"!<br>";
 			$samlevare='on';
 		}
-#		if (($delvare!='on')&&($ant_indg_i>0)) {
-#			print "Du skal s&aelig;tte antal til 0 p&aring; samtlige varer som denne vare indg&aring;r i, f&oslash;r du fjerner fluebenet i \"delvare\"!<br>";
-#			$delvare='on';
-#		}
-
 		if(!$betalingsdage){$betalingsdage=0;}
 		if ($id==0) {
 			$query = db_select("select id from varer where lower(varenr) = '".strtolower($varenr)."' or  upper(varenr) = '".strtoupper($varenr)."'",__FILE__ . " linje " . __LINE__);
@@ -617,7 +600,7 @@ if ($id > 0) {
 	$kostpris[0]=$row['kostpris'];
 #cho "$kostpris[0]<br>";
 	$provisionsfri=$row['provisionsfri']; 
-	$publiceret=$row['publiceret']; 
+#	$publiceret=$row['publiceret']; 
 	$gruppe=$row['gruppe']*1;
 	$prisgruppe=$row['prisgruppe']*1;
 	$varegruppe=$row['varegruppe']*1;
@@ -657,6 +640,14 @@ if ($id > 0) {
 	
 	if ($ny_beholdning) $beholdning=$ny_beholdning; 
 	if ($row['varianter']) $varianter=explode(chr(9),$row['varianter']);
+	
+	if ($r=db_fetch_array($q=db_select("select shop_id from shop_varer where saldi_id='$id'",__FILE__ . " linje " . __LINE__))) {
+		$shop_id=$r['shop_id'];
+		$publiceret='on';
+	} else {
+		$shop_id=NULL;
+		$publiceret=NULL;
+	}
 	
 	$momsfri='on';
 	$incl_moms=0;
@@ -820,6 +811,14 @@ if (!$varenr) {
 	#print "<tr><td>Varianter</td><td>";
 	($stregkode)?$tmp=$stregkode:$tmp=$varenr;
 	if (file_exists($exec_path."/barcode")||(file_exists($exec_path."/tbarcode")) && file_exists($exec_path."/convert")) { #20140603
+		$dan_kode=1;
+		if (strpos($tmp,'æ')) $dan_kode=0; 
+		if (strpos($tmp,'Æ')) $dan_kode=0; 
+		if (strpos($tmp,'ø')) $dan_kode=0; 
+		if (strpos($tmp,'Ø')) $dan_kode=0; 
+		if (strpos($tmp,'å')) $dan_kode=0; 
+		if (strpos($tmp,'Å')) $dan_kode=0;
+		if ($dan_kode)	{
 		if (strlen($tmp)==13) {
 			$a=substr($tmp,11,1)+substr($tmp,9,1)+substr($tmp,7,1)+substr($tmp,5,1)+substr($tmp,3,1)+substr($tmp,1,1);
 			$a*=3;
@@ -846,6 +845,7 @@ if (!$varenr) {
 #		print "<!--"; #20140909
 		system ($exec_path."/rm $rm\n".$exec_path."/barcode -n -E -e $e -g 200x40 -b $tmp -o $eps\n".$exec_path."/convert $eps $png\n".$exec_path."/rm $eps\n");
 #		print "-->";
+		} else $png=NULL;	
 		print "<td align=\"center\"><table width=\"100%\"><tbody>";
 		if($r=db_fetch_array(db_select("select id from grupper where art = 'LABEL' and box1 != ''",__FILE__ . " linje " . __LINE__))) $labelprint=1;
 		else $labelprint=NULL;
@@ -1128,10 +1128,13 @@ if (!$varenr) {
 		}
 	}
 	($provisionsfri)?$provisionsfri="checked":$provisionsfri=""; 
-	print "<tr><td colspan=\"2\">Provisionsfri</td><td><input class=\"inputbox\" type=\"checkbox\" name=\"provisionsfri\" $provisionsfri></td>";
+	print "<tr><td colspan=\"2\">Provisionsfri</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"provisionsfri\" $provisionsfri></td>";
 	if ($shopurl) {
-		($publiceret)?$publiceret="checked":$publiceret=""; 
-		print "<tr><td colspan=\"2\">Publiceret</td><td><input class=\"inputbox\" type=\"checkbox\" name=\"publiceret\" $publiceret></td>";
+#		($publiceret)?$publiceret="checked":$publiceret=""; 
+#		print "<tr><td colspan=\"2\">Publiceret</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"publiceret\" $publiceret></td>";
+		print "<tr><td colspan=\"2\">
+		<input type=\"hidden\" name=\"publiceret\" value=\"$publiceret\">
+		Shop ID (klik for at fjerne)</td><td align=\"center\"><a href=\"slet_shopbinding.php?id=$id\">$shop_id</a></td>";
 	}	
 	print "</tbody></table></td>";#  <- Diverse tabel
 #################### KATEGORIER ###########################
