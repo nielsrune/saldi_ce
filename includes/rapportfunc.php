@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| |) | |
 //                        |___/_/ \_|___|___/|_|
 
-// --------includes/rapportfunc.php ----- lap 3.6.4 ---- 2016.02.26 ---------------------------
+// --------includes/rapportfunc.php ----- lap 3.6.6 ---- 2016.04.13 ---------------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -38,6 +38,8 @@
 // 2015.10.26	indsat mulighed for at ophæve udligning. søg "uudlign"
 // 2015.11.04	Betalingslister v debitor
 // 2016.02.26	Rettet så link til ret_valutadiff.php kun vises for posteringer i aktivt regnskabsår. Søg område ver ret_valutadiff.php 
+// 2016.04.13	Tilføjet link til at rette dkksum til 0 pr dd hvis dd er i aktivt regnskabsår og valutasum er 0.
+
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 #cho "A $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart<br>";
@@ -917,13 +919,14 @@ function forside($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoart
 			}
 		}
 		print	"</td></tr>";
-		if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
-			$tekst1=findtekst(531,$sprog_id);
-			$tekst2=findtekst(532,$sprog_id);
 			print "<tr><td colspan=\"3\" align=center>";
-			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
+#		if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
+#			$tekst1=findtekst(531,$sprog_id);
+#			$tekst2=findtekst(532,$sprog_id);
+#			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
+#		}
+		print "<span onclick=\"javascript:location.href=('../debitor/multiroute.php')\"><input title=\"Multiroute\" style=\"width:115px\" type=\"button\" value=\"Multiroute\"></span>";
 			print	"</td></tr>";
-		}
 	} else {
 		$tekst1=findtekst(531,$sprog_id);
 		$tekst2=findtekst(532,$sprog_id);
@@ -931,7 +934,6 @@ function forside($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoart
 			if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
 			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
 		}
-		print "<input title=\"Salgsstat\" style=\"width:115px\" type=\"submit\" value=\"Salgsstat\" name=\"salgsstat\">";
 	}
 	print	"</td></tr></form>";
 	print "</tbody></table>";
@@ -1347,13 +1349,20 @@ if ($diff && !$difflink && $oppvaluta!='DKK') {
 						$difflink=1;
 						if ($regnstart<=date("Y-m-d") && $regnslut>=date("Y-m-d")) {
 						$title.="Klik for at regulere værdien i DKK fra ".dkdecimal($dkksum)." til ".dkdecimal($dkksum+$regulering)." pr. ".dkdato($transdate[$y]);
-							$tmp2="<a href=\"../includes/ret_valutadiff.php?";
+							$tmp2="<a href=\"../includes/ret_valutadiff.php?bfdate=$transdate[$y]&";
 							$tmp2.="valuta=$valuta&diff=$regulering&post_id=$oppid[$y]&dato_fra=$dato_fra&dato_til=$dato_til&";
 							$tmp2.="konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=".$returnpath."rapport.php\" ";
 							$tmp2.="onclick=\"confirmSubmit($confirm)\">$tmp</a>";
 							$tmp=$tmp2;
 						} else $title=NULL;
 					}
+				} elseif ($y==count($oppid) && abs($tmp)<0.01 && abs($dkksum) > 0.01 && $regnslut>=date("Y-m-d")) {
+					$title.="Klik for at regulere værdien i DKK fra ".dkdecimal($dkksum)." til ".dkdecimal($dkksum+$regulering)." pr. ".date("d-m-Y");
+					$tmp2="<a href=\"../includes/ret_valutadiff.php?bfdate=".date("Y-m-d")."&";
+					$tmp2.="valuta=$valuta&diff=$regulering&post_id=$oppid[$y]&dato_fra=$dato_fra&dato_til=$dato_til&";
+					$tmp2.="konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=".$returnpath."rapport.php\" ";
+					$tmp2.="onclick=\"confirmSubmit($confirm)\">$tmp</a>";
+					$tmp=$tmp2;
 				}
 				print "<td valign=\"top\" align=right title=\"$title\">$tmp<br></td>";
 				print "</tr>\n";

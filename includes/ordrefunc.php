@@ -3306,12 +3306,12 @@ function vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find) {
 		print "<td colspan=\"5\" $rowheight align=\"center\"><big><big>Tilbage</big></big></td></tr>\n";
 	}
 	$x=0;
-	echo "$qtxt<br>";
+#cho "$qtxt<br>";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($q)) {
 		$vare_id=$row['id']*1;
 		$beholdning=$row['beholdning']*1;
-		if ($row['samlevare']) $beholdning=find_samlebeholdning($vare_id);
+#		if ($row['samlevare']) $beholdning=find_samlebeholdning($vare_id);
 		$x++;
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}

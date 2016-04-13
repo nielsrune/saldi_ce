@@ -600,7 +600,7 @@ if ($id > 0) {
 	$kostpris[0]=$row['kostpris'];
 #cho "$kostpris[0]<br>";
 	$provisionsfri=$row['provisionsfri']; 
-#	$publiceret=$row['publiceret']; 
+	$publiceret=$row['publiceret']; 
 	$gruppe=$row['gruppe']*1;
 	$prisgruppe=$row['prisgruppe']*1;
 	$varegruppe=$row['varegruppe']*1;
@@ -646,7 +646,7 @@ if ($id > 0) {
 		$publiceret='on';
 	} else {
 		$shop_id=NULL;
-		$publiceret=NULL;
+#		$publiceret=NULL;
 	}
 	
 	$momsfri='on';
@@ -1132,9 +1132,14 @@ if (!$varenr) {
 	if ($shopurl) {
 #		($publiceret)?$publiceret="checked":$publiceret=""; 
 #		print "<tr><td colspan=\"2\">Publiceret</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"publiceret\" $publiceret></td>";
+		if ($shop_id) {
 		print "<tr><td colspan=\"2\">
 		<input type=\"hidden\" name=\"publiceret\" value=\"$publiceret\">
 		Shop ID (klik for at fjerne)</td><td align=\"center\"><a href=\"slet_shopbinding.php?id=$id\">$shop_id</a></td>";
+		} else {
+			($publiceret)?$publiceret="checked":$publiceret=""; 
+			print "<tr><td colspan=\"2\">Publiceret</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"publiceret\" $publiceret></td>";
+		}
 	}	
 	print "</tbody></table></td>";#  <- Diverse tabel
 #################### KATEGORIER ###########################

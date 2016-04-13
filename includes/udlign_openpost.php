@@ -36,7 +36,7 @@ $s_id=session_id();
 // 2014.05.27 indsat afrund forskellige steder for at undgå differ på 1 øre.(PHR Danosoft) Søg 20140527
 // 2015.03.01 Kontrol for at diff ikke overstiger maxdiff da det er lykkes for sundkiosken at oprette diffposteringer uden årsag 20150311
 // 2015.09.07	Fejl i rettelse fra 20130529. =! rettet til !=.
-
+// 2016.04.12 PHR !='DKK' rettet =='DKK' da maxdiff ikke relaterer til valutadiff.
 
 $modulnr=12;
 $kontonr=array();$post_id=array();
@@ -307,7 +307,7 @@ if (isset($submit) && $submit=='udlign') {
 		if ($dkkdiff!=$diff) {
 			$bogf_besk.=" Udligning af valutadiff, ($valuta[$x] ".dkdecimal($diff).", DKK ".dkdecimal($dkkdiff).")";
 		}
-		if (abs($dkkdiff)>$maxdiff && $valuta[$x]!='DKK') { #20131129
+		if (abs($dkkdiff)>$maxdiff && $valuta[$x]=='DKK') { #20131129 -> 20160412
 			$message=$db." | udlign_openpost | ".$brugernavn." ".date("Y-m-d H:i:s")." | Diff: $diff DKKdiff: $dkkdiff Maxdiff $maxdiff";
 			$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 			mail('fejl@saldi.dk', 'SALDI Opdat fejl', $message, $headers);

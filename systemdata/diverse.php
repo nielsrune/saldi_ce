@@ -1,5 +1,10 @@
 <?php
-// -------------------- systemdata/diverse.php ------ patch 3.6.2 -- 2016-01-16 --
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+//
+// -------------------- systemdata/diverse.php ------ patch 3.6.6 -- 2016-04-12 --
 //
 // LICENS
 //
@@ -39,6 +44,7 @@
 // 20150907 PHR Sætpriser tilføjet under ordre_valg, Søg 20150907 & $saetvareid
 // 20151006 PHR Labelprint ændret fra php til html og kontrol for php indsat.
 // 20160116 PHR Indsat kontrol for ftp adgang v ebconnect integration
+// 20160412 PHR Opdelt vare_valg i vare_valg, labels & shop_valg
 
 @session_start();
 $s_id=session_id();
@@ -207,9 +213,9 @@ if ($_POST) {
 		
 		if  (($id==0) && ($r = db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__)))) $id=$r['id'];
 		elseif ($id==0){
-			db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10) values ('Div_valg (Varer)','5','DIV','$box1','$box2','$box3','$box4','$box5','$box6','$box7','$box8','$box9','$box10')",__FILE__ . " linje " . __LINE__);
+			db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10) values ('Div_valg (Varer)','5','DIV','$box1''$box6','$box8','$box9','$box10')",__FILE__ . " linje " . __LINE__);
 		} elseif ($id > 0) {
-			db_modify("update grupper set  box1='$box1',box2='$box2',box3='$box3',box4='$box4',box5='$box5',box7='$box7',box9='$box9',box10='$box10' where id = '$id'",__FILE__ . " linje " . __LINE__);
+			db_modify("update grupper set  box1='$box1',box9='$box9',box10='$box10' where id = '$id'",__FILE__ . " linje " . __LINE__);
 		}
 	#######################################################################################
 	} elseif ($sektion=='varianter') {
@@ -229,9 +235,34 @@ if ($_POST) {
 			if ($var_type_beskrivelse[$x] && $variant_id[$x]) db_modify("insert into variant_typer (beskrivelse,variant_id) values ('$var_type_beskrivelse[$x]','$variant_id[$x]')",__FILE__ . " linje " . __LINE__);
 		}
 	#######################################################################################
-	} elseif ($sektion=='label') {
+	} elseif ($sektion=='shop_valg') {	
+		$id=$_POST['id'];
+		$box1=if_isset($_POST['box1']);#incl_moms
+		$box2=if_isset($_POST['box2']);#Shop url
+		$box3=if_isset($_POST['box3']);#shop valg
+		$box4=if_isset($_POST['box4']);#merchant id
+		$box5=if_isset($_POST['box5']);#md5 secret
+		$box6=if_isset($_POST['box6']);#Bruges ved vare_valg
+		$box7=if_isset($_POST['box7']);#Tegnsæt for webshop
+		$box8=if_isset($_POST['box8']);#Bruges ved ordre_valg
+		$box9=if_isset($_POST['box9']);#ledig
+		$box10=if_isset($_POST['box10']);#ledig
+		
+		if ($box3=='1') $box2='!';
+		$qtxt=NULL;	
+		if  ((!$id) && ($r = db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__)))) $id=$r['id'];
+		if (!$id){
+			$qtxt="insert into grupper (beskrivelse,kodenr,art,box2,box3,box4,box5,box7) values ('Div_valg (Varer)','5','DIV','$box2','$box3','$box4','$box5','$box7')";
+		} elseif ($id > 0) {
+			$qtxt="update grupper set box2='$box2',box3='$box3',box4='$box4',box5='$box5',box7='$box7' where id = '$id'";
+		}
+		if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	#######################################################################################
+	} elseif ($sektion=='labels') {
+		$valg=if_isset($_GET['valg']);
 		$label=if_isset($_POST['label']);
-		$fy_ord=array('<?php','<?','?>');
+		$php_slut="?".">"; # Hack til løsning af syntakshighlightning, så det ikke bliver set af redigeringsværktøjet som en afslutning af PHP-kode
+		$fy_ord=array('<?php','<?',$php_slut); # Hack benyttes her
 		for ($x=0;$x<count($fy_ord);$x++) {
 			if (strstr($label,$fy_ord[$x])) {
 				$label=str_replace($fy_ord[$x],'',$label);
@@ -241,9 +272,9 @@ if ($_POST) {
 		$r = db_fetch_array(db_select("select id from grupper where art = 'LABEL'",__FILE__ . " linje " . __LINE__));
 		$id=$r['id'];
 		if ($id) {
-			db_modify("update grupper set  box1='".db_escape_string($label)."' where id = '$id'",__FILE__ . " linje " . __LINE__);
+			db_modify("update grupper set $valg='".db_escape_string($label)."' where id = '$id'",__FILE__ . " linje " . __LINE__);
 		} else {
-			db_modify("insert into grupper (beskrivelse,kodenr,art,box1) values ('Label layout','1','LABEL','".db_escape_string($label)."')",__FILE__ . " linje " . __LINE__);
+			db_modify("insert into grupper (beskrivelse,kodenr,art,$valg) values ('Label layout','1','LABEL','".db_escape_string($label)."')",__FILE__ . " linje " . __LINE__);
 		} 
 	#######################################################################################
 	} elseif ($sektion=='prislister') {
@@ -262,10 +293,10 @@ if ($_POST) {
 		$antal=$_POST['antal'];
 
 		for($x=1;$x<=$antal;$x++) {
-			if (!$box4[$x]) $box1[$x]='';
+#			if (!$box4[$x]) $box1[$x]=''; # 20160225
 
 			$id[$x]*=1;
-echo "\n<p> id[$x] = $id[$x] box2[$x] = $box2[$x]   box4[$x] = $box4[$x] slet[$x] = $slet[$x] </p>";
+echo "\n<p> id[$x]=$id[$x] box1[$x]=$box1[$x] box2[$x]=$box2[$x] box4[$x]=$box4[$x] slet[$x]=$slet[$x] </p>";
 			if ($id[$x]==0 && $box4[$x] && $r = db_fetch_array(db_select("select id from grupper where art='PL' and beskrivelse='$beskrivelse[$x]'",__FILE__ . " linje " . __LINE__))) {
 				$id[$x]=$r['id'];
 			} elseif ( $id[$x]==0 && $box4[$x] && $beskrivelse[$x] ) {
@@ -645,6 +676,8 @@ echo "\n<p> id[$x] = $id[$x] box2[$x] = $box2[$x]   box4[$x] = $box4[$x] slet[$x
 #			db_modify("insert into tjekliste (tjekpunkt,assign_id,assign_to,fase) values ('$ny_tjekgruppe','0','sager','$ny_fase')",__FILE__ . " linje " . __LINE__);
 		}
 	}
+} else {
+	$valg=if_isset($_GET['valg']);
 } 
 
 
@@ -662,6 +695,8 @@ if ($menu != 'T') {
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=personlige_valg>Personlige valg</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=ordre_valg>Ordrerelaterede valg</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=vare_valg>Varerelaterede valg</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=shop_valg>Shoprelaterede valg</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=labels>Labels</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=prislister>".findtekst(427,$sprog_id)."</a><!--tekst 427--></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=rykker_valg>Rykkerrelaterede valg</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=div_valg>Diverse valg</a></td></tr>\n";
@@ -683,6 +718,8 @@ if ($sektion=="provision") provision();
 if ($sektion=="personlige_valg") personlige_valg();
 if ($sektion=="ordre_valg") ordre_valg();
 if ($sektion=="vare_valg" || $sektion=="varianter" || $sektion=="label") vare_valg();
+if ($sektion=="shop_valg") shop_valg();
+if ($sektion=="labels") labels($valg);
 if ($sektion=="prislister") prislister();
 if ($sektion=="rykker_valg") rykker_valg();
 if ($sektion=="div_valg") div_valg();
