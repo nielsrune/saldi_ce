@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| |) | |
 //                        |___/_/ \_|___|___/|_|
 
-// --------includes/rapportfunc.php ----- lap 3.6.6 ---- 2016.04.13 ---------------------------
+// --------includes/rapportfunc.php ----- lap 3.6.6 ---- 2016.04.14 ---------------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -39,7 +39,7 @@
 // 2015.11.04	Betalingslister v debitor
 // 2016.02.26	Rettet så link til ret_valutadiff.php kun vises for posteringer i aktivt regnskabsår. Søg område ver ret_valutadiff.php 
 // 2016.04.13	Tilføjet link til at rette dkksum til 0 pr dd hvis dd er i aktivt regnskabsår og valutasum er 0.
-
+// 2016.04.14 Sorterer nu på ID for reg og faktnr, der giver mere mening #20160414
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 #cho "A $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart<br>";
@@ -920,12 +920,13 @@ function forside($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoart
 		}
 		print	"</td></tr>";
 			print "<tr><td colspan=\"3\" align=center>";
-#		if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
-#			$tekst1=findtekst(531,$sprog_id);
-#			$tekst2=findtekst(532,$sprog_id);
-#			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
-#		}
+		if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
+			$tekst1=findtekst(531,$sprog_id);
+			$tekst2=findtekst(532,$sprog_id);
+			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
+		} elseif (file_exists("../debitor/multiroute.php")) {
 		print "<span onclick=\"javascript:location.href=('../debitor/multiroute.php')\"><input title=\"Multiroute\" style=\"width:115px\" type=\"button\" value=\"Multiroute\"></span>";
+		}
 			print	"</td></tr>";
 	} else {
 		$tekst1=findtekst(531,$sprog_id);
@@ -1132,8 +1133,8 @@ $luk= "<a accesskey=L href=\"$returside\">";
 		$r2 = db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__));
 		$max_valdif_id=$r2['max_valdif_id'];
 						
-		if ($todate) $qtxt="select * from openpost where konto_id='$kto_id[$x]' and transdate<='$todate' order by transdate, faktnr, refnr";
-		else $qtxt= "select * from openpost where konto_id='$kto_id[$x]' order by transdate, faktnr, refnr";
+		if ($todate) $qtxt="select * from openpost where konto_id='$kto_id[$x]' and transdate<='$todate' order by transdate,id,faktnr,refnr"; #20160414
+		else $qtxt= "select * from openpost where konto_id='$kto_id[$x]' order by transdate,id,faktnr,refnr"; #20160414
 		$q2 = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 		while ($r2 = db_fetch_array($q2)) {
 			$y++;

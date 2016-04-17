@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| |) | |
 //                        |___/_/ \_|___|___/|_|
 
-// ------------includes/ret_valutadiff.php-------patch 3.6.6----2016-04-13--------
+// ------------includes/ret_valutadiff.php-------patch 3.6.6----2016-04-14--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -28,7 +28,7 @@
 // 20151116 - Funktion sat ud af drift.
 // 20160226 - Rutiner omskrevet og opdateret
 // 20160413 - at bogføringsdato hentes med $_GET søg $bfdate
-
+// 20160414 - Viste netativt fortegn på skærm
 
 @session_start();
 $s_id=session_id();
@@ -103,37 +103,39 @@ if ($transdate<$regnstart) $bfdate=$regnstart;
 elseif ($transdate>$regnslut) $bfdate=$regnslut;
 else $bfdate=$transdate;
 }
-$r=db_fetch_array(db_select("select gruppe,art from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__));
+$qtxt="select gruppe,art from adresser where id = '$konto_id'";
+$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $gruppe=trim($r['gruppe']);
 $art=trim($r['art']);
 if (substr($art,0,1)=='D') $art='DG';
 else $art='KG';
-$r=db_fetch_array(db_select("select box2 from grupper where art='$art' and kodenr='$gruppe'",__FILE__ . " linje " . __LINE__));
+$qtxt="select box2 from grupper where art='$art' and kodenr='$gruppe'";
+$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 #cho "$samlekonto=$r[box2]<br>";
 $samlekonto=$r['box2'];
 $dkkdiff=afrund($dkkdiff,2);
-$r=db_fetch_array(db_select("select sum(debet) as debet, sum(kredit) as kredit from transaktioner where kontonr='$samlekonto'",__FILE__ . " linje " . __LINE__));
+$qtxt="select sum(debet) as debet, sum(kredit) as kredit from transaktioner where kontonr='$samlekonto'";
+$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $tmp=$r['debet']-$r['kredit'];
 #cho "saldo $tmp<br>";
 if ($godkend) {
 	transaktion('begin');
 		if ($dkkdiff >= 0.01) {
-#cho "insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, kredit, kladde_id,afd, ansat, projekt)values('$diffkto','0','$bfdate','$logdate','$logtime','$beskrivelse','$dkkdiff','0','0','0','0')<br>"; 
-		db_modify("insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, kredit, kladde_id,afd, ansat, projekt, ordre_id)values('$diffkto','0','$bfdate','$logdate','$logtime','$beskrivelse','$dkkdiff','0','0','0','0','0')",__FILE__ . " linje " . __LINE__);
-#cho "insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, debet, kladde_id,afd, ansat, projekt)values('$samlekonto','0','$bfdate','$logdate','$logtime','$beskrivelse','$dkkdiff','0','0','0','0')<br>";
-		db_modify("insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, debet, kladde_id,afd, ansat, projekt, ordre_id)values('$samlekonto','0','$bfdate','$logdate','$logtime','$beskrivelse','$dkkdiff','0','0','0','0','0')",__FILE__ . " linje " . __LINE__);
+		$qtxt="insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, kredit, kladde_id,afd, ansat, projekt, ordre_id)values('$diffkto','0','$bfdate','$logdate','$logtime','$beskrivelse','$dkkdiff','0','0','0','0','0')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$qtxt="insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, debet, kladde_id,afd, ansat, projekt, ordre_id)values('$samlekonto','0','$bfdate','$logdate','$logtime','$beskrivelse','$dkkdiff','0','0','0','0','0')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$tmp=$dkkdiff*-1;
 	} elseif ($dkkdiff <= -0.01) {
 		$tmp=$dkkdiff*-1;
-#cho "insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, debet, kladde_id,afd, ansat, projekt)values($diffkto, '0','$bfdate','$logdate','$logtime','$beskrivelse','$tmp','0','0','0','0')<br>";
-		db_modify("insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, debet, kladde_id,afd, ansat, projekt, ordre_id)values($diffkto, '0','$bfdate','$logdate','$logtime','$beskrivelse','$tmp','0','0','0','0','0')",__FILE__ . " linje " . __LINE__);
-#cho "insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, kredit, kladde_id,afd, ansat, projekt)values('$samlekonto','0','$bfdate','$logdate','$logtime','$beskrivelse','$tmp','0','0','0','0')<br>";
-		db_modify("insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, kredit, kladde_id,afd, ansat, projekt, ordre_id)values('$samlekonto','0','$bfdate','$logdate','$logtime','$beskrivelse','$tmp','0','0','0','0','0')",__FILE__ . " linje " . __LINE__);
+		$qtxt="insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, debet, kladde_id,afd, ansat, projekt, ordre_id)values($diffkto, '0','$bfdate','$logdate','$logtime','$beskrivelse','$tmp','0','0','0','0','0')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$qtxt="insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, kredit, kladde_id,afd, ansat, projekt, ordre_id)values('$samlekonto','0','$bfdate','$logdate','$logtime','$beskrivelse','$tmp','0','0','0','0','0')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
-	$r=db_fetch_array(db_select("select sum(debet) as debet, sum(kredit) as kredit from transaktioner where kontonr='$samlekonto'",__FILE__ . " linje " . __LINE__));
+	$qtxt="select sum(debet) as debet, sum(kredit) as kredit from transaktioner where kontonr='$samlekonto'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$tmp=$r['debet']-$r['kredit'];
-#cho "saldo $tmp<br>";
-#cho "insert into openpost (konto_id, konto_nr, amount, beskrivelse, udlignet, transdate, kladde_id, refnr,valuta,valutakurs,udlign_id,udlign_date) values ('$konto_id','$kontonr','$dkkdiff','$beskrivelse','1','$bfdate','0','0','-','0','0','$bfdate')<br>";
 	$qtxt="insert into openpost (konto_id,konto_nr,amount,beskrivelse,udlignet,transdate,kladde_id,refnr,valuta,valutakurs,udlign_id,udlign_date) ";
 	$qtxt.="values ";
 	$qtxt.="('$konto_id','$kontonr','$dkkdiff','$beskrivelse','1','$bfdate','0','0','-','0','0','$bfdate')";
@@ -154,8 +156,8 @@ if ($godkend) {
 			print "<tr><td>$diffkto</td><td>".dkdecimal($dkkdiff)."</td><td></td></tr>"; 
 		print "<tr><td>$samlekonto</td><td></td><td>".dkdecimal($dkkdiff)."</td></tr>"; 
 		} else {
-			print "<tr><td>$diffkto</td><td></td><td>".dkdecimal($dkkdiff)."</td></tr>"; 
-			print "<tr><td>$samlekonto</td><td>".dkdecimal($dkkdiff)."</td><td></td></tr>"; 
+		print "<tr><td>$diffkto</td><td></td><td>".dkdecimal($dkkdiff*-1)."</td></tr>"; #20160414
+		print "<tr><td>$samlekonto</td><td>".dkdecimal($dkkdiff*-1)."</td><td></td></tr>"; #20160414 
 		}
 	print "<tr><td colspan=\"3\" align=\"center\"><input type=\"submit\" style=\"width:100px\" name =\"afbryd\" value=\"Afbryd\"> <input type=\"submit\" style=\"width:100px\" name =\"godkend\" value=\"OK\"></td></tr>";
 #		print "<meta http-equiv=\"refresh\" content=\"5;URL=$retur?rapportart=Kontokort&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&submit=ok\">";

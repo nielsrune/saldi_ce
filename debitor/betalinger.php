@@ -1,5 +1,10 @@
 <?php
-// ---------debitor/betalinger.php---------------------Patch 3.5.9-----2015.11.04---
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// ---------debitor/betalinger.php---------------------Patch 3.6.5-----2016.04.07---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,10 +23,12 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // -----------------------------------------------------------------------------------
 //
 // 2015.11.04 Kopieret fra kreditor og tilrettet til debitorer (phr) 
+// 2016.04.07 Indsat db_escape_string. Søg db_escape_string
+
 
 @session_start();
 $s_id=session_id();
@@ -71,14 +78,19 @@ if ($_POST['slet_ugyldige'] || $_POST['gem']|| $_POST['udskriv']) {
 		}	
 		else {
 			#cho "update betalinger set bet_type='$erh[$x]',fra_kto='$fra_kto[$x]',egen_ref='$egen_ref[$x]',til_kto='$til_kto[$x]',kort_ref='$kort_ref[$x]',modt_navn='$modt_navn[$x]',belob='$belob[$x]',valuta='$valuta[$x]',betalingsdato='$betalingsdato[$x]' where id='$id[$x]'<br>";
-			db_modify("update betalinger set bet_type='$erh[$x]',fra_kto='$fra_kto[$x]',egen_ref='$egen_ref[$x]',til_kto='$til_kto[$x]',kort_ref='$kort_ref[$x]',modt_navn='$modt_navn[$x]',belob='$belob[$x]',valuta='$valuta[$x]',betalingsdato='$betalingsdato[$x]' where id='$id[$x]'",__FILE__ . " linje " . __LINE__);
+			db_modify("update betalinger set bet_type='$erh[$x]',fra_kto='$fra_kto[$x]',egen_ref='$egen_ref[$x]',til_kto='$til_kto[$x]',kort_ref='$kort_ref[$x]',modt_navn='".db_escape_string($modt_navn[$x])."',belob='$belob[$x]',valuta='$valuta[$x]',betalingsdato='$betalingsdato[$x]' where id='$id[$x]'",__FILE__ . " linje " . __LINE__);
 		}
 	}
 	db_modify("update betalingsliste set listenote='$listenote' where id='$liste_id'",__FILE__ . " linje " . __LINE__);
 	if ($udskriv) db_modify("update betalingsliste set bogfort='V', bogfort_af='$brugernavn' where id='$liste_id'",__FILE__ . " linje " . __LINE__);
 }
 
+$findlink=NULL;
 if (!$liste_id) $liste_id=0;
+else {
+	$r=db_fetch_array(db_select("select bogfort from betalingsliste where id='$liste_id'",__FILE__ . " linje " . __LINE__));
+	if ($r['bogfort']=='-') $findlink="<a href=betalinger.php?liste_id=$liste_id&find=nye>Find nye</a>";
+}
 $linjebg=$bgcolor;
 #$erh_title= "ERH351 = FI-kort 71\nERH352 = FI-kort 04 & 15\nERH354 = FI-kort 01 & 41\nERH355 = Bankoverf. med normal advisering\nERH356 = Bankoverf. med straks advisering\nERH357 = FI-kort 73\nERH358 = FI-kort 75\nERH400 = Udenlandsk overf&oslash;rsel\nSDC3 = Bankoverf. med kort advisering (SDC)\nSDCK020 = FI-kort 71 (SDC)\nSDCK037 = Udenlandsk overf&oslash;rsel (SDC)";
 $erh_title= "ERH355 = Bankoverf. med normal advisering";
@@ -90,7 +102,7 @@ $erh_title= "ERH355 = Bankoverf. med normal advisering";
 		<table width="100%" align="center" border="0" cellspacing="2" cellpadding="0"><tbody>
 		<td width="10%" <?php echo $top_bund ?>><font face="Helvetica, Arial, sans-serif" color="#000066"><a href=../includes/luk.php accesskey=L>Luk</a></td>
 		<td width="80%" <?php echo $top_bund ?> ><font face="Helvetica, Arial, sans-serif" color="#000066">Betalinger til bank</td>
-		<td width="10%" <?php echo $top_bund ?> ><font face="Helvetica, Arial, sans-serif" color="#000066"><?php print "<a href=betalinger.php?liste_id=$liste_id&find=nye>Find nye</a>"?></td>
+		<td width="10%" <?php echo $top_bund ?> ><font face="Helvetica, Arial, sans-serif" color="#000066"><?php print $findlink;?></td>
 
 		</tbody></table>
 		</td></tr>
@@ -172,7 +184,11 @@ if ($find) {
 					$kort_ref=trim($kort_ref);
 				} else $kort_ref=$r['betal_id'];	
 			}
-			db_modify("insert into betalinger(bet_type,fra_kto, egen_ref, til_kto, modt_navn, kort_ref, belob, betalingsdato, valuta, bilag_id, ordre_id, liste_id) values ('$erh','$egen_bank','$r[egen_ref]','$modt_konto','$r[modt_navn]','$kort_ref','$belob','$forfaldsdag', '$valuta', '$bilag_id', '$ordre_id','$liste_id')",__FILE__ . " linje " . __LINE__);
+			$qtxt="insert into betalinger";
+			$qtxt.="(bet_type,fra_kto, egen_ref, til_kto, modt_navn, kort_ref, belob, betalingsdato, valuta, bilag_id, ordre_id, liste_id) ";
+			$qtxt.="values ";
+			$qtxt.="('$erh','$egen_bank','$r[egen_ref]','$modt_konto','".db_escape_string($r['modt_navn'])."','$kort_ref','$belob','$forfaldsdag',"; $qtxt.="'$valuta', '$bilag_id', '$ordre_id','$liste_id')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
 }

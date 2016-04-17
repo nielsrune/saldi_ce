@@ -1,5 +1,10 @@
 <?php
-// ----------debitor/kassespor.php-------------lap 3.5.3-----2015-03-05-----
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+//
+// ----------debitor/kassespor.php-------------lap 3.6.6-----2016-04-13-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -10,22 +15,20 @@
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
 // i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 20141119 PHR Tilføjet summer og bord
 // 20150305 PHR Tilføjet status.
 // 20150305 PHR Skriver nu bordnavn i stedet for bordnr. Søg $bordnavn & $bordnr
+// 20160413	PHR Medtog ej pos_ordrer i sum hvis kasse ikke var valgt. Søg straksksbogfor
 
 ob_start();
 @session_start();
@@ -263,6 +266,10 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 			}
 		}
 	}
+	
+	$r = db_fetch_array(db_select("select box5 from grupper where art='DIV' and kodenr='3'",__FILE__ . " linje " . __LINE__));
+	$straksbogfor=$r['box5'];
+		
 	$udvaelg='';
 	if ($status) $udvaelg=$udvaelg.udvaelg($status, 'ordrer.status', 'NR');
 	if ($idnumre) $udvaelg=$udvaelg.udvaelg($idnumre, 'ordrer.id', 'NR');
@@ -283,7 +290,8 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 	if (!$udvaelg) $udvaelg="where";
 	else $udvaelg=$udvaelg." and";
 	$x=0;
-	$qtxt="select * from ordrer $udvaelg (art = 'PO' or art like 'D%') order by $sort";
+	if ($straksbogfor) $qtxt="select * from ordrer $udvaelg art = 'PO' order by $sort";
+	else $qtxt="select * from ordrer $udvaelg (art = 'PO' or art like 'D%') order by $sort";
 	$q = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$ordrestatus[$x]=$r['status'];
