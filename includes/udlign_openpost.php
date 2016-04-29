@@ -41,6 +41,9 @@
 // 2015.09.07	Fejl i rettelse fra 20130529. =! rettet til !=.
 // 2016.04.12 PHR !='DKK' rettet =='DKK' da maxdiff ikke relaterer til valutadiff.
 // 2016.04.14 PHR fjernet - foran 100 da der blev reguleret omvendt! #20160414
+// 2016.04.26 PHR '==' rettet til '='.  #20160426-1
+// 2016.04.26 PHR Indsat 'desc limit 1'. #20160426-2
+// 2016.04.26	PHR Rettet $diff til $tmp.  #20160426-3
 
 @session_start();
 $s_id=session_id();
@@ -158,13 +161,15 @@ $r2 = db_fetch_array(db_select("select box3 from grupper where art='$art' and ko
 $basisvaluta=trim($r2['box3']);
 $r2=db_fetch_array(db_select("select box2 from grupper where art ='VK' and box1='$basisvaluta'",__FILE__ . " linje " . __LINE__)); # Finder valutakurs for konto. 
 $basiskurs=str_replace(",",".",$r2['box2']); #Valutaen kan være i dansk talformat (BUG).
+#	cho "$valuta[0] basisvaluta $basisvaluta basiskurs $basiskurs<br>";
 if ($basisvaluta=='DKK') $basiskurs=100; 
 if ($basisvaluta != $valuta[0]) {
 	if ($valuta[0]=='DKK') {
 		$qtxt="select kodenr from grupper where box1 = '$basisvaluta' and art='VK'<br>";
 		$r2=db_fetch_array(db_select("select kodenr from grupper where box1 = '$basisvaluta' and art='VK'",__FILE__ . " linje " . __LINE__));
-		$qtxt="select kurs from valuta where gruppe ='$r2[kodenr]' and valdate <= '$transdate[0]' order by valdate<br>";
-		$r3=db_fetch_array(db_select("select kurs from valuta where gruppe ='$r2[kodenr]' and valdate <= '$transdate[0]' order by valdate",__FILE__ . " linje " . __LINE__));
+		$qtxt="select kurs from valuta where gruppe ='$r2[kodenr]' and valdate <= '$transdate[0]' order by valdate desc limit 1"; #20160426-2
+#cho "$qtxt<br>";
+		$r3=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$omregningskurs[0]=100/$r3['kurs'];
 			$amount[0]=afrund($amount[0]*$omregningskurs[0],2); #20140527
 			$sum=$amount[0];
@@ -287,7 +292,7 @@ if (isset($submit) && $submit=='udlign') {
 		$ym=$year.$month;
 
 		if (($ym<$aarstart || $ym>$aarslut))	{ #20140505
-			print "<BODY onLoad=\"javascript:alert('Udligningsdato udenfor regnskabs&aring;r')\">";
+			print "<BODY onLoad=\"javascript:alert('Udligningsdato ($ym) udenfor regnskabs&aring;r ($aarstart - $aarslut)')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;../includes/udlign_openpost.php?post_id=$post_id[0]&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=$retur\">";
 			exit;
 			$udlign_date=date("Y-m-d");
@@ -303,7 +308,7 @@ if (isset($submit) && $submit=='udlign') {
 		$dkkdiff=afrund($dkkdiff,2);
 		$diff=afrund($diff,2);
 		$r=db_fetch_array(db_select("select art, kontonr, gruppe, art from adresser where id = '$konto_id[0]'",__FILE__ . " linje " . __LINE__));
-		$kontoart==$r['art'];
+		$kontoart=$r['art']; #20160426-1
 		$kontonr[0]=$r['kontonr'];
 		$gruppe=trim($r['gruppe']);
 		$art=trim($r['art']);
@@ -378,9 +383,8 @@ if (isset($submit) && $submit=='udlign') {
 					$qtxt="insert into openpost ";
 					$qtxt.="(konto_id, konto_nr, amount, beskrivelse, udlignet, transdate, kladde_id, refnr,valuta,valutakurs,udlign_id,udlign_date)";
 					$qtxt.=" values ";
-					$qtxt.="('$konto_id[0]','$kontonr[0]','$diff','$bogf_besk','1','$udlign_date','0','0',";
+					$qtxt.="('$konto_id[0]','$kontonr[0]','$tmp','$bogf_besk','1','$udlign_date','0','0',";  #20160426-3
 					$qtxt.="'$basisvaluta','$basiskurs','$udlign_id','$udlign_date')";
-#cho "$qtxt<br>";
 					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				} else {
 					$vkurs=$dkkdiff/0.001*100;

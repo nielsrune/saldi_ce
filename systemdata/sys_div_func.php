@@ -1413,8 +1413,8 @@ function bilag() {
 			$ftplogin=NULL;
 			$ftp_bilag_mappe=NULL;
 			$ftp_dokument_mappe=NULL;
-			$extern_ftp=0;
-	}
+			$extern_ftp=NULL;
+		} else $extern_ftp='checked'; 
 	}
 	if ($_POST['box6']=='extern_ftp') $extern_ftp=1; 
 	if (!$ftp_bilag_mappe) $ftp_bilag_mappe='bilag';

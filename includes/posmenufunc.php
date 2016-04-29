@@ -1,5 +1,5 @@
 <?php
-//----------------- includes/posmenufunc.php -----ver 3.6.3---- 2016.01.31 ----------
+//----------------- includes/posmenufunc.php -----ver 3.6.6---- 2016.04.18 ----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -25,6 +25,7 @@
 // 2015.11.29	Tilføjet knap Konant på beløb & Betalingskort på beløb.
 // 2016.01.28 Tilføjet systemknap Stamkunder. Se funktion stamkunder i ordrefunc.php
 // 2016.01.31 Tilføjet systemknap Kontoudtog & Udskriv sidste. 
+// 2016.04.18 Alle 'på beløb' disables når der ikke er varer.
 
 
 if (!function_exists('menubuttons')) {
@@ -337,7 +338,11 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($a=='Konto') {
 						(!$kontonr || !$sum)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp;
 						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
-					} else print "<TD><INPUT TYPE=\"submit\" $tmp NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD>\n";
+					} else print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD>\n"; #20160418
+				} elseif ($d==8) {
+					$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+					(((!$id && !$varenr_ny) || !$sum || $kontonr) && !$indbetaling)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp;
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp2 NAME=\"betvaluta\" VALUE=\"$a\"></TD>\n";
 				} else print "<td><br>";
 				print "</td>\n";
 			} else print "<td></td>"; 
