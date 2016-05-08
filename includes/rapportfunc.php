@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| |) | |
 //                        |___/_/ \_|___|___/|_|
 
-// --------includes/rapportfunc.php ----- lap 3.6.6 ---- 2016.04.14 ---------------------------
+// --------includes/rapportfunc.php ----- lap 3.6.6 ---- 2016.05.03 ---------------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -40,6 +40,7 @@
 // 2016.02.26	Rettet så link til ret_valutadiff.php kun vises for posteringer i aktivt regnskabsår. Søg område ver ret_valutadiff.php 
 // 2016.04.13	Tilføjet link til at rette dkksum til 0 pr dd hvis dd er i aktivt regnskabsår og valutasum er 0.
 // 2016.04.14 Sorterer nu på ID for reg og faktnr, der giver mere mening #20160414
+// 2016.05.03 Ved visning af kontokort fra flere konti blev dkkamount forkert #20160503
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 #cho "A $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart<br>";
@@ -935,6 +936,7 @@ function forside($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoart
 			if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
 			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
 		}
+		print "<input title=\"Salgsstat\" style=\"width:115px\" type=\"submit\" value=\"Salgsstat\" name=\"salgsstat\">";
 	}
 	print	"</td></tr></form>";
 	print "</tbody></table>";
@@ -1218,7 +1220,10 @@ $luk= "<a accesskey=L href=\"$returside\">";
 				$amount[$y]*=$valutakurs[$y]/$dagskurs;
 				$dkkamount[$y]=$amount[$y]*$valutakurs[$y]/100;
 #cho "$dkkamount[$y]=$amount[$y]*$valutakurs[$y]/100<br>";
-			} else $beskrivelse[$y] = $r2['beskrivelse'];
+			} else {
+				$beskrivelse[$y] = $r2['beskrivelse'];
+				$dkkamount[$y]=$amount[$y]; #20160503
+			}
 			if ($oppvaluta[$y]=="-") {
 				$dkkamount[$y]=$amount[$y];
 				$amount[$y]=0;
@@ -1471,7 +1476,6 @@ function kontosaldo($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$konto
 		$primoprint[$x]=0;
 		$bgcolor='';
 
-
 		if ($todate) $qtxt="select * from openpost where konto_id='$kto_id[$x]' and transdate<='$todate' order by transdate, faktnr, refnr";
 		else $qtxt= "select * from openpost where konto_id='$kto_id[$x]' order by transdate, faktnr, refnr";
 # #cho "$qtxt<br>";
@@ -1508,6 +1512,7 @@ if (afrund($kontosum[$x],2)) {
 	print "</tbody></table>";
 
 }
+
 function ret_openpost($konto_id){
 	$x=0;
 	$q=db_select("select distinct(udlign_id) from openpost where konto_id='$konto_id' and udlignet='1'",__FILE__ . " linje " . __LINE__);

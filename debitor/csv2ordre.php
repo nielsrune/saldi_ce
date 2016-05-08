@@ -1,5 +1,10 @@
 <?php
-// -------------debitor/csv2ordre.php----------lap 3.4.3-----2014-08-06----
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// -------------debitor/csv2ordre.php----------lap 3.5.6-----2016-05-02----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,9 +23,9 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // -----------------------------------------------------------------------
-
+// 20160502 PHR Sat returnconfirm på [Hent] for at hindre dobbeltimport ved dobbeltklik.
 
 @session_start();
 $s_id=session_id();
@@ -86,7 +91,7 @@ function upload(){
 	print "<tr><td colspan=\"2\"><hr></td></tr>";
 	print "<tr><td> V&aelig;lg datafil:</td><td><input name=\"uploadedfile\" type=\"file\"></td></tr>";
 	print "<tr><td colspan=\"2\"><hr></td></tr>";
-	print "<tr><td colspan=\"2\" align=center><input type=\"submit\" value=\"Hent\"></td></tr>";
+	print "<tr><td colspan=\"2\" align=center><input type=\"submit\" value=\"Hent\"value=\"Godkend\" onclick=\"javascript:return confirm('Importer ordrer?')\"></td></tr>";
 	print "</form>";
 	print "</tbody></table>";
 	print "</td></tr>";
