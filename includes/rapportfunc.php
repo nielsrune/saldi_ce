@@ -1,10 +1,10 @@
 <?php
-//                         ___   _   _   ___  _
-//                        / __| / \ | | |   \| |
-//                        \__ \/ _ \| |_| |) | |
-//                        |___/_/ \_|___|___/|_|
-
-// --------includes/rapportfunc.php ----- lap 3.6.6 ---- 2016.05.03 ---------------------------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// --------includes/rapportfunc.php ----- lap 3.6.7 ---- 2017.04.03 ---------------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2016 saldi.dk aps
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.11.06 Kontrol for aktivt regnskabsaar v. bogføring af rykker.Søg 20121106  
@@ -41,6 +41,9 @@
 // 2016.04.13	Tilføjet link til at rette dkksum til 0 pr dd hvis dd er i aktivt regnskabsår og valutasum er 0.
 // 2016.04.14 Sorterer nu på ID for reg og faktnr, der giver mere mening #20160414
 // 2016.05.03 Ved visning af kontokort fra flere konti blev dkkamount forkert #20160503
+// 2017.03.03 Tilføjet inkasso.
+// 2017.03.16 Tilføjet 'flueben' ved PBS kunder. Søg $pbs.
+// 2017.04.03 Debitorrapportvisning oprettes i grupper hvis den ikke findes. 20170403
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 #cho "A $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart<br>";
@@ -87,32 +90,52 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ko
 	}
 
 	
-	$skjul_aabenpost=if_isset($_GET['skjul_aabenpost']);
-	$skjul_aaben_rykker=if_isset($_GET['skjul_aaben_rykker']);
-	$skjul_bogfort_rykker=if_isset($_GET['skjul_bogfort_rykker']);
-	$skjul_afsluttet_rykker=if_isset($_GET['skjul_afsluttet_rykker']);
-	$kun_debet=if_isset($_GET['kun_debet']);
-	$kun_kredit=if_isset($_GET['kun_kredit']);
 	
 	($kontoart=='D')?$tekst='DRV':$tekst='KRV';
 
-	if ($skjul_aabenpost) db_modify("update grupper set box7='$skjul_aabenpost',box11='',box12='' where art='$tekst' and kodenr='1'",__FILE__ . " linje " . __LINE__);
-	if ($skjul_aaben_rykker) db_modify("update grupper set box8='$skjul_aaben_rykker' where art='$tekst' and kodenr='1'",__FILE__ . " linje " . __LINE__);
-	if ($skjul_bogfort_rykker) db_modify("update grupper set box9='$skjul_bogfort_rykker' where art='$tekst' and kodenr='1'",__FILE__ . " linje " . __LINE__);
-	if ($skjul_afsluttet_rykker) db_modify("update grupper set box10='$skjul_afsluttet_rykker' where art='$tekst' and kodenr='1'",__FILE__ . " linje " . __LINE__);
-	if ($kun_debet) db_modify("update grupper set box11='$kun_debet',box12='' where art='$tekst' and kodenr='1'",__FILE__ . " linje " . __LINE__);
-	if ($kun_kredit) db_modify("update grupper set box11='',box12='$kun_kredit' where art='$tekst' and kodenr='1'",__FILE__ . " linje " . __LINE__);
-	
 	db_modify("update ordrer set art = 'R1' where art = 'RB'",__FILE__ . " linje " . __LINE__); # 20091012 - er overfloedig
 	
-	if ($r=db_fetch_array(db_select("select * from grupper where art = '$tekst' and kodenr = '1' order by box2",__FILE__ . " linje " . __LINE__))){
-		$skjul_aabenpost=$r['box7'];
-		$skjul_aaben_rykker=$r['box8'];
-		$skjul_bogfort_rykker=$r['box9'];
-		$skjul_afsluttet_rykker=$r['box10'];
-		$kun_debet=$r['box11'];
-		$kun_kredit=$r['box12'];
+	$r=db_fetch_array(db_select("select * from grupper where art = '$tekst' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
+	if (!$r['id']) { #20170403
+		db_modify("insert into grupper(beskrivelse,kodenr,art) values ('Debitorrapportvisning','1','$tekst')",__FILE__ . " linje " . __LINE__);
 	}
+	list($a,$b,$c,$d,$e,$f,$g)=explode(';',$r['box7']);
+	
+	if (isset($_GET['vis_aabenpost'])) {
+		$a=$_GET['vis_aabenpost'];
+		$f=NULL;
+		$g=NULL;
+	} elseif (isset($_GET['skjul_aabenpost']))  {
+		$a=NULL;
+		$f=NULL;
+		$g=NULL;
+	} elseif (isset($_GET['kun_debet']))  {
+		$a=NULL;
+		$f=$_GET['kun_debet'];
+		$g=NULL;
+	} elseif (isset($_GET['kun_kredit'])) {
+		$a=NULL;
+		$f=NULL;
+		$g=$_GET['kun_kredit'];
+	}	
+	if (isset($_GET['vis_aaben_rykker']))     $b=$_GET['vis_aaben_rykker'];
+	if (isset($_GET['vis_inkasso']))          $c=$_GET['vis_inkasso'];
+	if (isset($_GET['vis_bogfort_rykker']))   $d=$_GET['vis_bogfort_rykker'];
+	if (isset($_GET['vis_afsluttet_rykker'])) $e=$_GET['vis_afsluttet_rykker'];
+	
+	$box7="$a;$b;$c;$d;$e;$f;$g";
+	$qtxt="update grupper set box7='$box7' where art='$tekst' and kodenr='1'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
+	$vis_aabenpost=$a;
+	$vis_aaben_rykker=$b;
+	$vis_inkasso=$c;
+	$vis_bogfort_rykker=$d;
+	$vis_afsluttet_rykker=$e;
+	$kun_debet=$f;
+	$kun_kredit=$g;
+	($a || $f || $g)?$skjul_aabenpost=NULL:$skjul_aabenpost='on';
+	
 	if ($ny_rykker) {
 #		#cho "1;URL=rapport.php?ny_rykker=1&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&rapportart=$rapportart"; 
 		print "<meta http-equiv=\"refresh\" content=\"1;URL=rapport.php?ny_rykker=1&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&rapportart=$rapportart\">"; 
@@ -157,25 +180,25 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ko
 		print "<select class=\"inputbox\" name=\"aabenpostmode\" onchange=\"window.open(this.options[this.selectedIndex].value,'_top')\">\n";
 		if ($kun_debet=='on') print "<option>Kun konti i debet</option>\n";
 		elseif ($kun_kredit=='on') print "<option>Kun konti i kredit</option>\n";
-		elseif ($skjul_aabenpost=='on') print "<option>Skjul &aring;bne poster</option>\n";
-		else print "<option>Vis &aring;bne poster</option>\n";
-		if ($skjul_aabenpost=='on' || $kun_debet=='on' || $kun_kredit=='on') print "<option value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aabenpost=off\">Vis &aring;bne poster</option>\n";
-		if ($kun_debet!='on') print "<option value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aabenpost=off&kun_debet=on\">Kun konti i debet</option>\n";
-		if ($kun_kredit!='on') print "<option  value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aabenpost=off&kun_kredit=on\">Kun konti i kredit</option>\n";
-		if ($skjul_aabenpost!='on' && $kontoart=='D') print "<option  value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aabenpost=on\">Skjul &aring;bne poster</option>\n";
+		elseif ($vis_aabenpost=='on') print "<option>Vis &aring;bne poster</option>\n";
+		else print "<option>Skjul &aring;bne poster</option>\n";
+		if ($vis_aabenpost!='on') print "<option value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_aabenpost=on\">Vis &aring;bne poster</option>\n";
+		if ($kun_debet!='on') print "<option value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&kun_debet=on\">Kun konti i debet</option>\n";
+		if ($kun_kredit!='on') print "<option  value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&kun_kredit=on\">Kun konti i kredit</option>\n";
+		if ($skjul_aabenpost != 'on') print "<option  value=\"rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aabenpost=on\">Skjul &aring;bne poster</option>\n";
 		print "</select>\n";
 		if ($menu) print "<td></tr>\n";
 		else print "</div>\n";
 #	} 
-#	if ($skjul_aabenpost=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aabenpost=off>Vis</a><td></tr>\n";
-#	else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aabenpost=on>Skjul</a><td></tr>\n";	
+#	if ($vis_aabenpost=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_aabenpost=off>Vis</a><td></tr>\n";
+#	else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_aabenpost=on>Skjul</a><td></tr>\n";	
 	if ($menu!='T') print "</tbody></table></td></tr><!--Tabel 1.2 slut-->\n\n"; # <- Tabel 1.2
 #cho "XX $dato_fra,$dato_til,$konto_fra,$konto_til,$kontoart<br>";
 	if ($skjul_aabenpost!='on') vis_aabne_poster($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoart,$kun_debet,$kun_kredit);
 
  	####################################### Rykkeroversigt ##############################################
  	
-# if ($skjul_aaben_rykker!='on' || $skjul_bogfort_rykker!='on' || $skjul_afsluttet_rykker!='on') 
+# if ($vis_aaben_rykker!='on' || $vis_bogfort_rykker!='on' || $vis_afsluttet_rykker!='on') 
 	if (is_numeric($konto_fra) && is_numeric($konto_til)) {
 		$qtxt = "select * from ordrer where ".nr_cast('kontonr').">='$konto_fra' and ".nr_cast('kontonr')."<='$konto_til' and art LIKE 'R%' order by ".nr_cast('kontonr')."";
 	} elseif ($konto_fra && $konto_fra!='*') {
@@ -194,51 +217,60 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ko
  		$x=0;
  		$taeller=0;
  		$sum=array();
- 		while ($taeller <3) {  
+ 		while ($taeller <4) {  
 			$sum=array();
 			$taeller++;
 			print "<tr><td><table width=100% cellpadding=\"0\" cellspacing=\"3\" border=\"0\"><tbody><!--Tabel 1.3 start-->\n"; # Tabel 1.3 ->
 			if ($taeller==1) {
 				print "<tr><td width=10% align=center $top_bund><br></td><td width=80% align=center $top_bund>&Aring;bne&nbsp;rykkere</td><td width=10% align=center $top_bund>\n";
-				if ($skjul_aaben_rykker=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aaben_rykker=off>Skjul</a><td></tr>\n";
-				else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_aaben_rykker=on>Vis</a><td></tr>\n";	
+				if ($vis_aaben_rykker=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_aaben_rykker=off>Skjul</a><td></tr>\n";
+				else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_aaben_rykker=on>Vis</a><td></tr>\n";	
 			} elseif ($taeller==2) {
+				print "<tr><td width=10% align=center $top_bund><br></td><td width=80% align=center $top_bund>Inkasso sager</td><td width=10% align=center $top_bund>\n";
+				if ($vis_inkasso=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_inkasso=off>Skjul</a><td></tr>\n";
+				else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_inkasso=on>Vis</a><td></tr>\n";	
+			} elseif ($taeller==3) {
 				print "<tr><td width=10% align=center $top_bund><br></td><td width=80% align=center $top_bund>Bogf&oslash;rte&nbsp;rykkere</td><td width=10% align=center $top_bund>\n";
-				if ($skjul_bogfort_rykker=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_bogfort_rykker=off>Skjul</a><td></tr>\n";
-				else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_bogfort_rykker=on>Vis</a><td></tr>\n";	
+				if ($vis_bogfort_rykker=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_bogfort_rykker=off>Skjul</a><td></tr>\n";
+				else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_bogfort_rykker=on>Vis</a><td></tr>\n";	
 			} else  {
 				print "<tr><td width=10% align=center $top_bund><br></td><td width=80% align=center $top_bund>Afsluttede&nbsp;rykkere</td><td width=10% align=center $top_bund>\n";
-				if ($skjul_afsluttet_rykker=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_afsluttet_rykker=off>Skjul</a><td></tr>\n";
-				else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&skjul_afsluttet_rykker=on>Vis</a><td></tr>\n";	
+				if ($vis_afsluttet_rykker=='on') print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_afsluttet_rykker=off>Skjul</a><td></tr>\n";
+				else print "<a href=rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&vis_afsluttet_rykker=on>Vis</a><td></tr>\n";	
 			}
 			print "</tbody></table></td></tr><!--Tabel 1.3 slut-->\n";
-			if (($taeller==1 && $skjul_aaben_rykker=='on')||($taeller==2 && $skjul_bogfort_rykker=='on')||($taeller==3 && $skjul_afsluttet_rykker=='on')) {
+			if (($taeller==1 && $vis_aaben_rykker=='on')||($taeller==2 && $vis_inkasso=='on')||($taeller==3 && $vis_bogfort_rykker=='on')||($taeller==4 && $vis_afsluttet_rykker=='on')) {
 			print "<tr><td width=100%>";
 			print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody><!--Tabel 1.4 start-->"; #B
 			print "<tr><td>L&oslash;benr.</td><td>Firmanavn</td><td colspan=2 align=center>Dato</td><td align=center>Rykkernr</td><td colspan=3 align=right>Bel&oslash;b</td></tr>\n";	
 			print "<tr><td colspan=9><hr></td></tr>\n";
 			if ($taeller==1) {$formnavn='rykker1'; $status= "< 3";}
 			else  {$formnavn='rykker2'; $status= ">= 3";}
-			if ($taeller==3) $betalt="and betalt = 'on'";
+			if ($taeller==2) $inkasso="and felt_5 = 'inkasso'";
+			elseif ($taeller==3) $inkasso="and (felt_5 != 'inkasso' or felt_5 is NULL)";
+			else $inkasso=NULL;
+			if ($taeller==4) $betalt="and betalt = 'on'";
 			else $betalt="and betalt != 'on'";
 			print "<form name=$formnavn action=rapport.php method=post>";
 
+#echo "Inkasso $inkasso<br>";
+			
 			if (is_numeric($konto_fra) && is_numeric($konto_til)) {
-				$qtxt = "select * from ordrer where ".nr_cast('kontonr').">='$konto_fra' and ".nr_cast('kontonr')."<='$konto_til' and art LIKE 'R%' $betalt and status $status order by ".nr_cast('kontonr')."";
+				$qtxt = "select * from ordrer where ".nr_cast('kontonr').">='$konto_fra' and ".nr_cast('kontonr')."<='$konto_til' and art LIKE 'R%' $betalt $inkasso and status $status order by ".nr_cast('kontonr')."";
 			} elseif ($konto_fra && $konto_fra!='*') {
 				$konto_fra=str_replace("*","%",$konto_fra);
 				$tmp1=strtolower($konto_fra);
 				$tmp2=strtoupper($konto_fra);
-				$qtxt = "select * from ordrer where (firmanavn like '$konto_fra' or lower(firmanavn) like '$tmp1' or upper(firmanavn) like '$tmp2') and art LIKE 'R%' $betalt and status $status order by firmanavn";
-			}	else $qtxt = "select * from ordrer where art LIKE 'R%' $betalt and status $status order by firmanavn";
-#			#cho "tekst $qtxt<br>";
+				$qtxt = "select * from ordrer where (firmanavn like '$konto_fra' or lower(firmanavn) like '$tmp1' or upper(firmanavn) like '$tmp2') and art LIKE 'R%' $betalt $inkasso and status $status order by firmanavn";
+			}	else $qtxt = "select * from ordrer where art LIKE 'R%' $betalt $inkasso and status $status order by firmanavn";
+#			echo __line__." $taeller -> $qtxt<br>";
 
 			$q1 = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 #			$q1 = db_select("select * from ordrer where art LIKE 'R%' $betalt and status $status order by ordrenr desc",__FILE__ . " linje " . __LINE__);
 			$x=0;
 			while ($r1 = db_fetch_array($q1)) {
 				$rykkernr=substr($r1['art'],-1);
-#				$belob=dkdecimal($r1['sum']);
+#				$belob=dkdecimal($r1['sum'],2);
 				$x++;
 				$sum[$x]=0;
 				$udlignet=1;
@@ -257,25 +289,26 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ko
 					} else $sum[$x]=$sum[$x]+$r2['pris'];
 				}
 				print "<input type=hidden name=rykker_id[$x] value=$r1[id]>";
-				$belob=dkdecimal($sum[$x]);
+				$belob=dkdecimal($sum[$x],2);
 				if ($rykkernr==1) $color="#000000";
 				elseif ($rykkernr==2) $color="#CC6600";
 				elseif ($rykkernr==3) $color="#ff0000";
 				if ($linjebg!=$bgcolor) $linjebg=$bgcolor;
 				elseif ($linjebg!=$bgcolor5) $linjebg=$bgcolor5;
 				print "<tr style=\"background-color:$linjebg ; color: $color;\">";
-				print "<td onClick=\"window.open('rykker.php?rykker_id=$r1[id]','rykker','$jsvars')\" onMouseOver=\"this.style.cursor = 'pointer'\"><span title='Klik for detaljer' style=\"text-decoration: underline;\"><a>$r1[ordrenr]</a></td>";
+				print "<td><span title='Klik for detaljer' og for at sende rykker pr mail><a href=\"rykker.php?rykker_id=$r1[id]\">$r1[ordrenr]</a></td>";
 				print "<td>$r1[firmanavn]</td><td colspan=2 align=center>$r1[ordredate]</td><td align=center>$rykkernr</td>";
 				if ($udlignet || $delsum >= $sum[$x]) {
 					$color="#00aa00";
 					$title="Alle poster på rykkeren er betalt";
 				} elseif ($delsum) {
 					$color="#0000aa";
-					$title="Rykkeren er delvist betalt med kr ".dkdecimal($delsum)."";
+					$title="Rykkeren er delvist betalt med kr ".dkdecimal($delsum,2)."";
 				} else $title="";
 				print "<td colspan=3 align=right style=\"background-color:$linjebg ; color: $color;\" title='$title'>$belob</td>";	
 				$tmp = $rykkernr+1;
 				$tmp = "R".$tmp;
+#cho "select * from ordrer where art = '$tmp' and ordrenr = '$r1[ordrenr]' and betalt != 'on'<br>";
 				if (!db_fetch_array(db_select("select * from ordrer where art = '$tmp' and ordrenr = '$r1[ordrenr]' and betalt != 'on'",__FILE__ . " linje " . __LINE__))) print "<td align=center><input type=checkbox name=rykkerbox[$x]>";
 				else db_modify("update ordrer set betalt = 'on' where id = '$r1[id]'",__FILE__ . " linje " . __LINE__);
  
@@ -292,10 +325,14 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ko
 				print "<tr><td colspan=10><hr></td></tr>\n";
 				if ($taeller==1) print "<tr><td colspan=10 align=center><input type=submit value=\"  Slet  \" name=\"submit\" onClick=\"return confirmSubmit('Slet valgte ?')\">&nbsp;";
 				else print "<tr><td colspan=10 align=center>";
-				print "<input type=submit value=\"Udskriv\" name=\"submit\" onClick=\"return confirmSubmit('Udskriv valgte ?')\">";
 				if ($taeller==2) {
-					print " &nbsp;<span title='Registrerer rykker som afsluttet og fjernde den fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onClick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
+					print " &nbsp;<span title='Registrerer afmærkede sager som afsluttet og fjerner dem fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onClick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
+				}
+				else print "<input type=submit value=\"Udskriv\" name=\"submit\" onClick=\"return confirmSubmit('Udskriv valgte ?')\">";
+				if ($taeller==3) {
+					print " &nbsp;<span title='Registrerer rykker som afsluttet og fjerner den fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onClick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
 					print " &nbsp;<input type=submit value=\"Ny rykker\" name=\"submit\">";
+#					print " &nbsp;<span title='Registrerer sagen som sendt til inkasso. Hvis der er oprettet integration med inkasso selskab overføres sagen direkte'><input type=submit value=\"Inkasso\" name=\"submit\">";
 				}
 				if ($taeller==1) print " &nbsp;<input type=submit value=\"Bogf&oslash;r\" name=\"submit\" onClick=\"return confirmSubmit('Bogf&oslash;r valgte ?')\"></td></tr>\n";
 				else print "</td></tr>\n";
@@ -305,7 +342,8 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ko
 #			else print "<tr><td colspan=10><hr></td></tr>\n";
 			print "</form>\n";
 			print "</tbody></table></td></tr>";
-			}}
+			}
+		}
 	}
 }
 
@@ -315,9 +353,16 @@ function vis_aabne_poster($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,
 	global $bgcolor;
 	global $bgcolor5;
 	global $bruger_id;
+	global $sprog_id;
+	
+	$fromdate=NULL;
+	$kontoudtog=NULL;
+	$popup=NULL;
+	$todate=NULL;
+	
 	
 	print "<tr><td><table width=100% cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>\n";
-	print "<tr><td>Kontonr</td><td>Firmanavn</td><td align=right>>90</td><td align=right>60-90</td><td align=right>30-60</td><td align=right>8-30</td><td align=right>0-8</td><td align=right>I alt</td><tr>";
+	print "<tr><td>Kontonr</td><td>PBS</td><td>Firmanavn</td><td align=right>>90</td><td align=right>60-90</td><td align=right>30-60</td><td align=right>8-30</td><td align=right>0-8</td><td align=right>I alt</td><tr>";
 
 	$currentdate=date("Y-m-d");
 	if ($dato_fra && $dato_til) {
@@ -366,9 +411,11 @@ function vis_aabne_poster($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,
 		$email[$x]=trim($r['email']);
 		$betalingsbet[$x]=trim($r['betalingsbet']);
 		$betalingsdage[$x]=trim($r['betalingsdage']);
+		$pbs[$x]=trim($r['pbs']);
+		$pbs_nr[$x]=trim($r['pbs_nr']);
+		($pbs[$x] && $pbs_nr[$x])?$pbs[$x]='&#10004;':$pbs[$x]=NULL;
 	}
 	$kontoantal=$x;
-	
 	$sum=0;
 	$kontrolsum=0;
 	for ($x=1; $x<=$kontoantal; $x++) {
@@ -483,6 +530,7 @@ $ks=0;
 			if ($popup) print "<td onClick=\"window.open('rapport.php?rapportart=kontokort&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok','kreditorrapport','$jsvars')\" onMouseOver=\"this.style.cursor = 'pointer'\"><a>";
 			else print "<td><a href=rapport.php?rapportart=kontokort&kilde=openpost&kto_fra=$konto_fra&kilde_kto_til=$konto_til&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok>";
 			print "<span title='Klik for detaljer' style=\"text-decoration: underline;\">$kontonr[$x]</span></a></td>";
+			print "<td>$pbs[$x]</td>";
 			print "<td>$firmanavn[$x]</td>";
 /*	
 	if ($forfalden_plus90 != 0) $color="rgb(255, 0, 0)";
@@ -512,28 +560,28 @@ $ks=0;
 
 			if (($kontoart=='D' && $forfalden_plus90 > 0) || ($kontoart=='K' && $forfalden_plus90 < 0)) $color="rgb(255, 0, 0)";
 			else $color="rgb(0, 0, 0)";
-			$tmp=dkdecimal($forfalden_plus90);
+			$tmp=dkdecimal($forfalden_plus90,2);
 			print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 			if (($kontoart=='D' && $forfalden_plus60 > 0) || ($kontoart=='K' && $forfalden_plus60 < 0)) $color="rgb(255, 0, 0)";
 			else $color="rgb(0, 0, 0)";
-			$tmp=dkdecimal($forfalden_plus60);
+			$tmp=dkdecimal($forfalden_plus60,2);
 			print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 			if (($kontoart=='D' && $forfalden_plus30 > 0) || ($kontoart=='K' && $forfalden_plus30 < 0)) $color="rgb(255, 0, 0)";
 			else $color="rgb(0, 0, 0)";
-			$tmp=dkdecimal($forfalden_plus30);
+			$tmp=dkdecimal($forfalden_plus30,2);
 			print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 			if (($kontoart=='D' && $forfalden_plus8 > 0) || ($kontoart=='K' && $forfalden_plus8 < 0)) $color="rgb(255, 0, 0)";
 			else $color="rgb(0, 0, 0)";
-			$tmp=dkdecimal($forfalden_plus8);
+			$tmp=dkdecimal($forfalden_plus8,2);
 			print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 			if (($kontoart=='D' && $forfalden > 0) || ($kontoart=='K' && $forfalden < 0)) $color="rgb(255, 0, 0)";
 			else $color="rgb(0, 0, 0)";
-			$tmp=dkdecimal($forfalden);
+			$tmp=dkdecimal($forfalden,2);
 			print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 			if (afrund($kontrol,2)!=afrund($y,2)) {
 				ret_openpost($konto_id[$x]);
-				$tmp=dkdecimal($kontrol);
-			} else $tmp=dkdecimal($y);
+				$tmp=dkdecimal($kontrol,2);
+			} else $tmp=dkdecimal($y,2);
 			if (abs($y)<0.01 && abs($kontrol)<0.01) {
 				print "<td align=right title=\"Klik her for at udligne &aring;bne poster\"><a href=\"rapport.php?submit=ok&rapportart=openpost&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&udlign=$konto_id[$x]\">$tmp</a></td>";
 			}
@@ -549,34 +597,34 @@ $ks=0;
 	$forfaldsum_plus30=afrund($forfaldsum_plus30,2);
 	$forfaldsum_plus8=afrund($forfaldsum_plus8,2);
 
-	print "<tr><td colspan=10><hr></td></tr>\n";
-	print "<tr><td><br></td><td>I alt</td>";
+	print "<tr><td colspan='10'><hr></td></tr>\n";
+	print "<tr><td colspan='2'><br></td><td>I alt</td>";
 
 	if ($forfaldsum_plus90 != 0) $color="rgb(255, 0, 0)";
 	else $color="rgb(0, 0, 0)";
-	$tmp=dkdecimal($forfaldsum_plus90);
+	$tmp=dkdecimal($forfaldsum_plus90,2);
 #if ($konto_id[$x]=='19') #cho "F90: $forfaldsum_plus90<br>";
 	print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 	if ($forfaldsum_plus60 != 0) $color="rgb(255, 0, 0)";
 	else $color="rgb(0, 0, 0)";
-	$tmp=dkdecimal($forfaldsum_plus60);
+	$tmp=dkdecimal($forfaldsum_plus60,2);
 	print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 	if ($forfaldsum_plus60 != 0) $color="rgb(255, 0, 0)";
 	else $color="rgb(0, 0, 0)";
-	$tmp=dkdecimal($forfaldsum_plus30);
+	$tmp=dkdecimal($forfaldsum_plus30,2);
 	print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 	if ($forfaldsum_plus30 != 0) $color="rgb(255, 0, 0)";
 	else $color="rgb(0, 0, 0)";
-	$tmp=dkdecimal($forfaldsum_plus8);
+	$tmp=dkdecimal($forfaldsum_plus8,2);
 	print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 	if ($forfaldsum != 0) $color="rgb(255, 0, 0)";
 	else $color="rgb(0, 0, 0)";
-	$tmp=dkdecimal($forfaldsum);
+	$tmp=dkdecimal($forfaldsum,2);
 	print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 	$color="rgb(0, 0, 0)";
 #if ($konto_id[$x]=='19') #cho "K: $kontrolsum S: $sum<br>";
-  ($sum<=$kontrolsum)?$tmp=dkdecimal($kontrolsum):$tmp=dkdecimal($sum);
-# $tmp=dkdecimal($sum);
+  ($sum<=$kontrolsum)?$tmp=dkdecimal($kontrolsum,2):$tmp=dkdecimal($sum,2);
+# $tmp=dkdecimal($sum,2);
 	print "<td align=right><span style='color: $color;'>$tmp</span></td>";
 				
 	print "<input type=hidden name=rapportart value=\"openpost\">";
@@ -586,7 +634,7 @@ $ks=0;
 	print "<input type=hidden name=konto_til value=$konto_til>";
 	print "<input type=hidden name=kontoantal value=$kontoantal>";
 
-	if ($kontoart=='D') print "<tr><td colspan=10 align=center><span title=\"Klik her for at maile kontoudtog til de modtagere som er afm&aelig;rket herover\"><input type=submit value=\"Mail kontoudtog\" name=\"submit\"></span>&nbsp;
+	if ($kontoart=='D') print "<tr><td colspan='10' align='center'><span title=\"Klik her for at maile kontoudtog til de modtagere som er afm&aelig;rket herover\"><input type=submit value=\"Mail kontoudtog\" name=\"submit\"></span>&nbsp;
 		<span title='Klik her for at oprette rykker til de som er afm&aelig;rkede herover'><input type=submit value=\"Opret rykker\" name=\"submit\"></span>&nbsp;
 		<span onmouseover=\"return overlib('".findtekst(242,$sprog_id)."', WIDTH=800);\" onmouseout=\"return nd();\"><input type=submit value=\"Ryk alle\" name=\"submit\"></span></td></tr>\n";
 	print "</form>\n";
@@ -924,7 +972,7 @@ function forside($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoart
 		if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
 			$tekst1=findtekst(531,$sprog_id);
 			$tekst2=findtekst(532,$sprog_id);
-			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
+			print	"<span onClick=\"javascript:location.href=('../debitor/betalingsliste.php')\"><input title=\"$tekst1\" style=\"width:115px\" type=\"button\" value=\"$tekst2\"></span>";
 		} elseif (file_exists("../debitor/multiroute.php")) {
 		print "<span onclick=\"javascript:location.href=('../debitor/multiroute.php')\"><input title=\"Multiroute\" style=\"width:115px\" type=\"button\" value=\"Multiroute\"></span>";
 		}
@@ -934,7 +982,7 @@ function forside($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoart
 		$tekst2=findtekst(532,$sprog_id);
 		print "<tr><td colspan=\"3\" align=center>";
 			if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
-			print	"<span onClick=\"javascript:betalingsliste=window.open('betalingsliste.php','betalingsliste','$jsvars');betalingsliste.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"betalingslister\"></span>";
+			print	"<span onClick=\"javascript:location.href('betalingsliste.php')<input title=\"$tekst1\"><input style=\"width:115px\" type=\"button\" value=\"$tekst2\"></span>";
 		}
 		print "<input title=\"Salgsstat\" style=\"width:115px\" type=\"submit\" value=\"Salgsstat\" name=\"salgsstat\">";
 	}
@@ -1169,19 +1217,19 @@ $luk= "<a accesskey=L href=\"$returside\">";
 				$r3=db_fetch_array(db_select("select kurs from valuta where gruppe ='$r3[kodenr]' and valdate <= '$transdate[$y]' order by valdate desc",__FILE__ . " linje " . __LINE__));
 					$valutakurs[$y]=$r3['kurs']*1;
 					$dkkamount[$y]=$amount[$y]*$valutakurs[$y]/100;
-					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet fra DKK til $valuta".dkdecimal($dkkamount[$y]).", kurs ".dkdecimal($valutakurs[$y]).")";
+					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet fra DKK til $valuta".dkdecimal($dkkamount[$y],2).", kurs ".dkdecimal($valutakurs[$y],2).")";
 #					db_modify("update openpost set valutakurs='$valutakurs[$y]' where id='$oppid[$y]'");
 			} elseif ($valuta!="DKK" && $valutakurs[$y]==100) {
 				if ($r3=db_fetch_array(db_select("select kurs from valuta where gruppe ='$valutakode' and valdate <= '$transdate[$y]' order by valdate desc",__FILE__ . " linje " . __LINE__))) {
 					$dkkamount[$y]=$amount[$y];
 					$amount[$y]=$amount[$y]*100/$r3['kurs'];
-					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet til $valuta fra DKK ".dkdecimal($dkkamount[$y]).", kurs ".dkdecimal($r3['kurs']).")";
+					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet til $valuta fra DKK ".dkdecimal($dkkamount[$y],2).", kurs ".dkdecimal($r3['kurs'],2).")";
 				} elseif ($r3=db_fetch_array(db_select("select kurs from valuta where gruppe ='$valutakode' order by valdate",__FILE__ . " linje " . __LINE__))) {
 					$amount[$y]=$amount[$y]*100/$r3['kurs'];
-					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet til $valuta fra DKK ".dkdecimal($dkkamount[$y]).", kurs ".dkdecimal($r3['kurs']).")";
+					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet til $valuta fra DKK ".dkdecimal($dkkamount[$y],2).", kurs ".dkdecimal($r3['kurs'],2).")";
 				}
 			} elseif (($oppvaluta[$y]!='DKK' && $valuta=="DKK" && $valutakurs[$y]!=100)) {
-					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet til DKK fra ".$oppvaluta[$y]." ".dkdecimal($amount[$y]).", kurs ".dkdecimal($valutakurs[$y]).")";
+					$beskrivelse[$y] = $r2['beskrivelse']." - (Omregnet til DKK fra ".$oppvaluta[$y]." ".dkdecimal($amount[$y],2).", kurs ".dkdecimal($valutakurs[$y],2).")";
 					$amount[$y]=$amount[$y]*$valutakurs[$y]/100;
 #cho __line__." $amount[$y]=$amount[$y]*$valutakurs[$y]/100<br>";
 			} elseif ($valuta!="DKK" && $valuta==$oppvaluta[$y] && $valutakurs[$y]!=100) {
@@ -1200,9 +1248,9 @@ $luk= "<a accesskey=L href=\"$returside\">";
 #cho "DKKA $dkkamount[$y]=A $amount[$y]*VK $valutakurs[$y]/100<br>";
 #cho $r2['beskrivelse']."| $amount[$y]<br>";
 					if ($oppvaluta[$y]!='-' && abs($amount[$y])>=0.005) {
-						 if (!strpos($beskrivelse[$y],'Udligning af valutadiff')) $beskrivelse[$y] = $r2['beskrivelse']." - (DKK ".dkdecimal($dkkamount[$y]).")";
+						 if (!strpos($beskrivelse[$y],'Udligning af valutadiff')) $beskrivelse[$y] = $r2['beskrivelse']." - (DKK ".dkdecimal($dkkamount[$y],2).")";
 					} elseif (abs($amount[$y])<0.005) $beskrivelse[$y] = $r2['beskrivelse'];
-					else $beskrivelse[$y] = $r2['beskrivelse']." - (DKK ".dkdecimal($amount[$y]).")";
+					else $beskrivelse[$y] = $r2['beskrivelse']." - (DKK ".dkdecimal($amount[$y],2).")";
 					} elseif($oppvaluta[$y]!=$valuta && $oppvaluta[$y] != '-') {
 				if (!$valutakurs[$y]) {
 #cho "select kodenr from grupper where box1 = '$oppvaluta[$y]' and art='VK'<br>";
@@ -1216,7 +1264,7 @@ $luk= "<a accesskey=L href=\"$returside\">";
 				$r3=db_fetch_array(db_select("select kurs from valuta where gruppe ='$r3[kodenr]' and valdate <= '$transdate[$y]' order by valdate desc",__FILE__ . " linje " . __LINE__));
 				$dagskurs=$r3['kurs']*1;
 #cho "$dagskurs<br>";			
-				$beskrivelse[$y].=" $oppvaluta[$y] ".dkdecimal($amount[$y])." Kurs $valutakurs[$y]";
+				$beskrivelse[$y].=" $oppvaluta[$y] ".dkdecimal($amount[$y],2)." Kurs $valutakurs[$y]";
 				$amount[$y]*=$valutakurs[$y]/$dagskurs;
 				$dkkamount[$y]=$amount[$y]*$valutakurs[$y]/100;
 #cho "$dkkamount[$y]=$amount[$y]*$valutakurs[$y]/100<br>";
@@ -1242,7 +1290,7 @@ $luk= "<a accesskey=L href=\"$returside\">";
 				$dkksum+=$dkkamount[$y];
 				} else {
 				if ($primoprint[$x]==0) {
-					$tmp=dkdecimal($kontosum);
+					$tmp=dkdecimal($kontosum,2);
 					$tmp2="";
 					if ($valuta!='DKK') $tmp2="&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Bel&oslash;b kan v&aelig;re omregnet fra DKK";
 					print "<tr><td><br></td><td><br></td><td><br></td><td>Primosaldo $tmp2<br></td><td><br></td><td><br></td><td><br></td><td><br></td><td align=right title=\"DKK ".dkdecimal($dkksum,2)."\">$tmp<br></td></tr>\n";
@@ -1251,7 +1299,7 @@ $luk= "<a accesskey=L href=\"$returside\">";
 				print "<tr bgcolor=\"$baggrund\"><td valign=\"top\">".dkdato($transdate[$y])."<br></td><td valign=\"top\">$refnr[$y]<br></td><td valign=\"top\">$faktnr[$y]<br></td><td valign=\"top\">".stripslashes($beskrivelse[$y])."<br></td><td valign=\"top\">$projekt[$y]</td>";
 				if ($amount[$y] < 0) $tmp=0-$amount[$y];
 				else $tmp=$amount[$y];
-				$tmp=dkdecimal($tmp);
+				$tmp=dkdecimal($tmp,2);
 				if (!$forfaldsdag[$y]) $forfaldsdag[$y]=usdate(forfaldsdag($transdate[$y], $betalingsbet, $betalingsdage));
 #				if (($row[udlignet]!='1')&&($forfaldsdag<$currentdate)){$stil="<span style='color: rgb(255, 0, 0);'>";}
 #				else {$stil="<span style='color: rgb(0, 0, 0);'>";}
@@ -1284,8 +1332,8 @@ $luk= "<a accesskey=L href=\"$returside\">";
 				$dkksum+=$dkkamount[$y];
 				$dkksum=afrund($dkksum,2);
 #cho "$dkksum | $dkkamount[$y]<br>";
-				$tmp=dkdecimal($kontosum);
-				$dkktmp=dkdecimal($dkksum);
+				$tmp=dkdecimal($kontosum,2);
+				$dkktmp=dkdecimal($dkksum,2);
 				if ($valuta!='DKK' && $kontosum!=$dkksum) $title="DKK: $dkktmp";
 				else $title="";
 #cho "$transdate[$y] | $dkkamount[$y] | $dkksum<br>";
@@ -1354,7 +1402,7 @@ if ($diff && !$difflink && $oppvaluta!='DKK') {
 						if ($oppid[$y]>=$max_valdif_id && ($vis_difflink && (abs($regulering)>0.01 || $y==count($oppid)))) {
 						$difflink=1;
 						if ($regnstart<=date("Y-m-d") && $regnslut>=date("Y-m-d")) {
-						$title.="Klik for at regulere værdien i DKK fra ".dkdecimal($dkksum)." til ".dkdecimal($dkksum+$regulering)." pr. ".dkdato($transdate[$y]);
+							$title.="Klik for at regulere værdien i DKK fra ".dkdecimal($dkksum,2)." til ".dkdecimal($dkksum+$regulering,2)." pr. ".dkdato($transdate[$y]);
 							$tmp2="<a href=\"../includes/ret_valutadiff.php?bfdate=$transdate[$y]&";
 							$tmp2.="valuta=$valuta&diff=$regulering&post_id=$oppid[$y]&dato_fra=$dato_fra&dato_til=$dato_til&";
 							$tmp2.="konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=".$returnpath."rapport.php\" ";
@@ -1363,7 +1411,7 @@ if ($diff && !$difflink && $oppvaluta!='DKK') {
 						} else $title=NULL;
 					}
 				} elseif ($y==count($oppid) && abs($tmp)<0.01 && abs($dkksum) > 0.01 && $regnslut>=date("Y-m-d")) {
-					$title.="Klik for at regulere værdien i DKK fra ".dkdecimal($dkksum)." til ".dkdecimal($dkksum+$regulering)." pr. ".date("d-m-Y");
+					$title.="Klik for at regulere værdien i DKK fra ".dkdecimal($dkksum,2)." til ".dkdecimal($dkksum+$regulering,2)." pr. ".date("d-m-Y");
 					$tmp2="<a href=\"../includes/ret_valutadiff.php?bfdate=".date("Y-m-d")."&";
 					$tmp2.="valuta=$valuta&diff=$regulering&post_id=$oppid[$y]&dato_fra=$dato_fra&dato_til=$dato_til&";
 					$tmp2.="konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=".$returnpath."rapport.php\" ";
@@ -1375,7 +1423,7 @@ if ($diff && !$difflink && $oppvaluta!='DKK') {
 			}
 		}
 		if ($primoprint[$x]==0) {
-			$tmp=dkdecimal($kontosum);
+			$tmp=dkdecimal($kontosum,2);
 			print "<tr><td><br></td><td><br></td><td><br></td><td>Primosaldo<br></td><td><br></td><td><br></td><td><br></td><td><br></td><td align=right title=\"DKK sum $dkktmp\">$tmp<br></td></tr>\n";
 		}
 	}
@@ -1488,8 +1536,8 @@ function kontosaldo($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$konto
 			$oppkurs=$r2['valutakurs']*1;
 			if (!$oppkurs) $oppkurs=100;
 			$dkkamount=$amount;
-			if ($oppvaluta=='DKK') $belob=dkdecimal($amount);
-			else $belob = dkdecimal($amount*100/$oppkurs);
+			if ($oppvaluta=='DKK') $belob=dkdecimal($amount,2);
+			else $belob = dkdecimal($amount*100/$oppkurs,2);
 			$forfaldsdag=$r2['forfaldsdate'];
 			$transdate=$r2['transdate'];
 			if ($oppvaluta!='DKK' && $oppkurs!=100) { #postering foert i anden valuta end Debitors som er DKK
@@ -1502,11 +1550,11 @@ if (afrund($kontosum[$x],2)) {
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\"><td width=\"200px\">$kontonr[$x]</td><td>$firmanavn[$x]</td>";
-			$tmp=dkdecimal($kontosum[$x]);
+			$tmp=dkdecimal($kontosum[$x],2);
 			print "<td align=right> $tmp</td></tr>\n";
 }
 	}
-	$tmp=dkdecimal($totalsum);
+	$tmp=dkdecimal($totalsum,2);
 	print "<tr><td colspan=\"3\"><hr></td></tr>\n";
 	print "<tr><td><b>ialt</b></td><td  colspan=\"3\" align=\"right\"><b>$tmp</b><td></tr>\n";
 	print "</tbody></table>";

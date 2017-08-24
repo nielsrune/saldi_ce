@@ -248,7 +248,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="<cac:Contact>\n";
 	$l_retur.=oioubl_kontaktinfo($kontakt, "BuyerContact");
 #	$l_retur.="<cbc:Telephone>".$tlf."</cbc:Telephone>\n";
-#	$l_retur.="<cbc:ElectronicMail>".$email."</cbc:ElectronicMail>\n";
+	$l_retur.="<cbc:ElectronicMail>".$email."</cbc:ElectronicMail>\n";
 	$l_retur.="</cac:Contact>\n";
 	$l_retur.="</cac:Party>\n";
 	$l_retur.="</cac:AccountingCustomerParty>\n";
@@ -315,7 +315,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		if(!$beskrivelse) $beskrivelse=".";
 		$varenr=htmlspecialchars($varenr, ENT_QUOTES);
 		$enhed=htmlspecialchars($enhed, ENT_QUOTES);
-		$beskrivelse=htmlspecialchars($beskrivelse, ENT_QUOTES);
+		$beskrivelse=htmlspecialchars(strip_tags($beskrivelse), ENT_QUOTES);
 		$pris=$r_linje['pris']*1;
 		$antal=$r_linje['antal'];
 		if(!$antal) { #20150922

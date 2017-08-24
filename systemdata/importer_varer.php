@@ -1,29 +1,29 @@
-00<?php
-//                         ___   _   _   ___  _
-//                        / __| / \ | | |   \| |
-//                        \__ \/ _ \| |_| |) | |
-//                        |___/_/ \_|___|___/|_|
+<?php
+//                      ___   _   _   ___  _     ___  _ _
+//                     / __| / \ | | |   \| |   |   \| / /
+//                     \__ \/ _ \| |_| |) | | _ | |) |  <
+//                     |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------ systemdata/importer_varer.php ------------ lap 3.6.4 -- 2016-02-19 --
+// ------ systemdata/importer_varer.php ------------ lap 3.7.0 -- 2017-05-09 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2016 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------------
 // tilføjet vejl.pris til import.
 // 2014.02.01 Gjort søgning på eksisterende varenumre case uafhængig 20140201
@@ -32,6 +32,8 @@
 // 20151210 CA  Rettelse af stavefejl
 // 20160219 PHR Indsat "and art = 'K'" ved adresseopslag så den ikke fejlagtigt finder en kunde. 20160219 
 // 20160224 PHR Ændret $id til $vare_id. 
+// 20161015 PHR Eksisterende varenumre som er numeriske og starter med 0 findes nu selvom et 0'et er fjernet af f.eks et regneark. 20161015
+// 20170509 Tilføjet varemærke (trademark);
 
 @session_start();
 $s_id=session_id();
@@ -138,6 +140,12 @@ if ($feltnavn) {
 	$tmp = $_COOKIE['saldi_vareimp'];
 	$feltnavn=explode(";",$tmp);
 }
+$q=db_select("select varenr from varer",__FILE__ . " linje " . __LINE__); #20161015 -> 4 linjer
+while($r=db_fetch_array($q)){
+	$v_nr[$v]=$r['varenr'];
+	$v++;
+}
+
 print "<tr><td width='100%' align='center'><table width='100%' border='0' cellspacing='1' cellpadding='1'><tbody>\n";
 print "<form enctype='multipart/form-data' action='importer_varer.php' method='POST'>\n";
 #print "<tr><td colspan=6 width=100% align=center> $filnavn</td></tr>";
@@ -158,7 +166,7 @@ print "<input type='hidden' name='feltantal' value='$feltantal'>\n";
 print "&nbsp; <input type='submit' name='submit' value='Vis' />\n";
 
 #20140718
-$felt_navn=array("varenr","stregkode","beskrivelse","kostpris","salgspris","vejl.pris","notes","enhed","enhed2","forhold","gruppe","provisionsfri","leverandor","min_lager","max_lager","lokation","lukket","serienr","samlevare","delvare","trademark","	retail_price","special_price","	campaign_cost","tier_price","	open_colli_price","colli","	outer_colli","outer_colli_price","special_from_date","special_to_date","	komplementaer","circulate","operation","prisgruppe","tilbudgruppe","	rabatgruppe","dvrg","m_type","m_rabat","m_antal","folgevare","kategori","varianter","publiceret","indhold");
+$felt_navn=array("varenr","stregkode","varemærke","beskrivelse","kostpris","salgspris","vejl.pris","notes","enhed","enhed2","forhold","gruppe","provisionsfri","leverandor","min_lager","max_lager","lokation","lukket","serienr","samlevare","delvare","trademark","	retail_price","special_price","	campaign_cost","tier_price","	open_colli_price","colli","	outer_colli","outer_colli_price","special_from_date","special_to_date","	komplementaer","circulate","operation","prisgruppe","tilbudgruppe","	rabatgruppe","dvrg","m_type","m_rabat","m_antal","folgevare","kategori","varianter","publiceret","indhold");
 
 
 $felt_antal=count($felt_navn);
@@ -196,6 +204,7 @@ if ($fp) {
 	$kontonumre=array();
 	while (!feof($fp)) {
 		$skriv_linje=0;
+		$varenr=NULL;
 		if ($linje=fgets($fp)) {
 			$x++;
 			$skriv_linje=1;
@@ -207,7 +216,11 @@ if ($fp) {
 				$feltfejl[$y]=0;
 				$felt[$y]=trim($felt[$y]);
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
+				if ($feltnavn[$y]=='varenr') { #20161015
+					$varenr=trim($felt[$y]); 
+				}
 				if ($feltnavn[$y]=='vejl_pris' || $feltnavn[$y]=='vejl.pris') $feltnavn[$y]='retail_price';
+				if ($feltnavn[$y]=='varemærke') $feltnavn[$y]='trademark';
 				if ($feltnavn[$y]=='kostpris')	{
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
@@ -246,13 +259,18 @@ if ($fp) {
 #				} 
 			}
  		}
-		if ($skriv_linje==2) print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer/felter indeholder fejl og bliver ikke importeret')\">";
+		if ($skriv_linje==2 || in_array($varenr,$v_nr)) { #20161015
+			$txt='R&oslash;de linjer/felter indeholder fejl og bliver ikke importeret\n';
+			$txt.='Gr&oslash;nne linjer/felter er eksisterende varer og opdateres\n';
+			print "<BODY onLoad=\"javascript:alert('$txt')\">";
+		}
 		if ($skriv_linje>=1){
 			print "<tr>";
 #			print "<tr><td>$bilag</td>";
 			for ($y=0; $y<=$feltantal; $y++) {
 				if ($skriv_linje==2) $color="#e00000";
 				elseif ($feltfejl[$y]) $color="#e00000";
+				elseif (in_array($varenr,$v_nr)) $color="#00e000";	
 				else $color="#000000";
 				if ($feltnavn[$y]) {print "<td><span style=\"color: $color;\">$felt[$y]&nbsp;</span></td>";}
 				else {print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";}
@@ -322,6 +340,14 @@ transaktion('begin');
  #echo "delete from kontoplan where regnskabsaar='$regnskabsaar'<br>";
 #db_modify("delete from de where regnskabsaar='$regnskabsaar'");
 
+$v=0;
+$q=db_select("select id,varenr from varer",__FILE__ . " linje " . __LINE__);
+while($r=db_fetch_array($q)){
+	$v_id[$v]=$r['id'];
+	$v_nr[$v]=$r['varenr'];
+	$v++;
+}
+
 
 $fp=fopen("$filnavn","r");
 if ($fp) {
@@ -339,6 +365,7 @@ if ($fp) {
 			$skriv_linje=1;
 			if ($charset=='UTF-8' && $tegnset!='UTF-8') $linje=utf8_encode($linje);
 			elseif ($charset!='UTF-8' && $tegnset=='UTF-8') $linje=utf8_decode($linje);
+			$vare_id=0;
 			$felt=array();
  			$felt = opdel($splitter, $linje);
  			for ($y=0; $y<count($felt); $y++) {
@@ -352,6 +379,7 @@ if ($fp) {
 				}
 				if ($feltnavn[$y]=='vejl.pris') $feltnavn[$y]='retail_price';
 				if ($feltnavn[$y]=='vejl.pris') $feltnavn[$y]='retail_price';
+				if ($feltnavn[$y]=='varemærke') $feltnavn[$y]='trademark';
 				if ($feltnavn[$y]=='lokation') $feltnavn[$y]='location';
 				if ($feltnavn[$y]=='kostpris')	{
 					$tmp=str_replace(",","",$felt[$y]);
@@ -414,8 +442,26 @@ if ($fp) {
 			$vare_b=$vare_b.",''";
 			if ($varenr && $r=db_fetch_array(db_select("select id from varer where varenr='$varenr' or lower(varenr)='".strtolower($varenr)."' or upper(varenr)='".strtoupper($varenr)."'",__FILE__ . " linje " . __LINE__))) { #20140201
 				$vare_id=$r['id'];
+			}
+			if (!$vare_id) {			
+				for ($v=0;$v<count($v_id);$v++) { #20161015
+					if ($v_nr[$v]==$varenr)	$vare_id=$v_id[$v];
+				}
+			}
+			if (!$vare_id) {
+				for ($v=0;$v<count($v_id);$v++) { #20161015
+					if (strtolower($v_nr[$v])==strtolower($varenr))	$vare_id=$v_id[$v];
+				}
+			}
+			If (!$vare_id && is_numeric($varenr)) { #20161015
+				for ($v=0;$v<count($v_id);$v++) {
+				 if (is_numeric($v_nr[$v]) && $v_nr[$v]*1==$varenr*1)	$vare_id=$v_id[$v];
+				}
+			}
+			if ($vare_id) {
 				$upd_antal++;
-				db_modify("update varer set $upd where id='$vare_id'",__FILE__ . " linje " . __LINE__);
+				$qtxt="update varer set $upd where id='$vare_id'";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			} else {
 				$imp_antal++;
 				db_modify("insert into varer($vare_a) values ($vare_b)",__FILE__ . " linje " . __LINE__);
@@ -427,8 +473,8 @@ if ($fp) {
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			if ($r['transdate'] != $dd && $r['kostpris'] != $kostpris) $qtxt="insert into kostpriser (vare_id,kostpris,transdate) values ('$vare_id','$kostpris','$dd')";
 			elseif ($r['transdate'] == $dd && $r['kostpris'] != $kostpris) $qtxt="update kostpriser set kostpris=$kostpris where id = '$r[id]'";
+			else $qtxt=NULL;
 			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
-			
 			if ($leverandor && $vare_id) {
 				if ($r=db_fetch_array(db_select("select id from vare_lev where vare_id='$vare_id' and lev_id='$leverandor'",__FILE__ . " linje " . __LINE__))) {
 					db_modify("update vare_lev set kostpris='$kostpris' where id='$r[id]'",__FILE__ . " linje " . __LINE__);

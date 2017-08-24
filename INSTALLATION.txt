@@ -16,10 +16,7 @@ Systemkrav til klient:
 Webbrowser hvor cookies og JavaScript er slået til og som understøtter nye 
 vinduer og popop-vinduer. 
 
-Saldi er udviklet til og testet med webbrowserne:
-- Firefox 3.0
-- Microsoft Internet Explorer 7.0
-- Opera 9.0
+Saldi er udviklet til og testet med Google Chrome 
  
 Dog skulle de fleste andre browsere også virke problemfrit.
 
@@ -127,6 +124,7 @@ Selve installeringen:
     "Vejledning" på hovedsiden.
 
 =====================================================================
-Senest ændret 2009-05-19 af Claus Agerskov <ca@saldi.dk>
+Senest ændret 2017-02-09 af Peter Holten Rude <phr@saldi.dk>
+Skrevet af Claus Agerskov <ca@saldi.dk>
 
 © Saldi - http://www.saldi.dk/

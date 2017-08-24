@@ -1,6 +1,10 @@
 <?php
-
-// ------- finans/listeangivelse.php ------------- lap 3.4.3 --- 2014-07-29 ---
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// ------- finans/listeangivelse.php ------------- lap 3.5.6 --- 2016-06-02 ---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -19,12 +23,13 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------------
 // 
 // 20130210 Break ændret til break 
 // 20140729 CA  - Listeanvisning ændres fra kvartal til måned - ca. Søg 20140729
-
+// 20160602 PHR	- Tilføjet hhv "$euvarekonto &&" & "$euydelseskonto &&" da der blev lavet lister på varelinjer uden kontonr.  
+// 20160824 PHR	- Hack til at vise lister hvis $euvarekonto mm ikke er udfyldt. #20160824
 
 @session_start();
 $s_id=session_id();
@@ -75,7 +80,6 @@ while ($row=db_fetch_array($query)) {
         $euvarekonto=$row['box3'];
         $euydelseskonto=$row['box4'];
 }
-
 $debughtml.="<p>[".$euvarekonto."|".$euydelseskonto."]</p>\n";
 
 if ($_POST){ # 20140729 Start afsnit 1
@@ -91,6 +95,10 @@ if ($_POST){ # 20140729 Start afsnit 1
 
 list($liste_md, $liste_aar) = explode(".", $listeperiode);
 
+if ( $liste_md > 12 ) {
+	$liste_md=$liste_md-12;
+	$liste_aar++;
+}
 if ( $liste_md < 10 ) $liste_md="0".$liste_md; 
 $liste_startdato=$liste_aar."-".$liste_md."-01";
 $liste_slutdato=$liste_aar."-".$liste_md."-".sidste_dag_i_maaned($liste_aar, $liste_md);
@@ -123,28 +131,26 @@ while ($row = db_fetch_array($query)) {
 	$debughtml.= "\n<table>\n";
 	$debughtml.= "<tr><th>Dato</th><th>Cvrnr.</th><th>Bel&oslash;b</th><th>Valuta</th></tr>\n";
 #cho "select id, fakturadate, kontonr, sum, cvrnr, valuta, valutakurs from ordrer where konto_id = '$row[id]' and fakturadate >= '$kvartal_startdato' and fakturadate <= '$kvartal_slutdato' and status = '4' order by cvrnr<br>";
-	$q=db_select("select id, fakturadate, kontonr, sum, cvrnr, valuta, valutakurs from ordrer where konto_id = '$row[id]' and fakturadate >= '$liste_startdato' and fakturadate <= '$liste_slutdato' and status = '4' order by cvrnr",__FILE__ . " linje " . __LINE__); # 20140729 afsnit 2
+	$q=db_select("select id, fakturadate, kontonr,firmanavn, sum, cvrnr, valuta, valutakurs from ordrer where konto_id = '$row[id]' and fakturadate >= '$liste_startdato' and fakturadate <= '$liste_slutdato' and status = '4' order by cvrnr",__FILE__ . " linje " . __LINE__); # 20140729 afsnit 2
 	while ($r = db_fetch_array($q)) {
 		$fakturaer++;
-		if ( $r[cvrnr] ) { 
+		if ( $r['cvrnr'] ) { 
 			$modtagercvrnr=$r['cvrnr'];
 		} else {
 			$modtagercvrnr=$debitorcvrnr;
 		}
+		$modtagerfirma=$r['firmanavn'];
 		$modtagerlandekode = strtoupper(substr($modtagercvrnr, 0, 2));
 		$modtagercvrnr = strtoupper(substr($modtagercvrnr, 2));
-#		$modtagercvrnr = strtoupper(preg_replace('/W', '', preg_replace('_', '', $modtagercvrnr)));
-#cho "$modtagerlandekode $modtagercvrnr>br>";
-		# EU-vare- og ydelseskoeb
-#cho "select ordrelinjer.pris as pris, ordrelinjer.antal as antal, ordrelinjer.rabat as rabat, grupper.box11 as konto from ordrelinjer, varer, grupper where ordrelinjer.ordre_id = '$r[id]' and ordrelinjer.varenr=varer.varenr and varer.gruppe=grupper.kodenr and grupper.art='VG'<br>";
-		$qq=db_select("select ordrelinjer.pris as pris, ordrelinjer.antal as antal, ordrelinjer.rabat as rabat, grupper.box11 as konto from ordrelinjer, varer, grupper where ordrelinjer.ordre_id = '$r[id]' and ordrelinjer.varenr=varer.varenr and varer.gruppe=grupper.kodenr and grupper.art='VG'",__FILE__ . " linje " . __LINE__);
+		$qq=db_select("select ordrelinjer.pris as pris, ordrelinjer.antal as antal, ordrelinjer.rabat as rabat, grupper.box12 as konto from ordrelinjer, varer, grupper where ordrelinjer.ordre_id = '$r[id]' and ordrelinjer.varenr=varer.varenr and varer.gruppe=grupper.kodenr and grupper.art='VG'",__FILE__ . " linje " . __LINE__);
 		while ($rr = db_fetch_array($qq)) {
-#cho $rr[konto]." a ".$rr[antal]." a ".$rr[pris]." $euvarekonto $euydelseskonto<br>";
 			$debughtml.="<tr><td>".$rr['antal']." a ".$rr['pris']." (-".$rr['rabat']."</td><td>Konto: ".$rr['konto']."</td></tr>\n";
-			if ( $rr['konto'] == $euvarekonto ) {
+			if (( $euvarekonto && $rr['konto'] == $euvarekonto) ||  ($rr['konto'] && $rr['konto'] != $euydelseskonto) || (!$rr['konto'] && !$euydelseskonto)) { #20160824 #20160602
 				$varesumdkk+= number_format($r['valutakurs']*$rr['pris']*$rr['antal']*((100-$rr['rabat'])/100)/100,0,'','');
 			}	
-			if ( $rr['konto'] == $euydelseskonto ) $ydelsessumdkk+= number_format($r['valutakurs']*$rr['pris']*$rr['antal']*((100-$rr['rabat'])/100)/100,0,'','');
+			if ($euydelseskonto && $rr['konto'] == $euydelseskonto ) { #20160602
+				$ydelsessumdkk+= number_format($r['valutakurs']*$rr['pris']*$rr['antal']*((100-$rr['rabat'])/100)/100,0,'','');
+			}
 		}
 
 
@@ -171,7 +177,7 @@ while ($row = db_fetch_array($query)) {
 			$linjebg=$bgcolor5; $color='#000000';
 		}
 
-		$listehtml.= "<tr style='background: $linjebg'><td style='font-weight: bold; background: $linjebg; color: $color'>".$modtagerlandekode."</td><td style='font-weight: bold; background: $linjebg; color: $color'>".$modtagercvrnr."</td><td style='font-weight: bold; background: $linjebg; color: $color'>".$varesumdkk."</td><td style='font-weight: bold; background: $linjebg; color: $color'>&nbsp;</td><td style='font-weight: bold; background: $linjebg; color: $color'>".$ydelsessumdkk."</td></tr>\n";
+		$listehtml.= "<tr style='background: $linjebg'><td style='font-weight: bold; background: $linjebg; color: $color'>".$modtagerlandekode."</td><td style='font-weight: bold; background: $linjebg; color: $color'>".$modtagercvrnr."</td><td>".$modtagerfirma."</td><td style='font-weight: bold; background: $linjebg; color: $color'>".$varesumdkk."</td><td style='font-weight: bold; background: $linjebg; color: $color'>&nbsp;</td><td style='font-weight: bold; background: $linjebg; color: $color'>".$ydelsessumdkk."</td></tr>\n";
 	}
 	$debughtml.= "</table>\n\n";
 } 
@@ -208,6 +214,7 @@ if ( $antal_poster > 0 ) {
 	$bodyhtml.="<tr>\n";
 	$bodyhtml.="<td>Landekode for <br />varemodtager <strong>(3)</strong></td>\n";
 	$bodyhtml.="<td>Varemodtagerens <br />moms-nr.<strong>(4)</strong></td>\n";
+	$bodyhtml.="<td>Varemodtagerens <br />navn</td>\n";
 	$bodyhtml.="<td>Samlet varesalg mv. <br />i danske kroner <strong>(5)</strong></td>\n";
 	$bodyhtml.="<td style=\"color:#666\" title=\"Trekantshandel er endnu ikke underst&oslash;ttet.\">";
 	$bodyhtml.="Bel&oslash;b for trekants-<br />handel i danske kroner <strong>(6)</strong></td>\n";

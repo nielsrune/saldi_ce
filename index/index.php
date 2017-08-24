@@ -1,5 +1,10 @@
 <?php
-// -----------index/index.php-----------lap 3.4.8------2015-01-02---
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// -----------index/index.php-----------lap 3.6.6------2016-11-04---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -16,15 +21,15 @@
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
-// 20140106	Tilføjet link til glemt kode
-// 20140428 Flyttet timestamp 3 linjer op (før </form>) (Forumbruger nielsrune) Søg 20140428    
+// 20140321	Tilføjet link til glemt kode
+// 20161104	Div ændringer relateret til bedre sikkerhed
 
-$regnskab=''; $navn=''; $kode=''; 
-$css="../css/standard.css";
+$regnskab=''; $brugernavn=''; $kode=''; 
+$css="../css/login.css";
 
 if (!file_exists("../includes/connect.php")) {
 	print "<meta http-equiv=\"refresh\" content=\"0;url=install.php\">\n";
@@ -37,11 +42,23 @@ if (!file_exists("../includes/connect.php")) {
 include("../includes/connect.php");
 include("../includes/db_query.php");
 include("../includes/std_func.php");
-include("../includes/version.php");
 
-if (isset ($_GET['navn'])) $navn = html_entity_decode(stripslashes($_GET['navn']),ENT_COMPAT,$charset);
+if (isset ($_GET['navn'])) $brugernavn = html_entity_decode(stripslashes($_GET['navn']),ENT_COMPAT,$charset);
 if (isset ($_GET['regnskab'])) $regnskab = html_entity_decode(stripslashes($_GET['regnskab']),ENT_COMPAT,$charset);
 if (isset ($_GET['tlf'])) $kode = stripslashes($_GET['tlf']);
+$fejltxt = if_isset($_POST['fejltxt']);
+$vent = if_isset($_POST['vent']);
+if (!$regnskab && !$brugernavn) {
+	if (isset($_POST['regnskab'])) $regnskab = $_POST['regnskab'];
+	if (isset($_POST['brugernavn'])) $brugernavn = $_POST['brugernavn'];
+	IF (isset($_COOKIE['saldi_huskmig'])) {
+		list($huskmig,$r,$b)=explode(chr(9),$_COOKIE['saldi_huskmig']);
+		if ($huskmig) $huskmig="checked='checked'";
+		else $huskmig=NULL; 
+		if (!$regnskab) $regnskab = $r;
+		if (!$brugernavn) $brugernavn = $b;
+	} else $huskmig=NULL;
+}
 		
 if (isset($brug_timestamp)) {
  	?>
@@ -63,79 +80,65 @@ else $charset="ISO-8859-1";
 if (file_exists("../doc/vejledning.pdf")) $vejledning="../doc/vejledning.pdf";
 else $vejledning="http://saldi.dk/dok/komigang.html";
 
-PRINT "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n
-<html>\n
-<head><title>Saldi login</title>";
-if ($css) PRINT "<link rel=\"stylesheet\" type=\"text/css\" href=\"$css\">";
-print "<meta http-equiv=\"content-type\" content=\"text/html; charset=$charset\">\n<meta http-equiv=\"content-language\" content=\"da\">\n</head>\n";
-print "<body><table style=\"width:100%;height:100%;\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";# Tabel 1 ->
-print "<tr><td align=\"center\" valign=\"top\">";
-print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>"; #Tabel 1.1 ->
-print "<tr><td  style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;background:url(../img/grey1.gif);\" width=\"45%\"> Ver $version</td>";
-print "<td style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;;background:url(../img/grey1.gif)\" width=\"10%\" align = \"center\"> <a href=\"$vejledning\" target=\"_blank\">Vejledning</a></td>\n";
-print "<td style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;;background:url(../img/grey1.gif)\" width=\"45%\" align = \"right\">&nbsp;</td></tr>\n";
-print "</tbody></table></td></tr><tr><td align=\"center\" valign=\"middle\">\n"; # <- tabel 1.1 slut
-print "<table width=\"350\" align=\"center\" border=\"5\" cellspacing=\"5\" cellpadding=\"5\"><tbody>"; # tabel 1.2 ->
-print "<tr><td><FORM name=\"login\" METHOD=\"POST\" ACTION=\"login.php\" onSubmit=\"return handleLogin(this);\"><table width=\"100%\" align=center border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>"; # tabel 1.2.1 ->
-if (isset($mastername)&&$mastername) $tmp="<big><big><big><b>$mastername</b></big></big></big>";   
-elseif (strpos($_SERVER['PHP_SELF'],"beta")) $tmp="<big><big><big><b>!!! BETA !!!</b></big></big></big>";
-else $tmp="<big><big><big><b>SALDI</b></big></big></big>";
-print "<tr><td colspan=\"2\">";
-print "<table width=\"100%\" border=\"0\"><tbody><tr><td width=\"10%\">"; # tabel 1.2.1.1 ->
-print "";
-if (file_exists("../img/logo.png")) print "<img style=\"border:0px solid;width:50px;heigth:50px\" alt=\"\" src=\"../img/logo.png\">";
-print "</td><td width=\"80%\" align=\"center\">$tmp</td><td width=\"10%\" align=\"right\">";
-if (file_exists("../img/logo.png")) print "<img style=\"border:0px solid;width:50px;heigth:50px\" alt=\"\" src=\"../img/logo.png\"></td></tr>\n";
-print "</tbody></table></td></tr>"; # <- tabel 1.2.1.1
-print "<tr><td colspan=\"2\"><hr></td></tr>\n";
-print "<tr><td>".findtekst(322,$sprog_id)."</td>";
-print "<td width=\"2%\">";
-if ($login=="dropdown") {
-	print "<select name=regnskab>";
-	$query = db_select("select regnskab from regnskab order by regnskab asc",__FILE__ . " linje " . __LINE__);
-	if (db_num_rows($query)==0)	{
-		print "<option>Ingen regnskaber oprettet</option>";
-		} else {
-			while ($row = db_fetch_array($query))
-			print "<option>".$row['regnskab']."</option>";
-			print "</select>";
-	}
-} elseif (($login=="cookie")&&(!$navn)){
-	if (isset($_COOKIE['saldi_std'])) {
-		$regnskab=stripslashes($_COOKIE['saldi_std']);
-	}
-	print "<input class=\"inputbox\" style=\"width:160px\" type=\"TEXT\" NAME=\"regnskab\" value=\"$regnskab\">";
-} else print"<input class=\"inputbox\" style=\"width:160px\" type=\"TEXT\" NAME=\"regnskab\" value=\"$regnskab\">";
-print "</tr><tr><td>".findtekst(323,$sprog_id)."</td><td><INPUT class=\"inputbox\" style=\"width:160px\" TYPE=\"TEXT\" NAME=\"login\" value=\"$navn\"></td></tr>\n";
-print "<tr><td>".findtekst(324,$sprog_id)."</td>";
-print	"<td><INPUT class=\"inputbox\" style=\"width:160px\" TYPE=\"password\" NAME=\"password\" value=\"$kode\"></td></tr>\n";
-print "<tr><td colspan=\"2\" align=\"center\"><br></td></tr>\n";
-print "<tr><td colspan=\"2\" align=\"center\"><input type=\"submit\" name=\"pwtjek\" value=\"Login\"></td></tr>\n";
-if (isset($mastername) && strtolower($mastername)=='rotary') {
-	print "<tr><td colspan=\"2\" align=center>".findtekst(325,$sprog_id)."</td></tr>\n";
+PRINT "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";
+print "<html>\n";
+print "<head>\n";
+print "<title>$title</title>\n";
+if ($css) PRINT "<link rel=\"stylesheet\" type=\"text/css\" href=\"$css\">\n";
+print "<!--[if lt IE 9]>
+		<script src=\"http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE9.js\"></script>
+		<![endif]-->\n";
+print "<meta http-equiv=\"content-type\" content=\"text/html; charset=$charset\"></head>\n";
+if (isset($mastername)&&$mastername) $host="$mastername";   
+elseif (strpos($_SERVER['PHP_SELF'],"beta")) $host="!!! BETA !!!";
+elseif (!file_exists("../sager/sager.php")) $host="SALDI";
+print "<body>\n";
+print "	<div id=\"main\">\n";    				
+print "		<div class=\"loginHolder\">\n";
+print "			<div class=\"loginBox\">\n";
+print "				<div class=\"loginForm\">\n";    
+print "					<form name=\"login1\" METHOD=\"POST\" ACTION=\"login.php\" onSubmit=\"return handleLogin(this);\">\n";
+print "						<input type=\"hidden\" name=\"vent\" value=\"$vent\">\n";
+if ($fejltxt) {
+	print "<label style=\"text-align:center;color:red;\">$fejltxt</label>\n";
+	print "<label><br></label>\n";
+	print "<label><hr></label>\n";
+	print "<label><br></label>\n";
 }
-print "<input type=\"hidden\" name=\"timestamp\" value=\"".date("U")."\">"; #20140428
-print "</tbody></table></FORM></td></tr>\n"; # <- tabel 1.2.1
-print "<tr><td colspan=\"2\" align=\"center\">
-		<a href=\"glemt_kode.php\">Glemt adgangskode</a>
-		</td></tr>\n";
-print	"</tbody></table></td></tr>\n"; # <- tabel 1.2
-print "<tr><td align=\"center\" valign=\"bottom\">";
-print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody><tr>"; # tabel 1.3 ->
-print "<td width=\"20%\" style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;background:url(../img/grey1.gif);\" align=\"left\">&nbsp;Copyright&nbsp;&copy;$copyright&nbsp;DANOSOFT&nbsp;ApS</td>";
-print "<td width=\"60%\" style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;background:url(../img/grey1.gif);\" align=\"center\">Et <a href=\"http://www.saldi.dk\" target=\"blank\">SALDI</a> regnskab</td>";
-print "<td width=\"20%\" style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;background:url(../img/grey1.gif);\" align=\"left\"><br></td>";
-print "</tr></tbody></table>"; # <- tabel 1.3
-print "</td></tr>\n";
-print "</tbody></table>"; # <- tabel 1
+print "						<label for=\"Regnskab\">Regnskab:</label>\n";
+print "						<input class=\"textinput\" type=\"text\" id=\"regnskab\" name=\"regnskab\" value=\"$regnskab\" tabindex=\"1\">\n";
+print "						<label for=\"login\">Brugernavn:</label>\n";
+print "						<input class=\"textinput\" type=\"text\" id=\"login\" name=\"brugernavn\" value=\"$brugernavn\" tabindex=\"2\">\n";
+print "						<label for=\"password\">Password:</label>\n";
+print "						<input class=\"textinput\" type=\"password\" id=\"password\" name=\"password\"  value=\"$kode\" tabindex=\"3\">\n";
+print "						<div class=\"loginAction\">\n";
+print "							<div class=\"flleft\">\n";
+print "								<label for=\"husk_mig\">\n";
+print "								<input type=\"checkbox\" id=\"husk_mig\"name=\"huskmig\" $huskmig tabindex=\"4\">\n";
+print "								Husk mig</label>\n";
+print "								<a class=\"forgotpass\" href=\"glemt_kode.php\" tabindex=\"5\">Glemt adgangskode?</a>\n";
+print "							</div><!-- end of flleft -->\n";
+print "							<input class=\"button blue flright\" type=\"submit\" value=\"Login\" alt=\"Login\" title=\"Login\" tabindex=\"6\">\n";
+print "							<div class=\"clearfix\"></div>\n";
+print "						</div><!-- end of loginAction -->\n";        
+print "					</form>\n";
+print "				</div><!-- end of loginForm -->\n";
+print "			</div><!-- end of loginBox -->\n";
+print	"		</div><!-- end of loginHolder -->\n";
+print "	</div><!-- end of main -->\n";
+#print "	<div id=\"footer\"><p>Pluder | Pluder</p></div>\n";
+
+
+
+
 if (!isset($_COOKIE['saldi_std'])) {
-	print "<script language=\"javascript\" type=\"text/javascript\">";
-	print "document.login.regnskab.focus();";
-	print "</script>";
+	print "<script language=\"javascript\" type=\"text/javascript\">\n";
+	print "document.login.regnskab.focus();\n";
+	print "</script>\n";
 } else {
-	print "<script language=\"javascript\" type=\"text/javascript\">";
-	print "document.login.login.focus();";
-	print "</script>";
+	print "<script language=\"javascript\" type=\"text/javascript\">\n";
+	print "document.login.login.focus();\n";
+	print "</script>\n";
 }
 ?>
 </body></html>

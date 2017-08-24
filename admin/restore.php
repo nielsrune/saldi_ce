@@ -1,25 +1,35 @@
 <?php
-// -----------------------admin/restore.php------------lap 3.2.4-------2011-10-25-----------
-// LICENS
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
 //
+// -----------------------admin/restore.php------------lap 3.5.6-------2016-06-09-----------
+// LICENS
+//		if ($bordnr) $bordnr=$_COOKIE['saldi_bordnr'];
+
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
 // af denne licens eller en senere version efter eget valg
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// 
+// Programmet må ikke uden forudgående skriftlig aftale anvendes
+// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2011 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
+// 20160609 PHR - if ($POST) fungerer ikke mere, hvid ikke det anfiges hvad der postes.  
 
 @session_start();
 $s_id=session_id();
-ini_set('upload_max_filesize', '100M');
 
 ?>
 <script LANGUAGE="JavaScript">
@@ -72,8 +82,7 @@ if ($menu=='T') {
 	print "</tbody></table>";
 	print "</td></tr>";
 }
-
-if($_POST) {
+if($_FILES['uploadedfile']['name'] || $_POST['filnavn']) { # 20160609
 	if ($restore=if_isset($_POST['restore'])) {
 		if ($restore=='OK') {
 			$backup_encode=if_isset($_POST['backup_encode']);
@@ -152,7 +161,7 @@ function upload(){
 
 	print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print "<form enctype=\"multipart/form-data\" action=\"restore.php\" method=\"POST\">";
-	print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"99999999\">";
+#	print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"99999999\">";
 	print "<tr><td width=100% align=center><br></td></tr>";
 	print "<tr><td width=100% align=center>Bem&aelig;rk at alle brugere skal v&aelig;re logget ud</td></tr>";
 	print "<tr><td width=100% align=center><br></td></tr>";

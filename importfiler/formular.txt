@@ -348,6 +348,49 @@
 7	5	Hermed fremsendes rykker		2	0	0	0	10	0					Dansk
 8	5	Rykker		1	0	0	0	10	0					Dansk
 8	5	Hermed fremsendes rykker		2	0	0	0	10	0					Dansk
+9	1			15	192	191	192	0	0					Dansk
+9	1			15	44	191	44	0	0					Dansk
+9	1			201	-9	201	274	0	0					Dansk
+9	1			5	-9	201	-9	0	0					Dansk
+9	1			5	-9	5	274	0	0					Dansk
+9	1	LOGO		84	249	0	-16	0	0					Dansk
+9	1			5	274	201	274	0	0					Dansk
+9	1			15	186	191	186	0	0					Dansk
+9	2	Att.: $ordre_kontakt	V	24	213	0	-16	10	0	Helvetica			A	Dansk
+9	2	Deres ordre ....... :	V	24	204	0	-16	10	0	Helvetica			A	Dansk
+9	2	$ordre_kundeordnr;	V	58	204	0	-16	10	0	Helvetica			A	Dansk
+9	2	Varenummer	V	15	188	0	-16	10	0	Helvetica			A	Dansk
+9	2	Tekst	V	45	188	0	-16	10	0	Helvetica			A	Dansk
+9	2	Leveres	H	137	188	0	-16	10	0	Helvetica			A	Dansk
+9	2	Plukliste $ordre_ordrenr	V	15	261	0	-16	15	0	Helvetica	on		A	Dansk
+9	2	$ordre_felt_1;	V	58	208	0	-16	10	0	Helvetica			A	Dansk
+9	2	Leveret	V	156	188	0	-16	10	0	Helvetica			A	Dansk
+9	2	Telefon:. $egen_tlf * Fax: $egen_fax * $egen_web * E-mail: $egen_email  	C	105	11	0	-16	8	0	Helvetica			A	Dansk
+9	2	$eget_firmanavn * $egen_addr1 * DK-$eget_postnr $eget_bynavn 	C	105	14	0	-16	8	0	Helvetica			A	Dansk
+9	2	Initialer	H	191	188	0	-16	10	0	Helvetica			A	Dansk
+9	2	$ordre_addr1	V	24	236	0	-16	10	0	Helvetica	on		A	Dansk
+9	2	$ordre_firmanavn	V	24	241	0	-16	10	0	Helvetica	on		A	Dansk
+9	2	Dato	V	140	234	0	-16	10	0	Helvetica			A	Dansk
+9	2	................ :	H	166	234	0	-16	10	0	Helvetica			A	Dansk
+9	2	$ordre_ordredate;	H	191	234	0	-16	10	0	Helvetica			A	Dansk
+9	2	$ordre_addr2;	V	24	232	0	-16	10	0	Helvetica	on		A	Dansk
+9	2	Side	V	140	230	0	-16	10	0	Helvetica			A	Dansk
+9	2	................ :	H	166	230	0	-16	10	0	Helvetica			A	Dansk
+9	2	$formular_side	H	191	230	0	-16	10	0	Helvetica			A	Dansk
+9	2	$ordre_postnr $ordre_bynavn	V	24	228	0	-16	10	0	Helvetica	on		A	Dansk
+9	2	Konto	V	140	226	0	-16	10	0	Helvetica			A	Dansk
+9	2	.............. :	H	166	226	0	-16	10	0	Helvetica			A	Dansk
+9	2	$ordre_kontonr	H	191	226	0	-16	10	0	Helvetica			A	Dansk
+9	2	Ordre	V	140	222	0	-16	10	0	Helvetica			A	Dansk
+9	2	.............. :	H	166	222	0	-16	10	0	Helvetica			A	Dansk
+9	2	$ordre_ordrenr	H	191	222	0	-16	10	0	Helvetica			A	Dansk
+9	2	Deres ref ........... :	V	24	208	0	-16	10	0	Helvetica			A	Dansk
+9	3	generelt		26	179	6	-16	0	0					Dansk
+9	3	_______	H	191	-16	0	-16	9	0	Helvetica				Dansk
+9	3	_______	C	163	-16	0	-16	9	0	Helvetica				Dansk
+9	3	leveres	V	137	-16	0	-16	9	0	Helvetica				Dansk
+9	3	beskrivelse	V	45	-16	52	-16	9	0	Helvetica				Dansk
+9	3	varenr	V	15	-16	0	-16	9	0	Helvetica				Dansk
 11	2	Kontoudtog		23	220	0	0	12	0	Helvetica	on		A	Dansk
 11	2	$adresser_postnr; $adresser_bynavn		23	236	0	0	10	0	Helvetica			A	Dansk
 11	2	Forfaldsdato	H	140	190	0	0	10	0	Helvetica	on		A	Dansk

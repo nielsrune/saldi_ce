@@ -2,7 +2,7 @@
 	@session_start();
 	$s_id=session_id();
 
-// --------------debitor/levering.php--------lap 3.2.9-------2013.05.08--------------
+// --------------debitor/levering.php--------lap 3.5.6-------2016.09.13--------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -21,10 +21,11 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2004-2013 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2013.05.06 Rettet lidt i fejlhåndtering.
 // 2013.05.08 Tilføjet "and status < 2" så status ikke bliver sat tilbage ved klik på tilbagenap på mus.
+// 2016.09.13 Tilføjet oioubl Søg 20160913
 
 $id=NULL;	
 if (isset($_GET['id'])) $id=($_GET['id']);
@@ -40,13 +41,14 @@ if ($id && $id>=1) {
 	$genfakt=if_isset($_GET['genfakt']);
 	$pbs=if_isset($_GET['pbs']);
 	$mail_fakt=if_isset($_GET['mail_fakt']);
+	$oioubl=if_isset($_GET['oioubl']); #20160913
 	transaktion("begin");
 	$svar=levering($id,$hurtigfakt,$genfakt,0);
 	if ($svar=='OK') {
 		transaktion("commit");
 		if ($hurtigfakt=='on') {
 			db_modify("update ordrer set status=2 where id='$id' and status<2",__FILE__ . " linje " . __LINE__);
-			print "<meta http-equiv=\"refresh\" content=\"0;URL=bogfor.php?id=$id&genfakt=$genfakt&mail_fakt=$mail_fakt&pbs=$pbs\">";
+			print "<meta http-equiv=\"refresh\" content=\"0;URL=bogfor.php?id=$id&genfakt=$genfakt&mail_fakt=$mail_fakt&pbs=$pbs&oioubl=$oioubl\">"; #20160913
 			exit;
 		} else print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	} else print "<BODY onLoad=\"javascript:alert('$svar')\">";

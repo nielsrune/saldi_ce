@@ -1,28 +1,34 @@
 <?php
-// -----------debitor/rykker.php---------lap 3.4.3-------2014-07-07--------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -----------debitor/rykker.php---------lap 3.6.7-------2017-03-03--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20140628 - Diverse rettelser da rykkergebyr altid vistes i DKK Søg 20140628
 // 20140707 - Opdatering virkede kun når der blev ændret valuta 20140707
 // 20140903 - Opdatering slettede beskrivelse ved bogført rykker 20140903  
+// 20170303	-	Tilføjet inkasso - Søg inkasso
 
 @session_start();
 $s_id=session_id();
@@ -36,8 +42,18 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 	
+$inkasso=if_isset($_POST['inkasso']);
+$mail_fakt=if_isset($_POST['mail_fakt']);
+$submit=if_isset($_POST['submit']);
 $rykker_id=if_isset($_GET['rykker_id']);
-if ($_POST['submit']) {
+
+if ($rykker_id && $inkasso) {
+	db_modify("update ordrer set felt_5 = 'inkasso' where id='$rykker_id'",__FILE__ . " linje " . __LINE__);
+	$felt_5='inkasso';
+	#cho "update ordrer set felt_5 = 'inkasso' where id = '$rykker_id'<br>";
+	#xit;
+}
+if ($submit || $inkasso) {
 	$linjeantal=if_isset($_POST['linjeantal']);
 	if (!$rykker_id) $rykker_id=if_isset($_POST['rykker_id']);
 	$r=db_fetch_array(db_select("select status from ordrer where id = '$rykker_id'",__FILE__ . " linje " . __LINE__)); #20140903
@@ -49,10 +65,10 @@ if ($_POST['submit']) {
 	$kontakt=db_escape_string(trim($_POST['kontakt']));
 	$email=db_escape_string(trim($_POST['email']));
 	$valuta=trim($_POST['valuta']);
+	if (!isset($felt_5)) $felt=trim($_POST['felt_5']);
 	$ny_valuta=trim($_POST['ny_valuta']); #21040628
-	if (strpos($email,"@") && strpos($email,".") && strlen($email)>5) $mail_fakt = $_POST['mail_fakt'];
-	elseif($_POST['mail_fakt'])	{
-		$mail_fakt='';
+	if ($mail_fakt && (!strpos($email,"@") || !strpos($email,".") || !strlen($email)>5)) { 
+		$mail_fakt=NULL;
 		print "<BODY onLoad=\"javascript:alert('e-mail ikke gyldig')\">";
 	}
 	if ($ny_valuta != $valuta) { #21040628 ->
@@ -78,14 +94,13 @@ if ($_POST['submit']) {
 			}
 		}
 		db_modify("update ordrelinjer set pris =pris*$valutakurs/$ny_valutakurs where varenr != '' and varenr is not NULL and ordre_id='$rykker_id'",__FILE__ . " linje " . __LINE__);
-		db_modify("update ordrer set valuta ='$ny_valuta',valutakurs ='$ny_valutakurs' where id='$rykker_id'",__FILE__ . " linje " . __LINE__);
+		db_modify("update ordrer set valuta ='$ny_valuta',valutakurs ='$ny_valutakurs',felt_5='$felt_5'  where id='$rykker_id'",__FILE__ . " linje " . __LINE__);
 	}
 	#20140707
 	db_modify("update ordrer set email ='$email',mail_fakt='$mail_fakt',kontakt='$kontakt' where id='$rykker_id'",__FILE__ . " linje " . __LINE__);
 	if ($submit=="Send" && $mail_fakt) {
 		#	print "<BODY onLoad=\"return confirm('Dokumentet sendes pr. mail til $email')\">";
 	}
-	
 	if ($submit=="Slet valgte") {
 		$rykkerbox=$_POST['rykkerbox'];
 		$slettet=0;
@@ -96,7 +111,7 @@ if ($_POST['submit']) {
 			}
 		}
 		if ($slettet==$linjeantal) {
-#		echo "delete from ordrer where id=$rykker_id<br>";
+#		#cho "delete from ordrer where id=$rykker_id<br>";
 			db_modify("delete from ordrer where id=$rykker_id",__FILE__ . " linje " . __LINE__);
 			$rykker_id=0;
 		} 
@@ -113,23 +128,21 @@ if ($_POST['submit']) {
 			db_modify("update ordrelinjer set beskrivelse = '$beskrivelse[$x]' where id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
 			}	
 		}
-	} elseif (strstr($submit,"Udskriv") || $submit=="Send") {
-		print "<BODY onLoad=\"window.open('rykkerprint.php?rykker_id=$rykker_id&rykkernr=$rykkernr&kontoantal=1','','width=800,height=600,scrollbars=1,resizeable=1')\">";
+	} elseif (strstr($submit,"Udskriv") || $submit=="Send" || $_POST['inkasso']) {
+		if ($_POST['inkasso']) {
+			$qtxt="select box9 from grupper where art = 'DIV' and kodenr = '4'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			if ($r['box9'] && is_numeric($r['box9'])) {
+				print "<meta http-equiv=\"refresh\" content=\"0;URL=inkassoprint.php?rykker_id=$rykker_id&inkasso=$r[box9]\">";
+				exit;
+			} 
+		} else print "<meta http-equiv=\"refresh\" content=\"0;URL=rykkerprint.php?rykker_id=$rykker_id&rykkernr=$rykkernr&kontoantal=1'\">";
 	} elseif (strstr($submit,"Tilbage")) {
-		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?rapportart=openpost\">";
 		exit;
 	}
 }	
-print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
-print "<tr><td align=\"center\" valign=\"top\">";
-print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-print "<td width=\"10%\" $top_bund><a href=../includes/luk.php accesskey=L>Luk</a></td>";
-print "<td width=\"80%\" $top_bund>Rykkerbrev</td>";
-print "<td width=\"10%\" $top_bund><br></td>";
-print "</tbody></table>";
-print "</td></tr>";
-print "<td align = center valign = top>";
-print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
+
 	
 	
 if ($rykker_id) {
@@ -156,6 +169,7 @@ if ($rykker_id) {
 	$ref = trim(htmlentities($row['ref'],ENT_COMPAT,$charset));
 	$ordrenr=$row['ordrenr'];
 	$ordredato=dkdato($row['ordredate']);
+	$fakturadate=$row['fakturadate'];
 	$momssats=$row['momssats'];
 	$status=$row['status'];
 	$rykkernr=substr($row['art'],-1);
@@ -163,10 +177,39 @@ if ($rykker_id) {
 	else $valuta='DKK';
 	if (!$status){$status=0;}
 	$kontonr=$row['kontonr'];
+	$felt_5=$row['felt_5'];
+	($felt_5=='inkasso')?$inkasso=2:$inkasso=0;
+	$intxt1=0;
+	$intxt2=0;
+	if (!$inkasso && date('U')-strtotime($fakturadate)>=11*24*60*60) { 
+		$inkassotxt1='10 dage';
+		$inkassotxt2='inkasso';
+		$formular=$rykkernr+5;
+		if ($formular<6) $formular=6;
+		$qtxt="select beskrivelse from formularer where formular = '$formular' and art = '2' and lower(sprog)='dansk'";
+		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array($q)) {
+		if (strstr(strtolower($r['beskrivelse']),$inkassotxt1)) $intxt1=1;
+		if (strstr(strtolower($r['beskrivelse']),$inkassotxt2)) $intxt2=1;
+		if ($intxt1 && $intxt2) $inkasso=1;
+		}
+	}
 } else {
-	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
+	print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?rapportart=openpost\">";
 	exit;
 }
+print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+print "<tr><td align=\"center\" valign=\"top\">";
+print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
+print "<td width=\"10%\" $top_bund><a href=rapport.php?rapportart=openpost accesskey=L>Luk</a></td>";
+if ($felt_5=='inkasso') print "<td width=\"80%\" $top_bund>Inkassosag</td>";
+else print "<td width=\"80%\" $top_bund>Rykkerbrev</td>";
+print "<td width=\"10%\" $top_bund><br></td>";
+print "</tbody></table>";
+print "</td></tr>";
+print "<td align = center valign = top>";
+print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
+
 $x=0;
 $valutakode[$x]='DKK';
 $valutabesk[$x]='Danske kroner';
@@ -177,10 +220,11 @@ while ($r=db_fetch_array($q)){
 	$valutabesk[$x]=$r['beskrivelse'];
 }
 
-print "<form name=rykker action=rykker.php method=post>";
+print "<form name=\"rykker\" action=\"rykker.php?rykker_id=$rykker_id\" method=\"post\">";
 print "<input type=hidden name=rykker_id value=$rykker_id>";
 print "<input type=hidden name=rykkernr value=$rykkernr>";
 print "<input type=hidden name=valuta value=$valuta>"; #21040628
+print "<input type=hidden name=felt_5 value=$felt_5>"; #21070303
 
 $ordre_id=if_isset($id);
 print "<tr><td width=50%><table cellpadding=0 cellspacing=0 border=0 width=100%>";
@@ -219,7 +263,7 @@ print "</td></tr><tr><td align=center colspan=3><table cellpadding=0 cellspacing
 	$x=0;
 	$sum=0;
 	$ialt=0;
-// echo "select * from ordrelinjer where ordre_id = '$rykker_id' order by posnr<br>";
+#cho "select * from ordrelinjer where ordre_id = '$rykker_id' order by posnr<br>";
 	$q = db_select("select * from ordrelinjer where ordre_id = '$rykker_id' order by serienr, posnr",__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		$x++;
@@ -257,7 +301,7 @@ print "</td></tr><tr><td align=center colspan=3><table cellpadding=0 cellspacing
 	$linjeantal=$x;
 	print "<input type=hidden name=linjeantal value=$x>";
 	for ($x=1; $x<=$linjeantal; $x++) {
-		if ($pris[$x]) $dkpris[$x]=dkdecimal($pris[$x]);
+		if ($pris[$x]) $dkpris[$x]=dkdecimal($pris[$x],2);
 		else $dkpris[$x]='';
 #		print "<tr bgcolor=\"$linjebg\">";
 		print "<input type=hidden name=linje_id[$x] value=$linje_id[$x]>";
@@ -282,7 +326,7 @@ print "</td></tr><tr><td align=center colspan=3><table cellpadding=0 cellspacing
 		print "<tr><td colspan=3><input class=\"inputbox\" type=\"text\" size=\"60\" name=\"ny_beskrivelse\"></td>";
 	}
 	print "<tr><td colspan=5><br></td></tr>\n";
-	print "<td align=right colspan=4>I alt ".dkdecimal($ialt)."</td>";
+	print "<td align=right colspan=4>I alt ".dkdecimal($ialt,2)."</td>";
 	print "</tbody></table></td></tr>\n";
 	print "<tr><td align=center colspan=8>";
 	print "<table width=100% border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody><tr>";
@@ -290,16 +334,19 @@ print "</td></tr><tr><td align=center colspan=3><table cellpadding=0 cellspacing
 	print "<td align=center><input type=submit value=\"Opdat&eacute;r\" name=\"submit\"></td>";
 
 	if ( strlen("which ps2pdf")) {
-		if ($mail_fakt) print "<td align=center><input type=submit value=\"Send\" name=\"submit\"></td>"; 
+		if ($mail_fakt) print "<td align=center><input type=submit value=\"Send\" name=\"submit\" onclick=\"return confirm('Send rykker som mail til $email?')\"></td>"; 
 		else print "<td align=center><input type=submit value=\"Udskriv\" name=\"submit\"></td>";
 	} else {
-		if ($mail_fakt) print "<td align=center><input type=submit value=\"Send\" name=\"submit\" disabled=\"disabled\"></td>"; 
+		if ($mail_fakt) print "<td align=center><input type=submit value=\"Send\" name=\"submit\" onclick=\"return confirm('Send rykker som mail til $email?') disabled=\"disabled\"></td>"; 
 		else print "<td align=center><input type=submit value=\"Udskriv\" name=\"submit\" disabled=\"disabled\"></td>";
 	}
-
 	if ($status<3) {
 		db_modify("update ordrer set sum='$sum' where id='$rykker_id'",__FILE__ . " linje " . __LINE__);
 		print "<td align=center><input type=submit value=\"Slet valgte\" name=\"submit\"></td>";
+	} elseif ($inkasso == 1) {
+		print "<td align=center><input type='submit' value=\"Inkasso\" name=\"inkasso\" onclick=\"return confirm('Send sagen til inkasso?')\"></td>";
+	} elseif ($inkasso == 2) {
+		print "<td align=center><input type='submit' value=\"Inkasso\" name=\"inkasso\" onclick=\"return confirm('Send sagen til inkasso igen?')\"></td>";
 	}
 	print "</form>";
 ?>

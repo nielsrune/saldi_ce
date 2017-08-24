@@ -1,16 +1,21 @@
 <?php
-// -----------includes/std_func.php----------------- lap 3.4.7 -- 2014-12-23 --
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -----------includes/std_func.php----------------- lap 3.6.6 -- 2016-10-22 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
-
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+//
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
@@ -18,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2013.02.10 Break ændret til break 1
@@ -34,19 +39,27 @@
 // 2015.02.18 PK Tilføjet to funktioner til at lave uppercase på tekst-streng. Søg mb_ucfirst eller mb_ucwords
 // 2015.03.13 CA  Byttet om på farverne for infoboks (nu blå) og popop (nu grøn). Søg 20150313
 // 2016.01.16 PHR Oprettet funktion regnstartslut
+// 2016.10.11 PHR Oprettet funktion lagerreguler
+// 2016.10.22 PHR Rettet funktion lagerreguler $diff skal ikke fratrækkes $rest 20161022
+// 2016.11.24 PHR Rettet funktion lagerreguler så lagerstatus fjernes for lagre > 0 hvis der ikke er flere lagre  Søg 20161022
+// 2016.12.17	PHR Tilføjet funktion find_beholdning (Flyttet fra lager/varer.php)
+// 2016.12.22 PHR Rettet funktion lagerreguler så dubletter på lager 0 slettes hvis der ikke er flere lagre.
+// 2016.12.22 PHR Rettet fejl. Lager o blev ikke fundet så dublet blev oprettet på lager 0
+// 2017.04.04 PHR Funktion 'find_lagervaerdi' udelader nu ikke bogførte ordrer da disse kan give skæve tal.
 
 if (!function_exists('nr_cast')) {
 	function nr_cast($tekst)
 	{
 		global $db_type;
 			if ($db_type=='mysql') $tmp = "CAST($tekst AS SIGNED)";
-			else $tmp = "to_number(text($tekst),text(999999999999))";
+			else $tmp = "to_number(text($tekst),text(999999999999999))";
 		return $tmp;
 	}
 }
 if (!function_exists('dkdecimal')) {
 	function dkdecimal($tal,$decimaler) {
-		if (!$decimaler && $decimaler!='0') $decimaler=2;
+		if (!isset($decimaler)) $decimaler=2;
+		elseif (!$decimaler && $decimaler!='0') $decimaler=2;
 		if (is_numeric($tal)) { 
 			if ($tal) $tal=afrund($tal,$decimaler); #Afrunding tilfoejet 2009.01.26 grundet diff i ordre 98 i saldi_104
 			$tal=number_format($tal,$decimaler,",",".");
@@ -108,7 +121,8 @@ if (!function_exists('usdate')) {
 		if (strlen($date) <= 4) {
 			$g1=substr($date,0,2);
 			$g2=substr($date,2,2);
-			if ($r = db_fetch_array(db_select("select box1, box2, box3, box4 from grupper where art='RA' and kodenr='$regnaar'",__FILE__ . " linje " . __LINE__))){
+			$qtxt="select box1, box2, box3, box4 from grupper where art='RA' and kodenr='$regnaar'";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
 				$startmaaned=trim($r['box1']);
 				$startaar=trim($r['box2']);
 				$slutmaaned=trim($r['box3']);
@@ -748,6 +762,8 @@ function find_lagervaerdi($kontonr,$slut,$tidspkt) {
 	$kob=0;
 	$salg=0;
 	
+	#cho "Slut $slut<br>";
+	
 	if (!$slut) {
 		print "<BODY onLoad=\"javascript:alert('737 | $slut | $linje')\">";
 		return('stop');	
@@ -763,6 +779,37 @@ function find_lagervaerdi($kontonr,$slut,$tidspkt) {
 		$gruppe[$x]=$r['kodenr'];
 		$x++;
 	}
+	$vare_id=array();
+/*
+	$x=0;
+	$qtxt="select kostpriser.vare_id,kostpriser.kostpris,varer.gruppe from kostpriser,varer";
+	$qtxt.=" where ";
+	$qtxt.="kostpriser.transdate<='$slut' and varer.id=kostpriser.vare_id";
+	$qtxt.=" order by ";
+	$qtxt.="kostpriser.transdate desc";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r=db_fetch_array($q)) {
+		if (!in_array($r['vare_id'],$vare_id) && in_array($r['gruppe'],$gruppe)) {
+			$vare_id[$x]=$r['vare_id'];
+			$kostpris[$x]=$r['kostpris'];
+			$antal[$x]=0;
+			$x++;
+		}
+	}
+	$qtxt="select id,kostpris,gruppe from varer";
+	$qtxt.=" order by ";
+	$qtxt.="id";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r=db_fetch_array($q)) {
+		if (!in_array($r['id'],$vare_id) && in_array($r['gruppe'],$gruppe)) {
+			$vare_id[$x]=$r['id'];
+			$kostpris[$x]=$r['kostpris'];
+			$antal[$x]=0;
+			$x++;
+		}
+	}
+*/
+
 	$y=0;
 	for ($x=0;$x<count($gruppe);$x++) {
 		$q=db_select("select id,kostpris from varer where gruppe = '$gruppe[$x]' order by id",__FILE__ . " linje " . __LINE__);
@@ -774,9 +821,9 @@ function find_lagervaerdi($kontonr,$slut,$tidspkt) {
 		}
 	}
 	for ($x=0;$x<count($vare_id);$x++) {
-		if ($kob) {
-			if ($tidspkt=='start') $qtxt="select sum(antal) as antal from batch_kob where vare_id = $vare_id[$x] and (fakturadate < '$slut' or kobsdate < '$slut')";
-			else $qtxt="select sum(antal) as antal from batch_kob where vare_id = $vare_id[$x] and (fakturadate <= '$slut' or kobsdate <= '$slut')";
+		if ($kob) { # 20170404 Tilføjet and fakturadate > '1970-01-01' da ikke bogførte købsordrer kan give skæve tal.
+			if ($tidspkt=='start') $qtxt="select sum(antal) as antal from batch_kob where vare_id = $vare_id[$x] and kobsdate < '$slut'and kobsdate < '$slut'";# or kobsdate < '$slut'
+ 			else $qtxt="select sum(antal) as antal from batch_kob where vare_id = $vare_id[$x] and kobsdate > '1970-01-01' and kobsdate <= '$slut'";# or kobsdate <= '$slut'	
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$antal[$x]+=$r['antal'];
 		}
@@ -863,10 +910,151 @@ function regnstartslut($regnaar) {
 	$slutaar=$r['box4'];
 	$regnstart=$startaar.'-'.$startmd.'-01';
 	$regnslut=$slutaar.'-'.$slutmd.'-31';
-echo "$regnstart $regnslut<br>";
 	return($regnstart.chr(9).$regnslut);
 }}
+if (!function_exists('lagerreguler')) {
+function lagerreguler($vare_id,$ny_beholdning,$kostpris,$lager,$transdate) {
+#cho "$vare_id,$ny_beholdning,$kostpris,$lager,$transdate<br>";
+	$lager*=1;
+	$ny_beholdning*=1;
+	$vare_id*=1;
+	$x=0;
+	if ($lager) { #20161123
+		$qtxt="select * from lagerstatus where vare_id='$vare_id' and lager='$lager'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$diff=$ny_beholdning-$r['beholdning'];
+	} else { 
+		$qtxt="select count(kodenr) as lagerantal from grupper where art='LG'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		if (!$r['lagerantal']) {
+			$qtxt="select id from lagerstatus where vare_id='$vare_id' and lager='$lager'";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			if ($r['id']) db_modify("delete from lagerstatus where vare_id='$vare_id' and id !='$r[id]'",__FILE__ . " linje " . __LINE__);
+		}
+		$qtxt="select beholdning from varer where id='$vare_id'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$diff=$ny_beholdning-$r['beholdning'];
+	}
+	if ($diff){
+		$ny_beholdning*=1;
+	#cho "$diff=$ny_beholdning-$r[beholdning]<br>"; 
+		$qtxt="select id from lagerstatus where vare_id='$vare_id' and lager='$lager'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		if ($r['id']) $qtxt="update lagerstatus set beholdning='$ny_beholdning' where id='$r[id]'";
+		else $qtxt="insert into lagerstatus(vare_id,beholdning,lager) values ('$vare_id','$ny_beholdning','$lager')";
+#cho __line__." $qtxt<br>";
+#xit;
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
+		$qtxt="update varer set beholdning=beholdning+$diff where id='$vare_id'";
+#cho __line__." $qtxt<br>";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		if ($diff>0) {
+			$qtxt="insert into batch_kob(vare_id,linje_id,kobsdate,fakturadate,ordre_id,antal,pris,rest,lager)"; 
+			$qtxt.="values"; 
+			$qtxt.="('$vare_id','0','$transdate','$transdate','0','$diff','$kostpris','$diff','$lager')";
+#cho __line__." $qtxt<br>";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		} else {
+			$diff*=-1;
+			$qtxt="select id,rest,pris from batch_kob where vare_id='$vare_id' and lager='$lager' and rest>'0' order by kobsdate,id";
+#cho __line__." $qtxt<br>";
+			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+			while($diff && $r=db_fetch_array($q)){
+				if ($diff-$r['rest']>=0){
+					$qtxt="update batch_kob set rest='0' where id='$r[id]'<br>";
+					db_modify("update batch_kob set rest='0' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
+					$qtxt="insert into batch_salg(batch_kob_id,vare_id,linje_id,salgsdate,fakturadate,ordre_id,antal,pris,lev_nr,lager)"; 
+					$qtxt.="values"; 
+					$qtxt.="('$r[id]','$vare_id','0','$transdate','$transdate','0','$r[rest]','$r[pris]','1','$lager')";
+#cho __line__." $qtxt<br>";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					$diff-=$r['rest'];	
+				} else {
+					#$diff-=$r['rest']; 20161022
+					$qtxt="update batch_kob set rest=rest+$diff where id='$r[id]'";
+#cho __line__." $qtxt<br>";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					$qtxt="insert into batch_salg(batch_kob_id,vare_id,linje_id,salgsdate,fakturadate,ordre_id,antal,pris,lev_nr,lager)"; 
+					$qtxt.="values"; 
+					$qtxt.="('$r[id]','$vare_id','0','$transdate','$transdate','0','$diff','$r[pris]','1','$lager')";
+#cho __line__." $qtxt<br>";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					$diff=0;
+				}
+			}
+			if ($diff) {
+				$qtxt="insert into batch_salg(batch_kob_id,vare_id,linje_id,salgsdate,fakturadate,ordre_id,antal,pris,lev_nr,lager)"; 
+				$qtxt.="values";
+				$qtxt.="('0','$vare_id','0','$transdate','$transdate','0','$diff','$kostpris','1',$lager)";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			}
+		}
+	}
+	$qtxt="select sum(beholdning) as beholdning from lagerstatus where vare_id='$vare_id'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$beholdning=$r['beholdning']*1;
+	db_modify("update varer set beholdning='$beholdning' where id='$vare_id'",__FILE__ . " linje " . __LINE__);
+#
+#xit;
+}}
+if (!function_exists('saldikrypt')) {
+function saldikrypt($id,$pw) {
+	$tmp='';
+	for($i=0;$i<strlen($pw);$i++)$tmp.=ord(substr($pw,$i,1))*3;
+	$pw=md5($tmp);
+	for ($i=0;$i<$id*100;$i++) {
+		$y=round(substr($i,-2)/4,0);
+		if (is_numeric(substr($pw,$y,1))) $pw=md5(strrev($pw));
+		else $pw=md5($pw);
+	}
+	return($pw);
+}}
+if (!function_exists('find_beholdning')) {
+function find_beholdning($vare_id, $udskriv) {
+
+	$x=0;
+	$ordre_id=array();
+	$query2 = db_select("select id from ordrer where status < 1 and art = 'DO'",__FILE__ . " linje " . __LINE__);
+	while ($row2 =db_fetch_array($query2)){
+		$x++;
+		$ordre_id[$x]=$row2['id'];
+	}
+	$x=0;
+	$y='';
+	$beholdning[1]=0;
+	$beholdning[2]=0;
+	$beholdning[3]=0;
+	$beholdning[4]=0;
+	$beholdning[5]='';
+	$beholdning[6]='';
+	$beholdning[7]='';
+	$beholdning[8]='';
+#if ($vare_id==81) echo "select ordrelinjer.id as linje_id, ordrelinjer.ordre_id as ordre_id, ordrelinjer.antal as antal,ordrer.ordrenr as ordrenr,ordrer.status as status,ordrer.art as art from ordrelinjer,ordrer where ordrelinjer.vare_id = $vare_id and ordrer.id=ordrelinjer.ordre_id<br>";
+	$query2 = db_select("select ordrelinjer.id as linje_id, ordrelinjer.ordre_id as ordre_id, ordrelinjer.antal as antal,ordrer.ordrenr as ordrenr,ordrer.status as status,ordrer.art as art from ordrelinjer,ordrer where ordrelinjer.vare_id = $vare_id and ordrer.id=ordrelinjer.ordre_id",__FILE__ . " linje " . __LINE__);
+	while ($row2 =db_fetch_array($query2)) {
+		if ($row2['status']<1 && $row2['art']=='DO') {
+			$beholdning[1]+=$row2['antal'];
+			($beholdning[5])?$beholdning[5].=",".$row2['ordrenr']:$beholdning[5].=$row2['ordrenr'];
+		}
+		elseif ($row2['status']<3 && $row2['art']=='DO') {
+			$beholdning[2]+=$row2['antal'];
+			($beholdning[6])?$beholdning[6].=",".$row2['ordrenr']:$beholdning[6].=$row2['ordrenr'];
+			$query3 = db_select("select antal from batch_salg where linje_id = '$row2[linje_id]'",__FILE__ . " linje " . __LINE__);
+			while ($row3=db_fetch_array($query3)) {$beholdning[2]-=$row3['antal'];}
+		}	elseif ($row2['status']<1 && $row2['art']=='KO') {
+			$beholdning[3]+=$row2['antal'];
+			($beholdning[7])?$beholdning[7].=",".$row2['ordrenr']:$beholdning[7].=$row2['ordrenr'];
+		}	elseif ($row2['status']<3 && $row2['art']=='KO') {
+			$beholdning[4]+=$row2['antal'];
+			($beholdning[8])?$beholdning[8].=",".$row2['ordrenr']:$beholdning[8].=$row2['ordrenr'];
+			$query3 = db_select("select antal from batch_kob where linje_id = '$row2[linje_id]'",__FILE__ . " linje " . __LINE__);
+			while ($row3=db_fetch_array($query3)) {$beholdning[4]-=$row3['antal'];}
+		}
+	}	
+	return $beholdning;
+}} #endfunc find_beholdning()
+##############################################
 
 ######################################################################################################################################
-
 ?>

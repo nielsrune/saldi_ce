@@ -1,6 +1,10 @@
 <?php
-
-// ----------includes/db_query.php----lap 3.5.9----2015-10-05--------------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----------includes/db_query.php----lap 3.6.7----2017-01-24--------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -19,11 +23,14 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2017 DANOSOFT ApS
 // ----------------------------------------------------------------------
-// 20121222 Tilføjet db_escape_string
+// 2012.12.22 Tilføjet db_escape_string
 // 2013.02.10 Break ændret til break 1
-// 20151005 Funktion injecttjek tjekker om der sker forsøg på at lave sql injektion
+// 2015.10.05 Funktion injecttjek tjekker om der sker forsøg på at lave sql injektion
+// 2017.01.24 PHR split erstattet af explode
+// 2017.03.21 E.Viuff, Funktion injecttjek - Tilføjet $brugernavn til global og rettet db_query til db_modify.
+// 2017.05.01	Tilføjet understøttelse af mysqli.
 
 if (!function_exists('db_connect')) {
 	function db_connect($l_host, $l_bruger, $l_password, $l_database="", $l_spor="") 
@@ -32,15 +39,24 @@ if (!function_exists('db_connect')) {
 		global $db_encode;
 		$errTxt="";
 		
-		if ($db_type=='mysql') {
+		if (strtolower($db_type)=='mysql') {
 			if (function_exists('mysql_connect')) {
-				if ($l_host && !$l_bruger && !$l_password) list($l_host,$l_bruger,$l_password)=split(",",$l_host); 
+				if ($l_host && !$l_bruger && !$l_password) list($l_host,$l_bruger,$l_password)=explode(",",$l_host); 
 				$connection = mysql_connect ("$l_host","$l_bruger","$l_password");
 				if ($db_encode=='UTF8') mysql_query("SET NAMES 'utf8'");
 				else mysql_query("SET NAMES 'latin9'");
 			} else {
 				$errTxt="<h1>Fejl: PHP-funktionen <b>mysql_connect()</b> kunne ikke findes</h1>".
-				"<p>Er b&aring;de MySql og php-mysql installeret?</p>";
+				"<p>Er b&aring;de MySQL og php-mysql installeret?</p>";
+			}
+		}	elseif (strtolower($db_type)=='mysqli') {
+			if (function_exists('mysqli_connect')) {
+				$connection = mysqli_connect ("$l_host","$l_bruger","$l_password");
+				if ($db_encode=='UTF8') mysqli_query("SET NAMES 'utf8'");
+				else mysqli_query("SET NAMES 'latin9'");
+			} else {
+				$errTxt="<h1>Fejl: PHP-funktionen <b>mysqli_connect()</b> kunne ikke findes</h1>".
+				"<p>Er b&aring;de MySQLi og php-mysqli installeret?</p>";
 			}
 		}	else {
 			if (function_exists('pg_connect')) {
@@ -92,10 +108,14 @@ if (!function_exists('db_modify')) {
 		global $db;
 		global $sqdb;
 		global $db_skriv_id;
+		global $webservice;
 		global $custom_alerttekst;
 		
 		if ($db_type=="mysql") $db_query="mysql_query";
-		else $db_query="pg_query";
+		else {
+			$db_query="pg_query";
+			$qtext=str_replace(' like ',' ilike ',$qtext);
+		}
 		
 		$qtext=injecttjek($qtext);
 		$db=trim($db);
@@ -145,8 +165,10 @@ if (!function_exists('db_select')) {
 		
 		if (!file_exists("../temp/$db")) mkdir("../temp/$db", 0775);
 		if ($db_type=="mysql") $query="mysql_query";
-		else $query="pg_query";
-		
+		else {
+			$query="pg_query";
+			$qtext=str_replace(' like ',' ilike ',$qtext);
+		}
 		if (!$query=$query($qtext)) {
 			if ($db_type=="mysql") $fejltekst=mysql_error();
 			else $fejltekst=pg_last_error();
@@ -175,7 +197,6 @@ if (!function_exists('db_select')) {
 				fwrite($fp,"-- ".$brugernavn." ".date("Y-m-d H:i:s").": ".$spor."\n");
 				fwrite($fp,"-- Fejl!! ".$qtext." | $fejltekst;\n");
 				fclose($fp);
-			
 #				if (!strpos($fejltekst,'current transaction is aborted, commands ignored until end of transaction block')) {
 					$message=$db." | ".$qtext." | ".$spor." | ".$brugernavn." ".date("Y-m-d H:i:s")." | $fejltekst";
 					$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
@@ -183,10 +204,12 @@ if (!function_exists('db_select')) {
 #				}
 				#	$custom_alerttekst saettes i connect.php;
 				(isset($custom_alerttekst))?$alerttekst=$custom_alerttekst:$alerttekst="Uforudset h&aelig;ndelse, kontakt salditeamet på telefon 4690 2208"; 
+				if (strpos($spor,'sqlquery_io')) echo "$fejltekst<br>";
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">\n";
 			} else {
 				#	$custom_alerttekst saettes i connect.php;
 				(isset($custom_alerttekst))?$alerttekst=$custom_alerttekst:$alerttekst="Uforudset h&aelig;ndelse, kontakt salditeamet på telefon 4690 2208"; 
+				echo $fejltxt;
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">\n";
 				exit;
 			}
@@ -281,7 +304,7 @@ if (!function_exists('db_escape_string')) {
 
 if (!function_exists('injecttjek')) {
 	function	injecttjek($qtext) {
-		global $db;
+		global $brugernavn,$db;
 		if (strpos($qtext,';')) {
 			$tjek=1;
 			for ($x=0;$x<strlen($qtext);$x++) {
@@ -297,7 +320,7 @@ if (!function_exists('injecttjek')) {
 					fclose($fp);
 					$s_id=session_id();
 					include("../includes/connect.php");
-					$db_query("delete from online where session_id = '$s_id'");
+					$db_modify("delete from online where session_id = '$s_id'");
 					print "<meta http-equiv=\"refresh\" content=\"0;URL=../index/index.php\">";
 					exit;
 				}

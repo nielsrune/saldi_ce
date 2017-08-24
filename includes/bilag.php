@@ -67,23 +67,29 @@ if(($_GET)||($_POST)) {
 	if ($kilde=="kassekladde") $tmp="../finans/kassekladde.php?kladde_id=$kilde_id&fokus=$fokus";
 	elseif ($kilde=="ordrer") $tmp="../debitor/ordre.php?id=$kilde_id&fokus=$fokus"; #20140122
 	else $tmp="../debitor/historikkort.php?id=$kilde_id";
+
+	if (file_exists("../owncloud")) $nfs_mappe='owncloud';
+	elseif (file_exists("../bilag")) $nfs_mappe='bilag';
+	
 	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=$tmp accesskey=L>Luk</a></td>";
 	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$title $bilag</td>";
 	print "<td width=\"10%\" $top_bund ><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><br></td>";
 	print "</tbody></table>";
 	print "</td></tr>";
 
+	
+	
 	if (isset($_POST['indsaet_bilag'])) {
-		upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion);
+		upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion,$nfs_mappe);
 		exit;
 	}
 	if (isset($_POST['pulje'])||$funktion=='gennemse') {
 		$puljefil=if_isset($_GET['puljefil']);
-		gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil);
+		gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$nfs_mappe);
 	}
 	
 	if ($filnavn) {
-		vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn);
+		vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn,$nfs_mappe);
 	} elseif ($filnavn=basename($_FILES['uploadedfile']['name'])) {
 		$filtype=strtolower(substr($filnavn,-4));
 		if ($kilde=='ordrer' && $filtype!='.pdf'){
@@ -93,18 +99,17 @@ if(($_GET)||($_POST)) {
 	#		$filnavn=htmlentities($filnavn,ENT_COMPAT,$charset);
 		$tmp="../temp/".$db."/".$filnavn;
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'],"$tmp")) {
-			upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion);
+			upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion,$nfs_mappe);
 		}	else {
 			echo "Der er sket en fejl under hentningen, pr&oslash;v venligst igen";
-			upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus);
+			upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$nfs_mappe);
 		}
-	} else upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus);
+	} else upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$nfs_mappe);
 }
 print "</tbody></table>";
 ################################################################################################################
-function upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus){
+function upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$nfs_mappe){
 global $charset;
-
 	print "<tr><td width=100% align=center><table width=\"500px\" height=\"200px\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border: 3px solid rgb(180, 180, 255); padding: 0pt 0pt 1px;\"><tbody>";
 	print "<tr><td width=100% align=center>Vedh&aelig;ft bilag</td></tr>";
 	print "<tr><td width=100% align=center><br></td></tr>";
@@ -134,7 +139,7 @@ global $charset;
 	print "<tr><td></form></td></tr>";
 }
 
-function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion){
+function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion,$nfs_mappe){
 	global $charset;
 	global $db;
 	global $bruger_id;
@@ -146,9 +151,9 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 	
 	if ($puljefil || file_exists("../temp/$db/$filnavn")) {
 		$x=0;
-		if (!file_exists("../owncloud/".$db)) {
-		  mkdir ("../owncloud/".$db,0777);
-		  if (!file_exists("../owncloud/".$db)) {
+		if (!file_exists("../".$nfs_mappe."/".$db)) {
+		  mkdir ("../".$nfs_mappe."/".$db,0777);
+		  if (!file_exists("../".$nfs_mappe."/".$db)) {
 				print tekstboks("Det er sket en fejl, bilag ikke gemt\nRing venligst på 46902208 så problemet kan blive løst");
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">";
 				exit;
@@ -171,8 +176,8 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 			$projekt=if_isset($_POST['projekt']);
 			if ($kilde=="kassekladde" || $kilde=="ordrer") {
 				$mappe='bilag';
-				if (!file_exists("../owncloud/".$db."/".$mappe)) {
-					mkdir ("../owncloud/".$db."/".$mappe,0777);
+				if (!file_exists("../".$nfs_mappe."/".$db."/".$mappe)) {
+					mkdir ("../".$nfs_mappe."/".$db."/".$mappe,0777);
 				}
 				$tidspkt=date("U");
 				if ($kilde=="kassekladde") {
@@ -183,41 +188,41 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 						$bilag_id=$r['id'];
 					}
 					$undermappe="kladde_$kilde_id";
-					if (!file_exists("../owncloud/".$db."/".$mappe."/".$undermappe)) {
-						mkdir ("../owncloud/".$db."/".$mappe."/".$undermappe,0777);
+					if (!file_exists("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe)) {
+						mkdir ("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe,0777);
 					} 
 				} else {
 					$undermappe="ordrer";
-					if (!file_exists("../owncloud/".$db."/".$mappe."/".$undermappe)) {
-						mkdir ("../owncloud/".$db."/".$mappe."/".$undermappe,0777);
+					if (!file_exists("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe)) {
+						mkdir ("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe,0777);
 					} 
 				}
 				$bilagfilnavn="bilag_".$bilag_id;
 			} else {
 				$mappe='dokumenter';
-				if (!file_exists("../owncloud/".$db."/".$mappe)) {
-					mkdir ("../owncloud/".$db."/".$mappe,0777);
+				if (!file_exists("../".$nfs_mappe."/".$db."/".$mappe)) {
+					mkdir ("../".$nfs_mappe."/".$db."/".$mappe,0777);
 				}
 				$undermappe="debitor_$kilde_id";
-				if (!file_exists("../owncloud/".$db."/".$mappe."/".$undermappe)) mkdir ("../owncloud/".$db."/".$mappe."/".$undermappe,0777);
+				if (!file_exists("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe)) mkdir ("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe,0777);
 				$bilagfilnavn="doc_".$bilag_id;
 			}
-			if ($puljefil) $fra="../owncloud/".$db."/pulje/".$puljefil;
+			if ($puljefil) $fra="../".$nfs_mappe."/".$db."/pulje/".$puljefil;
 			else $fra="../temp/".$db."/".$filnavn;
-			$til="../owncloud/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn;
+			$til="../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn;
 			system ("mv '$fra' '$til'\n");
-			if (file_exists("../owncloud/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn)) $tjek='ok';
+			if (file_exists("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn)) $tjek='ok';
 			else {
 				print "<BODY onLoad=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
 				break 1;
 			}
-			if ($dh = opendir("../owncloud/".$db."/pulje/")) {
+			if ($dh = opendir("../".$nfs_mappe."/".$db."/pulje/")) {
 				$slettet=0;	
 				while (($file = readdir($dh)) !== false) {
 					if ($slettet==0 && substr($file,-5)=='.desc') {
 						$descfil=str_replace("desc","",$file);
 						if (substr($puljefil,0,strlen($descfil))==$descfil) {
-							system ("rm ../owncloud/".$db."/pulje/".$descfil."desc\n");
+							system ("rm ../".$nfs_mappe."/".$db."/pulje/".$descfil."desc\n");
 							$slettet=1;
 						}
 					}
@@ -301,7 +306,7 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">";
 }
 
-function vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn){
+function vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn,$nfs_mappe){
 
 	global $charset;
 	global $db;
@@ -325,7 +330,7 @@ function vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn){
 			$bilagfilnavn="doc_".$bilag_id;
 		}
 		$google_docs=$r['box7'];
-		$fra="../owncloud/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn;
+		$fra="../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn;
 		$til="../temp/".$db."/".$filnavn;
 			system ("cp '$fra' '$til'\n");
 	} else {
@@ -352,7 +357,7 @@ function vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn){
 	print "<tr><td width=100% height=100% align=\"center\" valign=\"middle\"><iframe frameborder=\"no\" width=\"100%\" height=\"100%\" scrolling=\"auto\" src=\"vis_bilag.php?filnavn=$filnavn&db=$db&bilag_id=$bilag_id&kilde_id=$kilde_id&kilde=$kilde\"></iframe></td></tr>";
 }
 
-function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
+function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$nfs_mappe){
 	global $db;
 	
 	(isset($_POST['slet_bilag']) && $_POST['slet_bilag']=='Slet')?	$slet=1:$slet=0;
@@ -361,11 +366,11 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 	
 	if ($slet) {
 #		echo "slettter ../temp/$db/pulje/$descfil*<br>";
-		if ($descfil) system("rm ../owncloud/$db/pulje/$descfil*\n");
+		if ($descfil) system("rm ../".$nfs_mappe."/$db/pulje/$descfil*\n");
 		elseif (isset($_POST['puljefil'])) {
 			$puljefil=if_isset($_POST['puljefil']);
-#			echo "slettter ../owncloud/$db/pulje/$puljefil<br>";
-			if ($puljefil) system("rm ../owncloud/$db/pulje/$puljefil\n");
+#			echo "slettter ../".$nfs_mappe."/$db/pulje/$puljefil<br>";
+			if ($puljefil) system("rm ../".$nfs_mappe."/$db/pulje/$puljefil\n");
 		}
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/bilag.php?bilag=$bilag&kilde_id=$kilde_id&kilde=$kilde&fokus=$fokus&funktion=gennemse\">";
 		exit;
@@ -393,8 +398,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 		} if (!$fakturanr) $fakturanr=$r['fakturanr'];
 		if (!$sum) $sum=dkdecimal($r['amount']);
 	}
-	$dir="../owncloud/".$db."/pulje";
-#	$url="http://gateway.saldi.dk/udvikling/temp/$db/pulje/";
+	$dir="../".$nfs_mappe."/".$db."/pulje";
 	$url="://".$_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF'];
 	$url=str_replace("/includes/bilag.php","/temp/$db/pulje/",$url);
 	if ($_SERVER['HTTPS']) $url="s".$url;
@@ -434,12 +438,12 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 			closedir($dh);
 		}
 	}
-	
 	if ($puljefil) {
-		$tmp="../../../owncloud/$db/pulje/$puljefil";
+		$tmp="../../../".$nfs_mappe."/$db/pulje/$puljefil";
 		if (!is_dir("../temp/$db/pulje")) mkdir("../temp/$db/pulje"); 
 		system("cd ../temp/$db/pulje\nrm *\ncp $tmp .\n");
 	} else {
+	
 		print "<BODY onLoad=\"javascript:alert('Ingen bilag i pulje')\">";
 		if ($kilde=="kassekladde") $tmp="../finans/kassekladde.php?kladde_id=$kilde_id&fokus=$fokus";
 		elseif ($kilde=="ordrer") $tmp="../debitor/ordre.php?id=$kilde_id&fokus=$fokus";

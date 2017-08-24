@@ -59,7 +59,7 @@ if ($id==-1){	# Saa er der flere fakturaer
 	$ordre_antal = $_GET['ordre_antal'];
 	$ordre_id = explode(",", $_GET['skriv']);
 	if (strpos($formular,",")) {
-	 list($formular,$folgeseddel)=split(",",$formular);
+	 list($formular,$folgeseddel)=explode(",",$formular);
 	}
 } else {
 	$ordre_id[0]=$id;

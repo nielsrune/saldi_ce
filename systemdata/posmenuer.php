@@ -1,10 +1,10 @@
 <?php
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------------- systemdata/posmenuer.php ------ patch 3.6.4--2016-03-07--------
+// -------------------- systemdata/posmenuer.php ------ patch 3.6.7--2017-032-24--------
 // LICENS..
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2004-2017 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2013.10.17 Ku max ha' 10 menuer.
 // 2014.11.11 Tilføjet knapdesign på menu 0: Tastatur og tilføjet radius på knapper.
@@ -35,6 +35,8 @@
 // 2016.01.31 Tilføjet systemknap Kontoudtog & Udskriv sidste. 
 // 2016.02.18 Kontrol for strenglængde for butcolor. Søg 20160218  
 // 2016.03.07 Man kunne ikke lave tastaturknapper med '-'Søg 20160307
+// 2017.02.07	Tilføjet knap sæt
+// 2017.03.23	Tilføjet afdeling på menuer. Søg $afd
 
 @session_start();
 $s_id=session_id();
@@ -64,6 +66,7 @@ $menutype=if_isset($_POST['menutype']);
 $begin=if_isset($_POST['begin']);
 $end=if_isset($_POST['end']);
 $projekt=if_isset($_POST['projekt']);
+$afd=if_isset($_POST['afd']);
 $buttxt=trim(if_isset($_POST['buttxt']));
 $butcolor=if_isset($_POST['butcolor']);
 $butfunc=if_isset($_POST['butfunc']);
@@ -73,7 +76,12 @@ $ret_row=if_isset($_POST['ret_row']);
 $byt=if_isset($_POST['byt']);
 $flyt_col=if_isset($_POST['flyt_col']); 
 $flyt_row=if_isset($_POST['flyt_row']); 
-
+$kopier_menu=if_isset($_POST['kopier_menu']);
+if ($menu_id) {
+	if (!$beskrivelse) $beskrivelse="?";
+	if (!$cols) $cols=1;
+	if (!$rows) $rows=1;
+} 
 if (isset($_GET['menu_id'])) {
 	$menu_id=if_isset($_GET['menu_id']);
 	$ret_col=if_isset($_GET['ret_col']);
@@ -105,7 +113,6 @@ if (isset($_GET['menu_id'])) {
 } 
 
 $beskrivelse=db_escape_string($beskrivelse);
-
 if ($menutype) {
 	$begin=tid($begin);
 	$end=tid($end);
@@ -126,7 +133,7 @@ if ($menuvalg=='ny') {
 	}
 	if (!$m_id) $m_id=$x;
 	if (($m_id || $m_id=='0') && $beskrivelse) {
-		$qtxt="insert into grupper(beskrivelse,art,kode,kodenr,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11) values ('POS menu knapper','POSBUT','$plads','$m_id','$beskrivelse','$cols','$rows','$height','$width','$menutype','$begin','$end','$projekt','$fontsize','$radius')"; 
+		$qtxt="insert into grupper(beskrivelse,art,kode,kodenr,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12) values ('POS menu knapper','POSBUT','$plads','$m_id','$beskrivelse','$cols','$rows','$height','$width','$menutype','$begin','$end','$projekt','$fontsize','$radius','$afd')"; 
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
 } else {
@@ -138,7 +145,24 @@ if ($menuvalg=='ny') {
 		$qtxt="delete from grupper where art='POSBUT' and kodenr='$menu_id'";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	} elseif ($menu_id==$m_id && $cols && $rows) {
-		$qtxt="update grupper set kode='$plads',box1='$beskrivelse',box2='$cols',box3='$rows',box4='$height',box5='$width',box6='$menutype',box7='$begin',box8='$end',box9='$projekt',box10='$fontsize',box11='$radius' where art='POSBUT' and kodenr='$m_id'";
+		if ($kopier_menu) {
+			db_modify("delete from pos_buttons where menu_id='$menu_id'",__FILE__ . " linje " . __LINE__);
+			$q=db_select("select * from pos_buttons where menu_id='$kopier_menu'",__FILE__ . " linje " . __LINE__);
+			while($r=db_fetch_array($q)) {
+				$qtxt="insert into pos_buttons (menu_id,row,col,beskrivelse,color,funktion,vare_id,colspan,rowspan) values "; $qtxt.="('$menu_id','$r[row]','$r[col]','".db_escape_string($r['beskrivelse'])."','$r[color]','$r[funktion]','$r[vare_id]','$r[colspan]','$r[rowspan]')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			}
+			$r=db_fetch_array(db_select("select * from grupper where art='POSBUT' and kodenr='$kopier_menu'",__FILE__ . " linje " . __LINE__));
+			$cols=$r['box2'];
+			$rows=$r['box3'];
+			$height=$r['box4'];
+			$width=$r['box5'];
+			$projekt=$r['box9'];
+			$fontsize=$r['box10'];
+			$radius=$r['box11'];
+			$afd=$r['box12'];
+		}
+		$qtxt="update grupper set kode='$plads',box1='$beskrivelse',box2='$cols',box3='$rows',box4='$height',box5='$width',box6='$menutype',box7='$begin',box8='$end',box9='$projekt',box10='$fontsize',box11='$radius',box12='$afd' where art='POSBUT' and kodenr='$m_id'";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	} elseif ($menu_id && $ret_col && $ret_row && $butfunc) { #20150107
 		$buttxt=db_escape_string($buttxt);
@@ -151,8 +175,14 @@ if ($menuvalg=='ny') {
 			$r=db_fetch_array(db_select("select id from adresser where kontonr='$butvnr' and lukket !='on'",__FILE__ . " linje " . __LINE__));
 			$butvnr=$r['id']*1;
 		} elseif ($butfunc==6) {
-			$butvnr=$butvnr*1;
-		} else $butvnr=$butvnr*1;
+			$butvnr*=1;
+		} elseif ($butfunc==8) {
+			$butvnr*=1;
+			if ($butvnr) {
+				$r = db_fetch_array(db_select("select box1 from grupper where art = 'VK' and kodenr='$butvnr'",__FILE__ . " linje " . __LINE__));
+				$buttxt=$r['box1'];
+			}
+		} else $butvnr*=1;
 		$qtxt="select id from pos_buttons where menu_id='$menu_id' and row='$ret_row' and col='$ret_col'";
 		if (strlen($butcolor)>6) $butcolor=substr($butcolor,-6); #20160218
 		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
@@ -186,6 +216,17 @@ if ($menuvalg=='ny') {
 	}
 }
 $x=0;
+$afd_nr=array();
+$afd_beskrivelse=array();
+$qtxt="select * from grupper where art='AFD'";
+$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+while ($r=db_fetch_array($q)){
+	$afd_nr[$x]=$r['kodenr'];
+	$afd_beskrivelse[$x]=$r['beskrivelse'];
+	$x++;
+}
+
+$x=0;
 list($tmp,$beskrivelse)=explode(":",$menuvalg);
 if (is_numeric($tmp) && $menu_id != $tmp) $menu_id=$tmp;
 $menu_id*=1;
@@ -213,6 +254,7 @@ $end=$r['box8'];
 $projekt=$r['box9'];
 $fontsize=$r['box10'];
 $radius=$r['box11'];
+$afd=$r['box12'];
 if ($menutype=='on' || $menutype=='H') {
 	$menutype='H';
 	if (!$begin) $begin="00:00";
@@ -271,21 +313,27 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if($a=='Kontant') print "<OPTION>Kontant</OPTION>\n";
 		elseif($a=='Kontant på beløb') print "<OPTION>Kontant på beløb</OPTION>\n";
 		elseif($a=='Konto') print "<OPTION>Konto</OPTION>\n";
+		elseif($a=='Betalingskort') print "<OPTION>Betalingskort</OPTION>\n";
+		if($a=='Betalingskort på beløb') print "<OPTION>Betalingskort på beløb</OPTION>\n";
 		for($x=0;$x<$kortantal;$x++) {
 			if ($a==$korttyper[$x]) print "<OPTION>$korttyper[$x]</OPTION>\n";
 			elseif ($a==$korttyper[$x].' på beløb') print "<OPTION>$korttyper[$x] på beløb</OPTION>\n";
 		}
+		if($a=='Gem som tilbud') print "<OPTION>Gem som tilbud</OPTION>\n";
 		if($a!='Kontant') print "<OPTION>Kontant</OPTION>\n";
 		if($a!='Kontant på beløb') print "<OPTION>Kontant på beløb</OPTION>\n";
 		if($a!='Konto') print "<OPTION>Konto</OPTION>\n";
+		if($a!='Betalingskort') print "<OPTION>Betalingskort</OPTION>\n";
+		if($a!='Betalingskort på beløb') print "<OPTION>Betalingskort på beløb</OPTION>\n";
 		for($x=0;$x<$kortantal;$x++) {
 			if ($buttxt!=$korttyper[$x]) print "<OPTION>$korttyper[$x]</OPTION>\n";
 			if ($buttxt!=$korttyper[$x].' på beløb') print "<OPTION>$korttyper[$x] på beløb</OPTION>\n";
 		}
+		if($a!='Gem som tilbud') print "<OPTION>Gem som tilbud</OPTION>\n";
 		print "</SELECT>\n";
 	} else print "<INPUT CLASS=\"inputbox\" TYPE=\"text\" style=\"width:100px;text-align:center\" name=\"buttxt\" value=\"$a\"><br>\n";
 	print "<INPUT CLASS=\"inputbox\" TYPE=\"text\" style=\"width:100px;text-align:center\" name=\"butcolor\" value=\"$b\"><br>\n";
-	if ($d==6) {
+	if ($d==6 && $menutype!='U') {
 		print "<SELECT CLASS=\"inputbox\" style=\"width:100px;\" name=\"butvnr\">\n";
 		if ($c==1) print "<OPTION value=\"1\">Bordvalg</OPTION>\n";
 		if ($c==2) print "<OPTION value=\"2\">Brugervalg</OPTION>\n";
@@ -319,6 +367,8 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c==30) print "<OPTION value=\"30\">Stamkunder</OPTION>\n";
 		if ($c==31) print "<OPTION value=\"31\">Kontoudtog</OPTION>\n";
 		if ($c==32) print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
+		if ($c==33) print "<OPTION value=\"33\">Sæt</OPTION>\n";
+		if ($c==34) print "<OPTION value=\"34\">Følgeseddel</OPTION>\n";
 		if ($c!=16) print "<OPTION value=\"16\">Afslut</OPTION>\n";
 		if ($c!=1) print "<OPTION value=\"1\">Bordvalg</OPTION>\n";
 		if ($c!=2) print "<OPTION value=\"2\">Brugervalg</OPTION>\n";
@@ -329,6 +379,7 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c!=5) print "<OPTION value=\"5\">Find bon</OPTION>\n";
 		if ($c!=6) print "<OPTION value=\"6\">Flyt bord</OPTION>\n";
 		if ($c!=13) print "<OPTION value=\"13\">Forfra</OPTION>\n";
+		if ($c!=34) print "<OPTION value=\"34\">Følgeseddel</OPTION>\n";
 		if ($c!=26) print "<OPTION value=\"26\">Indbetaling</OPTION>\n";
 		if ($c!=7) print "<OPTION value=\"7\">Kasseoptælling</OPTION>\n";
 		if ($c!=8) print "<OPTION value=\"8\">Kassevalg</OPTION>\n";
@@ -347,11 +398,30 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c!=23) print "<OPTION value=\"23\">Send til køkken</OPTION>\n";
 		if ($c!=11) print "<OPTION value=\"11\">Skuffe</OPTION>\n";
 		if ($c!=30) print "<OPTION value=\"30\">Stamkunder</OPTION>\n";
+		if ($c!=33) print "<OPTION value=\"33\">Sæt</OPTION>\n";
 		if ($c!=19) print "<OPTION value=\"19\">Tilbage</OPTION>\n";
 		if ($c!=12) print "<OPTION value=\"12\">Udskriv</OPTION>\n";
 		if ($c!=32) print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
 		if ($c!=29) print "<OPTION value=\"29\">Vareopslag</OPTION>\n";
 		print	"</SELECT>\n";
+	} elseif ($d==8 && $menutype!='U') {
+		$valuta[0]='DKK';
+		$valutakode[0]=0;
+		$x=1;
+		$q=db_select("select * from grupper where art = 'VK' order by box1",__FILE__ . " linje " . __LINE__);
+		while($r = db_fetch_array($q)){
+			$valuta[$x]=$r['box1'];
+			$valutakode[$x]=$r['kodenr'];
+			$x++;
+		}
+		print "<SELECT CLASS=\"inputbox\" style=\"width:100px;\" name=\"butvnr\">\n";
+		for ($x=0;$x<count($valuta);$x++){
+			if ($c==$valutakode[$x]) print "<OPTION value=\"$valutakode[$x]\">$valuta[$x]</OPTION>\n";
+		}
+		for ($x=0;$x<count($valuta);$x++){
+			if ($c!=$valutakode[$x]) print "<OPTION value=\"$valutakode[$x]\">$valuta[$x]</OPTION>\n";
+		}
+		print "</SELECT>\n";
 	} else print "<INPUT CLASS=\"inputbox\" TYPE=\"text\" style=\"width:100px;text-align:center\" name=\"butvnr\" value=\"$c\"><br>\n";
 	print "<SELECT CLASS=\"inputbox\" style=\"width:100px;\" name=\"butfunc\">\n";
 	if ($d==1) print "<OPTION value=\"1\">Varenr</OPTION>\n";
@@ -361,6 +431,7 @@ if (($menu_id) && $ret_col && $ret_row) {
 	if ($d==5) print "<OPTION value=\"5\">Tastatur</OPTION>\n";
 	if ($d==6) print "<OPTION value=\"6\">Systemknap</OPTION>\n";
 	if ($d==7) print "<OPTION value=\"7\">Betalingsknap</OPTION>\n";
+	if ($d==8) print "<OPTION value=\"8\">Valutaknap</OPTION>\n";
 	if ($d!=1) print "<OPTION value=\"1\">Varenr</OPTION>\n";
 	if ($d!=2) print "<OPTION value=\"2\">Menu</OPTION>\n";
 	if ($d!=3) print "<OPTION value=\"3\">Kundenr</OPTION>\n";
@@ -368,6 +439,7 @@ if (($menu_id) && $ret_col && $ret_row) {
 	if ($d!=5) print "<OPTION value=\"5\">Tastatur</OPTION>\n";
 	if ($d!=6) print "<OPTION value=\"6\">Systemknap</OPTION>\n";
 	if ($d!=7) print "<OPTION value=\"7\">Betalingsknap</OPTION>\n";
+	if ($d!=8) print "<OPTION value=\"8\">Valutaknap</OPTION>\n";
 	print	"</SELECT><br>\n";
 	print "<input style=\"width:100px;\" type=\"text\" name=\"byt\"></td></tr>\n";
 } else {
@@ -394,10 +466,12 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($menutype=='H') print "<option value='H'>Hovedmenu</option>\n";
 		elseif ($menutype=='B') print "<option value='B'>Bogført</option>\n";
 		elseif ($menutype=='A') print "<option value='A'>Afslutning</option>\n";
+		elseif ($menutype=='U') print "<option value='U'>Brugervalg</option>\n";
 		else print "<option value=''>Undermenu</option>\n";
 		if ($menutype!='H') print "<option value='H'>Hovedmenu</option>\n";
 		if ($menutype!='A') print "<option value='A'>Afslutning</option>\n";
 		if ($menutype!='B') print "<option value='B'>Bogført</option>\n";
+		if ($menutype!='U') print "<option value='U'>Brugervalg</option>\n";
 		if ($menutype) print "<option value=''>Undermenu</option>\n";
 		print "</select></td></tr>\n";
 		if ($menutype=='H') {	
@@ -412,6 +486,17 @@ if (($menu_id) && $ret_col && $ret_row) {
 			}
 			if ($projekt) print "<option value=\"\"></option>";
 			print "</select></td></tr>";
+		}
+		if (count($afd_nr)) {
+			print "<tr><td>Afdeling</td><td><SELECT CLASS=\"inputbox\" $disabled name=\"afd\">";
+			if ($afd=='') print "<option value=''></option>";
+			for ($x=0;$x<count($afd_nr);$x++) {
+				if ($afd==$afd_nr[$x]) print "<option value=\"$afd_nr[$x]\">$afd_beskrivelse[$x]</option>";
+			}
+			for ($x=0;$x<count($afd_nr);$x++) {
+				if ($afd!=$afd_nr[$x]) print "<option value=\"$afd_nr[$x]\">$afd_beskrivelse[$x]</option>";
+			}
+			if ($afd!='') print "<option value=''></option>";
 		}
 		if ($menu_id || $menu_id=='0') {
 			print "<tr><td>Antal menur&aelig;kker</td><td><INPUT CLASS=\"inputbox\" $disabled TYPE=\"text\" style=\"width:50px;text-align:right\" name=\"rows\" value=\"$rows\"></td></tr>";
@@ -433,6 +518,9 @@ if (($menu_id) && $ret_col && $ret_row) {
 			print "<option value=\"H\">Højre side</option>";
 		}
 		print "</select></td></tr>";
+		if ($rows=='3' && $cols=='3') {
+			print "<tr><td>Kopier fra menu nr:</td><td><input type=\"text\" CLASS=\"inputbox\" $disabled style=\"width:25px;text-align:right\" name=\"kopier_menu\"></td></tr>";
+		}
 	}
 }
 if (!$menu_id) { 
@@ -577,6 +665,10 @@ function output ($menu_id,$rows,$cols,$radius,$width,$height,$fontsize,$bgcolor2
 				$r=db_fetch_array(db_select("select varenr from varer where id='$c' and lukket !='on'"));
 				$c=$r['varenr'];
 			}
+			if ($d=='7' && substr($a,-4)=='kort' && strlen($a)>8) {
+				$a=str_replace('kort',' <br>kort',$a);
+			}
+
 			if (!$c) $c='';
 #			$fontsize=$height*0.7;	
 			$style="

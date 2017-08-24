@@ -44,6 +44,7 @@
 // 2016.04.26 PHR '==' rettet til '='.  #20160426-1
 // 2016.04.26 PHR Indsat 'desc limit 1'. #20160426-2
 // 2016.04.26	PHR Rettet $diff til $tmp.  #20160426-3
+// 2016.10.28	PHR Rettet < til <=  da den gav posteringsdifference #20161028 
 
 @session_start();
 $s_id=session_id();
@@ -332,7 +333,7 @@ if (isset($submit) && $submit=='udlign') {
 			print "<BODY onLoad=\"javascript:alert('Differencen overstiger det maksimalt tilladte')\">"; #20131129
 			exit;
 		}
-		if (abs($diff)<$maxdiff) { #20150311
+		if (abs($diff)<=$maxdiff) { #20150311 + 20161028
 			if ($dkkdiff >= 0.01) {
 				$qtxt="insert into transaktioner (kontonr, bilag, transdate, logdate, logtime, beskrivelse, debet, kladde_id,afd, ansat, projekt)";
 				$qtxt.="values('$diffkto', '0', '$udlign_date', '$logdate', '$logtime', '$bogf_besk', '$dkkdiff', '0', '0', '0', '0')";
@@ -401,7 +402,7 @@ if (isset($submit) && $submit=='udlign') {
 			$message=$db." | udlign_openpost | ".$brugernavn." ".date("Y-m-d H:i:s")." | Diff: $diff DKKdiff: $dkkdiff Maxdiff $maxdiff";
 			$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 			mail('fejl@saldi.dk', 'SALDI Opdat fejl', $message, $headers);
-			print "<BODY onLoad=\"javascript:alert('Det er konstateret en posteringsdifference, udligning afbrudt')\">";
+			print "<BODY onLoad=\"javascript:alert('Der er konstateret en posteringsdifference, udligning afbrudt')\">";
 			exit;
 		}
 	}

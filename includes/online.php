@@ -1,5 +1,10 @@
 <?php
-// ---------------------includes/online.php----lap 3.4.9---2015-01-04---
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ---------------------includes/online.php----lap 3.6.7---2017-02-13---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2017 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2012.09.05 $ansat_navn bliver nu sat her. Søg 20120905
 // 2013.01.20 $sag_rettigheder bliver nu sat her. Søg 20130120
@@ -27,15 +32,19 @@
 // 2014.05.02	Indsat javascript i header til ordrelinje udfoldning - PHR Danosoft.Søg 20140502  
 // 2015.01.04 Indsat kontrol for om database er blevet opdateret. Søg 20150104
 // 2015.01.04 Ændret alert til tekstboks. Søg tekstboks
+// 2017.02.13 Initialiserer $meta_returside. 
+
  
+if (!isset($meta_returside)) $meta_returside=NULL;
 ini_set("display_errors", "0");
 $db_skriv_id=NULL; #bruges til at forhindre at skrivninger til masterbasen logges i de enkelte regnskaber.
 if (!isset($modulnr))$modulnr=NULL;
 if (!isset($db_type))$db_type="postgres";
+if (!isset($db_type))$db_type="postgres";
 $ip=$_SERVER['REMOTE_ADDR'];
 $ip=substr($ip,0,10);
 $sag_rettigheder=NULL;
-if ($title!="kreditorexport" && $ip!="128.30.52."){
+#if ($title!="kreditorexport"){
 	$query = db_select("select * from online where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
 		$dbuser = trim($row['dbuser']);
@@ -59,7 +68,7 @@ if ($title!="kreditorexport" && $ip!="128.30.52."){
 			}
 		}
 	}
-}
+#}
 
 $labelprint=0;
 if($sqdb=='udvikling') $labelprint=1;
@@ -68,6 +77,9 @@ elseif($db=='bizsys_22') $labelprint=1;
 elseif($db=='bizsys_25') $labelprint=1;
 
 if($db=='severinus_22') $kundedisplay=1;
+elseif($db=='grillbar_59') $kundedisplay=1;
+#elseif($db=='udvikling_5') $kundedisplay=1;
+else $kundedisplay=0;
 
 if ($modulnr && $modulnr<100 && $db==$sqdb) { #Lukker vinduet hvis revisorbruger er logget af
 	include("../includes/std_func.php");
@@ -157,6 +169,7 @@ if ($db && $sqdb && $db!=$sqdb) {
 	if (!isset($bgcolor3)) $bgcolor3="#cccccc";
 	if (!isset($bgcolor4)) $bgcolor4="#d0d0f0";
 	if (!isset($bgcolor5)) {
+		$bgcolor5=NULL;
 		for ($x=1;$x<=5;$x=$x+2) {
 			$a=hexdec(substr($bgcolor,$x,2));
 			if ($a<="224")$a+=32;
@@ -196,6 +209,9 @@ if ($header!='nix') {
 	print "<script type=\"text/javascript\" src=\"../javascript/jquery.autosize.js\"></script>\n"; #20140502
 	print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/overlib.js\"></script>\n"; 
 	print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>\n"; #20140502
+	print "<script src=\"../javascript/sweetalert.min.js\"></script>";
+	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/sweetalert.css\">";
+
 	#print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/main.css\"/>\n";
 	print "
 	<script type=\"text/javascript\">

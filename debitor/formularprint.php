@@ -1,8 +1,10 @@
 <?php #topkode_start
-@session_start();
-$s_id=session_id();
-
-// ---------debitor/formularprint-----patch 3.4.9---2015-01-06------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ---------debitor/formularprint-----patch 3.6.9---2017-05-05------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -12,7 +14,7 @@ $s_id=session_id();
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -21,13 +23,16 @@ $s_id=session_id();
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 // 
 // 17.01.2013 Oprydning i forb. med fejlsøgning i ret_genfakt.php
 // 08.04.2014 Ændret returside til ordre.php
 // 2015.01.06 Indsat "returside"
+// 2017.05.05 Ved $udskriv_til=='ingen' returneres uden udskrift.
 
+@session_start();
+$s_id=session_id();
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -44,8 +49,8 @@ if (isset($_GET['id']) && $_GET['id']){
 	$bg="nix";
 #	$subjekt=if_isset($_POST['subjekt']);
 #	$mailtext=if_isset($_POST['mailtext']);
-
-	$svar=formularprint($id,$formular,$lev_nr,$charset,$udskriv_til);
+	if ($udskriv_til=='ingen') $svar='OK';
+	else $svar=formularprint($id,$formular,$lev_nr,$charset,$udskriv_til);
 	if ($svar && $svar!='OK') {
 		print "<BODY onLoad=\"javascript:alert('$svar')\">";
 		if ($returside) {

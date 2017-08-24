@@ -1,26 +1,31 @@
 <?php
-
-// --debitor/debitorvisning.php--------------------lap 3.2.2--2011-07-03--
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// -----------debitor/debitorvisning.php--------lap 3.6.6--2016-06-06-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// af denne licens eller en senere version efter eget valg
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
 // i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2011 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
+// 2016.06.06 Tilføjet mulighed for at skjule lukkede debitorer Søg box11 / skjul_lukkede
 
 	
 @session_start();
@@ -54,6 +59,7 @@ if (isset($_POST) && $_POST) {
 		$cat_antal=$_POST['cat_antal'];
 		$cat_id=$_POST['cat_id'];
 		$cat_liste=$_POST['cat_liste'];
+		$box11=if_isset($_POST['skjul_lukkede']);
 
 		$box1="";
 		for ($x=0; $x<=$dg_antal; $x++) {
@@ -67,7 +73,7 @@ if (isset($_POST) && $_POST) {
 				($box2)?$box2.=chr(9).$cat_id[$x]:$box2=$cat_id[$x];
 			}
 		}
-		db_modify("update grupper set box1='$box1',box2='$box2',kode = '$valg' where art = 'DLV' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+		db_modify("update grupper set box1='$box1',box2='$box2',box11='$box11',kode = '$valg' where art = 'DLV' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 	} elseif ($sektion=='4') {
 		$vis_feltantal=if_isset($_POST['vis_feltantal']);
 		$vis_linjeantal=if_isset($_POST['vis_linjeantal']);
@@ -76,12 +82,11 @@ if (isset($_POST) && $_POST) {
 		$justering=if_isset($_POST['justering']);
 		$feltnavn=if_isset($_POST['feltnavn']);
 		$select=if_isset($_POST['select']);
-	
 #	if (!isset($vis_felt[0])) $vis_felt[0]="";
 		$box3='kontonr';
 		$box4=$feltbredde[0]*1;
 		$box5=$justering[0];
-		$box6=addslashes($feltnavn[0]);
+		$box6=db_escape_string($feltnavn[0]);
 		if (!$vis_linjeantal) $vis_linjeantal=50; 
 		$box7=$vis_linjeantal*1;
 		$box8=$select[0];
@@ -91,9 +96,10 @@ if (isset($_POST) && $_POST) {
 			$feltbredde[$x]=$feltbredde[$x]*1;
 			$box4=$box4.chr(9).$feltbredde[$x];
 			$box5=$box5.chr(9).$justering[$x];
-			$box6=$box6.chr(9).addslashes($feltnavn[$x]);
+			$box6=$box6.chr(9).db_escape_string($feltnavn[$x]);
 			$box8=$box8.chr(9).$select[$x];
 		}
+		
 		db_modify("update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8' where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 	}
 }
@@ -191,16 +197,20 @@ function sektion_3() {
 	global $vis_feltantal;
 	global $select;
 	
-	print "<tr><td colspan=3>V&aelig;lg hvilke kundegrupper og kategorier der skal v&aelig;re synlige p&aring; oversigten.</td></tr>";
+	print "<tr><td colspan=3>V&aelig;lg om lukkede debitorer skal v&aelig;re synlige p&aring; oversigten.</td></tr>";
+	
+	print "<tr><td colspan=3>Samt hvilke kundegrupper og kategorier der skal v&aelig;re synlige p&aring; oversigten.</td></tr>";
 	print "<tr><td colspan=3>Hvis intet er valgt, vil alt blive vist!</td></tr>";
 #	print "<tr><td colspan=3><hr></td></tr>";
 	
-	$r = db_fetch_array(db_select("select id,box1,box2 from grupper where art = 'DLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
+	$r = db_fetch_array(db_select("select id,box1,box2,box11 from grupper where art = 'DLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
 	$dg_liste=explode(chr(9),$r['box1']);
 	$cat_liste=explode(chr(9),$r['box2']);
+	($r['box11'])?$skjul_lukkede='checked':$skjul_lukkede=NULL;
 	
 	print "<form name=sektion_3 action=debitorvisning.php?sort=$sort&valg=$valg&sektion=3 method=post>";
 	print "<tr><td colspan=3><table border=1 width=100%><tbody>";
+	print "<tr><td>Skjul lukkede debitorer</td><td><input name=\"skjul_lukkede\" type=\"checkbox\" $skjul_lukkede></td></tr>";
 	print "<tr><td width=50%><table border=0 width=100%><tbody>";
 	print "<tr><td><b>Kundegrupper</b><br><hr></td></tr>";
 	$q = db_select("select * from grupper where art = 'DG' order by beskrivelse",__FILE__ . " linje " . __LINE__);
@@ -217,7 +227,7 @@ function sektion_3() {
 	print "</td><td valign=top><table border=0 width=100%><tbody>";
 	print "<tr><td><b>Kategorier</b><br><hr></td></tr>";
 	
-	$r=db_fetch_array(db_select("select box1,box2 from grupper where art='DebInfo'",__FILE__ . " linje " . __LINE__));
+	$r=db_fetch_array(db_select("select box1,box2,box9 from grupper where art='DebInfo'",__FILE__ . " linje " . __LINE__));
 	$cat_id=explode(chr(9),$r['box1']);
 	$cat_beskrivelse=explode(chr(9),$r['box2']);
 	$cat_antal=count($cat_id);

@@ -163,7 +163,7 @@
 163	Tvungen valg af kundeansvarlig på debitorkort
 164	Medtag kommentarer på følgesedler
 165	Anvend hurtigfakturering (ingen tilbud & automatisk levering ved fakturering)
-166	Omgående bogføring af købs- og salgsordrer
+166	Omgående bogføring af salgsordrer
 167	Integration med DocuBizz
 168	Brug jobkort
 169	Medtag kun linjer med antal på følgeseddel
@@ -188,7 +188,7 @@
 188	Hvis dette felt afmærkes, medtages kommentarlinjer fra tilbud/ordrer på følgesedler.
 189	Hvis dette felt afmærkes, medtages kun de varer, som er med i den pågældende leverering på følgesedlen.
 190	Hurtigfakturering anvendes, hvis man ikke har behov for at skrive tilbud/følgesedler, og hvor lagerttræk skal ske ved fakturering
-191	Hvis dette felt ikke er afmærket, skal købs- og salgsfakturaer bogføres gennem kassekladden med [Hent ordrer]-funktionen.
+191	Hvis dette felt ikke er afmærket, skal salgsfakturaer bogføres gennem kassekladden med [Hent ordrer]-funktionen.
 192	Afmærk dette felt for at tillade negativ lagerbeholdning.
 193	Docubizz er en aplikation til håndtering af indscannede dokumenter. Se mere om denne funktion på www.docubizz.dk
 194	Jobkort findes i debitorkonti. Her kan du definere opgavebeskrivelser til medarbejdere osv.
@@ -209,9 +209,9 @@
 209	Her skriver du de parametrer, som passer bedst til din browsers popup-funktioner
 210	Popup-indstillinger
 211	Intern bilagsopbevaring (mod betaling).
-212	Afmærk her hvis du vil ancende bilagsscanning og ikke selv vil etablere server til bilagsopbevaring. Samme omkostning som en ekstra bruger pr. GB. 
-213
-214
+212	Afmærk her hvis du vil anvende bilagsscanning og ikke selv vil etablere server til bilagsopbevaring. Samme omkostning som en ekstra bruger pr. GB. 
+213	Omgående bogføring af købsordrer
+214	Hvis dette felt ikke er afmærket, skal købsfakturaer bogføres gennem kassekladden med [Hent ordrer]-funktionen.
 215	Emne og tekst til brug ved udsendelse som e-mail
 216	Emne
 217	Skriv overskriften til den email som bruges, når der sendes pr. mail.
@@ -363,7 +363,7 @@
 363	Postnr./By
 364	Land
 365	E-mail / brug mail
-366	Afm&aelig;rk her hvis modtageren skal modtage tilbud, ordrer, fakturaer & rykker pr. mail
+366	Afm&aelig;rk her hvis modtageren skal modtage tilbud, ordrer, fakturaer &amp; rykker pr. mail
 367	Hjemmeside
 368	Betalingsbetingelse
 369	Forud
@@ -431,8 +431,8 @@
 431	Skriv den generelle rabat for varer fra $beskrivelse
 432	V&aelig;lg den generelle varegruppe til varer fra $beskrivelse
 433	Ingen leverand&oslash;r med kontonummer $kontonr
-434	Her kan skrives en alternativ SMTP-server til brug for udsendelse af ordrer mm. Den angivne server skal tillade videresendelse af mails fra ssl.saldi.dk.
-435	Alternativ SMTP-server
+434	Her kan skrives en alternativ SMTP-server til brug for udsendelse af ordrer mm. Den angivne server skal tillade videresendelse af mails fra ssl.saldi.dk. Hvis serveren bruger anden port 25 skrives denne efter STMP navnet adskilt af ":". F.eks. smtp.gmail.com:465
+435	Alternativ SMTP-server:port
 436	Skift
 437	Skriv en dato i formatet ddmmåå, f.eks 311210 for at se bevægelser inden danne dato<br>eller skriv et datointerval f.eks. 010110:311210.<br>Kontosaldi anvender kun slutdatoen.
 438	Dato
@@ -547,32 +547,32 @@
 614	Sikkerhedskopi
 615	Ved at afmærke her får du op til 14 ekstra felter på ansattes stamkort, for egne ansattes.
 616	Tilføj ekstra felter på ansatte
-617	-
-618	-
-619	-
-620	-
-621	-
-622	-
-623	-
-624	-
-625	-
-626	-
-627	-
-628	-
-629	-
-630	-
-631	-
-632	-
-633	-
-634	-
-635	-
-636	-
-637	-
-638	-
-639	-
-640	-
-641	-
-642	-
+617	Afmærkes feltet anvendes HTML/CSS til formulargenerering. 
+618	Brug HTML/CSS til formulargenerering
+619	API Nøgle
+620	API nøglen er en unik nøgle til verificering af din adgang til regnskabet.
+621	Tilladte IP adresser
+622	Angiv hvilke IP adresser der har adgang til at bruge API`et. Brug komma som separator. 
+623	Brugernavn
+624	Vælg den bruger som anvendes som reference til ordrer og logs mm. OBS. Brugeren skal være specielt oprettet til API, uden rettigheder og kan ikke logge ind direkte. 
+625	Ingen brugere uden rettigheder. Opret en bruger uden rettigheder og vælg denne for at aktivere API.
+626	Integration med Advokaternes Inkasso Service.
+627	Bekræft at du har læst og forstået betingelserne på https://www.inkassoadvokat.dk/betingelser
+628	Hvis ovenstående beløb ikke bliver indbetalt til os senest 10 dage fra dato, vil kravet uden yderligere varsel blive taget til inkasso 
+629	API Klient
+630	Hvis der skal integreres med webshop skal du her angive den fulde url til api klienten
+631	Saldi db:
+632	Skal sættes som variablen $db i api klienten.
+633	Kontonr for inkassoadvokat.
+634	Ved at udfylde dette felt med kontonummer for din inkassoadvokat (kreditor), får du mulighed for at sender rykkere som indeholder teksterne `inkasso` og `10 dage` direkte til inkasso fra rykkermodulet.
+635	Saldi url:
+636	Skal sættes som variablen $url i api klienten.
+637	Hvis feltet er afmærket vil `udtages fra kasse` som default være 0,00 ved kasseoptælling. Ellers vil systemet foreslå at udtage dagens tilgang.
+638	Sæt `udtages fra kasse` til 0
+639	Er dette felt afmærket skal der foretages valg af brugervalg/ ekspedient inden ekspedition.
+640	Tvungen brugervalg
+641	Kreditor kontonummer til inkassoselskab 
+642	Ved udfyldelse af dette felt sendes relevante dokumenter til inkassoselskab pr mail eller via API, når en rykker markeres til Inkasso. 
 643	-
 644	-
 645	Medarbejdernr.
@@ -625,7 +625,7 @@
 692	Merchant nr:
 693	Md5-secret tildeles ved oprettelse af betalingsaftale hos Quickpay
 694	Md5-secret
-695	Vælg her om du vil anvende Saldi's interne shop eller en ekstern via API.  
+695	Vælg her om du vil anvende Saldi´s interne shop eller en ekstern via API.  
 696	Webshop valg
 697	Ingen webshop
 698	Intern webshop
@@ -676,3 +676,22 @@
 743	Afmærkes dette felt bliver det muligt at ændre prisen på bundlinjen i en salgsordre og der bliver givet en samlet rabat, som ved bogføring fordeles på de enkelte varer. 
 744	Varenr. for sæt
 745	Sættes der et varenummer her bliver det muligt at samle en gruppe varer i en salgsordre som et sæt og give en samlet pris for denne gruppe.
+746	Brugernavn.
+747	Adgangskode.
+748	Krypering.
+749	Brugernavn til SMTP serveren, hvis dette kræves.
+750	Adgangskode til SMTP serveren, hvis dette kræves.
+751	Krypteringsmetode til SMTP serveren, hvis dette kræves.
+752	Agreement_id tildeles ved oprettelse af betalingsaftale hos Quickpay
+753	Agreement_id
+754	Bordvalg
+755	Ved valg af bord her, vil dette bord vælges hvis ikke andet bord er valgt.
+756	Nulstil regnskab
+757	Hvis du klikker på `Nulstil` slettes alle ordrer, kassekladder, transaktioner, regnskabsår > 1, historik, kunder, leverandører og varer! Det anbefales kraftigt at foretage en sikkerhedskopi først. 
+758	Behold debitorer & kreditorer.
+759	Hvis du afmærker dette felt beholdes dine kunder & leverandører (debitorer & kreditorer).
+760	Behold varer.
+761	Hvis du afmærker dette felt beholdes dine varer.
+762	Er du sikker på at du vil nulstille dit regnskab? Tag en sikkerhedskopi først!
+763	Direkte print til lokal printer.
+764	Hvis du vil kunne udskrive direkte til en lokal printer skal din router redirrigere data på port 9100 fra $myip direkte til din lokale printer. Herudover skal din printer være oprettet på saldi serveren. Kontakt saldi for uddybning.   

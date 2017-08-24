@@ -1,10 +1,10 @@
-Bidragsydere til SALDI
+Bidragsydere til saldi
 =====================================================================
-SALDI ejes af DANOSOFT ApS (http://www.danosoft.dk/).
+saldi ejes af saldi.dk aps (http://www.saldi.dk/).
 
 Hovedudvikler:
   Peter Rude <peter@saldi.dk>
-    DANOSOFT ApS (http://www.danosoft.dk/) tidligere ITz ApS.
+    saldi.dk aps (http://www.saldi.dk/) tidligere DANOSOFT ApS.
 
 Koordinator og udvikler:
   Claus Agerskov <ca@saldi.dk>

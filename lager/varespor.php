@@ -146,7 +146,7 @@ print "<tr><td colspan=5 align=center><b>=== SOLGT ===</b></td></tr>";
 print "<tr><td>Dato</td>
 	<td align=right>Antal</td>
 	<td align=right>Firmanavn</td>
-	<td align=right>Salgsordre</td>
+	<td align=right>Faktura</td>
 	<td align=right>Salgspris</td></tr>";
 print "<tr><td colspan=5><hr></td></tr>";
 
@@ -156,14 +156,14 @@ $salgsantal=0;
 $query = db_select("select * from batch_salg where vare_id=$vare_id order by fakturadate",__FILE__ . " linje " . __LINE__);
 while ($row = db_fetch_array($query)) {
 	if ($row['ordre_id']) {
-		$q1 = db_select("select ordrenr, firmanavn from ordrer where id=$row[ordre_id]",__FILE__ . " linje " . __LINE__);
+		$q1 = db_select("select ordrenr,firmanavn,fakturanr from ordrer where id=$row[ordre_id]",__FILE__ . " linje " . __LINE__);
 		$r1 = db_fetch_array($q1); 
 	} else $r1=NULL;
 	print "<tr><td>".dkdato($row['fakturadate'])."</td>
 		<td align=right>".dkdecimal($row['antal'])."</td>";
 	if ($row['ordre_id'])	{
 		print "<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r1[firmanavn]</u></td>
-		<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r1[ordrenr]</u></td>";
+		<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r1[fakturanr]</u></td>";
 	} else {
 		print "<td align=\"right\">Lagerregulering</td><td></td>";
 	}

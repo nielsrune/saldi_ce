@@ -1,22 +1,32 @@
 <?php
-
-// --------------systemdata/brugere.php------lap 3.0.6----2010-09-15------
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// --------------systemdata/brugere.php------------- lap 3.6.6 -- 2016-11-04 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
 // af denne licens eller en senere version efter eget valg
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// 
+// Programmet må ikke uden forudgående skriftlig aftale anvendes
+// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2010 DANOSOFT ApS
-// ------------------------------------------------------------------------
+// Copyright (c) 2004-2016 DANOSOFT ApS
+// ----------------------------------------------------------------------
+// 20150327 CA  Topmenudesign tilføjet                             søg 20150327
+// 20161104	PHR	Ændret kryptering af adgangskode
 
 @session_start();
 $s_id=session_id();
@@ -30,9 +40,22 @@ $ansat_id=array();
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
-include("top.php");
 
-print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>"; #A
+if ($menu=='T') {  # 20150327 start
+        include_once '../includes/top_header.php';
+        include_once '../includes/top_menu.php';
+        print "<div id=\"header\">\n";
+        print "<div class=\"headerbtnLft\"></div>\n";
+        print "</div><!-- end of header -->";
+        print "<div id=\"leftmenuholder\">";
+        include_once 'left_menu.php';
+        print "</div><!-- end of leftmenuholder -->\n";
+        print "<div class=\"maincontent\">\n";
+        print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>";
+} else {
+	include("top.php");
+	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>"; 
+}  # 20150327 stop
 
 $ret_id=$_GET['ret_id'];
 $slet_id=$_GET['slet_id'];
@@ -88,12 +111,6 @@ if ($_POST) {
 			$kode=NULL;
 			$ret_id=$id;
 	}
-	if (($kode) && (!strstr($kode,'**********'))) $kode=md5($kode);
-	elseif($kode)	{
-		$query = db_select("select * from brugere where id = '$id'",__FILE__ . " linje " . __LINE__);
-		if ($row = db_fetch_array($query))
-		$kode=trim($row['kode']);
-	}
 	$tmp=substr($medarbejder,0,1);
 	$ansat_id[0]=$ansat_id[0]*1;
 	if ((strstr($submit,'Tilf'))&&($brugernavn)) {
@@ -104,23 +121,29 @@ if ($_POST) {
 #			print "<tr><td align=center>Der findes allerede en bruger med brugenavn: $brugernavn!</td></tr>";
 		}	else {
 			if (!$regnaar) $regnaar=1;
-			
 			db_modify("insert into brugere (brugernavn,kode,rettigheder,regnskabsaar,ansat_id) values ('$brugernavn','$kode','$rettigheder','$regnaar',$ansat_id[0])",__FILE__ . " linje " . __LINE__);
+			$r=db_fetch_array(db_select("select id from brugere where brugernavn = '$brugernavn' and kode = '$kode'",__FILE__ . " linje " . __LINE__));
+			$id=$r['id'];
 		}
 	}
-	elseif ((strstr($submit,'Opdat'))&&($brugernavn)) {
+	if ($id && $kode) {
+		if (strstr($kode,'**********')) {
+			db_modify("update brugere set brugernavn='$brugernavn', rettigheder='$rettigheder', ansat_id=$ansat_id[0] where id=$id",__FILE__ . " linje " . __LINE__);
+		} else {
+			$kode=saldikrypt($id,$kode);
 		db_modify("update brugere set brugernavn='$brugernavn', kode='$kode', rettigheder='$rettigheder', ansat_id=$ansat_id[0] where id=$id",__FILE__ . " linje " . __LINE__);
+	}
 	}
 	elseif (($id)&&(!$kode)) {db_modify("delete from brugere where id = $id",__FILE__ . " linje " . __LINE__);}
 }
 
-print "<tr><td valign = top align=center>";
-#print "<table border=><tbody>";
+print "<tr><td valign = top>";
+print "<table border=0><tbody><tr><td>"; # 20150327
 print "<form name=bruger action=brugere.php method=post>";
 print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"70%\"><tbody>"; #B
 
 print "<tr><td colspan=2></td>";
-print str_repeat("<td align=center width=1% style=\"color: $bgcolor;\">_</td>", 25);
+print str_repeat("<td align=\"center\" width=\"1%\"><br></td>", 25);
 print "</tr>";
 print "<tr><td colspan = 14 align=right> Sikkerhedskopi &nbsp;</td><td colspan = 13 align=left> &nbsp;Debitorrapport</td></tr>";
 print "<tr><td colspan = 13 align=right> Varemodtagelse &nbsp;</td>"; print str_repeat("<td align=center> |</td>", 2); print "<td colspan=12> &nbsp;Kreditorrapport</td></tr>";
@@ -147,7 +170,7 @@ while ($row = db_fetch_array($query)) {
 		for ($y=0; $y<=15; $y++) {
 			if ($colbg!=$bgcolor) {$colbg=$bgcolor; $color='#000000';}
 			else {$colbg=$bgcolor5; $color='#000000';}
-			if (substr($row[rettigheder],$y,1)==0) print "<td bgcolor=\"$colbg\"></td>";
+			if (substr($row['rettigheder'],$y,1)==0) print "<td bgcolor=\"$colbg\"></td>";
 			else print "<td align=center bgcolor=\"$colbg\">*</td>";
 		}
 		print "</tr>";
@@ -261,4 +284,5 @@ print "</tr>";
 </table>
 </td></tr>
 </tbody></table>
+<?php if ($menu=='T') print "</div> <!-- end of maincontent -->\n";  # 20150327 ?>
 </body></html>

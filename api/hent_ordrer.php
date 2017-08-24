@@ -312,6 +312,8 @@ exit;
 function fakturer_ordre($saldi_id){
 	global $art;
 
+echo __line__;
+exit; 
 	#transaktion('begin');	
 	$qtxt="select shop_id from shop_ordrer where saldi_id='$saldi_id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));

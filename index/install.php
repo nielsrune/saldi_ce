@@ -1,5 +1,11 @@
 <?php
-// ------------------index/install.php-------3.4.3----2014-07-01------
+ob_start(); //Starter output buffering
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// ------------------index/install.php-------3.6.6----2016-11-16------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,9 +24,10 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 20140701 Tilføjet bilag til create regnskab
+// 20161106 Tilrettet til ny adgangskodehåndtering. Søg saldikrypt.
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -38,6 +45,7 @@ $noskriv=NULL;
 include("../includes/db_query.php");
 include("../includes/settings.php");
 include("../includes/version.php");
+include("../includes/std_func.php");
 
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\">";
@@ -91,8 +99,6 @@ if (isset($_POST['opret'])){
 			$verify_adm_pw = "<i>Adgangskoder forskellige. Skal v&aelig;re ens.</i>";
 		}
 	}
-	$adm_password=md5(trim($_POST['adm_password']));
-
 	$tmp.="<table>\n";
 	$tmp.="<tr><td colspan=\"2\" align=\"center\"><big><b>Oplysninger til SALDI-installering</b></big></td></tr>\n";	
 	$tmp.="<tr><td>Databaseserver </td><td><b>$db_type</b></td></tr>\n";
@@ -161,6 +167,9 @@ if (isset($_POST['opret'])){
 
 	db_modify("CREATE TABLE brugere(id serial NOT NULL, brugernavn text, kode text, status boolean, regnskabsaar integer, rettigheder text, PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("INSERT INTO brugere (brugernavn, kode, rettigheder) values ('$adm_navn' ,'$adm_password', '11111111111111111111')",__FILE__ . " linje " . __LINE__);
+	$r=db_fetch_array(db_select("SELECT id FROM brugere where brugernavn='$adm_navn'",__FILE__ . " linje " . __LINE__));	
+	$adm_password=saldikrypt($r['id'],$adm_password);
+	db_modify("UPDATE brugere SET kode='$adm_password' where id = '$r[id]'",__FILE__ . " linje " . __LINE__); 
 	db_modify("CREATE TABLE regnskab (id serial NOT NULL,	regnskab text, dbhost text, dbuser text, db text, version text, sidst text, brugerantal numeric, posteringer numeric, posteret numeric, lukket text,administrator text,lukkes date, betalt_til date,logintekst text,email text,bilag numeric(1,0), PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("INSERT INTO regnskab (regnskab, dbhost, dbuser, db, version,bilag) values ('$db_navn' ,'$host', '$db_bruger', '$db_navn', '$version','0')",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE online (session_id text, brugernavn text, db text, dbuser text, rettigheder text, regnskabsaar integer, logtime text, revisor boolean)",__FILE__ . " linje " . __LINE__);
@@ -228,7 +237,7 @@ if (isset($_POST['opret'])){
 	print	"</td></tr>";
 	print	"<tr><td align=\"center\" valign=\"bottom\">";
 	print	"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
-	print	"<td style=\"border: 1px solid rgb(180,180,255); padding: 0pt 0pt 1px;\" align=\"left\" background=\"../img/grey1.gif\" width=\"100%\" bgcolor=\"$bgcolor2\"><font face=\"Helvetica, Arial, sans-serif\" color=\"#000000\"><small><small>&nbsp;Copyright&nbsp;&copy;&nbsp;2003-2008&nbsp;DANOSOFT&nbsp;ApS</small></small></td>";
+	print	"<td style=\"border: 1px solid rgb(180,180,255); padding: 0pt 0pt 1px;\" align=\"left\" background=\"../img/grey1.gif\" width=\"100%\" bgcolor=\"$bgcolor2\"><font face=\"Helvetica, Arial, sans-serif\" color=\"#000000\"><small><small>&nbsp;Copyright&nbsp;&copy;&nbsp;2003-2016&nbsp;saldi.dk&nbsp;aps</small></small></td>";
 	print	"</tbody></table>";
 	print	"</td></tr>";
 	print	"</tbody></table>";
@@ -238,22 +247,31 @@ if (isset($_POST['opret'])){
 function skriv_connect($fp,$host,$db_bruger,$db_password,$db_navn,$db_encode,$db_type) {
 	fwrite($fp," \n");
 	fwrite($fp,"<?php\n");
-	fwrite($fp,"// ----/includes/connect.php---------------lap 3.1.1-----2011.01.04-----\n");
+	fwrite($fp,"//                         ___   _   _   __  _\n");
+	fwrite($fp,"//                        / __| / \ | | |  \| |\n");
+	fwrite($fp,"//                        \__ \/ _ \| |_| | | |\n");
+	fwrite($fp,"//                        |___/_/ \_|___|__/|_|\n");
+	fwrite($fp,"//\n");
+	fwrite($fp,"// ----/includes/connect.php---------------lap 3.6.6-----2016.11.04-----\n");
 	fwrite($fp,"// LICENS\n");
 	fwrite($fp,"//\n");
 	fwrite($fp,"// Dette program er fri software. Du kan gendistribuere det og / eller\n");
 	fwrite($fp,"// modificere det under betingelserne i GNU General Public License (GPL)\n");
 	fwrite($fp,"// som er udgivet af The Free Software Foundation; enten i version 2\n");
-	fwrite($fp,"// af denne licens eller en senere version efter eget valg\n");
+	fwrite($fp,"// af denne licens eller en senere version efter eget valg.\n");
+	fwrite($fp,"// Fra og med version 3.2.2 dog under iagttagelse af følgende:\n");
+	fwrite($fp,"// \n");
+	fwrite($fp,"// Programmet må ikke uden forudgående skriftlig aftale anvendes\n");
+	fwrite($fp,"// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.\n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// Dette program er udgivet med haab om at det vil vaere til gavn,\n");
+	fwrite($fp,"// Programmet er udgivet med haab om at det vil vaere til gavn,\n");
 	fwrite($fp,"// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se\n");
 	fwrite($fp,"// GNU General Public Licensen for flere detaljer.\n");
 	fwrite($fp,"//\n");
 	fwrite($fp,"// En dansk oversaettelse af licensen kan laeses her:\n");
-	fwrite($fp,"// http://www.fundanemt.com/gpl_da.html\n");
+	fwrite($fp,"// http://www.saldi.dk/dok/GNU_GPL_v2.html\n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// Copyright (c) 2003-2011 DANOSOFT ApS\n");
+	fwrite($fp,"// Copyright (c) 2004-2016 DANOSOFT ApS\n");
 	fwrite($fp,"// ----------------------------------------------------------------------\n");
 	fwrite($fp,"\n");
 	fwrite($fp,"if (!isset(\$bg)) \$bg='';\n");
@@ -280,6 +298,7 @@ function skriv_connect($fp,$host,$db_bruger,$db_password,$db_navn,$db_encode,$db
 	fwrite($fp,"#\$login = \"\";\n");
 	fwrite($fp,"#\$login = \"dropdown\";\n");
 	fwrite($fp,"\$login = \"cookie\";\n");
+	fwrite($fp,"\$revisorregnskab = \"1\";\n");
 	fwrite($fp,"\n");
 	fwrite($fp,"# \$brug_timestamp=\"y\";\n");
 	fwrite($fp,"\n");

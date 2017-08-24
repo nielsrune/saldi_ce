@@ -1,25 +1,31 @@
 <?php
-// -----------------finans/autoudlign.php------------lap 3.2.9--------2012.06.06----------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -----------------finans/autoudlign.php------------lap 3.7.0--------2017.06.07----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere $$detaljer.
+// GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2012 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20170607 PHR genkender nu også kontonr. Søg 20170707
 
 @session_start();
 $s_id=session_id();
@@ -120,11 +126,12 @@ while ($r = db_fetch_array($q)){
 			if (is_numeric(substr($beskrivelse,$z,1))) $tmp.=substr($beskrivelse,$z,1);
 			else $tmp='';
 			if ($tmp && $tmp==$r['faktnr']) $afmaerk='checked';
+			elseif ($tmp && $tmp==$r['konto_nr']) $afmaerk='checked'; #20170707
 		}
 	}
-#	$r2=db_fetch_array(db_select("select firmanavn,art from adresser where id = $r[konto_id]"));
+#	$r2=db_fetch_array(db_select("select firmanavn,kontonr,art from adresser where id = $r[konto_id]"));
 	($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-	print "<tr bgcolor=\"$linjebg\"><td>$r[transdate]</td><td>$r[firmanavn]</td><td align=right>$r[faktnr]</td>
+	print "<tr bgcolor=\"$linjebg\"><td>$r[transdate]</td><td>$r[konto_nr] - $r[firmanavn]</td><td align=right>$r[faktnr]</td>
 	<td><input type=radio name=udlign value=\"$r[konto_nr]:-:$r[art]:-:$r[faktnr]\" title='' $afmaerk></td>
 </tr>";
 }
@@ -132,7 +139,7 @@ while ($r = db_fetch_array($q)){
 	if ($x==0) print "<meta http-equiv=\"refresh\" content=\"0;URL=autoudlign.php?kladde_id=$kladde_id&id=$id\">";
 else {
 	print "<tr><td><input type=submit accesskey=\"u\" value=\"Udlign\" name=\"submit\"></td></td>
-	<td><input type=submit accesskey=\"u\" value=\"N&aelig;ste\" name=\"next\"></td></tr>";
+	<td><input type=submit accesskey=\"n\" value=\"N&aelig;ste\" name=\"next\"></td></tr>";
 }
 print "</form></tbody></table>";
 } # endfunc udlign

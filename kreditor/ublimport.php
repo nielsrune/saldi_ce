@@ -1,5 +1,10 @@
 <?php
-// -------------kreditor/ublimport.php----------lap 3.4.3-----2014-09-16----
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+//
+// -------------kreditor/ublimport.php----------lap 3.6.6-----2016-12-07----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -16,12 +21,13 @@
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2013 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2013.09.16 Tilføjet import fra pulje
+// Rettet puljesti - søg nfs_mount
 
 @session_start();
 $s_id=session_id();
@@ -32,6 +38,9 @@ $title="OIOUBL import";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+
+if (file_exists("../owncloud")) $nfs_mappe='owncloud';
+elseif (file_exists("../bilag")) $nfs_mappe='bilag';
 
 print "<div align=\"center\">";
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
@@ -53,7 +62,7 @@ if($_POST['hent'] || $_POST['importer'] || $_POST['opret'] || $_POST['tilknyt'])
 	if (basename($_FILES['uploadedfile']['name'])) {
 		$filnavn="../temp/".$db."_".str_replace(" ","_",$brugernavn).".csv";
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $filnavn)) {
-			importer($filnavn,0,0);
+			importer($filnavn,0,0,$nfs_mappe);
 		} else echo "Der er sket en fejl under hentningen, pr&oslash;v venligst igen";
 	} elseif ($filnavn=$_POST['filnavn']) {
 		$opret_lev=if_isset($_POST['opret_lev']);	
@@ -61,22 +70,22 @@ if($_POST['hent'] || $_POST['importer'] || $_POST['opret'] || $_POST['tilknyt'])
 		$opret_varenr=if_isset($_POST['opret_varenr']);	
 		$gl_varenr=if_isset($_POST['gl_varenr']);	
 		$salgspris=if_isset($_POST['salgspris']);	
-		importer($filnavn,$opret_lev,$opret_vare);
+		importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe);
 	} 
 } elseif ($_POST['indsaet']) {
 	$filnavn=if_isset($_POST['filnavn']);
-	importer($filnavn,$opret_lev,$opret_vare);
+	importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe);
 } elseif (isset($_POST['pulje'])) {
 	$puljefil=if_isset($_GET['puljefil']);
-	gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil);
+	gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$nfs_mappe);
 }elseif (isset($_POST['pulje'])||$funktion=='gennemse') {
 	$puljefil=if_isset($_GET['puljefil']);
-	gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil);
-} else upload($filnavn);
+	gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$nfs_mappe);
+} else upload($filnavn,$nfs_mappe);
 
 print "</tbody></table>";
 #####################################################################################################
-function upload($filnavn){
+function upload($filnavn,$nfs_mappe){
 
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 /*
@@ -103,7 +112,7 @@ print "</tbody></table>";
 print "</td></tr>";
 }
 
-function importer($filnavn,$opret_lev,$opret_vare){
+function importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe){
 	$descfil=if_isset($_POST['descfil']);
 
 #	list($firmanavn,$kontonr,$vejnavn,$husnr,$postnr,$bynavn,$land,$cvrnr,$ordredate,$l_varenr,$l_pris,$l_tekst,$l_antal,$l_sum,$l_moms,$l_momssats,$l_posnr)=explode(chr(9),vis_oioubl($filnavn));
@@ -126,7 +135,7 @@ function importer($filnavn,$opret_lev,$opret_vare){
 	global $l_momssats;
 	global $l_posnr;
 	
-	vis_oioubl($filnavn);
+	vis_oioubl($filnavn,$nfs_mappe);
 	
 	if ($opret_lev) {
 		if (!$kontonr) {
@@ -307,7 +316,7 @@ function importer($filnavn,$opret_lev,$opret_vare){
 	}
 }
 
-function vis_oioubl($filnavn) {
+function vis_oioubl($filnavn,$nfs_mappe) {
 	global $charset;
 	global $bgcolor;
 	global $bgcolor5;
@@ -547,7 +556,7 @@ if ($varname=="<sellersitemidentification") echo htmlentities($tmp)."<br>";
 	return ("$var"); 
 }
 
-function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
+function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$nfs_mappe){
 	global $db;
 	
 	(isset($_POST['slet_bilag']) && $_POST['slet_bilag']=='Slet')?	$slet=1:$slet=0;
@@ -561,7 +570,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 	if ($descfil && $slet) {
 		$tmp=str_replace(" ","\\ ",$descfil);
 		echo "slettter ../temp/$db/pulje/$descfil*<br>";
-		system("rm ../owncloud/$db/pulje/$tmp*\n");
+		system("rm ../".$nfs_mappe."/$db/pulje/$tmp*\n");
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ublimport.php?bilag=$bilag&kladde_id==$kilde_id&fokus=$fokus&funktion=gennemse\">";
 		exit;
 	}
@@ -588,8 +597,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 		} if (!$fakturanr) $fakturanr=$r['fakturanr'];
 		if (!$sum) $sum=dkdecimal($r['amount']);
 	}
-	$dir="../owncloud/".$db."/pulje";
-#	$url="http://gateway.saldi.dk/udvikling/temp/$db/pulje/";
+	$dir="../".$nfs_mappe."/".$db."/pulje";
 	$url="://".$_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF'];
 	$url=str_replace("/kreditor/ublimport.php","/temp/$db/pulje/",$url);
 	if ($_SERVER['HTTPS']) $url="s".$url;
@@ -598,7 +606,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 		if (is_dir($dir)) {
 			if ($dh = opendir($dir)) {
 				while (($file = readdir($dh)) !== false) {
-				if (substr($file,0,1)!='.' && substr($file,-4)=='.xml') {
+				if (substr($file,0,1)!='.' && (substr($file,-4)=='.xml' || substr($file,-4)=='.fak')) {
 						if (!$puljefil) $puljefil=$file;
 					}
 				}
@@ -606,6 +614,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 			}
 		} else echo "Dir eksisterer ikke<br>";
 	}
+#xit;
 	print "<form name=\"gennemse\" action=\"ublimport.php?funktion=gennemse&puljefil=$puljefil\" method=\"post\">\n";
 	print "<input type=\"hidden\" name=\"puljefil\" value=$puljefil>";
 	print "<input type=\"hidden\" name=\"filnavn\" value=$filnavn>";
@@ -620,7 +629,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 	if (is_dir($dir)) {
 		if ($dh = opendir($dir)) {
 			while (($file = readdir($dh)) !== false) {
-				if (substr($file,0,1)!='.' && substr($file,-4)=='.xml') {
+				if (substr($file,0,1)!='.' && (substr($file,-4)=='.xml' || substr($file,-4)=='.fak')) {
 					($file==$puljefil)?$bgcolor='#aaaaaa':$bgcolor='#ffffff'; 
 					$fil_nr++;
 					print "<tr><td bgcolor=\"$bgcolor\"><a href=ublimport.php?funktion=gennemse&kilde_id=$kilde_id&kilde=$kilde&bilag=$bilag&bilag_id=$bilag_id&dato=$dato&fokus=$fil_nr&puljefil=$file onfocus=\"document.forms[0].fokus.value=this.name;\" id=\"$fil_nr\">$file</a></td></tr>";
@@ -631,11 +640,11 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 	}
 	
 	if ($puljefil) {
-		$tmp="../../../owncloud/$db/pulje/$puljefil";
+		$tmp="../../../".$nfs_mappe."/$db/pulje/$puljefil";
 		if (!is_dir("../temp/$db/pulje")) mkdir("../temp/$db/pulje"); 
 		system("cd ../temp/$db/pulje\nrm *\ncp $tmp .\n");
 	} else {
-		print "<BODY onLoad=\"javascript:alert('Ingen bilag i pulje')\">";
+		print "<BODY onLoad=\"javascript:alert('Ingen bilag af typen `.xml` eller `.fak` i pulje')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../kreditor/ordreliste.php\">";
 	}
 	print "</td></tr>";
@@ -644,7 +653,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil){
 	print "<td rowspan=\"2\" width=85% height=\"100%\" align=center><table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border: 3px solid rgb(180, 180, 255); padding: 0pt 0pt 1px;\"><tbody>";
 	print	"<tr><td width=100% align=center>";
 $tmp="../temp/$db/pulje/".$puljefil;
-	vis_oioubl($tmp);
+	vis_oioubl($tmp,$nfs_mappe);
 	#	$tmp=$url.$puljefil;
 #	if ($puljefil) {
 #		if ($google_docs) $src="http://docs.google.com/viewer?url=$tmp&embedded=true";

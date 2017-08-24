@@ -72,7 +72,6 @@ if (isset($_POST['slet'])){
 	$saldo=if_isset($_POST['saldo']);
 	$valuta=if_isset($_POST['valuta']);
 	$ny_valuta=if_isset($_POST['ny_valuta']);
-#cho $ny_valuta."<br>";
 	$genvej=if_isset($_POST['genvej']);
 	$lukket=if_isset($_POST['lukket']);
 	if ($kontotype!='Sum' && $kontotype!='Resultat'){
@@ -85,16 +84,18 @@ if (isset($_POST['slet'])){
 	if ($ny_valuta != $valuta) {
 		$dd=date("Y-m-d");
 #cho $dd."<br>$saldo<br>$ny_valuta<br>";
-		if ($saldo) {
+#		if ($saldo) {
 			if ($valuta=='DKK') {
 				$valutakode=0;
 				$kurs=100;
 			} else {
+				echo "select kodenr from grupper where art='VK' and box1 = '$valuta'";
 				$r=db_fetch_array(db_select("select kodenr from grupper where art='VK' and box1 = '$valuta'",__FILE__ . " linje " . __LINE__));
 				$valutakode=$r['kodenr'];
 				$r=db_fetch_array(db_select("select kurs from valuta where gruppe='$valutakode' and valdate <= '$dd' order by valuta.valdate desc limit 1",__FILE__ . " linje " . __LINE__));
 				if ($r['kurs']) {
 					$kurs=$r['kurs'];
+echo $kurs;
 				}
 			}
 			if ($ny_valuta=='DKK') {
@@ -109,7 +110,7 @@ if (isset($_POST['slet'])){
 				}
 			}
 			db_modify("update kontoplan set valuta ='$ny_valutakode', valutakurs='$ny_kurs' where id = '$id'",__FILE__ . " linje " . __LINE__);
-		}
+#		}
 	}
 	if ($kontotype=='Overskrift'){
 		$kontotype='H';

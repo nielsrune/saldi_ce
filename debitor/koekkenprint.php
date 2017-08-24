@@ -1,24 +1,29 @@
 <?php
-// -------------debitor/pos_print/koekkenprint.php----------lap 3.5.6-----2015-06-16----
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -------------debitor/koekkenprint.php----------lap 3.7.0-----2017-06-19----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // -----------------------------------------------------------------------
 // 20140903 - Rettet diverse pga antal blev stillet tilbage efter 3. klik
 // 20140904 - Indsat 3x linjeafstand på udskrift.
@@ -26,6 +31,7 @@
 // 20141202 -	Sat printfil='' i alle kald til
 // 20150616 - Understøtter nu til og fravalg Søg 'tilfravalg'
 // 20150627	- Der kan nu sendes besked til køkken. Søg besked
+// 20170619 - PHR udskriftsdel lagt i funktion så der kan laves kundetilpasninger. 20170619
 
 @session_start();
 $s_id=session_id();
@@ -37,6 +43,7 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/ordrefunc.php");
+(file_exists("pos_print/koekkenprint_".$db_id.".php"))?include("pos_print/koekkenprint_".$db_id.".php"):include("pos_print/koekkenprint.php"); #20170619
 
 print "<div align=\"center\">";
 
@@ -78,7 +85,7 @@ if ($next) {
 	if ($kpr) {
 		if ($next) $url="http://$kpr/saldiprint.php?printfil=&url=$url&bruger_id=$bruger_id&bon=$bon&bonantal=$bonantal&id=$id&returside=$url/debitor/koekkenprint.php&next=$next&gem=0";
 		else $url="http://$kpr/saldiprint.php?printfil=&url=$url&bruger_id=$bruger_id&bon=$bon&bonantal=$bonantal&id=$id&returside=$url/debitor/pos_ordre.php&next=$next";
-	} else $url="$url/borlplaner/bordplan.php?id=$id";
+	} else $url="$url/bordplaner/bordplan.php?id=$id";
  	print "<meta http-equiv=\"refresh\" content=\"0;URL=$url\">\n";
 }	
 
@@ -182,6 +189,8 @@ if ($_POST['linje_id']) {
 					}
 				} else $kp[0]=$koekkenprinter;
 			} 
+			koekkenprint($linje_id,$bestil,$beskrivelse,$cat_id,$kategori);
+/*			
 			$udskrives=array();
 			for($y=0;$y<count($kp);$y++) {
 				$udskrives[$y]=0;
@@ -264,6 +273,7 @@ if ($_POST['linje_id']) {
 				fclose($fp);
 				$bon='';
 			}
+*/			
 		} else print "<BODY onLoad=\"javascript:alert('Der er ikke noget på bestillingslisten til køkken for $bordnavn')\">\n";
 		(count($kp)>1)?$next=1:$next=NULL;
 		$pfnavn="../temp/".$db."/".abs($bruger_id).".0";
@@ -283,13 +293,14 @@ if ($_POST['linje_id']) {
 		$bordnr=$r['nr'];
 		$hvem=$r['hvem'];
 	}
+	$kasse=stripslashes($_COOKIE['saldi_pos']);
 	$r = db_fetch_array(db_select("select box7,box10 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
-	$koekkenprinter=$r['box10'];
+	($r['box10'])?$koekkenprintere=explode(chr(9),$r['box10']):$koekkenprintere=NULL;
+	$koekkenprinter=$koekkenprintere[$kasse-1];
 	if (($bordnr || $bordnr=='0') && !$bordnavn) {
 		($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=NULL;
 		$bordnavn=$bord[$bordnr];
 	}
-	
 	$x=0;
 	$q=db_select("select ordrelinjer.id,ordrelinjer.antal,ordrelinjer.leveres,ordrelinjer.leveret,ordrelinjer.beskrivelse,ordrelinjer.tilfravalg,varer.notes,varer.kategori from ordrelinjer,varer where ordrelinjer.ordre_id='$id' and ordrelinjer.vare_id=varer.id  order by ordrelinjer.posnr desc",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array ($q)) {
@@ -320,6 +331,7 @@ $pre_fokus=if_isset($_POST['pre_fokus']);
 for ($x=0;$x<count($linje_id);$x++) {
 	$koekken[$x]=NULL;
 	print "<input type=\"hidden\" name=\"linje_id[$x]\" value=\"$linje_id[$x]\">";
+	print "<input type=\"hidden\" name=\"tilfravalg[$x]\" value=\"$tilfravalg[$x]\">";
 
 	if (!count($cat) || $koekkennr[$x]) {
 		if (isset($_POST['bestil'])) {

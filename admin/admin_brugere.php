@@ -1,21 +1,29 @@
 <?php
-
-// --------------systemdata/admin_brugere.php------lap 3.0.9----2010-12-22------
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// --------------systemdata/admin_brugere.php------lap 3.6.6----2016-11-04------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
 // af denne licens eller en senere version efter eget valg
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// 
+// Programmet må ikke uden forudgående skriftlig aftale anvendes
+// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2010 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ------------------------------------------------------------------------
 
 @session_start();
@@ -64,25 +72,27 @@ if ($_POST) {
 			$kode=NULL;
 			$ret_id=$id;
 	}
-	if (($kode) && (!strstr($kode,'**********'))) $kode=md5($kode);
-	elseif($kode)	{
+	if (($kode) && (!strstr($kode,'**********'))) {
+		$kode=saldikrypt($id,$kode);
+	} elseif($kode)	{
 		$query = db_select("select * from brugere where id = '$id'");
 		if ($row = db_fetch_array($query))
 		$kode=trim($row['kode']);
 	}
 	if ((strstr($submit,'Tilf'))&&($ret_bruger)&&($ret_bruger!="-")) {
-		$query = db_select("select id from brugere where brugernavn = '$ret_bruger'");
+		$query = db_select("select id from brugere where brugernavn = '$ret_bruger'",__FILE__ . " linje " . __LINE__);
 		if ($row = db_fetch_array($query)) {
 			$alerttext="Der findes allerede en bruger med brugenavn: $ret_bruger!";
 			print "<BODY onLoad=\"javascript:alert('$alerttext')\">";
 #			print "<tr><td align=center>Der findes allerede en bruger med brugenavn: $ret_bruger!</td></tr>\n";
 		}	else {
-			db_modify("insert into brugere (brugernavn, kode,rettigheder) values ('$ret_bruger', '$kode','rettigheder')");
+			db_modify("insert into brugere (brugernavn,rettigheder) values ('$ret_bruger','rettigheder')",__FILE__ . " linje " . __LINE__);
+			$r=db_fetch_array(db_select("select id from brugere where brugernavn = '$ret_bruger'",__FILE__ . " linje " . __LINE__));
+			$kode=saldikrypt($r['id'],$kode);
+			db_modify("update brugere set kode='$kode' where id=$r[id]",__FILE__ . " linje " . __LINE__);
 		}
-	}
-	
-	elseif ((strstr($submit,'Opdat'))&&($ret_bruger)&&($ret_bruger!="-")) {
-		db_modify("update brugere set brugernavn='$ret_bruger',kode='$kode',rettigheder='$rettigheder' where id=$id");
+	} elseif ((strstr($submit,'Opdat'))&&($ret_bruger)&&($ret_bruger!="-")) {
+		db_modify("update brugere set brugernavn='$ret_bruger',kode='$kode',rettigheder='$rettigheder' where id=$id",__FILE__ . " linje " . __LINE__);
 	}
 	elseif (($id)&&($ret_bruger=="-")) {db_modify("delete from brugere where id = $id");}
 }
@@ -99,7 +109,7 @@ print "<td title=\"".findtekst(334,$sprog_id)."\">".findtekst(329,$sprog_id)."</
 
 print "<tr><td height=\"10px\" colspan=\"3\"><br></td><td bgcolor=\"$bgcolor2\"></td><td></td><td bgcolor=\"$bgcolor2\"></td></tr>\n";
 
-$r = db_fetch_array(db_select("select * from brugere where brugernavn = '$brugernavn'"));
+$r = db_fetch_array(db_select("select * from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__));
 $bruger_id=$r['id'];
 list($br_admin,$tmp)=explode(",",$r['rettigheder'],2);
 if (!$br_admin) {
@@ -108,7 +118,7 @@ if (!$br_admin) {
 } else $disabled="";
 
 if ($br_admin) {
-	$query = db_select("select * from brugere order by brugernavn");
+	$query = db_select("select * from brugere order by brugernavn",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
 		if ($row['id']!=$ret_id) {
 			list($admin,$oprette,$slette,$adgang_til)=explode(",",$row['rettigheder'],4);

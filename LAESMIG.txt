@@ -1,14 +1,11 @@
-Læs mig-fil til SALDI 
+LÃ¦s mig-fil til SALDI 
 =====================================================================
-De rene tekstfiler er skrevet med ISO-8859-1. Hvis dit system er sat 
-op til UTF-8 eller andet, kan tre sidste bogstaver i det danske 
-alfabet samt specialtegn se underlige ud.
 
-Saldi er et frit, dansk økonomisystem.
+Saldi er et frit, dansk Ã¸konomisystem.
 
 Installering
 ------------
-Læs INSTALLERING.txt
+LÃ¦s INSTALLERING.txt
 
 Bidragsydere
 ------------
@@ -17,16 +14,17 @@ filen BIDRAG.txt.
 
 Ophavsrettigheder og licenser
 -----------------------------
-Læs OPHAVSRETTIGHEDER.txt, LICENS.txt og LICENSE.txt. Den sidstnævnte
-er den oprindelige GNU General Public License (GPL) på engelsk og er 
-den juridisk gældende. Den danske udgave under LICENS.txt er blot til
-hjælp for dem, der ikke er gode til engelsk.
+LÃ¦s OPHAVSRETTIGHEDER.txt, LICENS.txt og LICENSE.txt. Den sidstnÃ¦vnte
+er den oprindelige GNU General Public License (GPL) pÃ¥ engelsk og er 
+den juridisk gÃ¦ldende. Den danske udgave under LICENS.txt er blot til
+hjÃ¦lp for dem, der ikke er gode til engelsk.
 
 Mere information
 ----------------
-Find mere information om Saldi på hjemmesiden http://www.saldi.dk/
+Find mere information om Saldi pÃ¥ hjemmesiden http://www.saldi.dk/
 
 =====================================================================
-Senest ændret 2006-01-19 af Claus Agerskov <ca@saldi.dk>.
+Senest Ã¦ndret 2017-02-09 af Peter Holten Rude <phr@saldi.dk>.
+Skrevet af Claus Agerskov <ca@saldi.dk>.
 
-© Saldi - http://www.saldi.dk/
+Â© Saldi - http://www.saldi.dk/
