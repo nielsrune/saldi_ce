@@ -39,6 +39,7 @@
 // 20161015 Flere rettelser i forb med flere lagre.
 // 20161031 Opdatering af batch_kob_salg samt rettelse af fejl af søgestreng. # 20161031
 // 20161031 Function opdat_behold - trækker nu antal fra batch_kob og batch_salg da der kan være fejl i lagerstatus.
+// 20170915	Opdat behold satte negativt antal på forbrugsvarer.Søg 20170915
 
 @session_start();
 $s_id=session_id();
@@ -798,19 +799,30 @@ transaktion('commit');
 
 ########################################################################################################################
 function opdat_behold() {
+	$x=0; # hele select 20170915 
+	$qtxt="select kodenr from grupper where box8 = 'on' order by kodenr"; 
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while($r=db_fetch_array($q)) {
+		$kodenr[$x]=$r['kodenr'];
+		$x++;		
+	}
+	
 	$x=0;
-	$q=db_select("select id,beholdning from varer order by id",__FILE__ . " linje " . __LINE__);
+	$q=db_select("select id,beholdning,gruppe from varer order by id",__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
 		$id[$x]=$r['id'];
+		$gruppe[$x]=$r['gruppe'];
 		$beholdning[$x]=$r['beholdning'];
 		$x++;		
 	}
 	for ($x=0;$x<count($id);$x++){
 	#cho "select sum(beholdning) as ny_beholdning from lagerstatus where vare_id='$id[$x]'<br>";		
+		if (in_array($gruppe[$x],$kodenr)) { #if tilføjet 20170915 
 		$r=db_fetch_array(db_select("select sum(antal) as ny_beholdning from batch_kob where vare_id='$id[$x]'",__FILE__ . " linje " . __LINE__));
 		$ny_beholdning=$r['ny_beholdning']*1;
 		$r=db_fetch_array(db_select("select sum(antal) as ny_beholdning from batch_salg where vare_id='$id[$x]'",__FILE__ . " linje " . __LINE__));
 		$ny_beholdning-=$r['ny_beholdning']*1;
+		} else $ny_beholdning=0; #20170915
 		if ($ny_beholdning != $beholdning[$x]) {
 			db_modify("update varer set beholdning='$ny_beholdning' where id='$id[$x]'",__FILE__ . " linje " . __LINE__); 
 		}

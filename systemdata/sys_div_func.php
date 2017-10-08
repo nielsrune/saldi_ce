@@ -1015,7 +1015,7 @@ function api_valg() {
 		print "</form>";
 		print "<tr><td colspan='6'><hr></td></tr>";
 		print "<tr><td title='".findtekst(740,$sprog_id)."'><!--tekst 740-->".findtekst(741,$sprog_id)."<!--tekst 741--></td><td colspan='3' title='".findtekst(740,$sprog_id)."'><!--tekst 740--><a href=".$_SERVER['PHP_SELF']."?sektion=api_valg&varesync=1><input style='text-align:center;width:300px;' type='button' value='".findtekst(741,$sprog_id)."'><!--tekst 749--></a></td></tr>";
-		print "<tr><td title='".findtekst(740,$sprog_id)."'><!--tekst 740-->".findtekst(741,$sprog_id)."<!--tekst 741--></td><td colspan='3' title='".findtekst(740,$sprog_id)."'><!--tekst 740--><a href=".$_SERVER['PHP_SELF']."?sektion=api_valg&varesync=2><input style='text-align:center;width:300px;' type='button' value='".findtekst(741,$sprog_id)."'><!--tekst 749--></a></td></tr>";
+		print "<tr><td title='Opdaterer beskrivelse, stregkode og pris fra shop'><!--tekst 740-->Opdater fra shop<!--tekst 741--></td><td colspan='3' title='Opdaterer beskrivelse, stregkode og pris fra shop'><!--tekst 740--><a href=".$_SERVER['PHP_SELF']."?sektion=api_valg&varesync=2><input style='text-align:center;width:300px;' type='button' value='Opdater fra shop'><!--tekst 749--></a></td></tr>";
 	} else print "<tr><td colspan='2'>".findtekst(625,$sprog_id)."</td></tr>";
 	print "<tr><td colspan='6'><hr></td></tr>";
 	if (isset($_GET['varesync']) && $_GET['varesync']) {
@@ -1966,3 +1966,4 @@ function testftp($box1,$box2,$box3,$box4,$box5,$box6) {
 }
 
 ?>
+ 	

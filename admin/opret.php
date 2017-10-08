@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------/admin/opret.php-----patch 3.6.9------ 2017-05-05 --------
+// ------------/admin/opret.php-----patch 3.6.9------ 2017-09-07 --------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -56,6 +56,7 @@
 // 2017.02.16 PHR	Indextabeller oprettes kun for postgresql baser da der opstår fejl på mysql
 // 2017.03.02 PK Tilføjet tabel bilag_tjekskema, se opdat_3.6.php ver 3.6.6
 // 2017.05.02 PHR Tilføjet lager til tabel ordrer se opdat_3.6.php ver 3.6.8
+// 2017.09.07 PHR Advokaternes Inkassoservice indsættes son default inkassovirksomhed. ver. 3.7.0  
 
 @session_start();
 $s_id=session_id();
@@ -177,8 +178,7 @@ if ($_POST){
 print "</tbody></table";
 }
 
-function forside($regnskab,$brugernavn) 
-{
+function forside($regnskab,$brugernavn) {
 	global $charset;
 
 	print "<form name=debitorkort action=opret.php method=post>";
@@ -192,26 +192,16 @@ function forside($regnskab,$brugernavn)
 	print "</form>";
 }
 
-function opret ($sqhost,$squser ,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan)
-{
-	global $connection;
-	global $version;
-	global $db_id;
-	global $regnskab;
-	global $fra_formular;
-	global $db_encode;
-	global $db_type;
-	global $sqdb;
+function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
+	global $bruger_id,$connection;
+	global $db_id,$db_encode,$db_type;
+	global $fra_formular,$regnskab;
+	global $s_id,$sqdb,$version;
 	if ($fra_formular) {
-		global $kontakt;
-		global $firmanavn;
-		global $addr1;
-		global $addr2;
-		global $postnr;
-		global $bynavn;
-		global $tlf;
-		global $email;
-		global $cvrnr;
+		global $cvrnr,$kontakt,$firmanavn;
+		global $addr1,$addr2;
+		global $postnr,$bynavn;
+		global $tlf,$email;
 	}
 	
 	if ($db_type=="mysql") {
@@ -222,9 +212,12 @@ function opret ($sqhost,$squser ,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan)
 	} else {
 		if ($db_encode=="UTF8") db_modify("CREATE DATABASE $db with encoding = 'UTF8'",__FILE__ . " linje " . __LINE__);
 		else db_modify("CREATE DATABASE $db with encoding = 'LATIN9'",__FILE__ . " linje " . __LINE__);
+#		db_modify("delete from online where session_id='$s_id'",__FILE__ . " linje " . __LINE__);
+#		db_modify("insert into online (session_id, brugernavn, db, dbuser, regnskabsaar, logtime) values ('$s_id', '".db_escape_string($brugernavn)."', '$db', '$squser', '1', '".date("U")."')",__FILE__ . " linje " . __LINE__);
 		db_close($connection);
 		$connection = db_connect ("$sqhost","$squser","$sqpass","$db",__FILE__ . " linje " . __LINE__);
 	}
+#	include ("../includes/online.php");
 	
 	transaktion("begin");
 #	db_modify("CREATE SEQUENCE id START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1",__FILE__ . " linje " . __LINE__);
@@ -428,6 +421,10 @@ function opret ($sqhost,$squser ,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan)
 		if ($fra_formular) {
 			db_modify("insert into adresser (firmanavn,addr1,addr2,postnr,bynavn,kontakt,tlf,email,cvrnr,art)values('$firmanavn','$addr1','$addr2','$postnr','$bynavn','$kontakt','$tlf','$email','$cvrnr','S')",__FILE__ . " linje " . __LINE__);
 		}
+		$qtxt="insert into adresser (kontonr,firmanavn,addr1,addr2,postnr,bynavn,kontakt,tlf,email,cvrnr,art)values('88535553','Advokaternes Inkasso Service','Esplanaden 26','','1263','København K','Torben Stohn','88535553','info@inkassoadvokat.dk','74159710','K')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$r=db_fetch_array(db_select("select id from adresser where kontonr='88535553'",__FILE__ . " linje " . __LINE__));
+		db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14) values ('Div_valg (Rykker)','4','DIV','','','','','','','','','".$r['id']."','','','','','')",__FILE__ . " linje " . __LINE__);
 	}
 	transaktion("commit");
 	print "<BODY onLoad=\"javascript:alert('Regnskab $regnskab er oprettet og aktiveret')\">";

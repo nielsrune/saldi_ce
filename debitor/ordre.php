@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------debitor/ordre.php----------lap 3.6.7-----2017-03-23-------
+// ----------debitor/ordre.php----------lap 3.7.0-----2017-09-11-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -104,6 +104,7 @@
 // 2017.05.01	PHR	- Automatisk genkendelse af kort ved integreret terminal. Søg 'kortnavn'
 // 2017.06.27	PHR	-	Tilføjet lager[0] til opret_saet. Søg 20170627
 // 2017.07.03	PHR	-	Kostpriser opdateres løbende ved åbne ordrer. Søg 20170703  
+// 2017.09.07 PHR	-	Ovenstående rettet så den kun gælder ved % kostpriser da der ellers ødelægger mulighed for ændring af kostpris ved at skrive ny kostpris i parantes efter pris.
 
 @session_start();
 $s_id=session_id();
@@ -531,7 +532,7 @@ if ($b_submit) {
 #	$genfakt = trim(if_isset($_POST['genfakt']));
 	$fakturadato = trim(if_isset($_POST['fakturadato']));
 	$cvrnr = db_escape_string(trim($_POST['cvrnr']));
-	$procenttillag=usdecimal($procenttillag);
+	$procenttillag=usdecimal($procenttillag,2);
 	$institution = db_escape_string(trim($_POST['institution']));
 	$moms = if_isset($_POST['moms'])*1;
 	$betalingsbet = $_POST['betalingsbet'];
@@ -564,8 +565,8 @@ if ($b_submit) {
 	$afd_lager = $_POST['afd_lager'];
 	$fakturanr = trim(if_isset($_POST['fakturanr']));
 #	$momssats = trim($_POST['momssats']);
-	$momssats = usdecimal($_POST['momssats']);
-	$procenttillag = usdecimal($_POST['procenttillag']);
+	$momssats = usdecimal($_POST['momssats'],2);
+	$procenttillag = usdecimal($_POST['procenttillag'],2);
 	$mail_subj = db_escape_string(trim(if_isset($_POST['mail_subj'])));
 	$mail_text=db_escape_string(str_replace("\n","<br>",if_isset($_POST['mail_text'])));
 	$enhed = if_isset($_POST['enhed']);
@@ -582,10 +583,11 @@ if ($b_submit) {
 	$omkunde = $_POST['omkunde'];
 	$omvbet = $_POST['omvbet'];
 	$lev_varenr = $_POST['lev_varenr'];
+	$kostpris = $_POST['kostpris'];
 	$saet = $_POST['saet'];
 	$fast_db = $_POST['fast_db'];
 	$samlet_pris=if_isset($_POST['samlet_pris']);
-	if ($samlet_pris!='-') $samlet_pris=usdecimal($samlet_pris); #20150317
+	if ($samlet_pris!='-') $samlet_pris=usdecimal($samlet_pris,2); #20150317
 	$bruttosum=if_isset($_POST['bruttosum']);
 	$ordresum=if_isset($_POST['ordresum']);
 	$lager=if_isset($_POST['lager']);
@@ -825,9 +827,9 @@ if ($b_submit) {
 		if ($x==0 && $dkantal[$x]=='' && !$folgevare[$x-1]) $antal[$x]=1; #20160913
 		if ($dkantal[$x] || $dkantal[$x]=='0'){
 			if ( strstr($dkantal[$x], ":") ) $dkantal[$x]=tid2decimal($dkantal[$x], "t");
-			$tmp=usdecimal($dkantal[$x]);
+			$tmp=usdecimal($dkantal[$x],2);
 			$antaldiff[$x]=$tmp-$antal[$x];
-			$antal[$x]=usdecimal($dkantal[$x]);
+			$antal[$x]=usdecimal($dkantal[$x],2);
 			if ($art=='DK') $antal[$x]=$antal[$x]*-1;
 			elseif (($tidl_lev[$x]<0) && ($tidl_lev[$x] < $antal[$x])) $antal[$x]=$tidl_lev[$x];
 		} elseif(!$varenr[$x]) $vare_id[$x]=0;
@@ -845,7 +847,7 @@ if ($b_submit) {
 		else {
 			$leveres[$x]=trim(if_isset($_POST[$y]));
 			if ($leveres[$x]){
-			$leveres[$x]=usdecimal($leveres[$x]);
+			$leveres[$x]=usdecimal($leveres[$x],2);
 			if ($art=='DK') {$leveres[$x]=$leveres[$x]*-1;}
 			}
 		}
@@ -854,22 +856,28 @@ if ($b_submit) {
 		$y="pris".$x;
 		if ($x!=0||(isset($_POST[$y]) && strlen($_POST[$y]))) {
 			if(strpos($_POST[$y],"(") && strpos($_POST[$y],")")) {
-				list($pris[$x],$kostpris[$x])=explode("(",$_POST[$y]);
-				$pris[$x]=usdecimal($pris[$x]);
-				$kostpris[$x]=usdecimal(str_replace(")","",$kostpris[$x]));
-				if ($kostpris[$x] && $linje_id[$x]) {
-					db_modify("update ordrelinjer set kostpris='$kostpris[$x]' where id = '$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
+				list($pris[$x],$kp)=explode("(",$_POST[$y]);
+				$pris[$x]=usdecimal($pris[$x],2);
+				$kp=str_replace(")","",$kp);
+				if ($kp=="!") {
+					if ($vare_id[$x]) { #20170906
+						$r=db_fetch_array(db_select("select kostpris from varer where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
+						$kostpris[$x]=$r['kostpris']; # *100/$valutakurs;
 				}
-			} else $pris[$x]=usdecimal($_POST[$y]);
+				} else $kostpris[$x]=usdecimal($kp,2);
+#				if ($kostpris[$x] && $linje_id[$x]) {
+#					db_modify("update ordrelinjer set kostpris='$kostpris[$x]' where id = '$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
+#				}
+			} else $pris[$x]=usdecimal($_POST[$y],2);
 			if ($incl_moms && !$momsfri[$x] && !$omvbet[$x]) {
 				$pris[$x]=afrund(($pris[$x]/(100+$varemomssats[$x])*100),3);
 			}
 		}
 		$y="raba".$x;
-		$rabat[$x]=usdecimal(if_isset($_POST[$y]));
+		$rabat[$x]=usdecimal(if_isset($_POST[$y]),2);
 		if (($x>0)&&(!$rabat[$x]))$rabat=0;
 		$y="proc".$x;
-		$procent[$x]=usdecimal(if_isset($_POST[$y]));
+		$procent[$x]=usdecimal(if_isset($_POST[$y]),2);
 		if (($x>0)&&(!$procent[$x]))$procent[$x]=100;
 		$y="ialt".$x;
 		$ialt[$x]=if_isset($_POST[$y]);
@@ -1047,7 +1055,7 @@ if ($status<3 && $b_submit) {
 						$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
 						if ($antal[$x]+$r['antal']<0) {
 							$antal[$x]=$r['antal']*-1;
-							print "<BODY onLoad=\"javascript:alert('Der kan h&oslash;jst krediteres ".dkdecimal($row[antal]).". Antal reguleret (Varenr: $varenr[$x])')\">\n";
+							print "<BODY onLoad=\"javascript:alert('Der kan h&oslash;jst krediteres ".dkdecimal($row['antal'],2).". Antal reguleret (Varenr: $varenr[$x])')\">\n";
 						}
 					}
 					if ($antaldiff[$x]) db_modify("update ordrelinjer set antal=$antal[$x] where id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
@@ -1068,9 +1076,9 @@ if ($status<3 && $b_submit) {
 					else $leveres[$x]=$beholdning[$x]*1;
 					$tmp=$posnr_ny[$x]/100;
 					if ($hurtigfakt) {
-						$tekst="Lagerbeholdning: ".dkdecimal($beholdning[$x]).". Der kan h&oslash;jest leveres $leveres[$x] fra linjen med pos.nr. $tmp)";
+						$tekst="Lagerbeholdning: ".dkdecimal($beholdning[$x],2).". Der kan h&oslash;jest leveres $leveres[$x] fra linjen med pos.nr. $tmp)";
 					} else{
-						$tekst="Lagerbeholdning: ".dkdecimal($beholdning[$x]).". Der kan h&oslash;jest leveres $leveres[$x]. Antal reguleret (pos.nr. $tmp)";
+						$tekst="Lagerbeholdning: ".dkdecimal($beholdning[$x],2).". Der kan h&oslash;jest leveres $leveres[$x]. Antal reguleret (pos.nr. $tmp)";
 					}
 					Print "<BODY onLoad=\"javascript:alert('$tekst')\">\n";
 					if ($b_submit=="Fakturer") $b_submit="Gem";
@@ -1153,11 +1161,13 @@ if ($status<3 && $b_submit) {
 					if (!$antal[$x]) $antal[$x]=0;
 					$sum=$sum+($pris[$x]-($pris[$x]/100*$rabat[$x]))*$antal[$x];
 					if (!$leveres[$x]) $leveres[$x]=0;
-					if (!$rabat[$x]) $rabat[$x]='0';
+					if (!$rabat[$x]) $rabat[$x]=0;
+					if (!$kostpris[$x]) $kostpris[$x]=0;
 					if ($projekt[0]) $projekt[$x]=$projekt[0];
 					else $projekt[$x]=$projekt[$x];
 					if ($saet[$x] || ($varenr[$x] && $varenr[$x]==$rvnr)) $qtxt="update ordrelinjer set leveres='$leveres[$x]' where id='$linje_id[$x]'";
-					else $qtxt="update ordrelinjer set varenr='$varenr[$x]',beskrivelse='$beskrivelse[$x]',leveres='$leveres[$x]',pris='$pris[$x]',rabat='$rabat[$x]',procent='$procent[$x]',projekt='$projekt[$x]',kdo='$kdo[$x]',omvbet='$omvbet[$x]',saet='0',samlevare='$samlevare[$x]',lager='$lager[$x]' where id='$linje_id[$x]'";
+					# 20170906 Tilføjet $kostpris[$x]y
+					else $qtxt="update ordrelinjer set varenr='$varenr[$x]',beskrivelse='$beskrivelse[$x]',leveres='$leveres[$x]',pris='$pris[$x]',kostpris='$kostpris[$x]',rabat='$rabat[$x]',procent='$procent[$x]',projekt='$projekt[$x]',kdo='$kdo[$x]',omvbet='$omvbet[$x]',saet='0',samlevare='$samlevare[$x]',lager='$lager[$x]' where id='$linje_id[$x]'";
 					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					if ($samlevare[$x]) {
 						if ($antal[$x]) {
@@ -1797,8 +1807,8 @@ function ordreside($id,$regnskab) {
 #		print "<input type=\"hidden\" name=\"mail_fakt\" value=\"$mail_fakt\">";
 		print "<input type=\"hidden\" name=\"betalingsbet\" value=\"$betalingsbet\">";
 		print "<input type=\"hidden\" name=\"betalingsdage\" value=\"$betalingsdage\">";
-		print "<input type=\"hidden\" name=\"momssats\" value=\"".dkdecimal($momssats)."\">";
-		print "<input type=\"hidden\" name=\"procenttillag\" value=\"".dkdecimal($procenttillag)."\">";
+		print "<input type=\"hidden\" name=\"momssats\" value=\"".dkdecimal($momssats,2)."\">";
+		print "<input type=\"hidden\" name=\"procenttillag\" value=\"".dkdecimal($procenttillag,2)."\">";
 		print "<input type=\"hidden\" name=\"ref\" value=\"$ref\">";
 		print "<input type=\"hidden\" name=\"fakturanr\" value=\"$fakturanr\">";
 		print "<input type=\"hidden\" name=\"lev_adr\" value=\"$lev_adr\">";
@@ -1908,7 +1918,7 @@ function ordreside($id,$regnskab) {
 		print "<tr><td><b>Betaling</b></td><td>$betalingsbet&nbsp;+&nbsp;$betalingsdage</td>\n";
 		print "<tr><td><b>Vor ref.</b></td><td>$ref &nbsp; $afd_navn</td></tr>\n";
 		print "<tr><td><b>Fakturanr</b></td><td>$fakturanr</td></tr>\n";
-		$tmp=dkdecimal($valutakurs);
+		$tmp=dkdecimal($valutakurs,2);
 		if ($valuta) print "<tr><td><b>Valuta / Kurs</b></td><td>$valuta / $tmp</td></tr>\n";
 		if ($projekt[0]) print "<tr><td><b>Projekt</b></td><td>$projekt[0]</td></tr>\n";
 		if ($vis_saet) print "<tr><td><b>Kasse</b></td><td>$felt_5</td></tr>\n";
@@ -1928,8 +1938,8 @@ function ordreside($id,$regnskab) {
 			print "<tr><td><b>".findtekst(243,$sprog_id)."</b></td><td align=\"center\">$jobkort $debitorkort</td></tr>\n";
 			print "<tr><td colspan=\"2\"><b><hr></b></tr>\n";
 			if ($vis_saet) {
-				print "<tr><td><b>$felt_1</b></td><td align=\"right\">".dkdecimal($felt_2)."</td></tr>"; 
-				print "<tr><td><b>$felt_3</b></td><td align=\"right\">".dkdecimal($felt_4)."</td></tr>"; 
+				print "<tr><td><b>$felt_1</b></td><td align=\"right\">".dkdecimal($felt_2,2)."</td></tr>"; 
+				print "<tr><td><b>$felt_3</b></td><td align=\"right\">".dkdecimal($felt_4,2)."</td></tr>"; 
 			} else {
 				if (findtekst(244,$sprog_id)) print "<tr><td><b>".findtekst(244,$sprog_id)."</b></td><td>$felt_1</td></tr>\n";
 				if (findtekst(245,$sprog_id)) print "<tr><td><b>".findtekst(245,$sprog_id)."</b></td><td>$felt_2</td></tr>\n";
@@ -2050,8 +2060,8 @@ function ordreside($id,$regnskab) {
 #cho "DB $db[$x]=($pris[$x]-$kostpris[$x])*$antal[$x]<br>";
 						if ($pris[$x]!=0) $dg[$x]=$db[$x]*100/$pris[$x];
 						else $dg[$x]=0;
-						$dk_db[$x]=dkdecimal($db[$x]);
-						$dk_dg[$x]=dkdecimal($dg[$x]);
+						$dk_db[$x]=dkdecimal($db[$x],2);
+						$dk_dg[$x]=dkdecimal($dg[$x],2);
 #cho "$dk_db[$x] $dk_dg[$x]<br>";
 					}
 				}
@@ -2089,25 +2099,25 @@ function ordreside($id,$regnskab) {
 				$ialt=afrund($ialt,3);
 				if ($ialt!=0) {
 					$dg[$x]=$db[$x]*100/$ialt;
-					$dk_dg[$x]=dkdecimal($dg[$x]);					
+					$dk_dg[$x]=dkdecimal($dg[$x],2);					
 				}
-				$dk_kostpris[$x]=dkdecimal($kostpris[$x]);
+				$dk_kostpris[$x]=dkdecimal($kostpris[$x],2);
 				if ($art=='DO') {
-					$dk_db[$x]=dkdecimal($db[$x]);
-					$dk_kostsum[$x]=dkdecimal($kostsum[$x]);
+					$dk_db[$x]=dkdecimal($db[$x],2);
+					$dk_kostsum[$x]=dkdecimal($kostsum[$x],2);
 				}	else {
-					$dk_db[$x]=dkdecimal($db[$x]*-1);
-					$dk_kostsum[$x]=dkdecimal($kostsum[$x]*-1);
+					$dk_db[$x]=dkdecimal($db[$x]*-1,2);
+					$dk_kostsum[$x]=dkdecimal($kostsum[$x]*-1,2);
 				}
-				$dkpris=dkdecimal($pris[$x]);
+				$dkpris=dkdecimal($pris[$x],2);
 				($rabat[$x])?$dkrabat=dkdecimal($rabat[$x],3):$dkrabat=NULL;
-				$dkprocent=dkdecimal($procent[$x]);
+				$dkprocent=dkdecimal($procent[$x],2);
 				if ($momsfri[$x]!='on' && !$omvbet[$x] ) {
-					if($incl_moms) $dkpris=dkdecimal($pris[$x]+$pris[$x]*$varemomssats[$x]/100);
+					if($incl_moms) $dkpris=dkdecimal($pris[$x]+$pris[$x]*$varemomssats[$x]/100,2);
 				}
 				if ($antal[$x]) {
-					if ($art=='DK') $dkantal[$x]=dkdecimal($antal[$x]*-1);
-					else $dkantal[$x]=dkdecimal($antal[$x]);
+					if ($art=='DK') $dkantal[$x]=dkdecimal($antal[$x]*-1,2);
+					else $dkantal[$x]=dkdecimal($antal[$x],2);
 					if (substr($dkantal[$x],-1)=='0'){$dkantal[$x]=substr($dkantal[$x],0,-1);}
 					if (substr($dkantal[$x],-1)=='0'){$dkantal[$x]=substr($dkantal[$x],0,-2);}
 				} 
@@ -2162,7 +2172,7 @@ function ordreside($id,$regnskab) {
 						}
 					}
 					if ($art=='DK') $tmp*=-1;
-					$tmp=dkdecimal($tmp);
+					$tmp=dkdecimal($tmp,2);
 				}
 				print "<td align=\"right\" title=\"Kostpris $dk_kostsum[$x] * db: $dk_db[$x] * dg: $dk_dg[$x]%\">".$tmp."</td>\n";
 			} else print "<td>&nbsp;</td>\n";
@@ -2182,7 +2192,7 @@ function ordreside($id,$regnskab) {
 #cho "$kobs_ordre_id[0] && $art!='DK' && $ko_ant[$x]>=1<br>";
 			if ($kobs_ordre_id[0] && $art!='DK' && $ko_ant[$x]>=1) {
 				for ($y=0; $y<$ko_ant[$x]; $y++) {
-					$spantekst="K&oslash;bsordre&nbsp;$kobs_ordre_nr[$y] \n antal:&nbsp;$kobs_ordre_antal[$y]&nbsp;&aacute;&nbsp;".dkdecimal($kobs_ordre_pris[$y]);
+					$spantekst="K&oslash;bsordre&nbsp;$kobs_ordre_nr[$y] \n antal:&nbsp;$kobs_ordre_antal[$y]&nbsp;&aacute;&nbsp;".dkdecimal($kobs_ordre_pris[$y],2);
 					if ($kobs_ordre_art[$y]=='KO') $link="../kreditor/ordre.php?id=$kobs_ordre_id[$y]";
 					else $link="../debitor/ordre.php?id=$kobs_ordre_id[$y]";
 					print "<td align=\"right\" onClick=\"javascript:k_ordre=window.open('$link','ordre' ,'left=10,top=10,width=800,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no');k_ordre.focus();\"onMouseOver=\"this.style.cursor = 'pointer'\" title=\"'$spantekst'\"><img src=\"../ikoner/opslag.png\"></td>\n";
@@ -2215,18 +2225,18 @@ function ordreside($id,$regnskab) {
 		print "<tr><td colspan=\"11\"><br></td></tr>\n";
 		print "<tr><td colspan=\"11\"><table border=\"1\" cellspacing=\"0\" cellpadding=\"1\" width=\"100%\"><tbody>\n"; #Tabel 2.5.1 ->
 		print "<tr bgcolor=\"$bgcolor5\">\n";
-#		print "<td align=\"center\">".dkdecimal($procenttillag)."% tillæg ".dkdecimal($tillag)." </td>\n";
-		print "<td width=\"20%\" align=\"center\">Nettosum ".dkdecimal($sum)."</td>\n";
-		print "<td width=\"20%\" align=\"center\" title=\"D&aelig;kningsbidrag:&nbsp;".dkdecimal($dbsum)."\">";
-		if (!$vis_saet) print "D&aelig;kningsbidrag:&nbsp;".dkdecimal($dbsum);
+#		print "<td align=\"center\">".dkdecimal($procenttillag,2)."% tillæg ".dkdecimal($tillag,2)." </td>\n";
+		print "<td width=\"20%\" align=\"center\">Nettosum ".dkdecimal($sum,2)."</td>\n";
+		print "<td width=\"20%\" align=\"center\" title=\"D&aelig;kningsbidrag:&nbsp;".dkdecimal($dbsum,2)."\">";
+		if (!$vis_saet) print "D&aelig;kningsbidrag:&nbsp;".dkdecimal($dbsum,2);
 		print "</td>\n";
 		if ($sum) $dg_sum=($dbsum*100/$sum);
-		else $dg_sum=dkdecimal(0);
-		print "<td width=\"20%\" align=\"center\" title=\"D&aelig;kningsgrad:&nbsp;".dkdecimal($dg_sum)."%\">";
-		if (!$vis_saet) print "D&aelig;kningsgrad:&nbsp;".dkdecimal($dg_sum);
+		else $dg_sum=dkdecimal(0,2);
+		print "<td width=\"20%\" align=\"center\" title=\"D&aelig;kningsgrad:&nbsp;".dkdecimal($dg_sum,2)."%\">";
+		if (!$vis_saet) print "D&aelig;kningsgrad:&nbsp;".dkdecimal($dg_sum,2);
 		print "</td>\n";
-		print "<td align=\"center\">Moms ".dkdecimal($moms)."</td>\n";
-		print "<td align=\"center\" title=\"D&aelig;kningsgrad:&nbsp;".dkdecimal($dg_sum)."%\">I alt ".dkdecimal($ialt)."</td>\n";
+		print "<td align=\"center\">Moms ".dkdecimal($moms,2)."</td>\n";
+		print "<td align=\"center\" title=\"D&aelig;kningsgrad:&nbsp;".dkdecimal($dg_sum,2)."%\">I alt ".dkdecimal($ialt,2)."</td>\n";
 		print "</tbody></table></td></tr>\n"; #<- Tabel 2.5.1
 		print "<tr><td align=\"center\" colspan=\"11\">\n";
 		print "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody><tr>\n"; #Tabel 2.5.2 ->
@@ -2328,7 +2338,7 @@ function ordreside($id,$regnskab) {
 		if ($art=='OT') { // Når input fields er 'disabled' bliver de ikke opdateret, derfor tilføjes hidden fields #20140716
 			print "<input type=\"hidden\" name=\"kontonr\" value=\"$kontonr\">\n";
 			print "<input type=\"hidden\" name=\"ref\" value=\"$ref\">\n";
-			print "<input type=\"hidden\" name=\"procenttillag\" value=\"".dkdecimal($procenttillag)."\">";
+			print "<input type=\"hidden\" name=\"procenttillag\" value=\"".dkdecimal($procenttillag,2)."\">";
 			
 			print "<input type=\"hidden\" name=\"felt_1\" style=\"width:200px\" value=\"$felt_1\">\n";
 			print "<input type=\"hidden\" name=\"felt_2\" style=\"width:200px\" value=\"$felt_2\">\n";
@@ -2515,7 +2525,7 @@ function ordreside($id,$regnskab) {
 			}
 		}
 		print "</SELECT></td>\n";
-		print "<td>&nbsp;</td><td>Momssats</td><td><input class=\"inputbox\" style=\"text-align:right;width:35px\" type=\"text\" name=\"momssats\" value=\"".dkdecimal($momssats)."\" onchange=\"javascript:docChange = true;\" $disabled>%</td></tr>\n";
+		print "<td>&nbsp;</td><td>Momssats</td><td><input class=\"inputbox\" style=\"text-align:right;width:35px\" type=\"text\" name=\"momssats\" value=\"".dkdecimal($momssats,2)."\" onchange=\"javascript:docChange = true;\" $disabled>%</td></tr>\n";
 		/*
 		print "<tr><td colspan=2>Send pr. mail&nbsp;</td><td><input class=\"inputbox\" type=\"checkbox\" name=\"mail_fakt\" onchange=\"javascript:docChange = true;\" $mail_fakt></td>\n";
 		if ($lev_pbs_nr) {
@@ -2753,12 +2763,12 @@ function ordreside($id,$regnskab) {
 					($felt_2<$sum+$moms)?$felt_4=$sum+$moms-$felt_2:$felt_4=0;
 				}
 				
-				if ($terminal_ip[$felt_5-1] && $betalingsbet=='Kreditkort' && !$betalt) $felt_2=$sum+$moms;
+				if ($terminal_ip[$felt_5-1] && !$betalt) $felt_2=$sum+$moms;
 				$dkfelt_2=dkdecimal($felt_2,2);
 				$dkfelt_4=dkdecimal($felt_4,2);
 #cho $_GET['godkendt']."<br>";
 				if (if_isset($_GET['godkendt'])=='OK' && usdecimal(if_isset($_GET['modtaget']),2)==usdecimal($dkfelt_2,2)) {
-					$betalt=usdecimal($_GET['modtaget']);
+					$betalt=usdecimal($_GET['modtaget'],2);
 					if ($_GET['kortnavn']) $felt_1=$_GET['kortnavn'];
 					db_modify("update ordrer set betalt='$betalt',felt_1='$felt_1' where id = '$id'",__FILE__ . " linje " . __LINE__);
 
@@ -2769,9 +2779,13 @@ function ordreside($id,$regnskab) {
 				if ($betalt) {
 					$disabled='disabled';
 					$felt_2=$betalt;
-					$dkfelt_2=dkdecimal($betalt);
+					$dkfelt_2=dkdecimal($betalt,2);
 				} else $disabled=$disabled;
 #cho __line__." $felt_2=$betalt<br>";				
+/*				
+					for ($x=0;$x<count($korttyper);$x++) {
+						echo "$felt_1,$korttyper[$x]<br>";
+					}
 				if ($betalingsbet=='Kreditkort' && $felt_1=='Kontant') $felt_1=NULL;
 				if ($terminal_ip[$felt_5-1] && $betalingsbet!='Kreditkort' && in_array($felt_1,$korttyper)) $felt_1=NULL;
 				if (!$felt_1) {
@@ -2779,7 +2793,6 @@ function ordreside($id,$regnskab) {
 					elseif ($terminal_ip[$felt_5-1] && $betalingsbet=='Kreditkort') $felt_1=$korttyper[0];
 					elseif (!$terminal_ip[$felt_5-1]) $felt_1=$korttyper[0];
 				}
-				print "<tr><td><select name=\"felt_1\" $disabled>";
 				if ($felt_1) print "<option value=\"$felt_1\">$felt_1</value>";
 				if ($felt_1!='Kontant' && $betalingsbet!='Kreditkort') print "<option value=\"Kontant\">Kontant</value>";
 				if (!$terminal_ip[$felt_5-1] || $betalingsbet=='Kreditkort') {
@@ -2795,10 +2808,31 @@ function ordreside($id,$regnskab) {
 				if ($div_kort_kto && $felt_1 != 'Betalingskort') $terminal_ip[$felt_5-1]=NULL;
 				if ($felt_1!='Konto' && ($betalingsbet=='Netto' || $betalingsbet=='Lb.Md' || $betalingsbet=='Forud')) print "<option value=\"Konto\">Konto</value>";
 				print "</select></td>";
-#cho __line__." $felt_2=$betalt<br>";				
+*/
+				print "<tr><td><select style=\"width:110px\" name=\"felt_1\" $disabled>";
+				if ($betalingsbet=='Kreditkort') {
+					if (!in_array($felt_1,$korttyper) && $felt_1 != 'Betalingskort' && $terminal_ip[$felt_5-1]) $felt_1=NULL;
+					elseif (!in_array($felt_1,$korttyper) && !$terminal_ip[$felt_5-1]) $felt_1=NULL;
+					if ($terminal_ip[$felt_5-1]) {
+						if ($felt_1) print "<option value='$felt_1'>$felt_1</options>";
+						if ($felt_1!='Betalingskort') print "<option value='Betalingskort'>Betalingskort</options>";
+						for($x=0;$x<$kortantal;$x++) {
+							if ($felt_1!=$korttyper[$x] && !$betalingskort[$x]) print "<option value='$korttyper[$x]'>$korttyper[$x]</options>";
+						}
+					} else {
+						if ($felt_1) print "<option value='$felt_1'>$felt_1</options>";
+						for($x=0;$x<$kortantal;$x++) {
+							if ($felt_1!=$korttyper[$x]) print "<option value='$korttyper[$x]'>$korttyper[$x]</options>";
+						}
+					}
+				} else {
+					($betalingsbet=='Kontant')?$felt_1='Kontant':$felt_1='Konto';
+					print "<option value=\"$felt_1\">$felt_1</option>";
+				}
+				print "</select></td>";
 				print "<td><input class=\"inputbox\" type=\"text\" name=\"felt_2\" style=\"text-align:right;width:200px\" value=\"$dkfelt_2\" $disabled></td>";
-				print "</tr>";	
-				print "<tr><td><select name=\"felt_3\">"; 
+				print "</tr>\n";	
+				print "<tr><td><select style=\"width:110px\" name=\"felt_3\">"; 
 				if ($felt_3) print "<option value=\"$felt_3\">$felt_3</value>";
 				if ($felt_3!='Kontant') print "<option value=\"Kontant\">Kontant</value>";
 #				for($x=0;$x<$kortantal;$x++) {
@@ -2809,14 +2843,13 @@ function ordreside($id,$regnskab) {
 					$disabled="disabled='disabled'";
 				}
 				print "</select></td>";
-#cho __line__." $felt_2=$betalt<br>";				
-				print "<td><input class=\"inputbox\" type=\"text\" name=\"felt_4\" style=\"text-align:right;width:200px\" value=\"$dkfelt_4\" $disabled></td></tr>";	
+				print "<td><input class=\"inputbox\" type=\"text\" name=\"felt_4\" style=\"text-align:right;width:200px\" value=\"$dkfelt_4\" $disabled></td></tr>\n\n";	
 				if ($terminal_ip[$felt_5-1]) {
 					if ($felt_1=='Konto' || $felt_1=='Kontant') $terminal_ip[$felt_5-1]=NULL;
 				}
 				if ($disabled) {
-					print "<input type=\"hidden\" name=\"felt_1\" value=\"$felt_1\">";
-					print "<input type=\"hidden\" name=\"felt_2\" value=\"$dkfelt_2\">";
+					print "<input type=\"hidden\" name=\"felt_1\" value=\"$felt_1\">\n";
+					print "<input type=\"hidden\" name=\"felt_2\" value=\"$dkfelt_2\">\n";
 				}
 				if ($terminal_ip[$felt_5-1]) {
 					if ($_SERVER['HTTPS']) $url='https://';
@@ -2833,7 +2866,21 @@ function ordreside($id,$regnskab) {
 					$tidspkt=date('U');
 					$dkfelt_2=str_replace('.','',$dkfelt_2);
 #					http://192.168.76.201/pointd/kvittering.php?url=https://udvikling.saldi.dk/udvikling/debitor/pos_ordre.php&id=1&kommando=kortbetaling&belob=129,95&betaling=Dankort&betaling2=&modtaget=129.95&modtaget2=0&indbetaling=&tidspkt=1490181148
-					print "<tr><td colspan='2' align='center'><a href=\"http://". $terminal_ip[$felt_5-1] ."/pointd/kvittering.php?url=$url&id=$id&&kommando=kortbetaling&belob=$dkfelt_2&betaling=&modtaget=$dkfelt_2&modtaget2=0&indbetaling=&tidspkt=1490181148\">kortbetaling</a></td></tr>";
+					
+					($felt_1=='Betalingskort')?$vis_betalingslink=1:$vis_betalingslink=0;
+					for($x=0;$x<$kortantal;$x++) {
+						if ($felt_1==$korttyper[$x] && $betalingskort[$x]) $vis_betalingslink=1;
+					}
+					if ($vis_betalingslink==1) {
+						$href="http://".$terminal_ip[$felt_5-1]."/pointd/kvittering.php?url=$url&id=$id&&kommando=kortbetaling&";
+						$href.="belob=$dkfelt_2&betaling=&modtaget=$dkfelt_2&modtaget2=0&indbetaling=&tidspkt=".date("U");
+						print "<tr><td><br></td></tr><tr><td colspan='2' align='center'>";
+						print "<input type=\"button\" style=\"width:100%\" onclick=\"window.location.href='$href'\" value='Kortbetaling'>";
+						print "</td></tr>\n";
+			
+#						print "<tr><td colspan='2' align='center'>";
+#						print "<a href=\"http://". $terminal_ip[$felt_5-1] ."/pointd/kvittering.php?url=$url&id=$id&&kommando=kortbetaling&belob=$dkfelt_2&betaling=&modtaget=$dkfelt_2&modtaget2=0&indbetaling=&tidspkt=".date("U")."\">kortbetaling</a></td></tr>\n";
+					}
 				}
 			} else {
 				if (substr(findtekst(244,$sprog_id),0,1)!="#") print "<tr><td><span onmouseover=\"return overlib('".findtekst(249,$sprog_id)."',WIDTH=600);\" onmouseout=\"return nd();\">".findtekst(244,$sprog_id)."</span></td><td><input class=\"inputbox\" type=\"text\" name=\"felt_1\" style=\"width:200px\" value=\"$felt_1\" $disabled></td></tr>\n";
@@ -2897,7 +2944,7 @@ function ordreside($id,$regnskab) {
  		if ($kontonr) {
 			print "<tr><td align=\"center\" title=\"Positionsnummer. R&aelig;kkef&oslash;lgen &aelig;ndres ved at overskrive positionsnumrene (1,5 hvis mellem 1 og 2). En enkelt linje slettes ved at skrive minustegn som positionsnummer.\">Pos.</td><td align=\"center\" title=\"Varenummer. Skriv hele varenumret eller klik p&aring; Opslag for at v&aelig;lge. Hvis du vil v&aelig;lge mellem varenumre startende med t, s&aring; skriv t* i feltet og klik p&aring; Opslag.\">Varenr.</td><td align=\"center\" title=\"Antal enheder. Timer og minutter kan angives med : som skilletegn. Eksempelvis 5:45 som bliver til 5,75.\">Antal</td>";
 			print "<td align=\"center\">Enhed</td>";
-			if ($lagerantal) print "<td align=\"center\">Lager</td>";
+			if ($lagerantal > 1) print "<td align=\"center\">Lager</td>";
 			print "<td align=\"center\" title=\"Brug [Shift]+[Enter] for et indsætte et linjeskift i en beskrivelseslinje\">Beskrivelse</td><td align=\"center\">Pris</td><td align=\"center\">Rabat</td>";
 			if ($procentfakt) print "<td align=\"center\">Procent</td>";
 			print "<td align=\"center\">I alt</td>";
@@ -2970,15 +3017,15 @@ function ordreside($id,$regnskab) {
 				$projekt[$x]=$row['projekt'];
 				($row['kdo'])?$kdo[$x]='checked':$kdo[$x]=NULL;
 				if ($vare_id[$x]) { # 20170703
-					$r2=db_fetch_array(db_select("select kostpris from varer where id='$vare_id[$x]'"));
-					$kostpris[$x]=$r2['kostpris']*100/$valutakurs;
-				}
-				if ($vare_id[$x]) {
+#					$r2=db_fetch_array(db_select("select kostpris from varer where id='$vare_id[$x]'")); # udkommenteret 20170906
+#					$kostpris[$x]=$r2['kostpris']*100/$valutakurs; 
+#				}
+#				if ($vare_id[$x]) {
 					if ($fast_db[$x]) {
 						$kostpris[$x]=$pris[$x]*$fast_db[$x];
-					} else {
-						$r2=db_fetch_array(db_select("select kostpris from varer where id='$vare_id[$x]'"));
-						$kostpris[$x]=$r2['kostpris']*100/$valutakurs;
+#					} else {
+#						$r2=db_fetch_array(db_select("select kostpris from varer where id='$vare_id[$x]'"));
+#						$kostpris[$x]=$r2['kostpris']*100/$valutakurs;
 					}
 					if (!$samlevare[$x] || !$vis_saet) $kostsum+=$kostpris[$x]*$antal[$x]; #20170703 Tilføjet if (!$samlevare[$x] || !$vis_saet)
 					
@@ -2996,8 +3043,8 @@ function ordreside($id,$regnskab) {
 #cho "$db[$x]=$pris[$x]-$kostpris[$x]<br>";
 					if ($pris[$x]!=0) $dg[$x]=$db[$x]*100/$pris[$x];
 					else $dg[$x]=0;
-					$dk_db[$x]=dkdecimal($db[$x]);
-					$dk_dg[$x]=dkdecimal($dg[$x]);
+					$dk_db[$x]=dkdecimal($db[$x],2);
+					$dk_dg[$x]=dkdecimal($dg[$x],2);
 				}
 				if (($art=='DK')&&($antal[$x]<0)) $bogfor==0;
 				if ($serienr[$x]) {
@@ -3052,8 +3099,8 @@ function ordreside($id,$regnskab) {
 					while($r2 = db_fetch_array($q2)) {
 						$tmp=$tmp+$r2['antal'];
 					}
-					if ($art=='DK') $dkantal=dkdecimal($r['antal']*-1);
-					else $dkantal=dkdecimal($r['antal']);
+					if ($art=='DK') $dkantal=dkdecimal($r['antal']*-1,2);
+					else $dkantal=dkdecimal($r['antal'],2);
 					if (substr($dkantal,-1)=='0') $dkantal=substr($dkantal,0,-1);
 					if (substr($dkantal,-1)=='0') $dkantal=substr($dkantal,0,-2);
 				}
@@ -3098,8 +3145,8 @@ function ordreside($id,$regnskab) {
 						if ($r2['box2']) $fv_varemomssats=$r2['box2']*1;
 					}	else $fv_varemomssats=$momssats;
 				}
-				$fv_dk_db=dkdecimal($fv_db);
-				$fv_dk_dg=dkdecimal($fv_dg);
+				$fv_dk_db=dkdecimal($fv_db,2);
+				$fv_dk_dg=dkdecimal($fv_dg,2);
 				list($sum,$dbsum,$blandet_moms,$moms)=explode(chr(9),ordrelinjer($x_nr,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ialt,$tidl_lev_ialt,$levdiff,$projekt[0],$fv_linje_id,0,$x,$fv_varenr,$fv_beskrivelse,$fv_enhed,$fv_lager,$fv_salgspris,0,'percent',$procent[$x],$antal[$x],$leveres[$x],$folgevare[$x],$fv_momsfri,0,0,$fv_varemomssats,0,0,0,$projekt[$x],$kdo[$x],0,0,$fv_kostpris,$fv_db,$fv_dg,$fv_dk_db,$fv_dk_dg,'1',$saet[$x],$saetnr));
 			}
 			print "<input type=\"hidden\" name=\"folgevare[$x]\" value=\"$folgevare[$x]\">\n";
@@ -3139,7 +3186,7 @@ function ordreside($id,$regnskab) {
 		print "<input type=\"hidden\" name=\"lagervarer\" value=\"$lagervarer\">\n";
 		if ($status>=1&&$bogfor!=0 && !$leveres_ialt && $tidl_lev_ialt && $antal_ialt != $tidl_lev_ialt) $del_ordre = 'on';
 		else $del_ordre = '';
-		if ($kontonr && !$disabled) {
+		if ($kontonr) { # && !$disabled
 			$x++;
 			$antal[0]=1;
 			$posnr[0]=$linjeantal+1;
@@ -3182,7 +3229,7 @@ function ordreside($id,$regnskab) {
 					print "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:35px\" name=\"lagr0\" placeholder=\"$lager[0]\"></td>\n";
 				}
 				print "<td valign=\"top\"><textarea class=\"autosize inputbox ordreText comment\" id=\"comment\" rows=\"1\" cols=\"58\" name=\"beskrivelse0\" placeholder=\"$beskrivelse[0]\" onfocus=\"document.forms[0].fokus.value=this.name; var val=this.value; this.value=''; this.value= val;\"></textarea></td>\n"; #2013.11.27 Ændret til textarea, så hele texten vises #2013.11.29 indsat ny onfocus da chrome ikke satte curser efter tekst
-				print "<td valign=\"top\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=\"10\" name=\"pris0\" placeholder=\"".dkdecimal($pris[0])."\"></td>\n";
+				print "<td valign=\"top\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=\"10\" name=\"pris0\" placeholder=\"".dkdecimal($pris[0],2)."\"></td>\n";
 				print "<td valign=\"top\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=\"4\" name=\"raba0\">\n";
 				if ($procentfakt) print "</td><td valign=\"top\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=\"4\" name=\"proc0\" value=\"100,00\"></td>\n";
 				else print "<input type=\"hidden\" name=\"proc0\" value=\"100,00\"></td>\n";
@@ -3197,7 +3244,7 @@ function ordreside($id,$regnskab) {
 				$r=db_fetch_array(db_select("select beskrivelse from varer where varenr = '$procentvare'",__FILE__ . " linje " . __LINE__));
 				$tillag=$sum*$procenttillag/100;
 				$beskr=var2str($r['beskrivelse'],$id,$posnr[$x],$varenr[$x],$dkantal[$x],$enhed[$x],$dkpris,$dkprocent,$serienr[$x],$varemomssats[$x],$dkrabat[$x]);
-				$beskr=str_replace('$procenttillæg;',dkdecimal($procenttillag),$beskr);
+				$beskr=str_replace('$procenttillæg;',dkdecimal($procenttillag,2),$beskr);
 				print "<tr>\n";
 				print "<td></td>\n";
 				print "<td>$procentvare</td>\n";
@@ -3207,7 +3254,7 @@ function ordreside($id,$regnskab) {
 				print "<td></td>\n";
 				print "<td></td>\n";
 				print "<td></td>\n";
-				print "<td align=right>".dkdecimal($tillag)."</td>\n";
+				print "<td align=right>".dkdecimal($tillag,2)."</td>\n";
 				if ($art!='OT') print "<td></td>\n"; #20140716
 				print "</tr>\n";
 				$sum+=$tillag;
@@ -3226,7 +3273,7 @@ function ordreside($id,$regnskab) {
 			$ialt=($sum+$moms);
 			print "<tr><td colspan=\"12\"><table border=\"1\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\"><tbody>\n"; # Tabel 4.5.1 ->
 			print "<tr>\n";
-#			print "<td align=\"center\">".dkdecimal($procenttillag)."% tillæg:&nbsp;".dkdecimal($tillag)."</td>\n";
+#			print "<td align=\"center\">".dkdecimal($procenttillag,2)."% tillæg:&nbsp;".dkdecimal($tillag,2)."</td>\n";
 			print "<td align=\"center\">Nettosum:&nbsp;".dkdecimal($sum,2)."</td>\n";
 			if ($vis_saet) $db=$sum-$kostsum;
 			else $db=$dbsum;
@@ -3234,7 +3281,7 @@ function ordreside($id,$regnskab) {
 			if (!$vis_saet) print "D&aelig;kningsbidrag:&nbsp;".dkdecimal($db,2);
 			print "</td>\n";
 			if ($sum) $dg_sum=($db*100/$sum);
-			else $dg_sum=dkdecimal(0);
+			else $dg_sum=dkdecimal(0,2);
 			print "<td width=\"20%\" align=\"center\"  title=\"DG;".dkdecimal($dg_sum,2)."%\">";
 			if (!$vis_saet) print "D&aelig;kningsgrad:&nbsp;".dkdecimal($dg_sum,2)."%";
 			print "</td>\n";
@@ -3374,8 +3421,6 @@ function ordreside($id,$regnskab) {
 		"\n<input type=\"hidden\" name=\"txtCountryNum\" value=\"208\">".		//country codes can be fund in source on GLS site.
 		"\n<input type=\"hidden\" name=\"txtReferenceNo\" value=\"".$ordrenr." \">".
 		"\n<input type=\"hidden\" name=\"txtConsigneeEmail\" value=\"".$email." \">";
-
-
 		if(!empty($lev_navn)){
 			print "\n<input type=\"hidden\" name=\"txtName1\" value=\"".$lev_navn."\">";
 			print "\n<input type=\"hidden\" name=\"txtZipCodeDisplay\" value=\"".$lev_postnr."\">";
@@ -3496,11 +3541,11 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 		if ($momsfri!='on') {
 			$moms+=afrund($ialt*$varemomssats/100,3); # 20150130 rettet til 3 decimaler
 			if ($varemomssats!=$momssats) $blandet_moms=1;#tilfojet 20100923 grundet afrundingsfejl på ordre med rabat
-			if($incl_moms)$dkpris=dkdecimal($pris+$pris*$varemomssats/100);
+			if($incl_moms)$dkpris=dkdecimal($pris+$pris*$varemomssats/100,2);
 		} else $blandet_moms=1;#tilfojet 20100923 grundet afrundingsfejl på ordre med rabat
 		if ($antal) {
-			if ($art=='DK') $dkantal=dkdecimal($antal*-1);
-			else $dkantal=dkdecimal($antal);
+			if ($art=='DK') $dkantal=dkdecimal($antal*-1,2);
+			else $dkantal=dkdecimal($antal,2);
 			if (substr($dkantal,-1)=='0') $dkantal=substr($dkantal,0,-1);
 			if (substr($dkantal,-1)=='0') $dkantal=substr($dkantal,0,-2);
 		}
@@ -3517,6 +3562,7 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 	print "<input type=\"hidden\" name=\"proc$x\" value=\"$procent\">\n";
 	print "<input type=\"hidden\" name=\"saet[$x]\" value=\"$saet\">\n";
 	print "<input type=\"hidden\" name=\"samlevare[$x]\" value=\"$samlevare\">\n";
+		print "<input type=\"hidden\" name=\"kostpris[$x]\" value=\"$kostpris\">\n"; #20170906
 		print "<input type=\"hidden\" name=\"lager[$x]\" value=\"$lager\">\n";
 #	if ($art=='OT' || $saetnr || ($rvnr && $rabat)) { // Når input fields er 'disabled' bliver de ikke opdateret, derfor tilføjes hidden fields
 	print "<input type=\"hidden\" name=\"beskrivelse$x\" value=\"$beskrivelse\">\n";
@@ -3567,10 +3613,10 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 			<input class=\"inputbox\" type=\"hidden\" name=\"raba$x\" value=\"$dkrabat\"></td>
 			<input type=\"hidden\" name=\"posn$x\" value=\"$ny_pos\">\n";
 	} elseif ($saetnr) {
-		print "<td><input type=\"hidden\" name=\"pris$x\" value=\"".dkdecimal($pris)."\"></td><td><input class=\"inputbox\" type=\"hidden\" name=\"raba$x\" value=\"0\"></td>"; 
+		print "<td><input type=\"hidden\" name=\"pris$x\" value=\"".dkdecimal($pris,2)."\"></td><td><input class=\"inputbox\" type=\"hidden\" name=\"raba$x\" value=\"0\"></td>"; 
 	} elseif (!$rvnr) {
-		print "<td valign=\"top\" title=\"db: $dk_db - dg: $dk_dg%\"><input class=\"inputbox\" type=\"text\" $readonly style=\"text-align:right\" size=\"10\" $prplho name=\"pris$x\" value=\"$dkpris\" onchange=\"javascript:docChange = true;\" onfocus=\"if(this.value == '0,00') {this.value=''}\" onblur=\"if(this.value == ''){this.value ='0,00'}\" $disabled></td>\n"; #2013.11.29 Fjerner 0,00 ved fokus, og tilføjer 0,00 hvis feltet er tomt
-		$title=$dkantal."*".dkdecimal(($rabat/100)*$pris)."% = ".dkdecimal($antal*($rabat/100)*$pris);
+		print "<td valign=\"top\" title=\"Kost: ".dkdecimal($kostpris,2)." - db: $dk_db - dg: $dk_dg%\"><input class=\"inputbox\" type=\"text\" $readonly style=\"text-align:right\" size=\"10\" $prplho name=\"pris$x\" value=\"$dkpris\" onchange=\"javascript:docChange = true;\" onfocus=\"if(this.value == '0,00') {this.value=''}\" onblur=\"if(this.value == ''){this.value ='0,00'}\" $disabled></td>\n"; #2013.11.29 Fjerner 0,00 ved fokus, og tilføjer 0,00 hvis feltet er tomt
+		$title=$dkantal."*".dkdecimal(($rabat/100)*$pris,2)."% = ".dkdecimal($antal*($rabat/100)*$pris,2);
 		print "<td valign=\"top\" title=\"$title\"><input class=\"inputbox\" type=\"text\" $readonly style=\"text-align:right\" size=\"4\" name=\"raba$x\" value=\"$dkrabat\" onchange=\"javascript:docChange = true;\" onfocus=\"if(this.value == '0,00') {this.value=''}\" onblur=\"if(this.value == ''){this.value ='0,00'}\" $disabled></td>\n";
 	} else print "<td></td><td></td>";
 		
@@ -3582,17 +3628,17 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 	if ($ialt!=0) $dg=$db*100/$ialt;
 	else $dg=0;
 	$dbsum=$dbsum+$db;
-	$dk_db=dkdecimal($db);
-	$dk_dg=dkdecimal($dg);
+	$dk_db=dkdecimal($db,2);
+	$dk_dg=dkdecimal($dg,2);
 	if ($art=='DK') $ialt=$ialt*-1;
 	if ($varenr) {
 		if ($rvnr) {
 			$disabled='disabled';
-			if ($incl_moms && !$momsfri) $tmp=dkdecimal($antal*($pris+$pris*$varemomssats/100));
-			else $tmp=dkdecimal($pris);
+			if ($incl_moms && !$momsfri) $tmp=dkdecimal($antal*($pris+$pris*$varemomssats/100),2);
+			else $tmp=dkdecimal($pris,2);
 		} else {
-			if ($incl_moms && !$momsfri) $tmp=dkdecimal($ialt+$ialt*$varemomssats/100);
-			else $tmp=dkdecimal($ialt);
+			if ($incl_moms && !$momsfri) $tmp=dkdecimal($ialt+$ialt*$varemomssats/100,2);
+			else $tmp=dkdecimal($ialt,2);
 		}
 	}
 	else $tmp=NULL;
@@ -3604,7 +3650,7 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 		if ($saetnr) $r=db_fetch_array(db_select("select lev_varenr from ordrelinjer where samlevare='on' and saet='$saetnr' and ordre_id='$id'"));
 		else $r=db_fetch_array(db_select("select lev_varenr from ordrelinjer where varenr='$rvnr' and ordre_id='$id'"));
 		list($lev_vnr)=explode("|",$r['lev_varenr']);	
-		print "<td valign=\"top\" align=\"right\" title=\"db: $dk_db - dg: $dk_dg%\"><input class=\"inputbox\" type=\"text\" readonly=\"readonly\" style=\"background: none repeat scroll 0 0 #e4e4ee; text-align:right\" size=\"10\" value=\"".dkdecimal($lev_vnr)."\" disabled></td>\n";
+		print "<td valign=\"top\" align=\"right\" title=\"db: $dk_db - dg: $dk_dg%\"><input class=\"inputbox\" type=\"text\" readonly=\"readonly\" style=\"background: none repeat scroll 0 0 #e4e4ee; text-align:right\" size=\"10\" value=\"".dkdecimal($lev_vnr,2)."\" disabled></td>\n";
 	} else {
 		print "<td valign=\"top\" align=\"right\" title=\"db: $dk_db - dg: $dk_dg%\"><input class=\"inputbox\" type=\"text\" readonly=\"readonly\" style=\"background: none repeat scroll 0 0 #e4e4ee; text-align:right\" size=\"10\" value=\"$tmp\" $disabled></td>\n";
 	}
@@ -3671,12 +3717,12 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 			}
 			}
 			if ($art=='DK') {
-				$dklev=dkdecimal($leveres*-1);
-				$dk_tidl_lev=dkdecimal($tidl_lev*-1);
+				$dklev=dkdecimal($leveres*-1,2);
+				$dk_tidl_lev=dkdecimal($tidl_lev*-1,2);
 				$lever_modtag="modtag";
 			} else {
-				$dklev=dkdecimal($leveres);
-				$dk_tidl_lev=dkdecimal($tidl_lev);
+				$dklev=dkdecimal($leveres,2);
+				$dk_tidl_lev=dkdecimal($tidl_lev,2);
 				$lever_modtag="lever";
 			}
 
@@ -3688,7 +3734,7 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 			$temp=$beholdning-$reserveret;
 			$status=2;
 			$beholdning=$beholdning*1;
-			$beholdning=dkdecimal($beholdning);
+			$beholdning=dkdecimal($beholdning,2);
 			if (substr($beholdning,-1)=='0') $beholdning=substr($beholdning,0,-1);
 			if (substr($beholdning,-1)=='0') $beholdning=substr($beholdning,0,-2);
 			if (!$lagervare) $beholdning="ikke lagerført";
@@ -3733,9 +3779,9 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 		  if ($varemomssats!=$momssats) $blandet_moms=1;#tilfojet 20100923 grundet afrundingsfejl på ordre med rabat
 		} 
 		if ($incl_moms) $m_rabat+=$m_rabat*$varemomssats/100;
-		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right\" size=\"10\" value=\"".dkdecimal($m_rabat)."\"></td>\n";
+		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right\" size=\"10\" value=\"".dkdecimal($m_rabat,2)."\"></td>\n";
 		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right\" size=\"4\" value=\"\" onchange=\"javascript:docChange = true;\"></td>\n";
-		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right\" size=\"10\" value=\"".dkdecimal($m_rabat*$antal)."\"></td>\n";
+		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right\" size=\"10\" value=\"".dkdecimal($m_rabat*$antal,2)."\"></td>\n";
 		$sum+=afrund($m_rabat*$antal,2);
 	}
 	if ($omkunde) print "<td valign=\"top\"><input class=\"inputbox\" type=\"checkbox\" style=\"background: none repeat scroll 0 0 #e4e4ee\" name=\"omvbet[$x]\" onchange=\"javascript:docChange = true;\" $omvbet></td>\n";

@@ -46,6 +46,7 @@
 // 2017.06.08 Tilføjet genkendelse af loppeafreningssbilag. 20170608
 // 2017.06.30 Flyttet $bilag++ fra over db_modify da der var huller og dubletter i bilagsnr.rækken. 20170630
 // 2017.08.16 Tilføjet genkendelse af UTF-8 i filindhold og fjerner ukendt tegn i starte og slut af linje . Søg $tegnsaet;  
+// 2017.09.14 mb_detect_encoding fejlfortolker så jeg har skrevet min egen. 21070914
 
 ini_set("auto_detect_line_endings", true);
 
@@ -210,7 +211,9 @@ if ($fp) {
 		$tmp='';
 	}
 		$z++;
-		if(mb_detect_encoding($linje)=='UTF-8') $tegnsaet='UTF-8';
+		if ($tegnsaet=='iso') { #20170914
+			if (strpos($linje,'ø') || strpos($linje,'Ø')) $tegnsaet='UTF-8';
+		}	
 	}
 	fclose($fp);
 	if (($komma>$semikolon)&& ($komma>$tabulator)) {$tmp='Komma'; $feltantal=$komma;}
@@ -402,7 +405,6 @@ if ($fp) {
 					}	else $skriv_linje=0;		
 				}
 			}
- 		}		
 		if ($skriv_linje==1){
 			print "<tr><td>$bilag</td>";
 			for ($y=0; $y<=$feltantal; $y++) {
@@ -426,6 +428,8 @@ if ($fp) {
 		}	
 	}
 }
+}
+
  fclose($fp);
 print "</tbody></table>";
 print "</td></tr>";

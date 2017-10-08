@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//----------------- includes/ordrefunc.php -----ver 3.7.0---- 2017.08.16 ----------
+//----------------- includes/ordrefunc.php -----ver 3.7.0---- 2017.08.26 ----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -139,6 +139,7 @@
 // 2017.06.27	phr	-	Lagervalg var ikke muligt for samlevarer ved vareopslag  - Søg 20170627
 // 2017.08.02 PHR -	else rettet til elseif ($art!='PO') da der ellers kommer fejt ved optælling hvis kontonummer for kontantsalg ikke er sat #20170802
 // 2017.08.16 PHR -	Tilføjet strtolower så alle kort med samme navn køres på korrekt konto - Søg 20170816
+// 2017.08.26 PHR - Trækker nu diff konto fra POS opsætning frem for fra 'diverse -> ørediff' #20170826
 
 function levering($id,$hurtigfakt,$genfakt,$webservice) {
 echo "<!--function levering start-->";
@@ -1621,7 +1622,6 @@ function batch_salg($id) {
 				$kob_ordre_id = $r1['ordre_id'];
 				$projekt = $r1['projekt'];
 				$r2 = db_fetch_array(db_select("select valutakurs from ordrer where id = '$kob_ordre_id'",__FILE__ . " linje " . __LINE__));
-#cho "$r1['pris']-($r1['pris']*$r1['rabat']/100))*$r2['valutakurs']/100<br>";
 				$kostpris = ($r1['pris']-($r1['pris']*$r1['rabat']/100))*$r2['valutakurs']/100;
 if ($valutakurs && $valutakurs != 100) $kostpris*=100/$valutakurs; 
 				db_modify("update ordrelinjer set kostpris = '$kostpris' where id='$ordre_linje_id'",__FILE__ . " linje " . __LINE__);
@@ -2094,6 +2094,7 @@ include("../includes/genberegn.php");
 				$udlign=1;
 			}
 		} elseif ($art=='PO') { 
+#cho "Openpost $openpost<br>";
 			(is_numeric($id))?$beskrivelse="Bon - ".$fakturanr:$beskrivelse="Kontantsalg kasse - ".$kasse;
 			if ($kilde=='Dagsafslutning') $beskrivelse=$kilde." - kassenr: ".$kasse;
 		} elseif ($openpost) $beskrivelse="Faktura - ".$fakturanr;
@@ -2101,7 +2102,9 @@ include("../includes/genberegn.php");
 		else $beskrivelse="Kreditkort salg: Faktura - ".$fakturanr;
 		# 20120905 - Indsat grundet dobbelt bogforing af ordre id 4207 i regnskab saldi_510
 #cho "select id from transaktioner where ordre_id='$ordre_id'<br>";
-		if ($r=db_fetch_array(db_select("select id,ordre_id from transaktioner where ordre_id='$ordre_id'",__FILE__ . " linje " . __LINE__))) {
+		$qtxt="select id,ordre_id from transaktioner where ordre_id='$ordre_id'";
+#cho __line__." $qtxt<br>";		
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			$tekst="Bogf&oslash;ring afbrudt - tjek kontrolspor (id $r[id] oid $r[ordre_id])";
 			print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 			return($tekst);
@@ -2417,10 +2420,16 @@ include("../includes/genberegn.php");
 		$kredit=afrund($kredit,2);
 #cho "$diff > maxdif $maxdif<br>";
 		if ($art=='PO') { #20140628
-#cho "select box1,box2 from grupper where grupper.art='OreDif'<br>";
+		$r=db_fetch_array(db_select("select box9 from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__)); #20170826 +4 linjer
+		$diffkonti=explode(chr(9),$r['box9']);
+#cho "kasse $kasse<br>";
+		$difkto=$diffkonti[$kasse-1];
+		$maxdiff=0.5;
+/* 20170826
 		$r= db_fetch_array(db_select("select box1,box2 from grupper where grupper.art='OreDif'",__FILE__ . " linje " . __LINE__));
 		$difkto=$r['box2']*1;
 		$maxdif=$r['box1']*100;
+*/
 		if (!db_fetch_array(db_select("select id from kontoplan where kontonr='$difkto' and regnskabsaar='$regnaar'",__FILE__ . " linje " . __LINE__))) {
 			return("Kontonr $difkto (Øredifferencer) eksisterer ikke");
 		}

@@ -221,7 +221,7 @@ echo $qtxt."<br>";
 		
 		if  (($id==0) && ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__)))) $id=$r['id'];
 		elseif ($id==0){
-			db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box10) values ('Div_valg (Varer)','5','DIV','$box1')",__FILE__ . " linje " . __LINE__);
+			db_modify("insert into grupper (beskrivelse,kodenr,art,box1) values ('Div_valg (Varer)','5','DIV','$box1')",__FILE__ . " linje " . __LINE__);
 		} elseif ($id > 0) {
 			db_modify("update grupper set  box1='$box1' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
 		}
