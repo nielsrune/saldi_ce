@@ -5,7 +5,7 @@ ob_start(); //Starter output buffering
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------index/login.php----------lap 3.6.7------2017-02-10------
+// --------------index/login.php----------lap 3.7.0------2017-09-11------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -37,6 +37,7 @@ ob_start(); //Starter output buffering
 // 2015.10.02	PHR - online.txt er omdøbt til .ht_online.txt
 // 2016.11.04	PHR - Div ændringer relateret til bedre sikkerhed
 // 2017.02.10	PHR - Aktivering af nyt API 20170217
+// 2017.09.11	PHR	- Tilføjet db_type til global og rettet $sqdb til $db grundet db fejl ved login fra anden session uden logaf. 20170911 
 
 @session_start();
 session_unset();
@@ -331,9 +332,11 @@ function online($regnskab,$db,$bruger_id,$brugernavn,$password,$timestamp,$s_id)
 	global $sqhost;
 	global $dbuser;
 	global $dbpass;
+  global $db_type; #20170911
+
 
 	if ($db_type=='mysql') {
-	if (!mysql_select_db("$sqdb")) die( "Unable to connect to MySQL");
+	if (!mysql_select_db("$db")) die( "Unable to connect to MySQL"); #20170911
 	} else {
 		$connection = db_connect ("'$sqhost'", "'$dbuser'", "'$dbpass'", "'$db'", __FILE__ . " linje " . __LINE__);
 		if (!$connection) die( "Unable to connect to PostgreSQL");

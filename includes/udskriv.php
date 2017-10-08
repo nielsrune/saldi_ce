@@ -95,8 +95,10 @@ if (!$valg) {
 		print "<!--!";
 		system("lpq -P $ip", $tjek);
 		print "-->";
-		if ($tjek) $ip=NULL;
-		else $valg='ip';
+		if ($tjek) {
+			$ip=NULL;
+			$valg="pdf";
+		} else $valg='ip';
 	} elseif (!$r['box1']) {
 		$valg="pdf";
 	}
