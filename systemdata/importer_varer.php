@@ -34,6 +34,7 @@
 // 20160224 PHR Ændret $id til $vare_id. 
 // 20161015 PHR Eksisterende varenumre som er numeriske og starter med 0 findes nu selvom et 0'et er fjernet af f.eks et regneark. 20161015
 // 20170509 Tilføjet varemærke (trademark);
+// 20171024 PHR Erstatter '<br>' med '\n' i notes 20171024	
 
 @session_start();
 $s_id=session_id();
@@ -423,6 +424,10 @@ if ($fp) {
 					$leverandor=$tmp;
 					$levfelt=$y;
 				}
+				if ($feltnavn[$y]=='notes') { #20171024
+					$felt[$y]=str_replace("<br>","\n",$felt[$y]); 
+				}
+
 			}
  		}
 		if ($skriv_linje==1) {

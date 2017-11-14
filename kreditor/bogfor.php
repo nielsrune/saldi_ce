@@ -35,6 +35,7 @@ $s_id=session_id();
 // 2014.11.17 Fejl v. fifo og vareafgang v. negativt varekøb.Søg #20141117
 // 2015.04.22 Hvis samme vare købes til forskellige priser blev kostpris sat til sidste pris. Ændret så den nu sættes til snitprisen. Søg snitpris.
 // 2017.04.04	PHR - Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170404
+// 2017.10.26	PHR Udkommenteret 4 linjer da lagerførte varer fra udland blev bogført på varekøb DK
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -186,18 +187,17 @@ if (!$row['levdate']){
 				if ($box11 && cvrnr_omr(cvrnr_land($cvrnr)) == "EU") $bf_kto=$box11; 
 				elseif ($box13 && cvrnr_omr(cvrnr_land($cvrnr)) == "UD") $bf_kto=$box13;
 				else $bf_kto=$box3;
-#cho "cvr $cvrnr box11 $box11 box13 $box13 bf_kto $bf_kto<br>";
+#cho __line__."cvr $cvrnr box11 $box11 box13 $box13 bf_kto $bf_kto<br>";
 				if ($box8!='on'){
 #cho "update ordrelinjer set bogf_konto='$bf_kto' where id='$linje_id[$x]'<br>";
 					db_modify("update ordrelinjer set bogf_konto='$bf_kto' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
 					db_modify("update batch_kob set pris = '$dkpris[$x]', fakturadate='$levdate' where linje_id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
 				} else {
-					if ($box1) { #Box 1 er konto for lagertilgang,
-#cho "update ordrelinjer set bogf_konto='$box1' where id='$linje_id[$x]'<br>";
-						db_modify("update ordrelinjer set bogf_konto='$box1' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
-					} else {
+#					if ($box1) { #Box 1 er konto for lagertilgang, #udkommenteret 20171026
+#						db_modify("update ordrelinjer set bogf_konto='$box1' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__); #udkommenteret 20171026
+#					} else { #udkommenteret 20171026
 						db_modify("update ordrelinjer set bogf_konto='$bf_kto' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
-					}
+#					} #udkommenteret 20171026
 					if ($antal[$x]>0) {
 #cho "A select * from batch_kob where linje_id=$linje_id[$x]<br>";
 						$query = db_select("select * from batch_kob where linje_id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);

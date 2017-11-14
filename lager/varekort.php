@@ -41,6 +41,7 @@ ob_start(); //Starter output buffering
 // 2016.10.06 PHR hvis prisen er 0.001 vises prisen med 3 decimaler. Hvis brugt i pos indsættes varen til 0 kr oden at der hoppes til pris. 20161006
 // 2017.01.06 PHR Mrabat trak moms fra på procentrabat. Ændret "%" til "percent"
 // 2017.02.10	PHR - Aktivering af nyt API 20170210
+// 2017.10.30	PHR	Overføldige paramatrre i kald til og funktion kontoopslag fjernet.  
 
 @session_start();
 $s_id=session_id();
@@ -485,7 +486,7 @@ if ($_POST){
 			if ($m<59) $s='00';
 			else $s=59;
 			$special_to_time=$t.":".$m.":".$s;
-			$qtxt="update varer set beskrivelse = '".db_escape_string($beskrivelse[0])."',stregkode = '$stregkode',enhed='$enhed',enhed2='$enhed2',";
+			$qtxt="update varer set beskrivelse = '$beskrivelse[0]',stregkode = '$stregkode',enhed='$enhed',enhed2='$enhed2',";
 			$qtxt.="indhold='$indhold',forhold='$forhold',salgspris = '$salgspris',kostpris = '$kostpris[0]',provisionsfri = '$provisionsfri',";
 			$qtxt.="gruppe = '$gruppe',prisgruppe = '$prisgruppe',tilbudgruppe = '$tilbudgruppe',rabatgruppe = '$rabatgruppe',serienr = '$serienr',";
 			$qtxt.="lukket = '$lukket',notes = '$notes',samlevare='$samlevare',min_lager='$min_lager',max_lager='$max_lager',trademark='$trademark',";
@@ -587,7 +588,7 @@ echo __line__."<br>";
 	 }
 	}
 
-	if (strstr($submit, "Leverand")) kontoopslag("navn", $fokus, $id, "", "", "", "");
+	if (strstr($submit, "Leverand")) kontoopslag("navn", $fokus, $id);
 	if (strstr($submit, "Vare")) {
 		if (!$sort) $sort="varenr"; if (!$fokus) $fokus="varenr";
 		vareopslag ($sort, $fokus, $id, $vis_kost, $ref, $find, "varekort.php");
@@ -628,11 +629,11 @@ $varianter=array();
 if ($id > 0) {
 	$query = db_select("select * from varer where id = '$id'",__FILE__ . " linje " . __LINE__);
 	$row = db_fetch_array($query);
-	$varenr=htmlentities($row['varenr'],ENT_COMPAT,$charset);
-	$stregkode=htmlentities($row['stregkode'],ENT_COMPAT,$charset);
-	$beskrivelse[0]=htmlentities($row['beskrivelse'],ENT_COMPAT,$charset);
-	$enhed=htmlentities($row['enhed'],ENT_COMPAT,$charset);
-	$enhed2=htmlentities($row['enhed2'],ENT_COMPAT,$charset);
+	$varenr=$row['varenr'];
+	$stregkode=$row['stregkode'];
+	$beskrivelse[0]=$row['beskrivelse'];
+	$enhed=$row['enhed'];
+	$enhed2=$row['enhed2'];
 	$indhold=if_isset($row['indhold']);
 	$forhold=if_isset($row['forhold']);
 	$salgspris=if_isset($row['salgspris']);
@@ -647,15 +648,15 @@ if ($id > 0) {
 	$dvrg_nr[0]=if_isset($row['dvrg'])*1; # DebitorVareRabatGruppe
 	$serienr=if_isset($row['serienr']);
 	$lukket=if_isset($row['lukket']);
-	$notes=htmlentities(if_isset($row['notes']),ENT_COMPAT,$charset);
+	$notes=if_isset($row['notes']);
 	$delvare=if_isset($row['delvare']);
 	$samlevare=if_isset($row['samlevare']);
 	$min_lager=dkdecimal(if_isset($row['min_lager']),2);
 	$max_lager=dkdecimal(if_isset($row['max_lager']),2);
 	$beholdning=if_isset($row['beholdning'])*1;
 	$operation=if_isset($row['operation'])*1;
-	$trademark=htmlentities(if_isset($row['trademark']),ENT_COMPAT,$charset);
-	$location=htmlentities(if_isset($row['location']),ENT_COMPAT,$charset);
+	$trademark=if_isset($row['trademark']);
+	$location=if_isset($row['location']);
 	$folgevare=if_isset($row['folgevare'])*1;
 	$special_price=if_isset($row['special_price']);
 	$campaign_cost=if_isset($row['campaign_cost']);
@@ -757,7 +758,7 @@ while ($r=db_fetch_array($q)) {
 	$vare_sprog[$x]=$r['box1'];
 	$r2=db_fetch_array(db_select("select * from varetekster where vare_id='$id' and sprog_id = '$vare_sprog_id[$x]'",__FILE__ . " linje " . __LINE__));
 	$vare_tekst_id[$x]=$r2['id']*1;
-	$beskrivelse[$x]=htmlentities($r2['tekst'],ENT_COMPAT,$charset);
+	$beskrivelse[$x]=$r2['tekst'];
 }
 $vare_sprogantal=$x;
 
@@ -990,7 +991,7 @@ if (!$varenr) {
 	$x=0;
 	while ($row = db_fetch_array($query)) {
 		$x++;
-		$betegnelse[$x]=htmlentities($row['betegnelse'],ENT_COMPAT,$charset);
+		$betegnelse[$x]=$row['betegnelse'];
 	}
 	$antal_enheder=$x;
 	for ($x=0; $x<=$antal_enheder; $x++) {
@@ -1393,7 +1394,7 @@ if ($samlevare!='on') {
 			$x++;
 			$vare_lev_id[$x]=$row['id'];
 			$lev_id[$x]=$row['lev_id'];
-			$lev_varenr[$x]=htmlentities($row['lev_varenr'],ENT_COMPAT,$charset);
+			$lev_varenr[$x]=$row['lev_varenr'];
 			$kostpris[$x]=$row['kostpris'];
 			if ($x==1 && !$lev_varenr[$x] && !$kostpris[$x]) {
 				$lev_varenr[$x]=$varenr;
@@ -1714,7 +1715,7 @@ function cirkeltjek($vare_id)
 }
 
 ######################################################################################################################################
-function kontoopslag($sort, $fokus, $id, $tmp, $tmp, $tmp, $tmp )
+function kontoopslag($sort, $fokus, $id)
 {
 	global $bgcolor2;
 	global $top_bund;

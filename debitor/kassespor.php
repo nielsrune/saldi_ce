@@ -31,7 +31,8 @@
 // 20160413	PHR Medtog ej pos_ordrer i sum hvis kasse ikke var valgt. Søg straksksbogfor
 // 20160929	PHR	Løb tør for hukommelse hvis ingen søgekriterier.
 // 20161129 PHR	rettet nysort=refs til nysort=ref & nysort=summer til nysort=sum. Søg nysort=sum
-// 20170419	PHR - Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170419
+// 20170419	PHR Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170419
+// 20171004	PHR	Viser nu kun summer hvis der er saldo. Søg: if ($bet_sum[$z])
 
 ob_start();
 @session_start();
@@ -122,8 +123,8 @@ $x=0;
 $bet_type=array();
 $q=db_select("select betalingstype from pos_betalinger group by betalingstype order by betalingstype",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
-	if (!is_numeric($r['betalingstype']) && !in_array($r['betalingstype'],$bet_type)) {
-		$bet_type[$x]=$r['betalingstype'];
+	if (!is_numeric($r['betalingstype']) && !in_array(strtolower($r['betalingstype']),$bet_type)) {
+		$bet_type[$x]=strtolower($r['betalingstype']);
 		$bet_sum[$x]=0;
 		$x++;
 	}
@@ -240,7 +241,7 @@ udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre
 print "<tr><td colspan=\"9\" align=\"right\"><b>".dkdecimal($omsaet,2)."</b></td><td colspan=\"2\" align=\"right\"><b>".dkdecimal($modtaget,2)."</b></td><td colspan=\"1\" align=\"right\"><b>".dkdecimal($retursum,2)."</b></td></tr>"; 
 
 for ($z=0;$z<count($bet_type);$z++) {
-	print "<tr><td colspan=\"10\" align=\"right\"><b>$bet_type[$z]</b></td><td align=\"right\"><b>".dkdecimal($bet_sum[$z],2)."</b></td></tr>"; 
+	if ($bet_sum[$z]) print "<tr><td colspan=\"10\" align=\"right\"><b>$bet_type[$z]</b></td><td align=\"right\"><b>".dkdecimal($bet_sum[$z],2)."</b></td></tr>"; 
 }
 for ($z=0;$z<count($bet_type);$z++) {
 	if (strtolower($bet_type[$z])=='kontant'){
@@ -341,6 +342,7 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 				}
 				for ($y=0;$y<count($ordre_id);$y++) {
 					print "<tr bgcolor=\"$linjebg\">";
+					if ($ordre_id[$y]!=$ordre_id[$y-1]) {
 					print "<td>$ordrestatus[$x]</td>";
 					print "<td align=right>$id[$x]</span><br></td>\n";
 					print "<td align=right>$fakturadato[$x]<br></td>\n";
@@ -350,10 +352,13 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 					print "<td align=right>".$bordnavn[$bord[$x]]."<br></td>\n";
 					print "<td align=right>$ref[$x]<br></td>\n";
 					print "<td align=right>$dkksum[$x]<br></td>\n";
+					} else {
+						print "<td colspan='9'></td>\n";
+					}
 					print "<td align=right>$betalingstype[$y]<br></td>\n";
 					print "<td align=right>".dkdecimal($amount[$y],2)."<br></td>\n";
 					$retur=$betalt-($sum[$x]+$moms[$x]);
-					if ($ordre_id[$y]!=$ordre_id[$y+1]) {
+					if ($ordre_id[$y]!=$ordre_id[$y-1]) {
 					print "<td align=right>".dkdecimal($retur,2)."<br></td>\n";
 						$retursum+=$retur;
 					} else print "<td align=right><br></td>\n";

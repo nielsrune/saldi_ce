@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------------------includes/online.php----lap 3.6.7---2017-02-13---
+// ---------------------includes/online.php----lap 3.7.0---2017-10-09---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -33,10 +33,10 @@
 // 2015.01.04 Indsat kontrol for om database er blevet opdateret. Søg 20150104
 // 2015.01.04 Ændret alert til tekstboks. Søg tekstboks
 // 2017.02.13 Initialiserer $meta_returside. 
+// 2017.10.09 Table / body styles flyttet fra css/pos.css så font size kan sættes som variabel. søg 21071009
 
- 
+ini_set('display_errors',0);
 if (!isset($meta_returside)) $meta_returside=NULL;
-ini_set("display_errors", "0");
 $db_skriv_id=NULL; #bruges til at forhindre at skrivninger til masterbasen logges i de enkelte regnskaber.
 if (!isset($modulnr))$modulnr=NULL;
 if (!isset($db_type))$db_type="postgres";
@@ -205,12 +205,17 @@ if ($header!='nix') {
 	if($meta_returside) print "$meta_returside"; #20140502
 	if ($css) PRINT "<link rel=\"stylesheet\" type=\"text/css\" href=\"$css\">\n";
 	else print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/saldimenu.css\"/>\n";
+	if (substr($title,0,3)=='POS') { # 21071009
+		($title=='POS_ordre' && isset($_COOKIE['saldi_pfs']))?$pfs=$_COOKIE['saldi_pfs']:$pfs=10;
+		print "<style> body {font-family: Arial, Helvetica, sans-serif;font-size: ".$pfs."pt;} </style>";
+		print "<style> table {font-family: Arial, Helvetica, sans-serif;font-size: ".$pfs."pt;} </style>";
+	}
 	print "<script type=\"text/javascript\" src=\"../javascript/jquery-1.8.0.min.js\"></script>\n"; #20140502
 	print "<script type=\"text/javascript\" src=\"../javascript/jquery.autosize.js\"></script>\n"; #20140502
 	print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/overlib.js\"></script>\n"; 
 	print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>\n"; #20140502
-	print "<script src=\"../javascript/sweetalert.min.js\"></script>";
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/sweetalert.css\">";
+#	print "<script src=\"../javascript/sweetalert.min.js\"></script>";
+#	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/sweetalert.css\">";
 
 	#print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/main.css\"/>\n";
 	print "

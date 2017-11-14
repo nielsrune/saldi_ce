@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------lager/varer.php-------------lap 3.6.7-----2017-05-02--------
+// ---------lager/varer.php-------------lap 3.6.7-----2017-09-20--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -35,7 +35,7 @@
 // 2016.12.06 PHR Optimeret søgefunktion. Der kan søges på exakt streng og på streng hvor ord indgår afskilt af +
 // 2016.12.17	PHR Fjernet funktion find_beholdning (Flyttet til includes/std_func.php)
 // 2017.05.02	PHR Hvis der er flere lagre og lagernavn <= 2 tegn vises lagernavn i stedet for bogstav
-
+// 2017.09.20	Hele varelinjen er nu klikbar. Søg 20170920
 
 @session_start();
 $s_id=session_id();
@@ -371,6 +371,7 @@ global $beholdning;
 global $i_tilbud;
 global $i_ordre;
 global $i_forslag;
+global $jsvars;
 global $bestilt;
 global $brugernavn;
 global $bgcolor;
@@ -470,11 +471,16 @@ if ($udskriv && $forslag && !$alle_varer) {
 			($linjebg!=$bgcolor)?$linjebg=$bgcolor:$linjebg=$bgcolor5;
 			($row['lukket']=='1')?$color='red':$color='black';
 			print "<tr bgcolor=\"$linjebg\">";
+			if ($popup) { #20170920
 			$kort="kort".$row['id'];
-			if ($popup) print "<td onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$kort=window.open('varekort.php?opener=varer.php&amp;id=$row[id]&amp;returside=../includes/luk.php','$kort','scrollbars=1,resizable=1');$kort.focus();\"><FONT style=\"color:$color;\"><span style=\"text-decoration: underline;\">".htmlentities(stripslashes($row['varenr']),ENT_COMPAT,$charset)."</span></td>";
-			else print "<td> <a href=\"varekort.php?id=$row[id]&amp;returside=varer.php\"><FONT style=\"COLOR:$color;\">".htmlentities(stripslashes($row['varenr']),ENT_COMPAT,$charset)."</font></a></td>";	
-			print "<td><FONT style=\"color:$color\">".htmlentities(stripslashes($row['enhed']),ENT_COMPAT,$charset)."</font><br></td>";
-			print "<td><FONT style=\"color:$color\">".htmlentities(stripslashes($row['beskrivelse']),ENT_COMPAT,$charset)."</font><br></td>";
+				$js="onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$kort=window.open('varekort.php?opener=varer.php&amp;id=$row[id]&amp;returside=../includes/luk.php','".$jsvars."');$kort.focus();\"";
+			} else $js="onMouseOver=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:location.href='varekort.php?id=$row[id]'\"";
+#			if ($popup) print "<td </td>";
+#			else print "<td><a href=\"varekort.php?id=$row[id]&amp;returside=varer.php\"><FONT style=\"COLOR:$color;\">".htmlentities(stripslashes($row['varenr']),ENT_COMPAT,$charset)."</font></a></td>";	
+			print "<td $js><FONT style=\"COLOR:$color;\">".htmlentities(stripslashes($row['varenr']),ENT_COMPAT,$charset)."</font></td>";
+			print "<td $js><FONT style=\"color:$color\">".htmlentities(stripslashes($row['enhed']),ENT_COMPAT,$charset)."</font><br></td>";
+			print "<td $js><FONT style=\"color:$color\">".htmlentities(stripslashes($row['beskrivelse']),ENT_COMPAT,$charset)."</font><br></td>";
+			print "</span>";
 			if (!$vis_lev){
 				if ($lagerantal>1  && !$forslag) {
 					$r2=db_fetch_array(db_select("select sum(beholdning) as lagersum from lagerstatus where vare_id = $row[id]",__FILE__ . " linje " . __LINE__));
@@ -493,8 +499,8 @@ if ($udskriv && $forslag && !$alle_varer) {
 						}
 */						
 #						if ($y >= 1) print "<td align=center onClick=\"lagerflyt($row[id], $x)\" onMouseOver=\"this.style.cursor = 'pointer'\"><span title= 'Flyt til andet lager'><u>".dkdecimal($y)."</u></td>";
-						if ($y >= 1) print "<td align=center><span title= 'Flyt til andet lager'><a href='lagerflyt.php?lager=$x&vare_id=$row[id]'>".dkdecimal($y)."</a></td>";
-						else print "<td align=center>".dkdecimal($y)."</td></td>";	
+						if ($y >= 1) print "<td align=center><span title= 'Flyt til andet lager'><a href='lagerflyt.php?lager=$x&vare_id=$row[id]'>".dkdecimal($y,2)."</a></td>";
+						else print "<td align=center>".dkdecimal($y,2)."</td></td>";	
 					}
 				}
 #				if (($beholdning||$forslag)&&!$udskriv) {
@@ -518,7 +524,7 @@ if ($udskriv && $forslag && !$alle_varer) {
 					($b_ordrenr[$z])?$title="title=\"Ordre: $b_ordrenr[$z]\"":$title="title=\"\"";
 					print "<td align=\"right\" $title>$bestilt[$z]</td>";
 				}
-				print "<td align=right>".dkdecimal($row['beholdning'])."</td>";
+				print "<td align=right>".dkdecimal($row['beholdning'],2)."</td>";
 				if ($forslag){
 					$tmp=$row['beholdning']-$i_ordre[$z];
 					if ($row['min_lager']*1>$tmp || $alle_varer) {
@@ -532,7 +538,7 @@ if ($udskriv && $forslag && !$alle_varer) {
 				}
 			}
 			if (!$forslag) {
-				$salgspris=dkdecimal($row['salgspris']*(100+$incl_moms)/100);
+				$salgspris=dkdecimal($row['salgspris']*(100+$incl_moms)/100,2);
 				print "<td align=right>$salgspris<br></td>";
 			}
 			if ($vis_lev=='on') {
@@ -542,9 +548,9 @@ if ($udskriv && $forslag && !$alle_varer) {
 					$lev_varenr=$row2['lev_varenr'];
 					$levquery = db_select("select kontonr, firmanavn from adresser where id=$row2[lev_id]",__FILE__ . " linje " . __LINE__);
 					$levrow = db_fetch_array($levquery);
-					$kostpris=dkdecimal($row2['kostpris']);
+					$kostpris=dkdecimal($row2['kostpris'],2);
 				}
-				elseif ($row['samlevare']=='on') {$kostpris=dkdecimal($row['kostpris']);}
+				elseif ($row['samlevare']=='on') {$kostpris=dkdecimal($row['kostpris'],2);}
 				print "<td align=right>$kostpris</td>";
 				$query2 = db_select("select box8 from grupper where art='VG' and kodenr='$row[gruppe]'",__FILE__ . " linje " . __LINE__);
 				$row2 =db_fetch_array($query2);

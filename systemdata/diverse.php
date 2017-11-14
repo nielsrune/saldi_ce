@@ -52,13 +52,14 @@
 // 20170314 PHR POS Valg - tilføjet mulighed for at sætte 'udtages fra kasse' til 0 som default.
 // 20170404 PHR ordre_valg - Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170404
 // 20170731 PHR Tilføjet 'Nulstil regnskab - 20170731
+// 20171009 PHR Tilføjet pos_font_size under pos_valg.
 
 @session_start();
 $s_id=session_id();
+ob_start();
 $title="Diverse Indstillinger";
 $modulnr=1;
 $css="../css/standard.css";
-
 $diffkto=NULL;
 
 include("../includes/connect.php");
@@ -147,7 +148,6 @@ if ($_POST) {
 		if ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'PV' and kodenr='1'",__FILE__ . " linje " . __LINE__))) {
 			$id=$r['id'];
 			$qtxt="update grupper set  box1='$pv_box1', box3='$pv_box3' WHERE id = '$id'";
-echo $qtxt."<br>";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else {
 			$qtxt="insert into grupper (beskrivelse,kodenr,art,box1,box2,box3) values ('Udskrift','1','PV','$pv_box1','','$pv_box3')";
@@ -192,6 +192,7 @@ echo $qtxt."<br>";
 			$txt="Varenummer for sæt eksisterer ikke";
 			print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
 		}
+/*
 				if ($kostmetode) {
 			if ($r=db_fetch_array(db_select("select id from grupper WHERE art = 'VG' and box1 != box2",__FILE__ . " linje " . __LINE__))) {
 				$txt = findtekst(733,$sprog_id);
@@ -200,7 +201,7 @@ echo $qtxt."<br>";
 				exit;
 			}
 		}
-
+*/
 		# <- 20150907
 		if  ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'DIV' and kodenr='3'",__FILE__ . " linje " . __LINE__))) {
 			$id=$r['id'];
@@ -402,6 +403,11 @@ echo $qtxt."<br>";
 		$box14_2=if_isset($_POST['udtag0']);
 		$id3=if_isset($_POST['id3'])*1;
 		$box1_3=if_isset($_POST['brugervalg']);
+		$pfs=if_isset($_POST['pfs']);
+#		$pfs=if_isset($_POST['pfs']); #Pos Font Size
+#		$old_pfs=if_isset($_cookie['saldi_pfs']);
+#		if ($pfs) setcookie('saldi_pfs', $pfs, time()+60*60*24*365, '/');
+#ob_flush;
 		
 		$box2=NULL;
 		$box3=NULL;
@@ -443,6 +449,7 @@ echo $qtxt."<br>";
 				$box9_2.=chr(9).$diffkonti[$x];	
 				$box10_2.=chr(9).$koekkenprinter[$x];	
 				$box13_2.=chr(9).$bordvalg[$x];	 #20161116
+				$box2_3.=chr(9).$pfs[$x];	 #20161116
 #cho "$x $bordvalg[$x]<br>";				
 				for ($y=0;$y<count($ValutaKode);$y++) {
 					$VKbox4[$y].=chr(9).$ValutaKonti[$x][$y];
@@ -459,6 +466,7 @@ echo $qtxt."<br>";
 				$box9_2=$diffkonti[$x];	
 				$box10_2=$koekkenprinter[$x];
 				$box13_2=$bordvalg[$x];	 #20161116
+				$box2_3=$pfs[$x];
 #cho "$x $bordvalg[$x]<br>";				
 				for ($y=0;$y<count($ValutaKode);$y++) {
 					$VKbox4[$y]=$ValutaKonti[$x][$y];
@@ -521,7 +529,7 @@ echo $qtxt."<br>";
 		}
 #cho __line__." $box13_2<br>";
 		if ($id2) db_modify("update grupper set box1='$kasseprimo',box2='$optalassist',box3='$box3_2',box4='$box4_2',box5='$box5_2',box6='$div_kort_kto',box7='$box7_2',box8='$box8_2',box9='$box9_2',box10='$box10_2',box11='$box11_2',box12='$vis_saet',box13='$box13_2',box14='$box14_2' WHERE id = '$id2'",__FILE__ . " linje " . __LINE__);
-		if ($id3) db_modify("update grupper set box1='$box1_3',box2='',box3='',box4='',box5='',box6='',box7='',box8='',box9='',box10='',box11='',box12='',box13='',box14='' WHERE id = '$id3'",__FILE__ . " linje " . __LINE__);
+		if ($id3) db_modify("update grupper set box1='$box1_3',box2='$box2_3',box3='',box4='',box5='',box6='',box7='',box8='',box9='',box10='',box11='',box12='',box13='',box14='' WHERE id = '$id3'",__FILE__ . " linje " . __LINE__);
 
 		#######################################################################################
 	} elseif ($sektion=='docubizz') {

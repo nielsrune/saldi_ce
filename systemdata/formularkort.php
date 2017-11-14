@@ -1,4 +1,9 @@
 <?php
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
 // -------systemdata/formularkort------------------- lap 3.6.1 -- 2016-01-11 --
 // LICENS
 //
@@ -9,7 +14,7 @@
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -18,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------------
 
 // 2012.09.06 Tilføjet mulighed for at vise momssats på ordrelinjer.
@@ -35,6 +40,7 @@
 // 20150331 CA  Topmenudesign tilføjet                             søg 20150331
 // 20160111 PHR Tilføjet lev_varenr til ordrelinjer  søg 'lev_varenr'
 // 20160804 PHR X & Y koordinater kan nu indeholde decimaler.
+// 20171004 PHR Kopier alt - nu også på indkøbs...
 
 @session_start();
 $s_id=session_id();
@@ -186,8 +192,8 @@ if ($_POST) {
 						if (($art!='1') && ($str[$x]<=1)) $str[$x]=10;
 						db_modify("insert into formularer (beskrivelse, formular, art, xa, ya, xb, yb, str, color, font, fed, kursiv, side, justering, sprog) values ('$beskrivelse[$x]', $form_nr, $art_nr, $xa[$x], $ya[$x], $xb[$x], $yb[$x], $str[$x], $color[$x], '$form_font[$x]', '$fed[$x]', '$kursiv[$x]', '$side[$x]', '$justering[$x]', '$formularsprog')",__FILE__ . " linje " . __LINE__);
 					} elseif (substr($ny_beskrivelse[$x],0,10)=="kopier_alt") {
-						$tmp=substr($ny_beskrivelse[$x],-1);
-						kopier_alt($form_nr,$art_nr,$formularsprog,$tmp);
+						list($a,$b)=explode('|',$ny_beskrivelse[$x]);
+						kopier_alt($form_nr,$art_nr,$formularsprog,$b);
 					}
 				}	elseif ($id[$x]) {
 					if (strstr($beskrivelse[$x],'betalingsid(')) {
@@ -561,10 +567,14 @@ function drop_down($x,$form_nr,$art_nr,$formularsprog,$id,$beskrivelse,$xa,$xb,$
 		print "<option>forfalden_sum</option>";
 		print "<option>rykker_gebyr</option>";
 	}	
-	if ($form_nr>1 && $form_nr<6) print "<option value = \"kopier_alt|1\">Kopier alt fra tilbud</option>";
-	if ($form_nr!=2 && $form_nr<6) print "<option value = \"kopier_alt|2\">Kopier alt fra ordrebrkræftelse</option>";
-	if ($form_nr!=4 && $form_nr<6) print "<option value = \"kopier_alt|4\">Kopier alt fra faktura</option>";
+	if (($form_nr>1 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|1\">Kopier alt fra tilbud</option>";
+	if (($form_nr!=2 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|2\">Kopier alt fra ordrebrkræftelse</option>";
+	if (($form_nr!=4 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|4\">Kopier alt fra faktura</option>";
 	if ($form_nr<5) print "<option value = \"kopier_alt|5\">Kopier alt fra kreditnota</option>";
+	if ($form_nr>12) print "<option value = \"kopier_alt|12\">Kopier alt fra indkøbsforslag</option>";
+	if ($form_nr>11 && $form_nr!=13) print "<option value = \"kopier_alt|13\">Kopier alt fra rekvisition</option>";
+	if ($form_nr>11 && $form_nr!=14) print "<option value = \"kopier_alt|14\">Kopier alt fra indkøbsfaktura</option>";
+	
 	print "</SELECT></td>";
 	print "<td align=center><input class=\"inputbox\" type=text size=25 name=beskrivelse[$x] value=\"$beskrivelse\"></td>";
 	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".str_replace(".",",",round($xa,1))."></td>";
@@ -934,10 +944,14 @@ if (!$r=db_fetch_array(db_select("select * from formularer where formular = '$fo
 function kopier_alt($form_nr,$art_nr,$formularsprog,$kilde) {
 	if ($form_nr&&$art_nr&&$formularsprog) {
 		db_modify("delete from formularer where formular = '$form_nr' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__);
-		$q=db_select("select * from formularer where formular = '$kilde' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__);
+		$qtxt="select * from formularer where formular = '$kilde' and sprog='$formularsprog'";
+		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)) {
 			$xa=$r['xa']*1; $ya=$r['ya']*1; $xb=$r['xb']*1; $yb=$r['yb']*1;$str=$r['str']*1;$color=$r['color']*1;
-			db_modify("insert into formularer(formular,art,beskrivelse,justering,xa,ya,xb,yb,str,color,font,fed,kursiv,side,sprog) values	('$form_nr','$r[art]','".db_escape_string($r['beskrivelse'])."','$r[justering]','$xa','$ya','$xb','$yb','$str','$color','$r[font]','$r[fed]','$r[kursiv]','$r[side]','$formularsprog')",__FILE__ . " linje " . __LINE__);
+			$qtxt="insert into formularer(formular,art,beskrivelse,justering,xa,ya,xb,yb,str,color,font,fed,kursiv,side,sprog) values	";
+			$qtxt.="('$form_nr','$r[art]','".db_escape_string($r['beskrivelse'])."','$r[justering]','$xa','$ya','$xb','$yb','$str','$color',";
+			$qtxt.="'$r[font]','$r[fed]','$r[kursiv]','$r[side]','$formularsprog')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 #		print "<meta http-equiv=\"refresh\" content=\"10;URL=formularkort.php?formular=$form_nr&art=$art_nr&sprog=$formularsprog\">";
 
