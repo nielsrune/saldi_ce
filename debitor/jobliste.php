@@ -109,7 +109,7 @@ print "<td width=30% $top_bund align=center><br></td>";
 print "<td width=10% $top_bund align=center><a href=debitor.php>".findtekst(34,$sprog_id)."</a></td>";
 print "<td width=10% $knap_ind align=center>".findtekst(38,$sprog_id)."</td>";
 print "<td width=30% $top_bund align=center><br></td>";
-if ($popup) print "<td width=10% $top_bund onClick=\"javascript:job=window.open('jobkort.php?returside=jobliste.php&konto_id=$konto_id&ordre_id=$ordre_id','job','scrollbars=1,resizable=1');job.focus();\"><a accesskey=N href=jobliste.php?$parameter>".findtekst(39,$sprog_id)."</a></td>";
+if ($popup) print "<td width=10% $top_bund onclick=\"javascript:job=window.open('jobkort.php?returside=jobliste.php&konto_id=$konto_id&ordre_id=$ordre_id','job','scrollbars=1,resizable=1');job.focus();\"><a accesskey=N href=jobliste.php?$parameter>".findtekst(39,$sprog_id)."</a></td>";
 else print "<td width=10% $top_bund><a href=jobkort.php?returside=jobliste.php&konto_id=$konto_id&ordre_id=$ordre_id accesskey=N>".findtekst(39,$sprog_id)."</a></td>";
 print "</td></tr>\n";
 #print "<tr><td></td><td align=center><table border=1	cellspacing=0 cellpadding=0><tbody>";
@@ -208,7 +208,7 @@ while ($r =db_fetch_array($q)) {
 	
 	if (($tidspkt-($r['tidspkt'])>3600)||($r[hvem]==$brugernavn)) {
 		if ($popup) {
-			$javascript="onClick=\"javascript:$job=window.open('jobkort.php?tjek=$r[id]&id=$r[id]&returside=jobliste.php','$job','scrollbars=1,resizable=1');$job.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
+			$javascript="onclick=\"javascript:$job=window.open('jobkort.php?tjek=$r[id]&id=$r[id]&returside=jobliste.php','$job','scrollbars=1,resizable=1');$job.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" ";
 			$understreg='<span style="text-decoration: underline;">';
 			$linjetext="";
 			$slut="</span>";
@@ -220,7 +220,7 @@ while ($r =db_fetch_array($q)) {
 		} 
 	}
 	else {
-		$javascript="onClick=\"javascript:$job.focus();\"";
+		$javascript="onclick=\"javascript:$job.focus();\"";
 		$understreg='';
 		$linjetext="<span title= 'job er l&aring;st af $r[hvem]'>";
 			$slut="</span>";
@@ -240,7 +240,7 @@ while ($r =db_fetch_array($q)) {
 	print "<td>$felt_1<br></td>";
 	print "</tr>\n";
 }
-if (!$ialt && $konto_id) print "<Body onLoad=\"javascript:job=window.open('jobkort.php?returside=jobliste.php&konto_id=$konto_id&ordre_id=$ordre_id,'job','scrollbars=1,resizable=1');job.focus();\">";
+if (!$ialt && $konto_id) print "<Body onload=\"javascript:job=window.open('jobkort.php?returside=jobliste.php&konto_id=$konto_id&ordre_id=$ordre_id,'job','scrollbars=1,resizable=1');job.focus();\">";
 $cols=9;
 print "<tr><td colspan=$cols><hr></td></tr>\n";
 print "<tr><td colspan=$cols><hr></td></tr>\n";

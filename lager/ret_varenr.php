@@ -81,7 +81,7 @@ if (($nyt_varenr)&&('$nyt_varenr'!='$varenr')) {
 			else echo ", $r[ordrenr]";
 		}
 		if ($x>=1)echo "</td></tr><tr><td><hr></td></tr>";
-		print "<BODY onLoad=\"javascript:alert('Varenummer er rettet fra $varenr til $nyt_varenr')\">";
+		print "<BODY onload=\"javascript:alert('Varenummer er rettet fra $varenr til $nyt_varenr')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=varekort.php?id=$id\">";
 
 	}

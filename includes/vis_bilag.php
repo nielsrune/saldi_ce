@@ -35,7 +35,7 @@ $kilde=$_GET['kilde'];
 $db=$_GET['db'];
 if (isset($_GET['slet']) && $_GET['slet']=='ok') {
 	slet_bilag($bilag_id,$filnavn,$kilde_id,$kilde);
-	print "<BODY onLoad=\"javascript:alert('bilaget er slettet')\">";
+	print "<BODY onload=\"javascript:alert('bilaget er slettet')\">";
 	exit;
 }
 print "<br><br><br><br><br><table  width=\"500px\" height=\"200px\"style=\"border: 3px solid rgb(180, 180, 255); padding: 0pt 0pt 1px;\">";

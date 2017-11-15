@@ -168,7 +168,7 @@ for($x=1; $x<=$vareantal; $x++) {
 		if ($linjebg!=$bgcolor5){$linjebg=$bgcolor5; $color='#000000';}
 		else {$linjebg=$bgcolor; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if ($popup) print "<td onClick=\"javascript:varespor=window.open('varespor.php?vare_id=$vare_id[$x]','varespor','$jsvars')\" onMouseOver=\"this.style.cursor = 'pointer'\"><u>$varenr[$x]</u><br></td>";
+		if ($popup) print "<td onclick=\"javascript:varespor=window.open('varespor.php?vare_id=$vare_id[$x]','varespor','$jsvars')\" onmouseover=\"this.style.cursor = 'pointer'\"><u>$varenr[$x]</u><br></td>";
 		else print "<td><a href=varespor.php?vare_id=$vare_id[$x]>$varenr[$x]<br></td>";
 		print	"<td>$enhed[$x]<br></td><td>$beskrivelse[$x]<br></td>
 		<td align=right>$batch_k_antal[$x]<br></td><td align=right>$batch_s_antal[$x]<br></td>";
@@ -183,7 +183,7 @@ for($x=1; $x<=$vareantal; $x++) {
 }
 if ($csv){ 
 	fclose($fp);
-	print "<BODY onLoad=\"JavaScript:window.open('../temp/$db/lagerstatus.csv' ,'' ,'$jsvars');\">\n";
+	print "<BODY onload=\"JavaScript:window.open('../temp/$db/lagerstatus.csv' ,'' ,'$jsvars');\">\n";
 }
 print "<tr><td colspan=9><hr></td></tr>";
 print "<tr><td colspan=2><br></td><td>Samlet lagerv&aelig;rdi pr. $dato<br></td><td align=right><br></td><td align=right><br></td>

@@ -332,7 +332,7 @@ if ($sqlstreng=trim($sqlstreng)) {
 	$fy_ord=array('brugere','grupper');
 	for ($x=0;$x<count($fy_ord);$x++) {
 		if (strpos($del1,$fy_ord[$x])) {
-			print "<BODY onLoad=\"JavaScript:alert('Illegal værdi i søgestreng')\">";
+			print "<BODY onload=\"JavaScript:alert('Illegal værdi i søgestreng')\">";
 			exit;
 		}
 	}
@@ -1056,7 +1056,7 @@ echo $q;
 			print "    &nbsp;<input type='checkbox' value='0' name='slet[$x]' $slet[$x] \n";
 			print "        title='Sletter referencen til prislisten. Er kun muligt, n&aring;r prislisten ikke er aktiv.'>\n";
 			print "    &nbsp;<input type='submit' value='S&aelig;t op' name='saetop[$x]' \n";
-			print "        onClick=\"location.href='prislisteindstilling.php?prislisteid=".$id[$x]."';\" \n"; # 20150814
+			print "        onclick=\"location.href='prislisteindstilling.php?prislisteid=".$id[$x]."';\" \n"; # 20150814
 			print "        title='Opdat&eacute;r hvordan data skal hentes fra kilden.'>\n";
 		} else {
 			print "<td>-</td>\n";
@@ -1068,7 +1068,7 @@ echo $q;
 			print "    &nbsp;<input type='checkbox' value='Slet' name='slet[$x]' \n";
 			print "        title='Sletter referencen til prislisten. Er kun muligt, n&aring;r prislisten ikke er aktiv.'>\n";
 			print "    &nbsp;<input type='submit' value='S&aelig;t op' name='saetop[$x]' \n";
-			print "        onClick=\"location.href='prislisteindstilling.php?prislisteid=".$id[$x]."';\" \n"; # 20150814
+			print "        onclick=\"location.href='prislisteindstilling.php?prislisteid=".$id[$x]."';\" \n"; # 20150814
 			print "        title='Opdat&eacute;r hvordan data skal hentes fra kilden.'>\n";
 		}
 		print "</td>\n</tr>\n";
@@ -1140,7 +1140,7 @@ function rykker_valg()
 	if ($box3 || $box4) {
 		if ($r=db_fetch_array(db_select("select beskrivelse from varer where varenr = '$box4'",__FILE__ . " linje " . __LINE__))) {
 			$varetekst=htmlentities($r['beskrivelse']);
-		} else print "<BODY onLoad=\"JavaScript:alert('Varenummer ikke gyldigt')\">";
+		} else print "<BODY onload=\"JavaScript:alert('Varenummer ikke gyldigt')\">";
 	}
 */
 	print "<form name='diverse action=diverse.php?sektion=rykker_valg' method='post'>\n";
@@ -1737,8 +1737,8 @@ function testftp($box1,$box2,$box3,$box4,$box5,$box6) {
 	$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$box2.":'".$box3."'@".$box1."/".$box4." < ftpscript3 > ftplog3\n"; #rm ftpscript\nrm ftplog\n";
 	system ($kommando);
 	($box6)?$tmp="Dokumentserver":$tmp="FTP";
-	if (file_exists("../temp/$db/testfil.txt")) print "<BODY onLoad=\"JavaScript:alert('$tmp tilg&aelig;ngelig')\">";
-	else print "<BODY onLoad=\"JavaScript:alert('$tmp ikke tilg&aelig;ngelig')\">";
+	if (file_exists("../temp/$db/testfil.txt")) print "<BODY onload=\"JavaScript:alert('$tmp tilg&aelig;ngelig')\">";
+	else print "<BODY onload=\"JavaScript:alert('$tmp ikke tilg&aelig;ngelig')\">";
 }
 
 ?>

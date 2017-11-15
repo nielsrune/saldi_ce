@@ -46,7 +46,7 @@ $r=db_fetch_array(db_select("select box1 from grupper where art='LABEL'",__FILE_
 $txt=$r['box1'];
 for ($x=0;$x<count($fy_ord);$x++) {
 	if (strpos($txt,$fy_ord[$x])) {
-		print "<BODY onLoad=\"JavaScript:alert('Illegal værdi i labeltekst')\">";
+		print "<BODY onload=\"JavaScript:alert('Illegal værdi i labeltekst')\">";
 		exit;
 	}
 }
@@ -117,7 +117,7 @@ if ($beskrivelse) { #Dymo
   print "<tr><td rowspan=\"2\"></td><td align=\"center\"><font face=\"verdana\" size=\"2\">$stregkode</font></td></tr>\n";
 }
 */
-print "<body onLoad=\"javascript:window.print();\">\n";
+print "<body onload=\"javascript:window.print();\">\n";
 #javascript:window.close();
 print " <br>\n";
 ?>

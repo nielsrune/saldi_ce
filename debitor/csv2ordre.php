@@ -178,7 +178,7 @@ function overfoer_data($filnavn){
 	}	
 	print "</tbody></table>";
 	print "</td></tr>";
-	print "<BODY onLoad=\"javascript:alert('$imp_antal adresser importeret')\">";
+	print "<BODY onload=\"javascript:alert('$imp_antal adresser importeret')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/ordreliste.php?valg=tilbud\">";
 	exit;
 } # endfunc overfoer_data

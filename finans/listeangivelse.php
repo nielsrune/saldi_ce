@@ -285,7 +285,7 @@ function varelinjer($ordre_id, $faktdate, $udlign_date, $provision, $faktnr, $fi
 	$tmp=$pris[$x] - $kostpris[$x];
 	$tmp2=$tmp/100*$provision/100*$pro_procent;
 	print "<tr><td>".dkdato($faktdate)."</td><td> ".dkdato($udlign_date)."</td>";
-	print "<td align=right onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$ordre_id','d_ordre','scrollbars=yes,resizable=yes,dependent=yes');d_ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"><u><span title=\"$firmanavn\">$faktnr</span></u></td>";
+	print "<td align=right onclick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$ordre_id','d_ordre','scrollbars=yes,resizable=yes,dependent=yes');d_ordre.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"><u><span title=\"$firmanavn\">$faktnr</span></u></td>";
 	print "<td align=right>".dkdecimal($kostpris[$x])."</td><td align=right>".dkdecimal($pris[$x])."</td><td align=right>".dkdecimal($tmp)."</td><td align=right>".dkdecimal($tmp2)."</td></tr>";
 
 	return array($pris[$x],$kostpris[$x],$tmp2);	

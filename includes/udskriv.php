@@ -90,7 +90,7 @@ if ($valg && !$bgr) {
 			print "--> \n";
 			print "<table width=100% height=100%><tbody>";
   		print "<td width=\"10%\" height=\"1%\" $top_bund><a href=\"udskriv.php?valg=tilbage&id=$id&art=$art\" accesskey=\"L\">Luk</a></td>";
-# 			else print "<td width=\"10%\" height=\"1%\" $top_bund><a href='#' accesskey=L onClick=\"history.go(-2)\">Luk</a></td>";
+# 			else print "<td width=\"10%\" height=\"1%\" $top_bund><a href='#' accesskey=L onclick=\"history.go(-2)\">Luk</a></td>";
 			print "<td width=\"80%\" $top_bund align=\"center\" title=\"Klik her for at &aring;bne filen i nyt vindue, h&oslash;jreklik her for at gemme.\"><a href=../temp/$ps_fil.pdf target=blank>Vis udskrift</a></td>";
   		print "<td width=\"10%\" $top_bund align = \"right\"title=\"Klik her for at &aring;bne filen i tiff format\"><a href=\"../temp/$ps_fil.tiff\">TIFF-version</a></td>";
 			print "<tr><td width=100% height=99% align=\"center\" valign=\"middle\" colspan=\"3\"><iframe frameborder=\"0\" width=\"100%\" height=\"100%\" scrolling=\"auto\" src=\"../temp/$ps_fil.pdf\"></iframe></td></tr>";
@@ -98,7 +98,7 @@ if ($valg && !$bgr) {
 			print "</tbody></table>";
 			print exit;
 #			print "<meta http-equiv=\"refresh\" content=\"0;URL=../temp/$ps_fil.pdf\">";
-		} else print "<BODY onLoad=\"javascript:alert('PDF-fil ikke fundet - er PS2PDF installeret?')\">";
+		} else print "<BODY onload=\"javascript:alert('PDF-fil ikke fundet - er PS2PDF installeret?')\">";
 #		print "<meta http-equiv=\"refresh\" content=\"10;URL=../includes/luk.php\">";
 	}
   if ($valg=="printer") {
@@ -126,7 +126,7 @@ if ($valg && !$bgr) {
 			print "--> \n";
 			print "<table width=100% height=100%><tbody>";
   		print "<td width=\"10%\" height=\"1%\" $top_bund><a href=\"udskriv.php?valg=tilbage&id=$id&art=$art\" accesskey=\"L\">Luk</a></td>";
-# 			else print "<td width=\"10%\" height=\"1%\" $top_bund><a href='#' accesskey=L onClick=\"history.go(-2)\">Luk</a></td>";
+# 			else print "<td width=\"10%\" height=\"1%\" $top_bund><a href='#' accesskey=L onclick=\"history.go(-2)\">Luk</a></td>";
 			print "<td width=\"80%\" $top_bund align=\"center\" title=\"Klik her for at &aring;bne filen i nyt vindue, h&oslash;jreklik her for at gemme.\"><a href=../temp/$ps_fil.pdf target=blank>Vis udskrift</a></td>";
   		print "<td width=\"10%\" $top_bund align = \"right\"title=\"Klik her for at &aring;bne filen i tiff format\"><a href=\"../temp/$ps_fil.tiff\">TIFF-version</a></td>";
 			print "<tr><td width=100% height=99% align=\"center\" valign=\"middle\" colspan=\"3\"><iframe frameborder=\"0\" width=\"100%\" height=\"100%\" scrolling=\"auto\" src=\"../temp/$ps_fil.pdf\"></iframe></td></tr>";
@@ -134,7 +134,7 @@ if ($valg && !$bgr) {
 			print "</tbody></table>";
 			print exit;
 #			print "<meta http-equiv=\"refresh\" content=\"0;URL=../temp/$ps_fil.pdf\">";
-		} else print "<BODY onLoad=\"javascript:alert('PDF-fil ikke fundet - er PS2PDF installeret?')\">";
+		} else print "<BODY onload=\"javascript:alert('PDF-fil ikke fundet - er PS2PDF installeret?')\">";
 #		print "<meta http-equiv=\"refresh\" content=\"10;URL=../includes/luk.php\">";
 	}
   if ($valg=="printer") {
@@ -172,7 +172,7 @@ global $exec_path;
 
 
 	if (!file_exists("$filnavn")) {
-	print "<BODY onLoad=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
+	print "<BODY onload=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
 		return ('indl&aelig;sning af $filnavn fejlet');
 	}
 	$dd=date("Y-m-d");
@@ -240,10 +240,10 @@ global $exec_path;
 			$filnavn=db_escape_string($filnavn);
 			db_modify("update historik set dokument='$filnavn' where id='$bilag_id'",__FILE__ . " linje " . __LINE__);
 			$alerttekst=findtekst(490,$sprog_id);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 		} else {
 			$alerttekst=findtekst(506,$sprog_id);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 		}
 }
 ?>

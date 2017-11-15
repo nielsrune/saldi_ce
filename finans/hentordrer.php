@@ -59,7 +59,7 @@ if($_GET){
 	$q=db_select("select id from kassekladde where kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) $x++;
 	if ($x > 300) {
-		Print "<BODY onLoad=\"javascript:alert('Max antal kladdelinjer n&aring;et!')\">";
+		Print "<BODY onload=\"javascript:alert('Max antal kladdelinjer n&aring;et!')\">";
 	} else {
 		if (($kladde_id)&&($ordre_id)) {
 			flytordre($kladde_id, $ordre_id);
@@ -71,7 +71,7 @@ if($_GET){
 				$x=0;
 				$q2=db_select("select id from kassekladde where kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
 				while ($r2=db_fetch_array($q2)) $x++;
-				if ($x > 300) Print "<BODY onLoad=\"javascript:alert('Max antal kladdelinjer n&aring;et!')\">";
+				if ($x > 300) Print "<BODY onload=\"javascript:alert('Max antal kladdelinjer n&aring;et!')\">";
 				else flytordre($kladde_id, $r[id]);
 			}
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=kassekladde.php?kladde_id=$kladde_id\">";
@@ -609,7 +609,7 @@ function flytordre($kladde_id, $ordre_id) {
 			db_modify("update ordrer set status=4 where id=$id",__FILE__ . " linje " . __LINE__);
 			db_modify("delete from ordrelinjer where ordre_id=$id and posnr < 0",__FILE__ . " linje " . __LINE__);
 		}
-		else {Print "<BODY onLoad=\"javascript:alert('Ordredato uden for regnskabs&aring;r!')\">";}
+		else {Print "<BODY onload=\"javascript:alert('Ordredato uden for regnskabs&aring;r!')\">";}
 	}
 	transaktion("commit");
 #exit;

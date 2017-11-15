@@ -55,7 +55,7 @@ if (isset($_POST) && $_POST) {
 		if ($tmp2=='on') $vis_K=$vis_K.','.$_POST[$tmp1];
 	}	
 	db_modify("update grupper set box2='$vis_VG', box3='$vis_K', box4='$vis_lukkede' where art = 'VV' and box1 = '$brugernavn'",__FILE__ . " linje " . __LINE__);
-	if ($popup) print "<BODY onLoad=\"javascript=opener.location.reload();\">";
+	if ($popup) print "<BODY onload=\"javascript=opener.location.reload();\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 }
 

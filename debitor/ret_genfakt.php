@@ -209,7 +209,7 @@ if ($_GET['ordreliste']) {
 			}
 		}
 	}
-	if ($fejltekst) print "<BODY onLoad=\"javascript:alert('$fejltekst')\">\n";
+	if ($fejltekst) print "<BODY onload=\"javascript:alert('$fejltekst')\">\n";
 	for ($x=1 ; $x<=$linjeantal ; $x++) {
 		if ($posnr[$x]=='-') {
 			if ($linje_id[$x]) db_modify("delete from ordrelinjer where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
@@ -282,7 +282,7 @@ if ($_GET['ordreliste']) {
 						fwrite($fp,oioubldoc_faktura($ordreliste[$x],'faktura',NULL));
 						fclose($fp);
 #echo "'oioubl_dok.php?id=$ordreliste[$x]&doktype=$oioubl&genfakt=1' ,'' ,'$jsvars'<br>";
-#						print "<BODY onLoad=\"JavaScript:window.open('oioubl_dok.php?id=$ordreliste[$x]&doktype=$oioubl&genfakt=1' ,'' ,'$jsvars');\">\n";
+#						print "<BODY onload=\"JavaScript:window.open('oioubl_dok.php?id=$ordreliste[$x]&doktype=$oioubl&genfakt=1' ,'' ,'$jsvars');\">\n";
 						$r=db_fetch_array(db_select("select box8 from grupper where art = 'DIV' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 						if ($r['box8']) {
 							list($oiourl,$oiobruger,$oiokode)=explode(chr(9),$r['box8']);
@@ -310,7 +310,7 @@ if ($_GET['ordreliste']) {
 									#echo 'unlink(\"../temp/$db/$printfilnavn\")';
 									print "<tr><td>$printfilnavn overført til $oiourl</td></tr>";
 								} else {
-									print "<BODY onLoad=\"javascript:alert('Afsendelse af $printfilnavn fejlet tjek brugernavn og adgangskode til ftp hos ebConnect')\">";
+									print "<BODY onload=\"javascript:alert('Afsendelse af $printfilnavn fejlet tjek brugernavn og adgangskode til ftp hos ebConnect')\">";
 									exit;
 								}
 							} else {
@@ -325,7 +325,7 @@ if ($_GET['ordreliste']) {
 				} elseif ($ordreantal) {
 					if (strpos($svar,'invoicedate prior to')) $tekst="Genfaktureringsdato før fakturadato";
 					else $tekst="Der er konstateret en ubalance i posteringssummen\\nfor ordre $ordreliste[$x]\\nkontakt venligst Danosoft på tlf. +45 46902208";
-					print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
+					print "<BODY onload=\"javascript:alert('$svar')\">\n";
 					print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 					exit;
 				}
@@ -333,7 +333,7 @@ if ($_GET['ordreliste']) {
 		}
 		if ($udskriv) {
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=formularprint.php?id=-1&returside=ordreliste.php&ordre_antal=$y&skriv=$udskriv&formular=4\">";
-#			print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+#			print "<BODY onload=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
 			exit;
 		}
 	}

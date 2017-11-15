@@ -141,7 +141,7 @@ if ($_POST) {
 			$htext="venstre"; 
 		}
 		else $htext="h&oslash;jre";
-		print "<BODY onLoad=\"javascript:alert('Logo, tekster og linjer er flyttet $op mm $otext og $hojre mm til $htext')\">";
+		print "<BODY onload=\"javascript:alert('Logo, tekster og linjer er flyttet $op mm $otext og $hojre mm til $htext')\">";
 		$linjeantal=0; #
 	}
 	if ($submit=='Opdater' && $form_nr>=6 && $form_nr<=8 && $art_nr==2 && $gebyr) { #Rykkergebyr
@@ -153,7 +153,7 @@ if ($_POST) {
 			}	else {
 					db_modify("insert into formularer (beskrivelse, formular, art, xb, sprog) values ('GEBYR', '$form_nr', '2', '$r1[id]', '$formularsprog')",__FILE__ . " linje " . __LINE__);
 				}
-		} else print "<BODY onLoad=\"javascript:alert('Varenummeret $gebyr findes ikke i varelisten')\">";
+		} else print "<BODY onload=\"javascript:alert('Varenummeret $gebyr findes ikke i varelisten')\">";
 	} elseif (($submit=='Opdater')&&($form_nr>=6)&&($form_nr<=8)&&($art_nr==2)&&(!$gebyr)) db_modify("delete from formularer where beskrivelse = 'GEBYR' and formular='$form_nr' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__); #20140902
 	if ($submit=='Opdater' && $form_nr>=6 && $form_nr<=8 && $art_nr==2 && $rentevnr) { #Rykkerrenter
 		$tmp=strtoupper($rentevnr);
@@ -165,7 +165,7 @@ if ($_POST) {
 			}	else {
 					db_modify("insert into formularer (beskrivelse, formular, art, yb, str, sprog) values ('GEBYR', '$form_nr', '2', '$r1[id]', '$rentesats', '$formularsprog')",__FILE__ . " linje " . __LINE__);
 				}
-		} else print "<BODY onLoad=\"javascript:alert('Varenummeret $gebyr findes ikke i varelisten')\">";
+		} else print "<BODY onload=\"javascript:alert('Varenummeret $gebyr findes ikke i varelisten')\">";
 	} elseif (($submit=='Opdater')&&($form_nr==6)&&($art_nr==2)&&(!$gebyr)) db_modify("delete from formularer where beskrivelse = 'GEBYR' and formular='$form_nr' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__); #20140902
 	if ($_POST['linjer']){
 		transaktion('begin');
@@ -203,7 +203,7 @@ if ($_POST) {
 						if ($kontolen+$faktlen!=14) {
 							$tmp=14-$faktlen;
 							$beskrivelse[$x]=str_replace("($kontolen","($tmp",$beskrivelse[$x]);
-							print "<BODY onLoad=\"javascript:alert('Den samlede strengl&aelig;ngde for v&aelig;rdierne ($streng) skal v&aelig;re 14.\\nv&aelig;rdierne er rettet')\">";
+							print "<BODY onload=\"javascript:alert('Den samlede strengl&aelig;ngde for v&aelig;rdierne ($streng) skal v&aelig;re 14.\\nv&aelig;rdierne er rettet')\">";
 						}
 					}	
 					db_modify("update formularer set beskrivelse='$beskrivelse[$x]', xa=$xa[$x], ya=$ya[$x], xb=$xb[$x], yb=$yb[$x], str=$str[$x], color=$color[$x], font='$form_font[$x]', fed='$fed[$x]', kursiv='$kursiv[$x]', side='$side[$x]', justering='$justering[$x]'	where id = $id[$x]",__FILE__ . " linje " . __LINE__);
@@ -425,12 +425,12 @@ function sprog($nyt_sprog,$skabelon,$handling){
 
 $tmp=db_escape_string(htmlentities($nyt_sprog));
 if ($tmp!=$nyt_sprog) {
-	print "<BODY onLoad=\"javascript:alert('Sprog ben&aelig;vnelse m&aring; ikke indeholde specialtegn\\nOprettelse af $nyt_sprog er annulleret')\">";
+	print "<BODY onload=\"javascript:alert('Sprog ben&aelig;vnelse m&aring; ikke indeholde specialtegn\\nOprettelse af $nyt_sprog er annulleret')\">";
 } elseif ($nyt_sprog && $handling=='gem' && $nyt_sprog!="yes") {
 
 	$tmp=strtolower($nyt_sprog);
 	if (db_fetch_array($q=db_select("select kodenr from grupper where lower(box1) = '$tmp' and art = 'VSPR' ",__FILE__ . " linje " . __LINE__))) {
-		print "<BODY onLoad=\"javascript:alert('$nyt_sprog er allerede oprettet. Oprettelse annulleret')\">";
+		print "<BODY onload=\"javascript:alert('$nyt_sprog er allerede oprettet. Oprettelse annulleret')\">";
 	} elseif ($skabelon && $handling=='gem') {
 		$r=db_fetch_array($q=db_select("select max(kodenr) as kodenr from grupper where art = 'VSPR' ",__FILE__ . " linje " . __LINE__));
 		$kodenr=$r['kodenr']+1;
@@ -440,7 +440,7 @@ if ($tmp!=$nyt_sprog) {
 			$xa=$r['xa']*1; $ya=$r['ya']*1; $xb=$r['xb']*1; $yb=$r['yb']*1;$str=$r['str']*1;$color=$r['color']*1;
 			db_modify("insert into formularer(formular,art,beskrivelse,justering,xa,ya,xb,yb,str,color,font,fed,kursiv,side,sprog) values	('$r[formular]','$r[art]','".db_escape_string($r['beskrivelse'])."','$r[justering]','$xa','$ya','$xb','$yb','$str','$color','$r[font]','$r[fed]','$r[kursiv]','$r[side]','".db_escape_string($nyt_sprog)."')",__FILE__ . " linje " . __LINE__);
 		}
-		print "<BODY onLoad=\"javascript:alert('$nyt_sprog er oprettet.')\">";
+		print "<BODY onload=\"javascript:alert('$nyt_sprog er oprettet.')\">";
 	}
 } elseif ($skabelon && $handling=='slet') {
 	db_modify("delete from formularer where sprog = '$skabelon'",__FILE__ . " linje " . __LINE__);
@@ -955,8 +955,8 @@ if ($menu=='T') {  # 20150331 start bund
 	print "    <td width='14%' ".$top_bund.">&nbsp;</td>\n";
 } # 20150331 slut bund
 print "    <!-- <td width='10%' ".$top_bund."> ";
-print "onClick=\"javascript:window.open('logoslet.php', '','left=10,top=10,width=400,height=200,scrollbars=yes,resizable=yes,menubar=no,location=no')\" ";
-print "onMouseOver=\"this.style.cursor = 'pointer'\" ><u>Slet logo</u></td> -->\n";
+print "onclick=\"javascript:window.open('logoslet.php', '','left=10,top=10,width=400,height=200,scrollbars=yes,resizable=yes,menubar=no,location=no')\" ";
+print "onmouseover=\"this.style.cursor = 'pointer'\" ><u>Slet logo</u></td> -->\n";
 print "  </tbody></table>\n";
 print "</td></tr>\n";
 print "</tbody></table>\n";

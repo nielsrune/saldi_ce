@@ -190,7 +190,7 @@ while ($row = db_fetch_array($query))
         $r2=db_fetch_array(db_select("select lager, beholdning from lagerstatus where vare_id = $row[id] and lager = $x"));
         $y=$r2[beholdning];
 #        if (!$y) {$y='0';} 
-        print "<td align=center onClick=\"lagerflyt($row[id], $x)\">$font<span title= 'Flyt til andet lager'><a href><small>$y</small></a></td></td>";
+        print "<td align=center onclick=\"lagerflyt($row[id], $x)\">$font<span title= 'Flyt til andet lager'><a href><small>$y</small></a></td></td>";
       }
     }
     print "<td align=right>$linjetext<small>$font $row[beholdning]</small></span></td>";
