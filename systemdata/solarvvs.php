@@ -315,7 +315,7 @@ db_modify("update varer set beskrivelse='$beskrivelse', salgspris='$salgspris', 
 		}
 	}
 	fclose($fp);
-	print "<BODY onLoad=\"javascript:alert('$x VVS varer importeret / opdateret')\">\n";
+	print "<BODY onload=\"javascript:alert('$x VVS varer importeret / opdateret')\">\n";
 }
 print "</tbody></table>";
 print "</td></tr>";

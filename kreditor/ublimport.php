@@ -172,7 +172,7 @@ function importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe){
 				} elseif (substr($r['box1'],0,1)=='Y') { 
 					$momssats='0.00';
 				}
-			} else print "<BODY onLoad=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
+			} else print "<BODY onload=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
 		} else {
 			$grp_antal=0;
 			$q=db_select("select * from grupper where art='KG' order by kodenr",__FILE__ . " linje " . __LINE__);
@@ -224,7 +224,7 @@ function importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe){
 				}
 			}
 		} elseif ($opret_varenr) {
-			print "<BODY onLoad=\"javascript:alert('Angiv en salgspris på varen')\">";
+			print "<BODY onload=\"javascript:alert('Angiv en salgspris på varen')\">";
 		}
 		if (isset($_POST['tilknyt']) || $tilknyt) {
 			$low=strtolower($opret_varenr);
@@ -644,7 +644,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$n
 		if (!is_dir("../temp/$db/pulje")) mkdir("../temp/$db/pulje"); 
 		system("cd ../temp/$db/pulje\nrm *\ncp $tmp .\n");
 	} else {
-		print "<BODY onLoad=\"javascript:alert('Ingen bilag af typen `.xml` eller `.fak` i pulje')\">";
+		print "<BODY onload=\"javascript:alert('Ingen bilag af typen `.xml` eller `.fak` i pulje')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../kreditor/ordreliste.php\">";
 	}
 	print "</td></tr>";

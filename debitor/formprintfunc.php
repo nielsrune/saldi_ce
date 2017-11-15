@@ -401,7 +401,7 @@ function send_mails($filnavn,$email,$mailsprog,$form_nr,$charset) {
 	$afsendernavn=$row['firmanavn'];
 	if (!$afsendermail || !$afsendernavn) {
 		return("Missing sender mail");
-#		print "<BODY onLoad=\"javascript:alert('Firmanavn eller e-mail for afsender ikke udfyldt.\\nSe (Indstillinger -> stamdata).\\nMail ikke afsendt!')\">";
+#		print "<BODY onload=\"javascript:alert('Firmanavn eller e-mail for afsender ikke udfyldt.\\nSe (Indstillinger -> stamdata).\\nMail ikke afsendt!')\">";
 #		return;
 	}
 	
@@ -450,7 +450,7 @@ $mail->WordWrap = 50;  // set word wrap
  				echo "Mailer Error: " . $mail->ErrorInfo;
 		 		exit;
 	}
-#	if ($mailantal==1) print "<BODY onLoad=\"javascript:alert('Mail sendt til $email')\">";
+#	if ($mailantal==1) print "<BODY onload=\"javascript:alert('Mail sendt til $email')\">";
 #	else echo "Mail sendt til $email<br>";
 	return("Mail sent to $email");
 }	

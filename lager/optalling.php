@@ -82,7 +82,7 @@ $vis_ej_exist=if_isset($_GET['vis_ej_exist']);
 
 if ($slet && $vare_id && $varenr) {
 	db_modify("delete from regulering where vare_id='$vare_id' and bogfort='0'",__FILE__ . " linje " . __LINE__);
-#	print "<BODY onLoad=\"javascript:alert('Varenr: $varenr er slettet fra optællingslisten')\">\n";
+#	print "<BODY onload=\"javascript:alert('Varenr: $varenr er slettet fra optællingslisten')\">\n";
 	$vare_id=0;
 } elseif ($nulstil) { #20130109
 	db_modify("delete from regulering where bogfort='0' and lager='$lager'",__FILE__ . " linje " . __LINE__);
@@ -459,7 +459,7 @@ function vis_ej_optalt($lager) {
 			}
 		}
 	} else { #20140625
-		print "<BODY onLoad=\"javascript:alert('Ingen lagerførte varer.')\">\n";
+		print "<BODY onload=\"javascript:alert('Ingen lagerførte varer.')\">\n";
 		return(0);
 	}
 	$x=count($optalt);
@@ -791,7 +791,7 @@ transaktion('commit');
 	if ($bogfor==1) print "<tr><td colspan=\"6\">Klik <a href=optalling.php?bogfor=2&nulstil_ej_optalt=$nulstil_ej_optalt&dato=$dato&lager=$lager&godkend_regdif=$godkend_regdif>her</a> for endelig lagerregulering og bogføring pr. $dato</td></tr>";
 	# else print "<tr><td colspan=\"6\">Lagerregulering udført.</td></tr>";
 	else {
-		print "<BODY onLoad=\"javascript:alert('Lagerregulering udført.')\">\n";
+		print "<BODY onload=\"javascript:alert('Lagerregulering udført.')\">\n";
 #xit;
 		print "<meta http-equiv=\"refresh\" content=\"1;URL=optalling.php?dato=$dato&lager=$lager\">";
 	}
@@ -913,7 +913,7 @@ function importer($lager,$dato){
 				if ($tab) $splitter=chr(9);
 			}
 			if (!$splitter) {
-				print "<BODY onLoad=\"javascript:alert('Fejl i importfil - kan ikke opdeles i kolonner')\">\n";
+				print "<BODY onload=\"javascript:alert('Fejl i importfil - kan ikke opdeles i kolonner')\">\n";
 				print "<meta http-equiv=\"refresh\" content=\"1;URL=optalling.php?import=1\">";
 			}
 
@@ -996,7 +996,7 @@ function importer($lager,$dato){
 				fclose($fp);
 			}
 #xit;
-			print "<BODY onLoad=\"javascript:alert('$indsat varenumre importeret i liste, $ej_indsat varenumre ikke fundet i vareliste')\">\n";
+			print "<BODY onload=\"javascript:alert('$indsat varenumre importeret i liste, $ej_indsat varenumre ikke fundet i vareliste')\">\n";
 			print "<meta http-equiv=\"refresh\" content=\"1;URL=optalling.php?vis_ej_exist=1&lager=$lager\">";
 		}
 	} else {

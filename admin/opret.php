@@ -73,7 +73,7 @@ $modulnr=101;
 if (!$_POST['regnskab']||!$_POST['brugernavn']||!$_POST['passwd']||!$_POST['passwd2']) {
 	include("../includes/online.php");
 	if ($db != $sqdb) {
-		print "<BODY onLoad=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">";
+		print "<BODY onload=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">";
 		print "<meta http-equiv=\"refresh\" content=\"1;URL=../index/logud.php\">";
 		exit;
 	}
@@ -115,7 +115,7 @@ if ($_POST){
 	$std_kto_plan=$_POST['std_kto_plan'];
 
 	if ((($revisorregnskab && $passwd) || !$revisorregnskab)  && $passwd!=$passwd2 ) {
-		print "<BODY onLoad=\"javascript:alert('Adgangskoder er ikke ens')\">";
+		print "<BODY onload=\"javascript:alert('Adgangskoder er ikke ens')\">";
 		forside($regnskab,$brugernavn);
 		exit;
 	}
@@ -135,11 +135,11 @@ if ($_POST){
 #	$tmp=db_escape_string($regnskab);
 	$query = db_select("select * from regnskab where regnskab='$regnskab'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
-		print "<BODY onLoad=\"javascript:alert('Regnskab $regnskab findes allerede')\">";
+		print "<BODY onload=\"javascript:alert('Regnskab $regnskab findes allerede')\">";
 		forside($regnskab,$brugernavn);
 		exit;
 	} elseif ((!$revisorregnskab && (!$brugernavn||!$passwd)) || (!$regnskab))  {
-		print "<BODY onLoad=\"javascript:alert('Alle felter SKAL udfyldes')\">";
+		print "<BODY onload=\"javascript:alert('Alle felter SKAL udfyldes')\">";
 		forside($regnskab,$brugernavn);
 		exit();
 	} else {
@@ -381,7 +381,7 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 					if ($db_encode!="UTF8") $linje=utf8_decode($linje);
 					# if (strstr($linje,"'")>=28 && strstr($linje,",")>=13)zz
 					db_modify("insert into grupper (beskrivelse,kode,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14) values ($linje)",__FILE__ . " linje " . __LINE__);
-					# else print "<BODY onLoad=\"javascript:alert('Fejl i gruppefil, regnskab ikke oprettet korrekt')\">";
+					# else print "<BODY onload=\"javascript:alert('Fejl i gruppefil, regnskab ikke oprettet korrekt')\">";
 				}
 			}
 			fclose($fp);
@@ -427,7 +427,7 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 		db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14) values ('Div_valg (Rykker)','4','DIV','','','','','','','','','".$r['id']."','','','','','')",__FILE__ . " linje " . __LINE__);
 	}
 	transaktion("commit");
-	print "<BODY onLoad=\"javascript:alert('Regnskab $regnskab er oprettet og aktiveret')\">";
+	print "<BODY onload=\"javascript:alert('Regnskab $regnskab er oprettet og aktiveret')\">";
 	if ($fra_formular) {
 		$regnskab=urlencode($regnskab);
 		$brugernavn=urlencode($brugernavn);

@@ -81,7 +81,7 @@ $regnslut=$rsaar."-".$rsmd."-".$rsdd;
 if ($kladde_id) {	
 	$row =db_fetch_array(db_select("select bogfort from kladdeliste where id = $kladde_id",__FILE__ . " linje " . __LINE__));
 	if ($row['bogfort']=='V') {
-		print "<BODY onLoad=\"javascript:alert('Kladden er allerede bogf&oslash;rt - kladden lukkes')\">";
+		print "<BODY onload=\"javascript:alert('Kladden er allerede bogf&oslash;rt - kladden lukkes')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 		exit;
 	}
@@ -140,14 +140,14 @@ if ($_POST['bogfor'] || $_POST['simuler']) {
 		db_modify("delete from tmpkassekl where kladde_id = $kladde_id",__FILE__ . " linje " . __LINE__);
 		transaktion(commit);
 		genberegn($regnaar);
-		if ($popup) print "<BODY onLoad=\"javascript=opener.location.reload();\">";
+		if ($popup) print "<BODY onload=\"javascript=opener.location.reload();\">";
 	} elseif ($simuler) {
 		transaktion(begin);
 		bogfor($kladde_id, $kladdenote,'on');
 #		db_modify("delete from tmpkassekl where kladde_id = $kladde_id",__FILE__ . " linje " . __LINE__);
 		transaktion(commit);
 		if ($popup) {
-			print "<BODY onLoad=\"javascript=opener.location.reload();\">";
+			print "<BODY onload=\"javascript=opener.location.reload();\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 		}
 	}
@@ -465,7 +465,7 @@ if (abs($diff)>=0.01 || count($diffbilag))  { #20131115 ( || count($diffbilag))
 	$message=$db." | Uoverensstemmelse i posteringssum | ".__FILE__ . " linje " . __LINE__." | ".$brugernavn." ".date("Y-m-d H:i:s");
 	$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 	mail('fejl@saldi.dk', 'SALDI Fejl', $message, $headers);
-	print "<BODY onLoad=\"javascript:alert('Uoverensstemmelse i posteringssum - Kontakt venligst SALDI teamet p&aring; telefon 4690 2208')\">";
+	print "<BODY onload=\"javascript:alert('Uoverensstemmelse i posteringssum - Kontakt venligst SALDI teamet p&aring; telefon 4690 2208')\">";
 	$fejl=1; #20140228
 } elseif ($fejltext) {
 	print "<tr><td colspan=6><br></td></tr><tr><td align=center colspan=6>$fejltext</td></tr>";
@@ -599,7 +599,7 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 	
 	$r=db_fetch_array(db_select("select max(id) as id from transaktioner where kladde_id = $kladde_id",__FILE__ . " linje " . __LINE__));
 	if ($r['id']) {
-		print "<BODY onLoad=\"javascript:alert('Kladden er allerede bogført!')\">";
+		print "<BODY onload=\"javascript:alert('Kladden er allerede bogført!')\">";
 		return("Kladden er allerede bogført");
 		exit;
 	}
@@ -831,7 +831,7 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 		$kontodebet[$y]=array();  
 		for ($i=1;$i<=$b_antal;$i++) {
 			if ($bilag[$i]!=$bilag[$i-1] && $bilag[$i]!=$bilag[$i+1] && (!$debet[$i]||!$kredit[$i]) && $valuta[$i] != $valuta[$i-1]) { # 20131117 -- 20140228 tilføjet: && $valuta[$i] != $valuta[$i-1] 
-				print "<BODY onLoad=\"javascript:alert('Manglende modpostering i bilag $bilag[$i]!')\">";
+				print "<BODY onload=\"javascript:alert('Manglende modpostering i bilag $bilag[$i]!')\">";
 				exit;
 			}
 		# <- 20131115
@@ -865,11 +865,11 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 						$qtxt="insert into $tabel (kontonr,bilag,transdate,logdate,logtime,beskrivelse,debet,kredit,faktura,kladde_id,afd,ansat,projekt,valuta,valutakurs,ordre_id,moms)values('$b_diffkonto[$i]','$b_bilag[$i]','$b_transdate[$i]','$logdate','$logtime','$beskrivelse','$kontodebet[$y]','$kontokredit[$y]','$v_faktura[$i]','$kladde_id','$b_afd[$i]','$b_ansat[$i]','$b_projekt[$i]','$b_valuta[$i]','$b_kurs[$i]','$b_ordre_id[$i]','0')";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					} else {
-						print "<BODY onLoad=\"javascript:alert('Konto $b_diffkonto[$i] til valutadifferncer eksisterer ikke!')\">";
+						print "<BODY onload=\"javascript:alert('Konto $b_diffkonto[$i] til valutadifferncer eksisterer ikke!')\">";
 						exit;
 					} 
 				} elseif (($kontokredit[$y] || $kontodebet[$y]) && !$b_diffkonto[$i] && $valuta[$i])  { #20131028 -- 20140228 tilføjet: && $valuta[$i
-				print "<BODY onLoad=\"javascript:alert('Manglende konto til valutadiffencer! (bilag: $b_bilag[$i])')\">";
+				print "<BODY onload=\"javascript:alert('Manglende konto til valutadiffencer! (bilag: $b_bilag[$i])')\">";
 				exit;
 			} 
 		}
@@ -1015,7 +1015,7 @@ function momsberegning($konto,$amount,$momsart,$kontrol) {
 			$message=$db." | Afvigelse ved momsberegning | ".__FILE__ . " linje " . __LINE__." | ".$brugernavn." ".date("Y-m-d H:i:s");
 			$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 			mail('fejl@saldi.dk', 'SALDI Bogforingsfejl', $message, $headers);
-			print "<BODY onLoad=\"javascript:alert('Afvigelse ved momsberegning! Kontakt venligst Saldi teamet p&aring; telefon 4690 2208')\">";
+			print "<BODY onload=\"javascript:alert('Afvigelse ved momsberegning! Kontakt venligst Saldi teamet p&aring; telefon 4690 2208')\">";
 			exit;
 		}	
 	}
@@ -1059,7 +1059,7 @@ function valutaopslag($amount, $valuta, $transdate)
 		$r = db_fetch_array(db_select("select box1 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 		$tmp=dkdato($transdate);
 		$fejltext="---";
-		print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";	
+		print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";	
 	}
 	$r = db_fetch_array(db_select("select box3 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 	$diffkonto=$r['box3'];

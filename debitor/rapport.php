@@ -145,18 +145,18 @@ if (isset($_POST['submit']) || $rapportart) {
 		$kontoantal=$y;
 		if ($tmp){
 			if ($submit=="mail kontoudtog") {
-				print "<BODY onLoad=\"window.open('mail_kontoudtog.php?kontoliste=$tmp&dato_fra=$dato_fra&dato_til=$dato_til&kontoantal=$kontoantal','','$jsvars')\">";
+				print "<BODY onload=\"window.open('mail_kontoudtog.php?kontoliste=$tmp&dato_fra=$dato_fra&dato_til=$dato_til&kontoantal=$kontoantal','','$jsvars')\">";
 			} else {
-				print "<BODY onLoad=\"window.open('ny_rykker.php?kontoliste=$tmp&kontoantal=$kontoantal','','$jsvars')\">";
+				print "<BODY onload=\"window.open('ny_rykker.php?kontoliste=$tmp&kontoantal=$kontoantal','','$jsvars')\">";
 				$ny_rykker=1;
 			} 
 		} elseif ($submit=="ryk alle") {
-			print "<BODY onLoad=\"window.open('ny_rykker.php?kontoliste=alle&kontoantal=max','','$jsvars')\">";
+			print "<BODY onload=\"window.open('ny_rykker.php?kontoliste=alle&kontoantal=max','','$jsvars')\">";
 			$ny_rykker=1;
 		} else {
-			if ($submit=="mail kontoudtog") {print "<BODY onLoad=\"javascript:alert('Der er ikke afm&aelig;rket nogen konti til modtagelse af kontoudtog')\">";}
+			if ($submit=="mail kontoudtog") {print "<BODY onload=\"javascript:alert('Der er ikke afm&aelig;rket nogen konti til modtagelse af kontoudtog')\">";}
 			else {
-				print "<BODY onLoad=\"javascript:alert('Der er ikke afm&aelig;rket nogen konti til modtagelse af rykker eller bel&oslash;bet er ikke forfaldent til betaling')\">";
+				print "<BODY onload=\"javascript:alert('Der er ikke afm&aelig;rket nogen konti til modtagelse af rykker eller bel&oslash;bet er ikke forfaldent til betaling')\">";
 			}
 		}
 /*
@@ -189,12 +189,12 @@ if (isset($_POST['submit']) || $rapportart) {
 					$tmp2++;	
 				}
 			}
-			if ($submit=="udskriv" && $tmp2>0) print "<BODY onLoad=\"window.open('rykkerprint.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
+			if ($submit=="udskriv" && $tmp2>0) print "<BODY onload=\"window.open('rykkerprint.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
 			elseif ($submit=="ny rykker" && $tmp2>0) {
-				print "<BODY onLoad=\"window.open('ny_rykker.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
+				print "<BODY onload=\"window.open('ny_rykker.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
 				$ny_rykker=1;
 			} elseif ($submit=="afslut" && $tmp2>0) {
-				print "<BODY onLoad=\"window.open('afslut_rykker.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
+				print "<BODY onload=\"window.open('afslut_rykker.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
 				$ny_rykker=1;
 			} elseif ($submit=="inkasso" && $tmp2>0) {
 			echo "SASASA";

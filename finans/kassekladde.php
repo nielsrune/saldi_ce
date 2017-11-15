@@ -102,7 +102,7 @@ if ($tjek=if_isset($_GET['tjek'])) {
 	if (isset($row['tidspkt'])) {
 		list ($a,$c)=explode(" ",$row['tidspkt']);
 		if (($b-$c<3600)&&($row['hvem']!=$brugernavn)){
-			print "<body onLoad=\"javascript:alert('Kladden er i brug af $row[hvem]')\">";
+			print "<body onload=\"javascript:alert('Kladden er i brug af $row[hvem]')\">";
 			if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=../finans/kladdeliste.php\">";
 		} else {
@@ -238,7 +238,7 @@ if ($_POST) {
 	if ($kladde_id) {
 		if ($r=db_fetch_array(db_select("select id from kladdeliste where bogfort='S' and id='$kladde_id'",__FILE__ . " linje " . __LINE__))) {
 			 $alerttekst="Annullerer simulering for denne kladde";
-			 print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+			 print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 		}
 		db_modify("delete from tmpkassekl where kladde_id=$kladde_id",__FILE__ . " linje " . __LINE__);
 		db_modify("delete from simulering where kladde_id=$kladde_id",__FILE__ . " linje " . __LINE__);
@@ -524,33 +524,33 @@ if ($_POST) {
 		if (($debet[$x])&&(($d_type[$x]!="F")||(strlen($debet[$x])>1))) {
 			 if ($debet[$x]!=$debet[$x]*1) {
 				 $alerttekst="Ulovlig v&aelig;rdi i debetfelt (Bilag nr $bilag[$x]) \n kladde ikke gemt!";
-				 print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				 print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 				#$debet[$x]=$debet[$x]*1;
 			}
 		}
 		if (($kredit[$x])&&(($k_type[$x]!="F")||(strlen($kredit[$x])>1))) {
 			 if ($kredit[$x]!=$kredit[$x]*1) {
-				 print "<BODY onLoad=\"javascript:alert('Ulovlig v&aelig;rdi i kreditfelt (Bilag nr $bilag[$x])')\">";
+				 print "<BODY onload=\"javascript:alert('Ulovlig v&aelig;rdi i kreditfelt (Bilag nr $bilag[$x])')\">";
 				$fejl=1;
 				#$kredit[$x]=$kredit[$x]*1;
 			}
 		}
 		if (($kredit[$x])&&(($k_type[$x]!="F")||(strlen($kredit[$x])>1))) {
 			 if ($kredit[$x]!=$kredit[$x]*1) {
-				 print "<BODY onLoad=\"javascript:alert('Ulovlig v&aelig;rdi i kreditfelt (Bilag nr $bilag[$x])')\">";
+				 print "<BODY onload=\"javascript:alert('Ulovlig v&aelig;rdi i kreditfelt (Bilag nr $bilag[$x])')\">";
 				$fejl=1;
 				#$kredit[$x]=$kredit[$x]*1;
 			}
 		}
 		if (!$forskellige_datoer && $bilag[$x] && $bilag[$x]!='-' && $bilag[$x]==$bilag[$x-1] && $dato[$x]!=$dato[$x-1] && $bilagssum[$x-1]) {
-				print "<BODY onLoad=\"javascript:alert('Forskellige datoer i bilag $bilag[$x]')\">";
+				print "<BODY onload=\"javascript:alert('Forskellige datoer i bilag $bilag[$x]')\">";
 		}
 		if ((strpos($bilag[$x],'+'))&&($kladde_id)) {
 			indsaet_linjer($kladde_id,$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x]*1,$k_type[$x],$kredit[$x]*1,$faktura[$x],$belob[$x],$afd[$x]*1,$ansat[$x],$projekt[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x]*1,$momsfri[$x]);
 		}
 		if (($bilag[$x])&&($bilag[$x]!="-")&&($bilag[$x]!="->")&&($bilag[$x]!="<-")&&(!strpos($bilag[$x],'+'))&&(substr($bilag[$x],-1)!='r')&&(!is_numeric($bilag[$x]))) {//20160909 undtaget * til brug for bilagsrenum
-			 print "<BODY onLoad=\"javascript:alert('Ulovlig v&aelig;rdi i bilagsfelt (Bilag nr $bilag[$x])')\">";
+			 print "<BODY onload=\"javascript:alert('Ulovlig v&aelig;rdi i bilagsfelt (Bilag nr $bilag[$x])')\">";
 			$fejl=1;
 		} elseif (($bilag[$x])&&($bilag[$x]!="-")&&($bilag[$x]!="->")&&(substr($bilag[$x],-1)!='r')&&($bilag[$x]!="<-")) $bilag[$x]=$bilag[$x]*1; //20160909 undtaget * til brug for bilagsrenum
 		if ($bilag[$x] == "-") {$dato[$x]='';$beskrivelse[$x]='';$d_type[$x]='';$debet[$x]='';$k_type[$x]='';$kredit[$x]='';$faktura[$x]='';$belob[$x]='';$momsfri[$x]='';$afd[$x]='';$projekt[$x]='';$ansat[$x]='';$valuta[$x]='';$forfaldsdato[$x]='';$betal_id[$x]='';}
@@ -578,7 +578,7 @@ if ($_POST) {
 	if ($kladde_id) {
 		$row = db_fetch_array(db_select("select bogfort,tidspkt from kladdeliste where id=$kladde_id",__FILE__ . " linje " . __LINE__));
 		if (!$row['bogfort'] && $tidspkt==$row['tidspkt']) { #Refreshtjek"
-			print "<BODY onLoad=\"javascript:alert('Brug af refresh konstateret - handling ignoreret')\">";
+			print "<BODY onload=\"javascript:alert('Brug af refresh konstateret - handling ignoreret')\">";
 		} else {
 			db_modify("update kladdeliste set kladdenote = '$ny_kladdenote', hvem = '$brugernavn', tidspkt='$tidspkt' where id = '$kladde_id'",__FILE__ . " linje " . __LINE__);
 			$kladdenote = $ny_kladdenote;
@@ -722,7 +722,7 @@ if (!$simuler) {
 		} elseif ($menu=='S') {
 			include("../includes/sidemenu.php");
 		} else {
-			if ($popup) print "<td onClick=\"JavaScript:opener.location.reload();\" width=\"10%\" $top_bund>";
+			if ($popup) print "<td onclick=\"JavaScript:opener.location.reload();\" width=\"10%\" $top_bund>";
 			else print "<td $top_bund>";
 			$tekst=findtekst(154,$sprog_id);
 			if ($popup)	print "<a href=\"javascript:confirmClose('../includes/luk.php?tabel=kladdeliste&amp;id=$kladde_id','$tekst')\" accesskey=\"L\">Luk</a></td>";
@@ -1235,7 +1235,7 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 #	if ($udskriv) print "<tr><td width=\"100%\" height=\"100%\">zz</td></tr>";
 	print "</tbody></table>"; # Tabel 1 <- 
 	if ($udskriv) {
-		print "<body onLoad=\"javascript:window.print()\">";#;javascript:window.close();\">";
+		print "<body onload=\"javascript:window.print()\">";#;javascript:window.close();\">";
 		
 	}
 ######################################################################################################################################
@@ -1257,7 +1257,7 @@ function debitoropslag($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 	print"<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd' accesskey=L>Luk</a></td>";
 	print"<td width=\"80%\" $top_bund>Debitorliste</td>";
-	print "<td width=\"10%\" $top_bund align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"JavaScript:window.open('../debitor/debitorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'><u>Ny</u></a></td>";
+	print "<td width=\"10%\" $top_bund align=\"right\" onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"JavaScript:window.open('../debitor/debitorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'><u>Ny</u></a></td>";
 #	else print"<td width=\"10%\" $top_bund align=\"right\"><a href=../debitor/debitorkort.php?returside=../finans/kasseklade.php&id=$id accesskey=N>Ny</a></td>";
 
 	print"</tbody></table>";
@@ -1326,7 +1326,7 @@ function kreditoropslag($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dat
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 	print"<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find' accesskey='L'>Luk</a></td>";
 	print"<td width=\"80%\" $top_bund>kreditorliste</td>";
-	print "<td width=\"10%\" $top_bund align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"JavaScript:window.open('../kreditor/kreditorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'><u>Ny</u></a></td>";
+	print "<td width=\"10%\" $top_bund align=\"right\" onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"JavaScript:window.open('../kreditor/kreditorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'><u>Ny</u></a></td>";
 	print"</tbody></table>";
 	print"</td></tr>\n";
 	print"<tr><td valign=\"top\">";
@@ -1893,7 +1893,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 	if ($kladde_id) {
 		$row =db_fetch_array(db_select("select bogfort from kladdeliste where id = $kladde_id",__FILE__ . " linje " . __LINE__));
 		if ($row['bogfort']!='-') {
-			print "<BODY onLoad=\"javascript:alert('Kladden er allerede bogf&oslash;rt - kladden lukkes')\">";
+			print "<BODY onload=\"javascript:alert('Kladden er allerede bogf&oslash;rt - kladden lukkes')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 			exit;
 		}
@@ -1969,7 +1969,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			if ($row = db_fetch_array($query)) $debet=$row[kontonr];
 			else {
 				$alerttekst=addslashes($debet.' er ikke defineret som genvejstast (Bilag nr '.$bilag.') Kladden en IKKE gemt');
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -1992,7 +1992,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 				if ($row = db_fetch_array($query)) $debet=$row['kontonr'];
 				else {
 					$alerttekst=addslashes('Der er ingen konti som indeholder teksten '.$debet.' (Bilag nr '.$bilag.') Kladden en IKKE gemt');
-					print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+					print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 					$fejl=1;
 				}
 			}
@@ -2015,7 +2015,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 				if ($row = db_fetch_array($query)) $kredit=$row['kontonr'];
 				else {
 					$alerttekst=addslashes('Der er ingen konti som indeholder teksten '.$kredit.' (Bilag nr '.$bilag.') Kladden en IKKE gemt');
-					print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+					print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 					$fejl=1;
 				}
 			}
@@ -2026,7 +2026,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			if ($row = db_fetch_array($query)) $kredit=$row['kontonr'];
 			else {
 				$alerttekst=addslashes($kredit.' er ikke defineret som genvejstast (Bilag nr '.$bilag.') Kladden en IKKE gemt');
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -2037,7 +2037,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 				$alerttekst=addslashes('Der er ingen finanskonti hvor '.$debet.' indgår (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			} elseif (in_array($debet,$lukket)) $alerttekst=addslashes('Debetkonto '.$debet.' er l&aring;st og m&aring; ikke anvendes (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			if ($alerttekst) {
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -2046,9 +2046,9 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			if (!in_array($kredit,$kontonr)) {
 				$alerttekst=addslashes('B Kreditkonto '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			} elseif (in_array($kredit,$lukket)) $alerttekst=addslashes('Kreditkonto '.$kredit.' er l&aring;st og m&aring; ikke anvendes (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
-			if ($alerttekst) print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+			if ($alerttekst) print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 			if ($alerttekst) {
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -2058,7 +2058,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			if ($svar==$debet) $alerttekst=addslashes('Debitor '.$debet.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $debet=$svar;
 			if ($alerttekst) {
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -2068,7 +2068,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			if ($svar==$kredit) $alerttekst=addslashes('Debitor '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $kredit=$svar;
 			if ($alerttekst) {
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -2078,7 +2078,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			if ($svar==$debet) $alerttekst=addslashes('Kreditor '.$debet.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $debet=$svar;
 			if ($alerttekst) {
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -2088,7 +2088,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			if ($svar==$kredit) $alerttekst=addslashes('Kreditor '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $kredit=$svar;
 			if ($alerttekst) {
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
 		}
@@ -2101,7 +2101,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		$ym=$year.$month;
 		if (!$fejl && $dato && ($ym<$aarstart || $ym>$aarslut)) {
 			$alerttekst='Dato ('.$dato.') udenfor regnskabs&aring;r (Bilag nr '.$bilag.') Kladden er IKKE gemt!';
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 			$fejl=1;
 #			$transdate=date("Y-m-d");
 		}
@@ -2109,7 +2109,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		if (!$fejl&&$afd!='0') {
 			if (!$row= db_fetch_array(db_select("select id from grupper where art='AFD' and kodenr='$afd'",__FILE__ . " linje " . __LINE__))){
 				$alerttekst=addslashes('Afdeling '.$afd.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			} 
 		}
@@ -2117,7 +2117,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		if (!$fejl&&$projekt) {
 			if (!$row= db_fetch_array(db_select("select id from grupper where art='PRJ' and kodenr='$projekt'",__FILE__ . " linje " . __LINE__))){
 				$alerttekst=addslashes('Projekt '.$projekt.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			} 
 		}
@@ -2125,7 +2125,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		if (!$fejl&&$valuta!='DKK') {
 			if (!$row= db_fetch_array(db_select("select kodenr from grupper where art='VK' and box1='$valuta'",__FILE__ . " linje " . __LINE__))){
 				$alerttekst=addslashes('valuta '.$valuta.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			} else $valutakode=$row['kodenr'];
 			$valdate=usdate($dato);
@@ -2283,7 +2283,7 @@ function kopier_til_ny($kladde_id,$bilagsnr,$ny_dato) {
 		print "<span style=center title=\"Bilagsnummer for 1. bilag. De &oslash;vrige beregnes automatisk. S&aelig;ttes et lighedstegn anvendes orginalt bilagsnummer\">Skriv 1. bilagsnr <input type=\"text\" style=\"text-align:left;width:40px;\" name=bilagsnr value=$bilagsnr><br><br><br></span>";
 		print "<span style=center title=\"S&aelig;ttes et lighedstegn, anvendes orginal bilagsdato\">Skriv dato for alle bilag <input type=\"text\" size=8 name=ny_dato value=$dato><br><br><br></span>";
 		print "<input type=hidden name=kladde_id value=$kladde_id>";
-		print "<input type=submit accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\">&nbsp;<input type=button value=fortryd onClick=\"location.href='../includes/luk.php'\"><br></span>\n";
+		print "<input type=submit accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\">&nbsp;<input type=button value=fortryd onclick=\"location.href='../includes/luk.php'\"><br></span>\n";
 		print "</form>";
 		exit;
 	}
@@ -2319,7 +2319,7 @@ function regnskabsaar($regnaar) {
 		$slut=usdate("31-".trim($row['box3'])."-".trim($row['box4']))	; #usdate bruges for at sikre korrekt dato.
 	} else {
 		$alerttekst='Regnskabs&aring;r ikke oprettet!';
-		print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+		print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 		exit;
 	}
 	return $start.":".$slut;
@@ -2347,7 +2347,7 @@ function indsaet_linjer($kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_t
 		if ($r['kodenr']) $valutakode=$r['kodenr']*1;
 		else {
 			$fejl=1;
-			print "<BODY onLoad=\"javascript:alert('Valuta $valuta eksisterer ikke (Bilag $bilag)')\">";
+			print "<BODY onload=\"javascript:alert('Valuta $valuta eksisterer ikke (Bilag $bilag)')\">";
 		}
 	} else $valutakode=0;
 	if (!$fejl) {
@@ -2356,7 +2356,7 @@ function indsaet_linjer($kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_t
 			db_modify("insert into kassekladde (bilag,kladde_id,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,afd,ansat,projekt,valuta,forfaldsdate,betal_id,momsfri) values ('$bilag','$kladde_id','$date','$beskrivelse','$d_type','$debet','$k_type','$kredit','$faktura','$amount','$afd','$ansat_id','$projekt','$valutakode','$forfaldsdate','$betal_id','$momsfri')",__FILE__ . " linje " . __LINE__);
 		} else ($antal=$antal*1);
 		if ($antal>25) { #20150521
-			print "<BODY onLoad=\"javascript:alert('Du forsøger at indsætte $antal bilagslinjer! Max er 25!')\">";
+			print "<BODY onload=\"javascript:alert('Du forsøger at indsætte $antal bilagslinjer! Max er 25!')\">";
 			$antal=0;
 		}
 		for ($x=1;$x<=$antal;$x++) {
@@ -2385,7 +2385,7 @@ function ompost($ompost) {
 			print "<tr><td><a href=kassekladde.php?kladde_id=$kladde_id&ompost=$ompost&ompost_til=$r[id]>$r[id]</a></td><td>$r[kladdenote]</td><td>$r[oprettet_af]</td></tr>";
 		}
 		if ($x==0) {
-			print "<body onLoad=\"javascript:alert('Der skal f&oslash;rst oprettes en kassekladde som posteringen kan tilbagef&oslash;res til')\">";
+			print "<body onload=\"javascript:alert('Der skal f&oslash;rst oprettes en kassekladde som posteringen kan tilbagef&oslash;res til')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=kassekladde.php?kladde_id=$kladde_id\">";
 		}
 		print "<tbody></table>";
@@ -2395,7 +2395,7 @@ function ompost($ompost) {
 		$afd=$r['afd']*1;$ansat=$r['ansat']*1;$projekt=$r['projekt'];$valutakode=$r['valutakode']*1;
 		#20140718
 		db_modify("insert into kassekladde (bilag,kladde_id,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,momsfri,afd,ansat,projekt,valuta) values ('$r[bilag]','$ompost_til','$r[transdate]','".db_escape_string($r['beskrivelse'])."','$r[k_type]','$r[kredit]','$r[d_type]','$r[debet]','$r[faktura]','$r[amount]','$r[momsfri]','$afd','$ansat','$projekt','$valutakode')",__FILE__ . " linje " . __LINE__);
-		print "<body onLoad=\"javascript:alert('Posteringen er tilbagef&oslash;rt p&aring; kladde $ompost_til')\">";
+		print "<body onload=\"javascript:alert('Posteringen er tilbagef&oslash;rt p&aring; kladde $ompost_til')\">";
 	}
 } # endfunc ompost
 ##########################################################################################################
@@ -2408,7 +2408,7 @@ function valutaopslag($amount, $valuta, $transdate) {
 		$r = db_fetch_array(db_select("select box1 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 		$tmp=dkdato($transdate);
 		$fejltext="---";
-		print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";
+		print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";
 	}
 	$r = db_fetch_array(db_select("select box3 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 	$diffkonto=$r['box3'];

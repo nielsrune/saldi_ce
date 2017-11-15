@@ -51,7 +51,7 @@ if($r=db_fetch_array($q = db_SELECT("select box8 from grupper where art = 'DIV' 
 	$svnr=$r['varenr'];
 } else $svnr='S';
 $r=db_fetch_array(db_SELECT("select id from varer where varenr = '$svnr'",__FILE__ . " linje " . __LINE__));
-if (!$r['id']) print "<BODY onLoad=\"JavaScript:alert('Varenummer $svnr for sæt ikke gyldigt')\">";
+if (!$r['id']) print "<BODY onload=\"JavaScript:alert('Varenummer $svnr for sæt ikke gyldigt')\">";
 
 if ($id && $forfra && $saet) {
 	db_modify("delete from ordrelinjer where ordre_id='$id' and saet='$saet' and varenr='$svnr'",__FILE__ . " linje " . __LINE__);
@@ -249,25 +249,25 @@ function tastatur($id,$fokus,$saet) {
 	print "<TD height=\"100%\" valign=\"top\" align=\"left\" width=\"45%\"><TABLE BORDER=\"0\" CELLPADDING=\"4\" CELLSPACING=\"4\"><TBODY>\n";
 	print "<TR>\n";
 		$stil="STYLE=\"width:80px;height:40px;font-size:120%;\"";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"one\"   VALUE=\"1\" OnClick=\"saetpris.$fokus.value += '1';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"two\"   VALUE=\"2\" OnCLick=\"saetpris.$fokus.value += '2';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"three\" VALUE=\"3\" OnClick=\"saetpris.$fokus.value += '3';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"one\"   VALUE=\"1\" onclick=\"saetpris.$fokus.value += '1';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"two\"   VALUE=\"2\" onclick=\"saetpris.$fokus.value += '2';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"three\" VALUE=\"3\" onclick=\"saetpris.$fokus.value += '3';saetpris.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"four\"  VALUE=\"4\" OnClick=\"saetpris.$fokus.value += '4';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"five\"  VALUE=\"5\" OnCLick=\"saetpris.$fokus.value += '5';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"six\"   VALUE=\"6\" OnClick=\"saetpris.$fokus.value += '6';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"four\"  VALUE=\"4\" onclick=\"saetpris.$fokus.value += '4';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"five\"  VALUE=\"5\" onclick=\"saetpris.$fokus.value += '5';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"six\"   VALUE=\"6\" onclick=\"saetpris.$fokus.value += '6';saetpris.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"seven\" VALUE=\"7\" OnClick=\"saetpris.$fokus.value += '7';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"eight\" VALUE=\"8\" OnCLick=\"saetpris.$fokus.value += '8';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"nine\"  VALUE=\"9\" OnClick=\"saetpris.$fokus.value += '9';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"seven\" VALUE=\"7\" onclick=\"saetpris.$fokus.value += '7';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"eight\" VALUE=\"8\" onclick=\"saetpris.$fokus.value += '8';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"nine\"  VALUE=\"9\" onclick=\"saetpris.$fokus.value += '9';saetpris.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\",\" OnClick=\"saetpris.$fokus.value += ',';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\"0\" OnClick=\"saetpris.$fokus.value += '0';saetpris.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"clear\" VALUE=\"Ryd\" OnClick=\"saetpris.$fokus.value = '';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\",\" onclick=\"saetpris.$fokus.value += ',';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\"0\" onclick=\"saetpris.$fokus.value += '0';saetpris.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"clear\" VALUE=\"Ryd\" onclick=\"saetpris.$fokus.value = '';saetpris.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"forfra\"  VALUE=\"Forfra\" OnClick=\"window.location.href='saetpris.php?id=$id&forfra=1&saet=$saet'\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"forfra\"  VALUE=\"Forfra\" onclick=\"window.location.href='saetpris.php?id=$id&forfra=1&saet=$saet'\"></TD>\n";
 		print "<FORM ACTION=\"saetpris.php?id=$id\" method=\"post\" autocomplete=\"off\">\n";
-		print "<TD collspan=\"2\"><SELECT $stil NAME=\"saetvalg\" OnChange=\"this.form.submit()\">>";
+		print "<TD collspan=\"2\"><SELECT $stil NAME=\"saetvalg\" onchange=\"this.form.submit()\">>";
 		if ($saet) print "<OPTION VALUE=\"$saet\">Sæt $saet</OPTION>";		
 		for($x=0;$x<count($saets);$x++){
 			if ($saets[$x]!=$saet) print "<OPTION VALUE=\"$saets[$x]\">Sæt $saets[$x]</OPTION>";		
@@ -277,10 +277,10 @@ function tastatur($id,$fokus,$saet) {
 		print "</FORM>";
 		print "</TD>\n";
 		($art=='PO')?$href="pos_ordre.php?id=$id":$href="ordre.php?id=$id";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"tilbage\"  VALUE=\"Tilbage\" OnClick=\"window.location.href='$href'\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"tilbage\"  VALUE=\"Tilbage\" onclick=\"window.location.href='$href'\"></TD>\n";
 		print "</TR><TR>\n";
 		print "<FORM ACTION=\"saetpris.php?id=$id&saet=$saet\" method=\"post\" autocomplete=\"off\">\n";
-		print "<TD><INPUT TYPE=\"submit\" $stil OnClick=\"return confirm('Slet hele sættet fra ordren?');\" NAME=\"slet\" VALUE=\"Slet\"></TD>\n";
+		print "<TD><INPUT TYPE=\"submit\" $stil onclick=\"return confirm('Slet hele sættet fra ordren?');\" NAME=\"slet\" VALUE=\"Slet\"></TD>\n";
 		print "</FORM>";
 		print "<TD></TD>\n";
 		print "<TD><TD>\n";

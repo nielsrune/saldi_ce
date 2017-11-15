@@ -37,7 +37,7 @@ include("../includes/version.php");
 include("../includes/tjek4opdat.php");
 
 if ($db != $sqdb) {
-	print "<BODY onLoad=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">";
+	print "<BODY onload=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">";
 	print "<meta http-equiv=\"refresh\" content=\"1;URL=../index/logud.php\">";
 	exit;
 }

@@ -174,7 +174,7 @@ $felt_antal=count($felt_navn);
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x] && $felt_aktiv[$x]==1) {
-			print "<body onLoad=\"javascript:alert('Der kan kun v&aelig;re &eacute;n kolonne med $felt_navn[$x]')\">"; #20151210
+			print "<body onload=\"javascript:alert('Der kan kun v&aelig;re &eacute;n kolonne med $felt_navn[$x]')\">"; #20151210
 			$feltnavn[$y]='';
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
@@ -255,15 +255,15 @@ if ($fp) {
 				}
 #				if ($feltnavn[$y]=='varenr'&&!is_numeric($felt[$y])) {
 #					$skriv_linje=2;
-#					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
-#					print "<BODY onLoad=\"javascript:alert('varenrnummer skal v&aelig;re numerisk')\">";
+#					print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
+#					print "<BODY onload=\"javascript:alert('varenrnummer skal v&aelig;re numerisk')\">";
 #				} 
 			}
  		}
 		if ($skriv_linje==2 || in_array($varenr,$v_nr)) { #20161015
 			$txt='R&oslash;de linjer/felter indeholder fejl og bliver ikke importeret\n';
 			$txt.='Gr&oslash;nne linjer/felter er eksisterende varer og opdateres\n';
-			print "<BODY onLoad=\"javascript:alert('$txt')\">";
+			print "<BODY onload=\"javascript:alert('$txt')\">";
 		}
 		if ($skriv_linje>=1){
 			print "<tr>";
@@ -324,7 +324,7 @@ fclose($fp);
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]&& $felt_aktiv[$x]==1) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
+		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
 		$feltnavn[$y]='';
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
@@ -494,8 +494,8 @@ fclose($fp);
 transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";
-print "<BODY onLoad=\"javascript:alert('$imp_antal varer importeret, $upd_antal varer opdateret')\">";
-#print "<BODY onLoad=\"javascript:alert('$imp_antal varer importeret')\">";
+print "<BODY onload=\"javascript:alert('$imp_antal varer importeret, $upd_antal varer opdateret')\">";
+#print "<BODY onload=\"javascript:alert('$imp_antal varer importeret')\">";
 #print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 exit;
 } # endfunc overfoer_data

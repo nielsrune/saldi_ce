@@ -170,7 +170,7 @@ if ($fax) print "Fax: $fax";
 print "</td><td></td><td> N&aelig;ste kontakt</td><td> $kontaktes</td>\n";
 	if (db_fetch_array(db_select("select * from grupper where art = 'DIV' and kodenr = '2' and box7='on'",__FILE__ . " linje " . __LINE__))) {
 		$url="jobliste.php?kontonr=$kontonr&konto_id=$id&returside=historikkort.php";
-		$jobkort="<a href=$url><input type=\"button\" style=\"width:75px\" value=\"jobkort\" onClick=\"window.navigate('$url')\"></a>";
+		$jobkort="<a href=$url><input type=\"button\" style=\"width:75px\" value=\"jobkort\" onclick=\"window.navigate('$url')\"></a>";
 		print "<td>$jobkort</a></td></tr>";
 	} else print "<tr>";
 
@@ -253,7 +253,7 @@ while ($r=db_fetch_array($q)){
 	print "<tr><td colspan=2 width=100% >$ansat&nbsp;=&gt;<span title=\"D: $r1[tlf] M: $r1[mobil] E: $r1[email] B: $r1[notes]\">&nbsp;$kontakt</span></td></tr>";
 	print "<tr><td colspan=2>$kontaktet &nbsp; $kontaktes</td></tr>";
 #	if ($r[notedate]==date("Y-m-d")) 
-	print "<tr><td><a href=historikkort.php?id=$id&historik_id=$r[id]&handling=ret>&nbsp;&nbsp;ret&nbsp;&nbsp;</a>&nbsp;&nbsp;&nbsp;<a href=historikkort.php?id=$id&historik_id=$r[id]&handling=slet onClick=\"return Slet()\">&nbsp;slet&nbsp;</a></td>";
+	print "<tr><td><a href=historikkort.php?id=$id&historik_id=$r[id]&handling=ret>&nbsp;&nbsp;ret&nbsp;&nbsp;</a>&nbsp;&nbsp;&nbsp;<a href=historikkort.php?id=$id&historik_id=$r[id]&handling=slet onclick=\"return Slet()\">&nbsp;slet&nbsp;</a></td>";
 	if ($vis_bilag) {
 		if ($dokument) print "<td title=\"klik her for at &aring;bne bilaget: $dokument\" align=right><a href=\"../includes/bilag.php?kilde=historik&filnavn=$dokument&kilde_id=$id&bilag_id=$r[id]\"><img style=\"border: 0px solid\" alt=\"clip med papir\" src=\"../ikoner/paper.png\"></a></td>";
 		else print "<td title=\"klik her for at vedh&aelig;fte et bilag\" align=right><a href=\"../includes/bilag.php?kilde=historik&&ny=ja&kilde_id=$id&bilag_id=$r[id]\"><img style=\"border: 0px solid\" alt=\"papirclip\" src=\"../ikoner/clip.png\"></a></td>";

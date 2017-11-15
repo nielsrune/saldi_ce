@@ -55,7 +55,7 @@ print "
 			<td width=\"10%\"$top_bund><a href=debitor.php title =\"Klik her for at skifte til debitoroversigten\">Debitorer</a></td>
 			<td width=\"10%\"$knap_ind>Historik</a></td>
 			<td width=\"30%\"$top_bund><br></td>";
-if ($popup) print "<td width=\"10%\"$top_bund onClick=\"javascript:visning=window.open('grpvisning.php?side=historik','visning','scrollbars=1,resizable=1');visning.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"> <u>Visning</u></td>";
+if ($popup) print "<td width=\"10%\"$top_bund onclick=\"javascript:visning=window.open('grpvisning.php?side=historik','visning','scrollbars=1,resizable=1');visning.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"> <u>Visning</u></td>";
 else print "<td width=\"10%\"$top_bund><a href=grpvisning.php?side=historik>Visning</td>";
 print " </tr>
 			</tbody></table>
@@ -102,7 +102,7 @@ while ($r0 = db_fetch_array($q0)) {
 			else {$linjebg=$bgcolor; $color='#000000';}
 			print "<tr bgcolor=\"$linjebg\">";
 			if ($popup) { 
-				$pre="<td onClick=\"javascript:historikkort=window.open('historikkort.php?id=$r1[id]&returside=../includes/luk.php','historikkort','".$jsvars."');historikkort.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\";><u>";
+				$pre="<td onclick=\"javascript:historikkort=window.open('historikkort.php?id=$r1[id]&returside=../includes/luk.php','historikkort','".$jsvars."');historikkort.focus();\" onmouseover=\"this.style.cursor = 'pointer'\";><u>";
 				$post="<br></u></td>";
 			} else {
 				$pre="<td><a href=historikkort.php?id=$r1[id]>";

@@ -38,7 +38,7 @@ include("../includes/std_func.php");
 $modulnr=100;
 
 if ($db != $sqdb) {
-	print "<BODY onLoad=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">\n";
+	print "<BODY onload=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">\n";
 	print "<meta http-equiv=\"refresh\" content=\"1;URL=../index/logud.php\">\n";
 	exit;
 }

@@ -67,7 +67,7 @@ if (!file_exists("../logolib/$db_id")) mkdir("../logolib/$db_id");
 if (file_exists("../logolib/$db_id/bg.pdf")) {
 	if (system("which pdftk")) $logoart='PDF';
 	else {
-		print "<BODY onLoad=\"JavaScript:alert('pdftk ikke fundet, PDF kan ikke anvendes som baggrund');\">";
+		print "<BODY onload=\"JavaScript:alert('pdftk ikke fundet, PDF kan ikke anvendes som baggrund');\">";
 	}
 } elseif (file_exists("../logolib/$db_id/$formular.ps")) {
 	$logo="../logolib/$db_id/$formular.ps";

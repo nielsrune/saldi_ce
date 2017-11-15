@@ -194,7 +194,7 @@ for ($i=0; $i<=$konto_antal; $i++) {
 					$valutakurs=$r2['kurs'];
 				} else {
 					$tmp = dkdato($ordredate);
-					print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
+					print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
 				}
 			} else {
 				$valuta='DKK';
@@ -283,7 +283,7 @@ for ($i=0; $i<=$konto_antal; $i++) {
 					$valutakurs=$r2['kurs'];
 				} else {
 					$tmp = dkdato($ordredate);
-					print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
+					print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
 				}
 			} else {
 				$valuta='DKK';
@@ -354,7 +354,7 @@ for ($i=0; $i<=$konto_antal; $i++) {
 		}
 	}
 }	 
-if ($topniveau) print "<BODY onLoad=\"javascript:alert('Topniveau nået for rykkere med l&oslash;benr $topniveau')\">";
+if ($topniveau) print "<BODY onload=\"javascript:alert('Topniveau nået for rykkere med l&oslash;benr $topniveau')\">";
 print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 
 #############################################################################

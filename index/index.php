@@ -97,7 +97,7 @@ print "	<div id=\"main\">\n";
 print "		<div class=\"loginHolder\">\n";
 print "			<div class=\"loginBox\">\n";
 print "				<div class=\"loginForm\">\n";    
-print "					<form name=\"login1\" METHOD=\"POST\" ACTION=\"login.php\" onSubmit=\"return handleLogin(this);\">\n";
+print "					<form name=\"login1\" METHOD=\"POST\" ACTION=\"login.php\" onsubmit=\"return handleLogin(this);\">\n";
 print "						<input type=\"hidden\" name=\"vent\" value=\"$vent\">\n";
 if ($fejltxt) {
 	print "<label style=\"text-align:center;color:red;\">$fejltxt</label>\n";

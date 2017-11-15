@@ -216,7 +216,7 @@ elseif ($rapportart){
 				$konto_til=$r['kontonr']-1;
 			}
 			else $konto_fra=$r['kontonr']+1;
-		} else print "<BODY onLoad=\"javascript:alert('Sideskiftkonto ikke defineret i kontoplan - Balance & Resultat kan ikke adskilles')\">";
+		} else print "<BODY onload=\"javascript:alert('Sideskiftkonto ikke defineret i kontoplan - Balance & Resultat kan ikke adskilles')\">";
 
 		$submit="regnskab";
 	} else $submit=str2low($rapportart);
@@ -511,8 +511,8 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	print "</td></tr><tr>";
 	print "<td colspan=3 ALIGN=center><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>\n"; #E
 	if ($popup) {
-		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:kontrolspor=window.open('kontrolspor.php','kontrolspor','scrollbars=1,resizable=1');kontrolspor.focus();\"><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input type=submit value=\"Kontrolspor\" name=\"submit\"></span></td></tr>";
-		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:provisionsrapport=window.open('provisionsrapport.php','provisionsrapport','scrollbars=1,resizable=1');provisionsrapport.focus();\"><span title='Rapport over medarbejdernes provisionsindtjening'><input type=submit value=\"Provisionsrapport\" name=\"submit\"></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center onclick=\"javascript:kontrolspor=window.open('kontrolspor.php','kontrolspor','scrollbars=1,resizable=1');kontrolspor.focus();\"><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input type=submit value=\"Kontrolspor\" name=\"submit\"></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center onclick=\"javascript:provisionsrapport=window.open('provisionsrapport.php','provisionsrapport','scrollbars=1,resizable=1');provisionsrapport.focus();\"><span title='Rapport over medarbejdernes provisionsindtjening'><input type=submit value=\"Provisionsrapport\" name=\"submit\"></span></td></tr>";
 	} else {
 		print "<tr><td colspan=3 ALIGN=center><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input type=submit value=\"Kontrolspor\" name=\"submit\"></span></td></tr>";
 		print "<tr><td colspan=3 ALIGN=center><span title='Rapport over medarbejdernes provisionsindtjening'>  <input type=submit value=\"Provisionsrapport\" name=\"submit\"></span></td></tr>";
@@ -1379,7 +1379,7 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 			}
 			for ($tr=0;$tr<count($transdate);$tr++) {		
 				($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-				print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." $kladde_id[$tr]</td><td onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:kassekladde=window.open('kassekladde.php?id=$kladde_id[$tr]&returside=../includes/luk.php','kassekladde','$jsvars')\">$bilag[$tr]</td><td>$kontonr[$x] : $beskrivelse[$tr]</td>";
+				print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." $kladde_id[$tr]</td><td onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:kassekladde=window.open('kassekladde.php?id=$kladde_id[$tr]&returside=../includes/luk.php','kassekladde','$jsvars')\">$bilag[$tr]</td><td>$kontonr[$x] : $beskrivelse[$tr]</td>";
 				$xmoms=$debet[$tr]-$kredit[$tr];
 				print "<td align=right>".dkdecimal($xmoms,2)."</td>";
 #				$moms=$moms[$tr];
@@ -2423,7 +2423,7 @@ function momsangivelse ($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 		print "<tr><td colspan=6><hr></td></tr>";
 		print "</tbody></table>";
 	} else {
-		print "<BODY onLoad=\"javascript:alert('Rapportspecifikation ikke defineret (Indstillinger -> Moms)')\">";
+		print "<BODY onload=\"javascript:alert('Rapportspecifikation ikke defineret (Indstillinger -> Moms)')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?rapportart=kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&dato_til=$slutdato&maaned_til=$mt&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev\">";
 	}
 }

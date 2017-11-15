@@ -24,7 +24,7 @@ function opdat_2_0($under_nr, $lap_nr){
 	global $regnaar;
 	$s_id=session_id();
 	
-#	print "<body onLoad=\"javascript:alert('Systemet opdateres, det kan tage lidt tid')\">";
+#	print "<body onload=\"javascript:alert('Systemet opdateres, det kan tage lidt tid')\">";
 	if ($lap_nr<2){
 		include("../includes/connect.php");
 		$r=db_fetch_array(db_select("select * from regnskab where id=1",__FILE__ . " linje " . __LINE__));
@@ -243,7 +243,7 @@ function opdat_2_0($under_nr, $lap_nr){
 */		
 		include("../includes/connect.php");
 		db_modify("UPDATE regnskab set version = '2.0.7' where db = '$db'",__FILE__ . " linje " . __LINE__);
-		print "<BODY onLoad=\"JavaScript:window.open('../doc/nyt_i_2.0.7.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
+		print "<BODY onload=\"JavaScript:window.open('../doc/nyt_i_2.0.7.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
 	}
 	
 	if ($lap_nr<"9"){
@@ -279,7 +279,7 @@ function opdat_2_0($under_nr, $lap_nr){
 		db_modify("UPDATE grupper set box1 = '2.0.9' where art = 'VE'",__FILE__ . " linje " . __LINE__);
 		include("../includes/connect.php");
 		db_modify("UPDATE regnskab set version = '2.0.9' where db = '$db'",__FILE__ . " linje " . __LINE__);
-print "<BODY onLoad=\"JavaScript:window.open('../doc/nyt_i_2.0.9.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
+print "<BODY onload=\"JavaScript:window.open('../doc/nyt_i_2.0.9.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
 	}
 	if ($under_nr<1){
 		include("../includes/connect.php");
@@ -325,7 +325,7 @@ print "<BODY onLoad=\"JavaScript:window.open('../doc/nyt_i_2.0.9.html','','statu
 		db_modify("UPDATE grupper set box1 = '2.1.0' where art = 'VE'",__FILE__ . " linje " . __LINE__);
 		include("../includes/connect.php");
 		db_modify("UPDATE regnskab set version = '2.1.0' where db = '$db'",__FILE__ . " linje " . __LINE__);
-		print "<BODY onLoad=\"JavaScript:window.open('../doc/nyt_i_2.1.0.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
+		print "<BODY onload=\"JavaScript:window.open('../doc/nyt_i_2.1.0.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
 	}
 
 #	db_modify("UPDATE regnskab set version = '$version' where db = '$db'",__FILE__ . " linje " . __LINE__);

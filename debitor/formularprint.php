@@ -52,7 +52,7 @@ if (isset($_GET['id']) && $_GET['id']){
 	if ($udskriv_til=='ingen') $svar='OK';
 	else $svar=formularprint($id,$formular,$lev_nr,$charset,$udskriv_til);
 	if ($svar && $svar!='OK') {
-		print "<BODY onLoad=\"javascript:alert('$svar')\">";
+		print "<BODY onload=\"javascript:alert('$svar')\">";
 		if ($returside) {
 			print "<meta http-equiv=\"refresh\" content=\"1;URL=$returside\">";
 			exit;

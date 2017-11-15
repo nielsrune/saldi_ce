@@ -65,7 +65,7 @@ if ($r=db_fetch_array(db_select("select box1, box2, box3, box4 from grupper wher
 } 
 $tmp=date("Ym");
 if ($tmp<$aarstart || $tmp>$aarslut) {
-	print "<BODY onLoad=\"javascript:alert('Dags dato ligger ikke i aktivt regnskabs&aring;r')\">";
+	print "<BODY onload=\"javascript:alert('Dags dato ligger ikke i aktivt regnskabs&aring;r')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php?\">";
 	exit;
 }
@@ -114,7 +114,7 @@ while ($ordre_id) {
 include("../includes/genberegn.php");
 genberegn($regnaar);
 
-#if ($skriv) print "<BODY onLoad=\"JavaScript:window.open('../debitor/formularprint.php?id=-1&skriv=$skriv&formular=4,3&ordre_antal=$ordre_antal' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";			
+#if ($skriv) print "<BODY onload=\"JavaScript:window.open('../debitor/formularprint.php?id=-1&skriv=$skriv&formular=4,3&ordre_antal=$ordre_antal' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";			
 if ($skriv) print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/formularprint.php?id=-1&skriv=$skriv&formular=4,3&ordre_antal=$ordre_antal\">";
 
 if ($rest) {

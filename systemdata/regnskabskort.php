@@ -118,31 +118,31 @@ if ($_POST) {
 	$slutaar=$slutaar*1;
 	
 	if (!$beskrivelse){
-		Print "<BODY onLoad=\"javascript:alert('Beskrivelse ikke angivet. S&aelig;ttes til $aar!')\">";
+		Print "<BODY onload=\"javascript:alert('Beskrivelse ikke angivet. S&aelig;ttes til $aar!')\">";
 		$beskrivelse="$aar";
 	}
 	if (($startmd<1)||($startmd>12)){
-		Print "<BODY onLoad=\"javascript:alert('Startm&aring;ned skal v&aelig;re mellem 1 og 12!')\">";
+		Print "<BODY onload=\"javascript:alert('Startm&aring;ned skal v&aelig;re mellem 1 og 12!')\">";
 		$startmd="";
 	}
 	elseif ($startmd<10){$startmd="0".$startmd;};
 	if (($slutmd<1)||($slutmd>12)){
-		Print "<BODY onLoad=\"javascript:alert('Slutm&aring;ned skal v&aelig;re mellem 1 og 12!')\">";
+		Print "<BODY onload=\"javascript:alert('Slutm&aring;ned skal v&aelig;re mellem 1 og 12!')\">";
 		$slutmd="";
 	}
 	elseif ($slutmd<10){$slutmd="0".$slutmd;};
 	if (($startaar<$bundaar)||($startaar>$topaar)){
-		print "<BODY onLoad=\"javascript:alert('Start&aring;r skal v&aelig;re mellem $bundaar og $topaar!')\">";
+		print "<BODY onload=\"javascript:alert('Start&aring;r skal v&aelig;re mellem $bundaar og $topaar!')\">";
 		$startaar="";
 	}
 	if (($slutaar<$bundaar)||($slutaar>$topaar)){
-		print "<BODY onLoad=\"javascript:alert('Slut&aring;r skal v&aelig;re mellem $bundaar og $topaar!')\">";
+		print "<BODY onload=\"javascript:alert('Slut&aring;r skal v&aelig;re mellem $bundaar og $topaar!')\">";
 		$slutaar="";
 	}
 	$startdato=$startaar.$startmd;
 	$slutdato=$slutaar.$slutmd;
 	if ($slutdato<=$startdato){
-		Print "<BODY onLoad=\"javascript:alert('Regnskabs&aring;r skal slutte senere end det starter')\">";
+		Print "<BODY onload=\"javascript:alert('Regnskabs&aring;r skal slutte senere end det starter')\">";
 		$aaben="";
 	}
 
@@ -227,9 +227,9 @@ if ($id > 0) {
 		}
 	}
 } else {
-#	Print "<BODY onLoad=\"javascript:alert('$tekst')\">";
-#	print "<BODY onLoad=\"javascript:velkommen=window.open('velkommen.html','velkommen','".$jsvars."';) velkommen.focus();\";"
-	print "<BODY onLoad=\"javascript:docChange = true;\">";
+#	Print "<BODY onload=\"javascript:alert('$tekst')\">";
+#	print "<BODY onload=\"javascript:velkommen=window.open('velkommen.html','velkommen','".$jsvars."';) velkommen.focus();\";"
+	print "<BODY onload=\"javascript:docChange = true;\">";
 	$x=0;
 	$q = db_select("select * from grupper where art = 'RA' order by kodenr desc",__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) if ($x <= $r['kodenr']) $x=$r['kodenr']; 
@@ -347,7 +347,7 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	}
 	print "<td></td><td></td><td align=right>".dkdecimal($debetsum,2)."</td><td align=right>".dkdecimal($kreditsum,2)."</td></tr>\n";
 	if (abs($debetsum-$kreditsum)>0.009) {
-		print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";
+		print "<BODY onload=\"javascript:alert('Konti er ikke i balance')\">";
 	}
 	
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
@@ -533,7 +533,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		$ny_sum=$ny_sum+$ny_primo[$y];
 	}
 	print "<td></td><td></td><td align=right>".dkdecimal($saldosum,2)."</td><td></td><td align=right>".dkdecimal($ny_sum,2)."</td></tr>\n";
-	if ($debetsum-$kreditsum!=0) {print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";}
+	if ($debetsum-$kreditsum!=0) {print "<BODY onload=\"javascript:alert('Konti er ikke i balance')\">";}
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
 	print "<tr><td colspan = 5 align = center><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";

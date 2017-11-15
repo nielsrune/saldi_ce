@@ -47,7 +47,7 @@ if($_POST) {
 	$fejl = $_FILES['uploadedfile']['error'];
 	if ($fejl) {
 		switch ($fejl) {
-			case 2: print "<BODY onLoad=\"javascript:alert('Desv&aelig;rre - dit logo er alt for stort. Der acceptereres kun op til 100 kb')\">";
+			case 2: print "<BODY onload=\"javascript:alert('Desv&aelig;rre - dit logo er alt for stort. Der acceptereres kun op til 100 kb')\">";
 		}
 		upload();
 		exit;
@@ -62,7 +62,7 @@ if($_POST) {
 		$til = "../logolib/logo_$db_id.eps";
 		if($fil_stoerrelse > 500000) {
 			$tmp=ceil($fil_stoerrelse);
-			print "<BODY onLoad=\"javascript:alert('Desv&aelig;rre - dit logo er for stort. Der acceptereres kun op til 500 kb, og logoet fylder $tmp kb')\">";
+			print "<BODY onload=\"javascript:alert('Desv&aelig;rre - dit logo er for stort. Der acceptereres kun op til 500 kb, og logoet fylder $tmp kb')\">";
 			upload();
 			exit;
 		} else $filetype="eps";
@@ -70,7 +70,7 @@ if($_POST) {
 		$til = "../logolib/logo_$db_id.jpg";
 		if($fil_stoerrelse > 100000) {
 			$tmp=ceil($fil_stoerrelse);
-			print "<BODY onLoad=\"javascript:alert('Desv&aelig;rre - dit logo er for stort. Der acceptereres kun op til 100 kb, og logoet fylder $tmp kb')\">";
+			print "<BODY onload=\"javascript:alert('Desv&aelig;rre - dit logo er for stort. Der acceptereres kun op til 100 kb, og logoet fylder $tmp kb')\">";
 			upload();
 			exit;
 		} else $filetype="jpg";
@@ -79,7 +79,7 @@ if($_POST) {
 			$tmp=ceil($fil_stoerrelse);
 			system ("rm $filename");
 			$tmp/=1024;
-			print "<BODY onLoad=\"javascript:alert('Desv&aelig;rre - din PDF er for stor. Der acceptereres kun op til 1 MB, og den fylder $tmp MB')\">";
+			print "<BODY onload=\"javascript:alert('Desv&aelig;rre - din PDF er for stor. Der acceptereres kun op til 1 MB, og den fylder $tmp MB')\">";
 			upload();
 			exit;
 		}
@@ -97,26 +97,26 @@ if($_POST) {
 			$til=$tmp.".eps";
 			if (file_exists($convert)) {
 				system ("$convert $fra $til");
-				print "<BODY onLoad=\"javascript:alert('Logoet er indl&aelig;st.')\">";
-			} else print "<BODY onLoad=\"javascript:alert('ImageMagic er ikke installeret - logo kan ikke indl&aelig;ses')\">";
+				print "<BODY onload=\"javascript:alert('Logoet er indl&aelig;st.')\">";
+			} else print "<BODY onload=\"javascript:alert('ImageMagic er ikke installeret - logo kan ikke indl&aelig;ses')\">";
 			unlink ($fra);
  		} else {
 			print "<!-- kommentar for at skjule uddata til siden \n";
 			$pdftk=system("which pdftk");
 			print "-->\n";
 			if ($pdftk) {
-				print "<BODY onLoad=\"javascript:alert('Siden er indl&aelig;st.')\">";
+				print "<BODY onload=\"javascript:alert('Siden er indl&aelig;st.')\">";
 			} elseif (file_exists($pdf2ps)) {
 				$pdffil=$til;
 				$pdffil=str_replace("../logolib/$db_id/","",$pdffil);
 				$psfil=str_replace(".pdf",".ps",$pdffil);
 #				system ("cd ../logolib/$db_id/\nrm $psfil\n$pdf2ps $pdffil");
-				print "<BODY onLoad=\"javascript:alert('Siden er indl&aelig;st.')\">";
+				print "<BODY onload=\"javascript:alert('Siden er indl&aelig;st.')\">";
 			}
-			else print "<BODY onLoad=\"javascript:alert('Hverken PDFTK (anbefales) eller PDF2PS er ikke installeret - logo kan ikke indl&aelig;ses')\">";
+			else print "<BODY onload=\"javascript:alert('Hverken PDFTK (anbefales) eller PDF2PS er ikke installeret - logo kan ikke indl&aelig;ses')\">";
 		}
 	} else {
-		print "<BODY onLoad=\"javascript:alert('Der er sket en fejl under indl&aelig;sningen. Pr&oslash;v venligst igen')\">";
+		print "<BODY onload=\"javascript:alert('Der er sket en fejl under indl&aelig;sningen. Pr&oslash;v venligst igen')\">";
 		echo "Der er sket en fejl under indl&aelig;sningen. Pr&oslash;v venligst igen";
 		upload();
 	}

@@ -147,7 +147,7 @@ if (!function_exists('db_modify')) {
 				}
 				(isset($custom_alerttekst))?$alerttekst=$custom_alerttekst:$alerttekst="Uforudset h&aelig;ndelse, kontakt salditeamet på telefon 4690 2208"; 
 				if ($webservice) return ('1'.chr(9).'$alerttekst');
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">\n";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">\n";
 				exit;
 			}
 		}
@@ -205,12 +205,12 @@ if (!function_exists('db_select')) {
 				#	$custom_alerttekst saettes i connect.php;
 				(isset($custom_alerttekst))?$alerttekst=$custom_alerttekst:$alerttekst="Uforudset h&aelig;ndelse, kontakt salditeamet på telefon 4690 2208"; 
 				if (strpos($spor,'sqlquery_io')) echo "$fejltekst<br>";
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">\n";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">\n";
 			} else {
 				#	$custom_alerttekst saettes i connect.php;
 				(isset($custom_alerttekst))?$alerttekst=$custom_alerttekst:$alerttekst="Uforudset h&aelig;ndelse, kontakt salditeamet på telefon 4690 2208"; 
 				echo $fejltxt;
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">\n";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">\n";
 				exit;
 			}
 		} else {
@@ -313,7 +313,7 @@ if (!function_exists('injecttjek')) {
 				if ($tjek && substr($qtext,$x,1)==";") {	
 					$s_id=session_id();
 					$txt="SQL injection registreret!!! - Handling logget & afbrudt";
-					print "<BODY onLoad=\"javascript:alert('$txt')\">";
+					print "<BODY onload=\"javascript:alert('$txt')\">";
 					$fp=fopen("../temp/$db/.ht_modify.log","a");
 					fwrite($fp,"-- ".$brugernavn." ".date("Y-m-d H:i:s")."\n");
 					fwrite($fp,"-- SQL injection fra ".$_SERVER["REMOTE_ADDR"]." | " .$qtext.";\n");	

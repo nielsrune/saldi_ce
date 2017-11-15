@@ -89,7 +89,7 @@ if ($tjek=$_GET['tjek'])	{
 	$query = db_select("select tidspkt, hvem from ordrer where status < 3 and id = '$tjek' and hvem != '$brugernavn'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query))	{
 		if ($tidspkt-($row['tidspkt'])<3600) {
-			print "<BODY onLoad=\"javascript:alert('Ordren er i brug af $row[hvem]')\">";
+			print "<BODY onload=\"javascript:alert('Ordren er i brug af $row[hvem]')\">";
 			if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=ordreliste.php\">";
 		}
@@ -164,7 +164,7 @@ if ($_GET['vare_id']) {
 			$pris[0]=$pris[0]*100/$r['kurs'];
 		} else {
 			$tmp = dkdato($ordredate);
-			print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
+			print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
 		}
 	}
 
@@ -260,9 +260,9 @@ if ($_GET['vare_id']) {
 				$ordredato = dkdato($ordredate);
 			if ($r= db_fetch_array(db_select("select valuta.kurs as kurs from valuta, grupper where grupper.art='VK' and grupper.box1='$valuta' and valuta.gruppe=grupper.kodenr::INT and valuta.valdate <= '$ordredate' order by valuta.valdate desc",__FILE__ . " linje " . __LINE__))) {
 				$valutakurs=$r['kurs']*1; #20120814 *1 + naeste linje tilfojet.
-				if (!$valutakurs) print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredato')\">";
+				if (!$valutakurs) print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredato')\">";
 			} else {
-				print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredato')\">";
+				print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredato')\">";
 			}
 		} else $valutakurs=100;
 
@@ -276,12 +276,12 @@ if ($_GET['vare_id']) {
 				$momssats=0;	# Erhvervelsesmoms beregnes automatisk ved bogforing.
 				if ($box1) $tekst = "Erhvervelsesmoms beregnes automatisk ved bogf&oslash;ring.<br>";
 				else $tekst = "Leverand&oslash;rgruppen er ikke tilknyttet en momsgruppe";
-				print "<BODY onLoad=\"javascript:alert('$tekst')\">";
+				print "<BODY onload=\"javascript:alert('$tekst')\">";
 			} elseif (!$box1 || $box1=='Y') {
 				$momssats=0;	# Ydelsesmoms beregnes automatisk ved bogforing.
 				if ($box1) $tekst = "Ydelsesmoms beregnes automatisk ved bogf&oslash;ring.<br>";
 				else $tekst = "Leverand&oslash;rgruppen er ikke tilknyttet en momsgruppe";
-				print "<BODY onLoad=\"javascript:alert('$tekst')\">";
+				print "<BODY onload=\"javascript:alert('$tekst')\">";
 			}
 		}
 
@@ -401,11 +401,11 @@ if ($_GET['vare_id']) {
 					$momssats='0.00';
 				}
 #				if (!$momssats) {
-#					print "<BODY onLoad=\"javascript:alert('Kreditorgrupper forkert opsat')\">";
+#					print "<BODY onload=\"javascript:alert('Kreditorgrupper forkert opsat')\">";
 #					print "<meta http-equiv=\"refresh\" content=\"0;URL=ordreliste.php?id=$id\">";
 #					exit;
 #				}
-			} else print "<BODY onLoad=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
+			} else print "<BODY onload=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
 		}
 		if (!$id&&!$konto_id&&!$firmanavn&&$varenr[0]) {
 
@@ -460,7 +460,7 @@ if ($_GET['vare_id']) {
 						$tmp=abs($antal[$x]);
 						list($a,$b)=explode(",",dkdecimal($row['beholdning'],2));
 						if ($b*1) $a=$a.",".$b*1;
-						print "<BODY onLoad=\"javascript:alert('Du kan ikke returnere $antal[$x] n&aring;r lagerbeholdningen er $a ! (Varenr: $varenr[$x])')\">";
+						print "<BODY onload=\"javascript:alert('Du kan ikke returnere $antal[$x] n&aring;r lagerbeholdningen er $a ! (Varenr: $varenr[$x])')\">";
 						$bogfor=0;
 					}
 				}
@@ -481,23 +481,23 @@ if ($_GET['vare_id']) {
 							}
 							$tmp=$leveres[$x]*-1;
 							if (($rest<$tmp)&&($llager[$x]<='0')) {
-								if ($batch[$x]) print "<BODY onLoad=\"javascript:alert('Du kan ikke returnere $tmp n&aring;r der er $rest tilbage fra ordre nr: $kred_ord_nr! (Varenr: $varenr[$x])')\">";
-								else print "<BODY onLoad=\"javascript:alert('Du kan ikke returnere $tmp n&aring;r der er k&oslash;bt $rest på ordre nr: $kred_ord_nr! (Varenr: $varenr[$x])')\">";
+								if ($batch[$x]) print "<BODY onload=\"javascript:alert('Du kan ikke returnere $tmp n&aring;r der er $rest tilbage fra ordre nr: $kred_ord_nr! (Varenr: $varenr[$x])')\">";
+								else print "<BODY onload=\"javascript:alert('Du kan ikke returnere $tmp n&aring;r der er k&oslash;bt $rest på ordre nr: $kred_ord_nr! (Varenr: $varenr[$x])')\">";
 								$bogfor=0;
 							} elseif (!$negativt_lager) {
 								$r = db_fetch_array(db_select("select beholdning from varer where id = '$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
 								if ($r['beholdning']<$tmp) {
-									print "<BODY onLoad=\"javascript:alert('Du kan ikke returnere $tmp n&aring;r lagerbeholdningen er $r[beholdning]! (Varenr: $varenr[$x])')\">";
+									print "<BODY onload=\"javascript:alert('Du kan ikke returnere $tmp n&aring;r lagerbeholdningen er $r[beholdning]! (Varenr: $varenr[$x])')\">";
 									$bogfor=0;
 								}
 							}
 						}
 					} elseif (!$vare_id[$x] && $varenr[$x]) { 
-						print "<BODY onLoad=\"javascript:alert('Varenr: $varenr[$x] eksisterer ikke??')\">";
+						print "<BODY onload=\"javascript:alert('Varenr: $varenr[$x] eksisterer ikke??')\">";
 						$bogfor=0;
 					}
 					if ($antal[$x]>0) {
-						print "<BODY onLoad=\"javascript:alert('Du kan ikke kreditere et negativt antal (Varenr: $varenr[$x])')\">";
+						print "<BODY onload=\"javascript:alert('Du kan ikke kreditere et negativt antal (Varenr: $varenr[$x])')\">";
 						$antal[$x]=$antal[$x]*-1;
 						$bogfor=0;
 					}
@@ -505,7 +505,7 @@ if ($_GET['vare_id']) {
 				if (!$vare_id[$x]){$vare_id[$x]=find_vare_id($varenr[$x]);}
 				if (($posnr_ny[$x]=="-")&&($status<1)) {
 					$query = db_select("select * from batch_kob where linje_id = $linje_id[$x]",__FILE__ . " linje " . __LINE__);
-					if ($row = db_fetch_array($query)) {print "<BODY onLoad=\"javascript:alert('Du kan ikke slette varelinje $posnr_ny[$x] da der &eacute;r solgt vare(r) fra denne batch')\">";}
+					if ($row = db_fetch_array($query)) {print "<BODY onload=\"javascript:alert('Du kan ikke slette varelinje $posnr_ny[$x] da der &eacute;r solgt vare(r) fra denne batch')\">";}
 					else {
 						db_modify("delete from reservation where linje_id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
 						db_modify("delete from ordrelinjer where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
@@ -522,19 +522,19 @@ if ($_GET['vare_id']) {
 								$query = db_select("select * from serienr where kobslinje_id = '$linje_id[$x]' order by serienr",__FILE__ . " linje " . __LINE__);
 								while ($row = db_fetch_array($query)){$sn_antal++;}
 								if (($sn_antal>0)&&($antal[$x]<$sn_antal)) {
-									 print "<BODY onLoad=\"javascript:alert('Posnr: $posnr_ny[$x] - $varenr[$x] Antal kan ikke v&aelig;re mindre end antal registrerede serienr!')\">";
+									 print "<BODY onload=\"javascript:alert('Posnr: $posnr_ny[$x] - $varenr[$x] Antal kan ikke v&aelig;re mindre end antal registrerede serienr!')\">";
 									$antal[$x]=$sn_antal;
 								}
 								$query = db_select("select * from serienr where salgslinje_id = '$linje_id[$x]' order by serienr",__FILE__ . " linje " . __LINE__);
 								while ($row = db_fetch_array($query)){$sn_antal--;}
 								if (($sn_antal<0)&&($antal[$x]>$sn_antal)&&($art!='KK'))	{
-									 print "<BODY onLoad=\"javascript:alert('Posnr: $posnr_ny[$x] - $varenr[$x] Antal kan ikke v&aelig;re st&oslash;rre end antal serienr!')\">";
+									 print "<BODY onload=\"javascript:alert('Posnr: $posnr_ny[$x] - $varenr[$x] Antal kan ikke v&aelig;re st&oslash;rre end antal serienr!')\">";
 									$antal[$x]=$sn_antal;
 								}
 								$query = db_select("select * from serienr where salgslinje_id = '$linje_id[$x]' order by serienr",__FILE__ . " linje " . __LINE__);
 								while ($row = db_fetch_array($query)){$sn_antal++;}
 								if (($sn_antal>0)&&($antal[$x]<$sn_antal)&&($art=='KK'))	{
-									 print "<BODY onLoad=\"javascript:alert('Posnr: $posnr_ny[$x] - $varenr[$x] Antal kan ikke v&aelig;re mindre end antal serienr!')\">";
+									 print "<BODY onload=\"javascript:alert('Posnr: $posnr_ny[$x] - $varenr[$x] Antal kan ikke v&aelig;re mindre end antal serienr!')\">";
 									 $antal[$x]=$sn_antal;
 								}
 							}
@@ -544,7 +544,7 @@ if ($_GET['vare_id']) {
 							while ($row = db_fetch_array($query))$reserveret[$x]=$reserveret[$x]+$row['antal'];
 							$reserveret[$x]=afrund($reserveret[$x],2);
 							if ($antal[$x]>=0 && $antal[$x]<$reserveret[$x]) {
-								print "<BODY onLoad=\"javascript:alert('Der er $reserveret[$x] reservationer p&aring; varenr. $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $reserveret[$x]!')\">";
+								print "<BODY onload=\"javascript:alert('Der er $reserveret[$x] reservationer p&aring; varenr. $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $reserveret[$x]!')\">";
 								$antal[$x]=$reserveret[$x]; $submit="Gem"; $status=1;
 							}
 #cho __LINE__." select * from batch_kob where linje_id = '$linje_id[$x]'<br>";
@@ -563,7 +563,7 @@ if ($_GET['vare_id']) {
 								elseif ($solgt[$x]!=0) $posnr_ny[$x]=0;
 								elseif ($reserveret[$x]!=0) {
 									$posnr_ny[$x]=$posnr[$x];
-									print "<BODY onLoad=\"javascript:alert('Varenr: $varenr[$x] Der er reserveret varer fra denne varelinje - linjen kan ikke slettes!')\">";
+									print "<BODY onload=\"javascript:alert('Varenr: $varenr[$x] Der er reserveret varer fra denne varelinje - linjen kan ikke slettes!')\">";
 								}
 								else {
 									db_modify("delete from reservation where linje_id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
@@ -576,21 +576,21 @@ if ($_GET['vare_id']) {
 								}
 							} elseif ($antal[$x]>0) {
 /* 20150209			if ($antal[$x]<$solgt[$x]) { 20150309
-									print "<BODY onLoad=\"javascript:alert('Varenr $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $solgt[$x]!')\">";
+									print "<BODY onload=\"javascript:alert('Varenr $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $solgt[$x]!')\">";
 									$antal[$x]=$solgt[$x]; $submit="Gem"; $status=1;
 								} */
 								if ($antal[$x]<$tidl_lev[$x]) {
-									print "<BODY onLoad=\"javascript:alert('Varenr $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $tidl_lev[$x]!')\">";
+									print "<BODY onload=\"javascript:alert('Varenr $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $tidl_lev[$x]!')\">";
 									$antal[$x]=$tidl_lev[$x]; $submit="Gem"; $status=1;
 								}
 								if ($leveres[$x]>$antal[$x]-$tidl_lev[$x]) {
 									$temp=$antal[$x]-$tidl_lev[$x];
-									print "<BODY onLoad=\"javascript:alert('Varenr. $varenr[$x]: antal klar til modtagelse &aelig;ndret fra $leveres[$x] til $temp!')\">";
+									print "<BODY onload=\"javascript:alert('Varenr. $varenr[$x]: antal klar til modtagelse &aelig;ndret fra $leveres[$x] til $temp!')\">";
 									$leveres[$x]=$temp; $submit="Gem"; $status=1;
 								}
 								elseif ($leveres[$x]<0) {
 									$temp=0;
-									print "<BODY onLoad=\"javascript:alert('Varenr. $varenr[$x]: modtag &aelig;ndret fra $leveres[$x] til $tidl_lev[$x]!')\">";
+									print "<BODY onload=\"javascript:alert('Varenr. $varenr[$x]: modtag &aelig;ndret fra $leveres[$x] til $tidl_lev[$x]!')\">";
 									$leveres[$x]=$temp; $submit="Gem"; $status=1;
 								}
 							} else {
@@ -599,20 +599,20 @@ if ($_GET['vare_id']) {
 								while($row = db_fetch_array($query)) $tidl_lev[$x]+=$row['antal'];
 #cho __LINE__." $tidl_lev[$x]<br>"; 								
 								if ($antal[$x]>$tidl_lev[$x]) {
-									print "<BODY onLoad=\"javascript:alert('Varenr. $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $tidl_lev[$x]!')\">";
+									print "<BODY onload=\"javascript:alert('Varenr. $varenr[$x]: antal &aelig;ndret fra $antal[$x] til $tidl_lev[$x]!')\">";
 									$antal[$x]=$tidl_lev[$x]; $submit="Gem"; $status=1;
 								}
 								if ($leveres[$x]<$antal[$x]+$tidl_lev[$x]) {
 									$tmp1=$leveres[$x]*-1;
 									$tmp2=abs($antal[$x]+$tidl_lev[$x]);
 
-									print "<BODY onLoad=\"javascript:alert('Posnr $posnr_ny[$x] :return&eacute;r &aelig;ndret fra $tmp1 til $tmp2!')\">";
+									print "<BODY onload=\"javascript:alert('Posnr $posnr_ny[$x] :return&eacute;r &aelig;ndret fra $tmp1 til $tmp2!')\">";
 									$leveres[$x]=$antal[$x]+$tidl_lev[$x]; $submit="Gem"; $status=1;
 								}
 								elseif ($leveres[$x] > 0) {
 									$tmp1=$leveres[$x]*-1;
 									$tmp2=0;
-									print "<BODY onLoad=\"javascript:alert('Varenr $varenr[$x]: return&eacute;r &aelig;ndret fra $tmp1 til $tmp2!')\">";
+									print "<BODY onload=\"javascript:alert('Varenr $varenr[$x]: return&eacute;r &aelig;ndret fra $tmp1 til $tmp2!')\">";
 									$leveres[$x]=0; $submit="Gem"; $status=1;
 								}
 							}
@@ -627,7 +627,7 @@ if ($_GET['vare_id']) {
 					if ((!strpos($posnr_ny[$x], '+'))&&($id)) {
 						$posnr_ny[$x]=afrund($posnr_ny[$x],0);
 						if ($posnr_ny[$x]>=1) {db_modify("update ordrelinjer set posnr='$posnr_ny[$x]' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);}
-						else print "<BODY onLoad=\"javascript:alert('Hint! Du skal s&aelig;tte et - (minus) som pos nr for at slette en varelinje')\">";
+						else print "<BODY onload=\"javascript:alert('Hint! Du skal s&aelig;tte et - (minus) som pos nr for at slette en varelinje')\">";
 					}
 					if (($status<2)||(($antal[$x]>0)&&($status==2)&&($antal[$x]>=$tidl_lev[$x]))||(($antal[$x]<0)&&($status==2)&&($antal[$x]<=$tidl_lev[$x]))) {
 						if ($serienr[$x]) $antal[$x]=afrund($antal[$x],0);
@@ -679,7 +679,7 @@ if ($_GET['vare_id']) {
 								$pris[0]=$pris[0]*100/$r1['kurs'];
 							} else {
 								$tmp = dkdato($ordredate);
-								print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
+								print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
 							}
 						}
 						if ($serienr[0]) $antal[0]=afrund($antal[0],0);
@@ -740,7 +740,7 @@ if ($_GET['vare_id']) {
 			}
 			else {
 				$query = db_select("select hvem from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
-				if ($row = db_fetch_array($query)) {print "<BODY onLoad=\"javascript:alert('Ordren er overtaget af $row[hvem]')\">";}
+				if ($row = db_fetch_array($query)) {print "<BODY onload=\"javascript:alert('Ordren er overtaget af $row[hvem]')\">";}
 				if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 				else print "<meta http-equiv=\"refresh\" content=\"0;URL=ordreliste.php\">";
 			}
@@ -849,8 +849,8 @@ if ($_GET['vare_id']) {
 	} else $valutakurs=100;
 	if (!$valutakurs) {
 		$tmp = dkdato($ordredate);
-		print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
-	} elseif(!$fakturanr) print "<BODY onLoad=\"javascript:alert('Fakturanummer mangler')\">";
+		print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\">";
+	} elseif(!$fakturanr) print "<BODY onload=\"javascript:alert('Fakturanummer mangler')\">";
 	else {
 			db_modify("update ordrer set valutakurs = '$valutakurs' where id = '$id'",__FILE__ . " linje " . __LINE__);
 			$linjeantal=0;
@@ -862,7 +862,7 @@ if ($_GET['vare_id']) {
 			for ($x=1;$x<=$linjeantal;$x++) {
 				db_modify("update ordrelinjer set posnr = '$x' where id = '$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
 			}
-			if (!$linjeantal) print "<BODY onLoad=\"javascript:alert('Du kan ikke fakturere uden ordrelinjer')\">";
+			if (!$linjeantal) print "<BODY onload=\"javascript:alert('Du kan ikke fakturere uden ordrelinjer')\">";
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=bogfor.php?id=$id\">";
 		}
 	}
@@ -1156,9 +1156,9 @@ function ordreside($id) {
 			}
 			if ($box9[$x]=='on') {
 				if ($art=='KK') $solgt[$x]=$solgt[$x]*-1;
-				if ($serienr[$x]) print "<td onClick=\"serienummer($linje_id[$x])\" align=right><u>$solgt[$x]</u></td>";
+				if ($serienr[$x]) print "<td onclick=\"serienummer($linje_id[$x])\" align=right><u>$solgt[$x]</u></td>";
 				else print "<td align=right>$solgt[$x]</td>";
-			} elseif ($serienr[$x])  print "<td onClick=\"serienummer($linje_id[$x])\" align=right><u>Snr</u></td>";
+			} elseif ($serienr[$x])  print "<td onclick=\"serienummer($linje_id[$x])\" align=right><u>Snr</u></td>";
 			else print "<td align=right><br></td>";
 
 			print "</tr>\n";
@@ -1352,7 +1352,7 @@ function ordreside($id) {
 				$valutakurs=$r['kurs'];
 			} else {
 				$tmp = dkdato($ordredate);
-				print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\" onchange=\"javascript:docChange = true;\">";
+				print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $ordredate')\" onchange=\"javascript:docChange = true;\">";
 			}
 		} else $valutakurs = 100;
 		db_modify("update ordrer set valutakurs='$valutakurs' where ordre_id = '$ordre_id'",__FILE__ . " linje " . __LINE__);
@@ -1433,7 +1433,7 @@ function ordreside($id) {
 				if ($vare_id[$x]) {
 					$row = db_fetch_array(db_select("select gruppe from varer where id = '$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
 					if (!$row[gruppe]) {
-						print "<BODY onLoad=\"javascript:alert('Vare med varenummer $varenr[$x] er ikke tilknyttet en varegruppe (Pos nr. $posnr[$x])')\">";
+						print "<BODY onload=\"javascript:alert('Vare med varenummer $varenr[$x] er ikke tilknyttet en varegruppe (Pos nr. $posnr[$x])')\">";
 						exit;
 					} else {
 						$row = db_fetch_array(db_select("select box9 from grupper where kodenr = '$row[gruppe]' and art = 'VG'",__FILE__ . " linje " . __LINE__));
@@ -1461,7 +1461,7 @@ function ordreside($id) {
 						}
 						elseif ($antal[$x]-$tidl_lev[$x]!=$row['antal']) {
 							if (($antal[$x]>=0)&&($tidl_lev[$x]<0)) {
-								print "<BODY onLoad=\"javascript:alert('Antal m&aring; ikke &aelig;ndres til positivt tal, n&aring;r der er returneret varer (Pos nr. $posnr[$x])')\">";
+								print "<BODY onload=\"javascript:alert('Antal m&aring; ikke &aelig;ndres til positivt tal, n&aring;r der er returneret varer (Pos nr. $posnr[$x])')\">";
 								$antal[$x]=$tidl_lev[$x];
 							}
 							else db_modify("insert into reservation (linje_id, vare_id, batch_salg_id, antal) values	($linje_id[$x], $vare_id[$x], 0, $antal[$x]-$tidl_lev[$x])",__FILE__ . " linje " . __LINE__);
@@ -1492,10 +1492,10 @@ function ordreside($id) {
 					print "<td>($dk_tidl_lev[$x])</td>";
 				}
 			}
-			if (($status>0)&&($serienr[$x])){print "<td onClick=\"serienummer($linje_id[$x])\"><input type=button value=\"Serienr.\" name=\"vis_snr$x\" onchange=\"javascript:docChange = true;\"></td>";}
-			if ($antal[$x]<0 && $art!='KK' && $box9[$x]=='on') {print "<td align=center onClick=\"batch($linje_id[$x])\"><span title= 'V&aelig;lg fra k&oslash;bsordre'><img alt=\"K&oslash;bsordre\" src=../ikoner/serienr.png></td></td>";}
+			if (($status>0)&&($serienr[$x])){print "<td onclick=\"serienummer($linje_id[$x])\"><input type=button value=\"Serienr.\" name=\"vis_snr$x\" onchange=\"javascript:docChange = true;\"></td>";}
+			if ($antal[$x]<0 && $art!='KK' && $box9[$x]=='on') {print "<td align=center onclick=\"batch($linje_id[$x])\"><span title= 'V&aelig;lg fra k&oslash;bsordre'><img alt=\"K&oslash;bsordre\" src=../ikoner/serienr.png></td></td>";}
 
-#print "<BODY onClick=\"JavaScript:window.open('batch.php?linje_id=$linje_id', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+#print "<BODY onclick=\"JavaScript:window.open('batch.php?linje_id=$linje_id', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
 #cho "OL2 $omlev<br>";
 		if ($omlev) print "<td valign=\"top\"><input class=\"inputbox\" type=\"checkbox\" style=\"background: none repeat scroll 0 0 #e4e4ee\" name=\"omvbet[$x]\" onchange=\"javascript:docChange = true;\" $omvbet[$x]></td>\n";
 		print "</tr>\n";
@@ -1553,7 +1553,7 @@ function ordreside($id) {
 		elseif ($status > 1 && $bogfor==1){print "<td align=center><input type=submit accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";}
 		if (!$posnr[1] && $id) {print "<td align=center><input type=submit value=\"&nbsp;&nbsp;Slet&nbsp;&nbsp;\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";}
 		elseif ($id && $art=='KO') print "<td align=center><span title=\"Udskriver ordre til PDF\"><input type=\"submit\" value=\"Udskriv\" name=\"udskriv\" onclick=\"javascript:docChange = false;\"></span></td>";
-		print "<td align=center><span title=\"Klik her for at udskrive ordrelinjer til en tabulatorsepareret fil, som kan importeres i et regneark\"><input type=submit value=\"&nbsp;&nbsp;CSV&nbsp;&nbsp;\" name=\"submit\" onClick=\"javascript:ordre2csv=window.open('ordre2csv.php?id=$ordre_id','ordre2csv','scrollbars=1,resizable=1')\"></span></td>";
+		print "<td align=center><span title=\"Klik her for at udskrive ordrelinjer til en tabulatorsepareret fil, som kan importeres i et regneark\"><input type=submit value=\"&nbsp;&nbsp;CSV&nbsp;&nbsp;\" name=\"submit\" onclick=\"javascript:ordre2csv=window.open('ordre2csv.php?id=$ordre_id','ordre2csv','scrollbars=1,resizable=1')\"></span></td>";
 		if ($konto_id) $r=db_fetch_array(db_select("select kreditmax from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__));
 		if ($kreditmax=$r['kreditmax']*1) {
 			if ($valutakurs) $kreditmax=$kreditmax*100/$valutakurs;
@@ -1566,7 +1566,7 @@ function ordreside($id) {
 				elseif ($valuta!='DKK' && $r['valuta']=='DKK') {
 					if ($r3=db_fetch_array(db_select("select kurs from grupper, valuta where grupper.art='VK' and grupper.box1='$valuta' and valuta.gruppe = ".nr_cast("grupper.kodenr")." and valuta.valdate <= '$r[transdate]' order by valuta.valdate desc",__FILE__ . " linje " . __LINE__))) {
 						$opp_amount=$r['amount']*100/$r3['kurs'];
-					} else print "<BODY onLoad=\"javascript:alert('Ingen valutakurs for faktura $r[faktnr]')\">";
+					} else print "<BODY onload=\"javascript:alert('Ingen valutakurs for faktura $r[faktnr]')\">";
 				}
 				elseif ($valuta!='DKK' && $r['valuta']!='DKK' && $r['valuta']!=$valuta) {
 					$tmp==$r['amount']*$r['valuta']/100;
@@ -1576,7 +1576,7 @@ function ordreside($id) {
 			}
 			if ($kreditmax<$ialt+$tilgode) {
 				$tmp=	dkdecimal(($ialt+$tilgode)-$kreditmax,2);
-				print "<BODY onLoad=\"javascript:alert('Kreditmax overskrides med $valuta $tmp')\">";
+				print "<BODY onload=\"javascript:alert('Kreditmax overskrides med $valuta $tmp')\">";
 			}
 		}# end  if ($kreditmax....
 	}
@@ -1855,7 +1855,7 @@ function sidehoved($id, $returside, $kort, $fokus, $tekst) {
 	if (($kort!="../lager/varekort.php" && $returside != "ordre.php")&&($id)) {print "<td width=\"10%\" $top_bund> $color<a href=\"javascript:confirmClose('ordre.php?returside=ordreliste.php','$alerttekst')\" accesskey=N>Ny</a></td>";}
 	else if (($kort=="../lager/varekort.php" && $returside == "ordre.php")&&($id)) {print "<td width=\"10%\" $top_bund> $color<a href=\"$kort?returside=$returside&ordre_id=$id\" accesskey=N>Ny</a></td>";}
 	elseif ($kort=="../kreditor/kreditorkort.php") {
-		print "<td width=\"5%\"$top_bund onClick=\"javascript:kreditor_vis=window.open('kreditorvisning.php','kreditor_vis','scrollbars=1,resizable=1');kreditor_vis.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"> <span title='V&aelig;lg hvilke kreditorgrupper som vises i varelisten'><u>Visning</u></span></td>";
+		print "<td width=\"5%\"$top_bund onclick=\"javascript:kreditor_vis=window.open('kreditorvisning.php','kreditor_vis','scrollbars=1,resizable=1');kreditor_vis.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"> <span title='V&aelig;lg hvilke kreditorgrupper som vises i varelisten'><u>Visning</u></span></td>";
 		print "<td width=\"5%\" $top_bund> $color<a href=\"javascript:confirmClose('$kort?returside=../kreditor/ordre.php&ordre_id=$id&fokus=$fokus','$alerttekst')\" accesskey=N>Ny</a></td>";
 	}
 	elseif (($id)||($kort!="../lager/varekort.php")) {print "<td width=\"10%\" $top_bund> $color<a href=\"javascript:confirmClose('$kort?returside=../kreditor/ordre.php&ordre_id=$id&fokus=$fokus','$alerttekst')\" accesskey=N>Ny</a></td>";}
@@ -1903,7 +1903,7 @@ function indset_konto($id, $konto_id) {
 		} elseif (substr($row['box1'],0,1)=='Y') { 
 			$momssats='0.00';
 		}
-	} else print "<BODY onLoad=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
+	} else print "<BODY onload=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
 	$momssats=$momssats*1;
 	if ((!$id)&&($firmanavn)) {
 		$ordredate=date("Y-m-d");
@@ -1922,8 +1922,8 @@ function indset_konto($id, $konto_id) {
 		}
 		else {
 			$query = db_select("select hvem from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
-			if ($row = db_fetch_array($query)) {print "<BODY onLoad=\"fejltekst('Ordren er overtaget af $row[hvem]')\">";}
-			else {print "<BODY onLoad=\"fejltekst('Du er blevet smidt af')\">";}
+			if ($row = db_fetch_array($query)) {print "<BODY onload=\"fejltekst('Ordren er overtaget af $row[hvem]')\">";}
+			else {print "<BODY onload=\"fejltekst('Du er blevet smidt af')\">";}
 		}
 	}
 	return $id;

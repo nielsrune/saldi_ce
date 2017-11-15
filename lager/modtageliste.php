@@ -45,7 +45,7 @@ print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cell
 		<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>
 		<td width=\"10%\"  title=\"Klik her for at lukke modtagelisten\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=$returside accesskey=L>Luk</a></td>
 		<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">Modtageliste</td>
-		<td width=\"10%\" title=\"Klik her for at oprette en ny modtagelse\" $top_bund onClick=\"javascript:liste=window.open('modtagelse.php?returside=modtageliste.php&tjek=-1','liste','<?php echo $jsvars ?>');liste.focus();\"><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=modtageliste.php?sort=$sort&rf=$rf&vis=$vis accesskey=N>Ny</a></td>
+		<td width=\"10%\" title=\"Klik her for at oprette en ny modtagelse\" $top_bund onclick=\"javascript:liste=window.open('modtagelse.php?returside=modtageliste.php&tjek=-1','liste','<?php echo $jsvars ?>');liste.focus();\"><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=modtageliste.php?sort=$sort&rf=$rf&vis=$vis accesskey=N>Ny</a></td>
 		</tbody></table>
 		</td></tr>
 		<tr><td valign=\"top\">
@@ -82,7 +82,7 @@ $tjek=0;
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
 		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
-			print "<td onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$liste=window.open('modtagelse.php?tjek=$row[id]&liste_id=$row[id]&returside=modtageliste.php','$liste','".$jsvars."');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
+			print "<td onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$liste=window.open('modtagelse.php?tjek=$row[id]&liste_id=$row[id]&returside=modtageliste.php','$liste','".$jsvars."');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 		}
 		else {print "<td><span title= 'liste er l&aring;st af $row[hvem]'>$row[id]</span></td>";}
 		$initdato=dkdato($row['initdate']);
@@ -100,7 +100,7 @@ $tjek=0;
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
 		if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn)) {
-			print "<td  onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$liste=window.open('modtagelse.php?liste_id=$row[id]&returside=modtageliste.php','$liste','".$jsvars."');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
+			print "<td  onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$liste=window.open('modtagelse.php?liste_id=$row[id]&returside=modtageliste.php','$liste','".$jsvars."');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 		}
 		else {print "<td><span title= 'liste er l&aring;st af $row[hvem]'>$row[id]</span></td>";}
 #		print "<tr>";
@@ -120,7 +120,7 @@ $tjek=0;
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if ($popup) print "<td  onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$liste=window.open('modtagelse.php?liste_id=$row[id]&returside=../includes/luk.php','$liste','".$jsvars."');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
+		if ($popup) print "<td  onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$liste=window.open('modtagelse.php?liste_id=$row[id]&returside=../includes/luk.php','$liste','".$jsvars."');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
    	else print "<td><a href=modtagelse.php?liste_id=$row[id]&returside=modtageliste.php>$row[id]</a><br></td>";
 		$listedato=dkdato($row['initdate']);
 		print "<td>$listedato<br></td>";

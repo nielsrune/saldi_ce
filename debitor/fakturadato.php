@@ -52,7 +52,7 @@ if ($submit=='OK') {
 	$fakturadato=($_POST['fakturadato']);
 	list($day, $month, $year)=explode ("-",$fakturadato);
 	if ((strlen($day)==6&&!$month&&!$year&&!is_numeric($day))&&(!checkdate($month,$day,$year))) {
-		print "<body onLoad=\"fejltekst('$fakturadato -- er ikke en gyldig dato')\">";
+		print "<body onload=\"fejltekst('$fakturadato -- er ikke en gyldig dato')\">";
 	} else {
 		$fakturadate=usdate($fakturadato);
 		if (!$hurtigfakt) {
@@ -66,16 +66,16 @@ if ($submit=='OK') {
 		$aarslut=str_replace(" ","",$year.$r['box3']);
 		list($year, $month, $day)=explode("-",$fakturadate);
 		$ym=substr($year,-2).$month;
-		if (($ym<$aarstart)||($ym>$aarslut)) print "<BODY onLoad=\"fejltekst('Fakturadato uden for regnskabs&aring;r')\">";
+		if (($ym<$aarstart)||($ym>$aarslut)) print "<BODY onload=\"fejltekst('Fakturadato uden for regnskabs&aring;r')\">";
 		elseif (checkdate($month,$day,$year)) {
 			$tmp=$year."-".$month."-".$day;
 			if ($hurtigfakt) $levdate=$tmp;
 			db_modify("update ordrer set fakturadate='$tmp', levdate='$levdate' where id='$id'",__FILE__ . " linje " . __LINE__);
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside?id=$id&pbs=$pbs&mail_fakt=$mail_fakt&hurtigfakt=$hurtigfakt\">";
 
-# 			print "<BODY onLoad=\"javascript:window.location = '$returside?id=$id&pbs=$pbs&mail_fakt=$mail_fakt&hurtigfakt=$hurtigfakt	'\">";
+# 			print "<BODY onload=\"javascript:window.location = '$returside?id=$id&pbs=$pbs&mail_fakt=$mail_fakt&hurtigfakt=$hurtigfakt	'\">";
 			exit;
-		} else print "<BODY onLoad=\"fejltekst('Fakturadato ikke gyldig')\">";
+		} else print "<BODY onload=\"fejltekst('Fakturadato ikke gyldig')\">";
 
 	}
 } elseif ($submit=='Fortryd') {

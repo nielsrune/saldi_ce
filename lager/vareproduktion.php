@@ -59,7 +59,7 @@ if ($_POST['bilag'] || $_POST['bilag']=='0') {
 	$ny_beholdning=if_isset($_POST['ny_beholdning']);
 	$bilag=if_isset($_POST['bilag']);
 	if(!is_numeric($bilag) || strlen($bilag)>9) {
-		print "<BODY onLoad=\"javascript:alert('Bilagsnummer skal v&aelig;re et positivt tal og m&aring; maks indeholder 9 cifre')\">";	
+		print "<BODY onload=\"javascript:alert('Bilagsnummer skal v&aelig;re et positivt tal og m&aring; maks indeholder 9 cifre')\">";	
 		$fejl=1;
 	}
 }
@@ -129,7 +129,7 @@ if (!$fejl && $antal>=1) {
 				$tjeksum+=$amount[$x];
 			}
 			if (abs($tjeksum-$afgangsum)>0.01) {
-				print "<BODY onLoad=\"javascript:alert('Ubalance i posteringssum -kontakt Saldi teamet på tlf. 4690 2208')\">";
+				print "<BODY onload=\"javascript:alert('Ubalance i posteringssum -kontakt Saldi teamet på tlf. 4690 2208')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=varekort.php?id=$id[0]\">";
 				exit;
 			}
@@ -138,7 +138,7 @@ if (!$fejl && $antal>=1) {
 			('$tilgang','$bilag','$transdate','$transdate','$logtime','Produktionsordre: $varenr[0] ($brugernavn)','$afgangsum','0','','0','0','0','0','1','100','0')",__FILE__ . " linje " . __LINE__);
 		}	
 		$diff=transtjek();
-		if ($diff > 1) print "<BODY onLoad=\"javascript:alert('Ubalance i transaktioner -kontakt Saldi teamet på tlf. 4690 2208')\">";
+		if ($diff > 1) print "<BODY onload=\"javascript:alert('Ubalance i transaktioner -kontakt Saldi teamet på tlf. 4690 2208')\">";
 		else transaktion('commit'); 
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=varekort.php?id=$id[0]\">";
 	} else {

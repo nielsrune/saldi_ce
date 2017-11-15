@@ -44,7 +44,7 @@ if ($row = db_fetch_array($query)) {
 
 $kladde_id=if_isset($_GET['kladde_id']);
 if (!$kladde_id) {
-	print "<body onLoad=\"javascript:alert('Kladde ID ikke registreret')\">";
+	print "<body onload=\"javascript:alert('Kladde ID ikke registreret')\">";
 	exit;
 }
 $datotid=date("Ymd_his");
@@ -55,7 +55,7 @@ if ($r=db_fetch_array(db_select("select * from grupper where art='DocBiz'",__FIL
 	$ftpkode=$r['box3'];
 	$ftpmappe=$r['box4'];
 } else {
-	print "<body onLoad=\"javascript:alert('FTP information ikke fundet')\">";
+	print "<body onload=\"javascript:alert('FTP information ikke fundet')\">";
 }
 		
 $filnavn="../temp/$db/$datotid.sh";
@@ -156,7 +156,7 @@ if ($fp=fopen("$filnavn","r")) {
 		}
 		
 	
-	print "<body onLoad=\"javascript:alert('DocuBizz data overf&oslash;rt')\">";
-} else print "<body onLoad=\"javascript:alert('Ingen data til overf&oslash;rsel')\">";
+	print "<body onload=\"javascript:alert('DocuBizz data overf&oslash;rt')\">";
+} else print "<body onload=\"javascript:alert('Ingen data til overf&oslash;rsel')\">";
 print "<meta http-equiv=\"refresh\" content=\"0;URL=kassekladde.php?kladde_id=$kladde_id\">";
 ?>
