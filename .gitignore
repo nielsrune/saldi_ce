@@ -1,0 +1,33 @@
+#Nedenstående ser ud til at være gamle filer, der er blandet ind i /seneste ved en fejl
+#===
+
+# temp-filer
+*~
+
+# .svn mapper
+.svn/
+
+# Specifikke
+debitor/udlign_openpost.php
+doc/tabelinfo/opret.sql
+doc/brugervejledning.pdf
+finans/genberegn.php
+finans/ordre.php
+finans/simuler.php
+ikoner/eksporter.png
+ikoner/l_arrow.gif
+ikoner/l_arrow.png
+ikoner/sqlfinans.png
+ikoner/tux.gif
+importfiler/formular_ny.txt
+includes/importer.php
+includes/opdater.php
+index/backup.php
+index/favicon.ico
+index/komigang.html
+lager/enheder.php
+lager/vareliste.php
+
+#*~
+#.svn/
+

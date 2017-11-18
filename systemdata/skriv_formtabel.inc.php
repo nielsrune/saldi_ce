@@ -67,6 +67,24 @@ global $feltbredde;
 						print "<option value=\"amount\">kr</option>";
 					}
 					print "</SELECT></td>";
+				} elseif (($art[$i]=='AFD')) {
+					$l=0;
+					$q=db_select("select * from grupper where art='LG' order by kodenr",__FILE__ . " linje " . __LINE__);
+					while ($r=db_fetch_array($q)){
+#						$l_id[$l]=$r['id'];
+						$l_nr[$l]=$r['kodenr'];
+						$l_besk[$l]=$r['beskrivelse'];
+						if (!$box1[$i] && $l_nr[$l]==$kodenr[$i]) $box1[$i]=$l_nr[$l];
+						$l++;
+					}
+					print "<td title=\"".titletxt($art[$i],'box1')."\"><SELECT NAME=box1[$i] style=\"width:".$b[$i]."em\">";
+					for ($l=0;$l<count($l_nr);$l++) {
+						if ($box1[$i] == $l_nr[$l]) print "<option value=\"$l_nr[$l]\">$l_nr[$l] : $l_besk[$l]</option>";
+					}
+					for ($l=0;$l<count($l_nr);$l++) {
+						if ($box1[$i] != $l_nr[$l]) print "<option value=\"$l_nr[$l]\">$l_nr[$l] : $l_besk[$l]</option>";
+					}
+					print "</SELECT></td>";
 				} else {
 					print "<td title=\"".titletxt($art[$i],'box1')."\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=\"$b1\" name=\"box1[$i]\" value=\"$box1[$i]\"></td>";
 				}
@@ -158,6 +176,8 @@ global $feltbredde;
 					print "<option value=\"amount\">kr</option>";
 					print "<option value=\"percent\">%</option>";
 					print "</SELECT></td>";
+				} elseif ($art[$y]=='AFD') {
+					print "<td></td>";
 				} else {
 					print "<td title=\"".titletxt($art[$y],'box1')."\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=\"$b1\" name=\"box1[$y]\"></td>";
 				}

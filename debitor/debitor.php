@@ -1,5 +1,10 @@
 <?php
-// ---------------debitor/debitor.php---lap 3.2.9------2013-02-10----
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+//
+// ---------------debitor/debitor.php---lap 3.6.4------2016-06-06----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -16,11 +21,13 @@
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2013 DANOSOFT ApS
+// Copyright (c) 2003-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
+// 2016.02.18 Udvælg funger nu også hvis debitor er med i flere kategorier. Søg 20160218
+// 2016.06.06 Tilføjet mulighed for at skjule lukkede debitorer Søg box11 / skjul_lukkede
 
 #ob_start();
 @session_start();
@@ -84,9 +91,10 @@ if (!$r=db_fetch_array(db_select("select id from grupper where art = 'DLV' and k
 	}
 	db_modify("insert into grupper(beskrivelse,kode,kodenr,art,box3,box4,box5,box6,box7)values('debitorlistevisning','$valg','$bruger_id','DLV','$box3','$box4','$box5','$box6','100')",__FILE__ . " linje " . __LINE__);
 } else {
-	$r=db_fetch_array(db_select("select box1,box2,box7,box9,box10 from grupper where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__)); 
+	$r=db_fetch_array(db_select("select box1,box2,box7,box9,box10,box11 from grupper where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__)); 
 	$dg_liste=explode(chr(9),$r['box1']);
 	$cat_liste=explode(chr(9),$r['box2']);
+	$skjul_lukkede=$r['box11'];
 	$linjeantal=$r['box7'];
 	if (!$sort) $sort=$r['box9'];
 	$find=explode("\n",$r['box10']);
@@ -142,7 +150,7 @@ print "</td></tr>\n";
 print "</tbody></table>";
 print " </td></tr>\n<tr><td align=\"center\" valign=\"top\" width=\"100%\">";
 
-$r = db_fetch_array(db_select("select box3,box4,box5,box6,box8 from grupper where art = 'DLV' and kodenr = '$bruger_id' and kode='$valg'",__FILE__ . " linje " . __LINE__));
+$r = db_fetch_array(db_select("select box3,box4,box5,box6,box8,box11 from grupper where art = 'DLV' and kodenr = '$bruger_id' and kode='$valg'",__FILE__ . " linje " . __LINE__));
 $vis_felt=explode(chr(9),$r['box3']);
 $feltbredde=explode(chr(9),$r['box4']);
 $justering=explode(chr(9),$r['box5']);
@@ -166,6 +174,7 @@ for ($x=1;$x<$vis_feltantal;$x++) $tmp=$tmp."\n".trim($find[$x]);
 $tmp=addslashes($tmp);
 db_modify("update grupper set box10='$tmp' where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 
+if ($skjul_lukkede) $udvaelg = " and lukket != 'on'";
 for ($x=0;$x<$vis_feltantal;$x++) {
 	$find[$x]=addslashes(trim($find[$x]));
 	$tmp=$vis_felt[$x];
@@ -213,7 +222,11 @@ if ($start>0) {
 	$prepil=$start-$linjeantal;
 	if ($prepil<0) $prepil=0;
 	print "<td><a href=debitor.php?start=$prepil&valg=$valg><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
-} else print "<td></td>";
+} else {
+	print "<td>";
+	if (file_exists("rotary_addrsync.php")) print "<a href=\"rotary_addrsync.php\" target=\"blank\" title=\"Klik her for at synkronisere medlemsinfo\">!</a>";
+	print "</td>";
+}
 for ($x=0;$x<$vis_feltantal;$x++) {
 	if ($feltbredde[$x]) $width="width=$feltbredde[$x]";
 	else $width="";
@@ -333,7 +346,8 @@ for($i=0;$i<$dgcount;$i++) {
 					else $tmp=""; 
 					print "<tr><td></td>$tmp<td colspan=\"2\"><b>$cat_beskrivelse[$i4]</b></td></tr>";
 					print "<tr><td colspan=\"$colspan\"><hr></td>";
-					$udv2=$udv1." and kategori = '$cat_id[$i4]'";	
+					$udv2=$udv1." and (kategori = '$cat_id[$i4]' or kategori LIKE '$cat_id[$i4]".chr(9)."%' ";
+					$udv2.="or kategori LIKE '%".chr(9)."$cat_id[$i4]' or kategori LIKE '%".chr(9)."$cat_id[$i4]".chr(9)."%')";	#20160218
 					break 1;
 				} 
 			}	

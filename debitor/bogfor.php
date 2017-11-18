@@ -43,6 +43,7 @@ if ($id && $id>0) {
 	$mail_fakt=if_isset($_GET['mail_fakt']);
 	transaktion('begin');
 	$svar=bogfor($id,'');
+	
 	if ($svar && $svar!='OK') {
 		echo "Svar $svar<br>";;
 		print "<BODY onLoad=\"javascript:alert('$svar')\">";
@@ -56,6 +57,7 @@ if ($id && $id>0) {
 		}
 		transaktion('commit');
 	}
+#xit;	
 	if (!$genfakt) {
 		if ($pbs) {
 			pbsfakt($id);

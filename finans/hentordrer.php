@@ -1,27 +1,33 @@
 <?php
-// -----------------finans/hentordrer.php------------lap 3.2.9-------2013.02.10 -------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -------------------finans/hentordrer.php-------patch 3.6.7----2017-03-03-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2013 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
-
 // 20130210 Break ændret til break 1
+// 20170303 PHR fjernet et par semikolons fra db_select som gav injektionsadvarsel.
+// 20170321 PHR Blokeret POS ordrer. Det giver bare bøvl. 20170321
 
 
 @session_start();
@@ -110,7 +116,7 @@ function hentordrer($kladde_id) {
 	print "<tr><td>Dato</td><td>Beskrivelse</td><td><br></td><td>Debet</td><td><br></td><td>Kredit</td><td>Fakturanr</td>
 		<td align=center>Bel&oslash;b</td><td align=center>Valuta</td><td align=center><a href=hentordrer.php?kladde_id=$kladde_id&flyt=alle>Flyt alle</a></td></tr>";
 
-	$query = db_select("select * from ordrer where status=3 order by fakturadate,fakturanr",__FILE__ . " linje " . __LINE__);
+	$query = db_select("select * from ordrer where art != 'PO' and status='3' order by fakturadate,fakturanr",__FILE__ . " linje " . __LINE__); #20170321
 	while ($row = db_fetch_array($query)){
 		$x++;
 		$id[$x]=$row['id'];
@@ -246,9 +252,9 @@ function hentordrer($kladde_id) {
 					}
 				}
 			}
-			$query = db_select("select gruppe from adresser where id='$konto_id[$x]';",__FILE__ . " linje " . __LINE__);
+			$query = db_select("select gruppe from adresser where id='$konto_id[$x]'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
-			$query = db_select("select box1 from grupper where art='KG' and kodenr='$row[gruppe]';",__FILE__ . " linje " . __LINE__);
+			$query = db_select("select box1 from grupper where art='KG' and kodenr='$row[gruppe]'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
 			$box1=substr(trim($row['box1']),1,1);
 			if (substr(trim($row['box1']),0,1)=='E') {
@@ -480,7 +486,8 @@ function flytordre($kladde_id, $ordre_id) {
 				$beskrivelse=addslashes($beskrivelse);
 				db_modify("insert into kassekladde (bilag, transdate, beskrivelse, k_type, kredit, faktura, amount, momsfri, kladde_id, afd, valuta, projekt, ansat, ordre_id) values ('$bilag', '$transdate', '$beskrivelse', 'K', '$kontonr', '$fakturanr', '$sum', 'on', '$kladde_id', '$afd', '$valuta', '$projekt[0]', '$ansat', '$ordre_id')",__FILE__ . " linje " . __LINE__);
 				for ($p=1;$p<=$projektantal;$p++) {
-					$query = db_select("select * from ordrelinjer where ordre_id='$id' and projekt = '$projekt[$p]'",__FILE__ . " linje " . __LINE__);
+					$qtxt="select * from ordrelinjer where ordre_id='$id' and projekt = '$projekt[$p]'";
+					$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 					$y=0;
 					$bogf_konto = array();
 					while ($row = db_fetch_array($query)) {
@@ -518,9 +525,9 @@ function flytordre($kladde_id, $ordre_id) {
 						}
 					}
 				}
-				$query = db_select("select gruppe from adresser where id='$konto_id';",__FILE__ . " linje " . __LINE__);
+				$query = db_select("select gruppe from adresser where id='$konto_id'",__FILE__ . " linje " . __LINE__);
 				$row = db_fetch_array($query);
-				$query = db_select("select box1 from grupper where art='KG' and kodenr='$row[gruppe]';",__FILE__ . " linje " . __LINE__);
+				$query = db_select("select box1 from grupper where art='KG' and kodenr='$row[gruppe]'",__FILE__ . " linje " . __LINE__);
 				$row = db_fetch_array($query);
 				$box1=substr(trim($row['box1']),1,1);
 
@@ -634,7 +641,6 @@ function pos_moms($momskode) {
 			$k_kontrol=$k_kontrol+$diff;
 		}
 	}
-#echo "moms $moms<br>";
 	$moms=afrund($moms,2);
 	return($moms);
 }

@@ -1,4 +1,9 @@
 <?php
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
 // -------systemdata/formularkort------------------- lap 3.6.1 -- 2016-01-11 --
 // LICENS
 //
@@ -9,7 +14,7 @@
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -18,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------------
 
 // 2012.09.06 Tilføjet mulighed for at vise momssats på ordrelinjer.
@@ -34,7 +39,8 @@
 // 2015.01.17	Phr - Merget med version fra jan. 14 som var blevet overskrevet 2014.07.09.
 // 20150331 CA  Topmenudesign tilføjet                             søg 20150331
 // 20160111 PHR Tilføjet lev_varenr til ordrelinjer  søg 'lev_varenr'
-
+// 20160804 PHR X & Y koordinater kan nu indeholde decimaler.
+// 20171004 PHR Kopier alt - nu også på indkøbs...
 
 @session_start();
 $s_id=session_id();
@@ -77,12 +83,9 @@ if ($_POST) {
 			if (!$handling) $handling=if_isset($_POST['slet']);
 			if (!$handling) $handling=if_isset($_POST['fortryd']);
 			if ($handling == 'slet') $nyt_sprog='slet';
-#			echo "handlin	$handling<br>";	
-#exit;	
 		}
 	}
 	$formular=if_isset($_POST['formular']);
-#	$form_tekst=if_isset($_POST['form_tekst']);
 	$form_nr=if_isset($_POST['form_nr']);
 	$formularsprog=db_escape_string(if_isset($_POST['sprog']));
 	$art=if_isset($_POST['art']);
@@ -126,7 +129,8 @@ if ($_POST) {
 	
 	if (isset($_POST['op']) || isset($_POST['hojre'])) { #Flytning af 0 punkt.
 		$op=$_POST['op']*1; $hojre=$_POST['hojre']*1;
-		$query=db_select("select id, xa, xb, ya, yb from formularer where formular=$form_nr and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__);
+		$qtxt="select id, xa, xb, ya, yb from formularer where formular=$form_nr and sprog='$formularsprog'";
+		$query=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($row=db_fetch_array($query)){
 			db_modify("update formularer set xa=$row[xa]+$hojre, ya=$row[ya]+$op where id=$row[id]",__FILE__ . " linje " . __LINE__);
 			if ($row[yb]) db_modify("update formularer set xb=$row[xb]+$hojre, yb=$row[yb]+$op where id=$row[id]",__FILE__ . " linje " . __LINE__);
@@ -182,15 +186,14 @@ if ($_POST) {
 				if ($ny_beskrivelse[$x]) {
 					$beskrivelse[$x]=trim($beskrivelse[$x]." $".$ny_beskrivelse[$x].";");
 				}
-				$xa[$x]=$xa[$x]*1; $ya[$x]=$ya[$x]*1; $xb[$x]=$xb[$x]*1; $yb[$x]=$yb[$x]*1; $str[$x]=$str[$x]*1; $color[$x]=$color[$x]*1;
+				$xa[$x]=str_replace(",",".",$xa[$x])*1; $ya[$x]=str_replace(",",".",$ya[$x])*1; $xb[$x]=str_replace(",",".",$xb[$x])*1; $yb[$x]=str_replace(",",".",$yb[$x])*1; $str[$x]=$str[$x]*1; $color[$x]=$color[$x]*1;
 				if ($x==0||(!$id[$x] && (($art_nr==5) || $form_nr==10))) {
-#echo "$ny_beskrivelse[$x]<br>";
 					if ($xa[$x]>0) {
 						if (($art!='1') && ($str[$x]<=1)) $str[$x]=10;
 						db_modify("insert into formularer (beskrivelse, formular, art, xa, ya, xb, yb, str, color, font, fed, kursiv, side, justering, sprog) values ('$beskrivelse[$x]', $form_nr, $art_nr, $xa[$x], $ya[$x], $xb[$x], $yb[$x], $str[$x], $color[$x], '$form_font[$x]', '$fed[$x]', '$kursiv[$x]', '$side[$x]', '$justering[$x]', '$formularsprog')",__FILE__ . " linje " . __LINE__);
 					} elseif (substr($ny_beskrivelse[$x],0,10)=="kopier_alt") {
-						$tmp=substr($ny_beskrivelse[$x],-1);
-						kopier_alt($form_nr,$art_nr,$formularsprog,$tmp);
+						list($a,$b)=explode('|',$ny_beskrivelse[$x]);
+						kopier_alt($form_nr,$art_nr,$formularsprog,$b);
 					}
 				}	elseif ($id[$x]) {
 					if (strstr($beskrivelse[$x],'betalingsid(')) {
@@ -302,12 +305,13 @@ if ($art_nr==1) {
 		
 	print "<tr><td></td><td></td><td align=center>X</td><td align=center> Y</td></tr>\n";
 	$x=1;
-	$query=db_select("select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse ='LOGO' and sprog = '$formularsprog'",__FILE__ . " linje " . __LINE__);
+	$qtxt="select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse ='LOGO' and sprog = '$formularsprog'";
+	$query=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	$row=db_fetch_array($query);
 	print "<tr>\n";
 	print "<input type=\"hidden\" name=\"id[$x]\" value=\"$row[id]\"><input type=\"hidden\" name=\"beskrivelse[$x]\" value=\"LOGO\">\n";
-	print "<td colspan=\"2\"></td><td align=\"center\"><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".round($row[xa],0).">\n";
-	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".round($row[ya],0).">";
+	print "<td colspan=\"2\"></td><td align=\"center\"><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".str_replace(".",",",round($row[xa],1)).">\n";
+	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".str_replace(".",",",round($row[ya],1)).">";
 
 	print "<tr><td><br></td></tr>";
 	print "<tr><td colspan=6 align=center> Linjer</td></tr>";
@@ -329,15 +333,16 @@ if ($art_nr==1) {
 	print "</tr>";
  
 	$x=1;
-	$query=db_select("select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse !='LOGO' and sprog='$formularsprog' order by ya,xa,yb,xb",__FILE__ . " linje " . __LINE__);
+	$qtxt="select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse !='LOGO' and sprog='$formularsprog' order by ya,xa,yb,xb";
+	$query=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row=db_fetch_array($query)){
 		$x++; 
 		print "<tr>";
 		print "<input type=hidden name=id[$x] value=$row[id]>";
-		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".round($row[xa],0).">";
-		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".round($row[ya],0).">"; 
-		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xb[$x] value=".round($row[xb],0).">";
-		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=yb[$x] value=".round($row[yb],0).">";
+		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".str_replace(".",",",round($row[xa],1)).">";
+		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".str_replace(".",",",round($row[ya],1)).">"; 
+		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xb[$x] value=".str_replace(".",",",round($row[xb],1)).">";
+		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=yb[$x] value=".str_replace(".",",",round($row[yb],1)).">";
 		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=str[$x] value=".round($row[str],0).">";
 		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=color[$x] value=".round($row[color],0).">";
 		print "</tr>";
@@ -369,7 +374,8 @@ if ($art_nr==1) {
 	drop_down(0,$form_nr,$art_nr,$formularsprog,"","","","","","","","","","","","","","");  
 	
 $tmp = db_escape_string($formularsprog);
-	$query=db_select("select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse != 'GEBYR' and sprog='$tmp' order by ya desc, xa",__FILE__ . " linje " . __LINE__);
+	$qtxt="select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse != 'GEBYR' and sprog='$tmp' order by ya desc, xa";
+	$query=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row=db_fetch_array($query)) {
 		$x++;
 		drop_down($x,$form_nr,$art_nr,$formularsprog,$row['id'],$row['beskrivelse'],$row['xa'],$row['xb'],$row['ya'],$row['yb'],$row['str'],$row['color'],$row['justering'],$row['font'],$row['fed'],$row['kursiv'],$row['side']);  
@@ -518,22 +524,26 @@ function drop_down($x,$form_nr,$art_nr,$formularsprog,$id,$beskrivelse,$xa,$xb,$
 		print "<option value=\"ordre_cvrnr\">ordre_cvrnr</option>";
 	}
 	if ($form_nr<6 || $form_nr==10 || $form_nr>=12) {
-		print "<option>ordre_ordredate</option>";
-		print "<option>ordre_levdate</option>";
-		print "<option>ordre_notes</option>";
-		print "<option>ordre_ordrenr</option>";
-		print "<option>ordre_momssats</option>";
+		print "<option>ordre_ean</option>";
+		print "<option>ordre_felt_1</option>";
+		print "<option>ordre_felt_2</option>";
+		print "<option>ordre_felt_3</option>";
+		print "<option>ordre_felt_4</option>";
+		print "<option>ordre_felt_5</option>";
+		print "<option>ordre_institution</option>";
 		print "<option>ordre_kundeordnr</option>";
-		print "<option>ordre_projekt</option>";
 		print "<option>ordre_lev_navn</option>";
 		print "<option>ordre_lev_addr1</option>";
 		print "<option>ordre_lev_addr2</option>";
 		print "<option>ordre_lev_postnr</option>";
 		print "<option>ordre_lev_bynavn</option>";
 		print "<option>ordre_lev_kontakt</option>";
-		print "<option>ordre_ean</option>";
-		print "<option>ordre_institution</option>";
-		print "<option>ordre_lev_kontakt</option>";
+		print "<option>ordre_levdate</option>";
+		print "<option>ordre_momssats</option>";
+		print "<option>ordre_notes</option>";
+		print "<option>ordre_ordredate</option>";
+		print "<option>ordre_ordrenr</option>";
+		print "<option>ordre_projekt</option>";
 	}	
 	if ($form_nr==4 || $form_nr==13) {
 		print "<option>ordre_fakturanr</option>";
@@ -557,14 +567,18 @@ function drop_down($x,$form_nr,$art_nr,$formularsprog,$id,$beskrivelse,$xa,$xb,$
 		print "<option>forfalden_sum</option>";
 		print "<option>rykker_gebyr</option>";
 	}	
-	if ($form_nr>1 && $form_nr<6) print "<option value = \"kopier_alt|1\">Kopier alt fra tilbud</option>";
-	if ($form_nr!=2 && $form_nr<6) print "<option value = \"kopier_alt|2\">Kopier alt fra ordrebrkræftelse</option>";
-	if ($form_nr!=4 && $form_nr<6) print "<option value = \"kopier_alt|4\">Kopier alt fra faktura</option>";
+	if (($form_nr>1 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|1\">Kopier alt fra tilbud</option>";
+	if (($form_nr!=2 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|2\">Kopier alt fra ordrebrkræftelse</option>";
+	if (($form_nr!=4 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|4\">Kopier alt fra faktura</option>";
 	if ($form_nr<5) print "<option value = \"kopier_alt|5\">Kopier alt fra kreditnota</option>";
+	if ($form_nr>12) print "<option value = \"kopier_alt|12\">Kopier alt fra indkøbsforslag</option>";
+	if ($form_nr>11 && $form_nr!=13) print "<option value = \"kopier_alt|13\">Kopier alt fra rekvisition</option>";
+	if ($form_nr>11 && $form_nr!=14) print "<option value = \"kopier_alt|14\">Kopier alt fra indkøbsfaktura</option>";
+	
 	print "</SELECT></td>";
 	print "<td align=center><input class=\"inputbox\" type=text size=25 name=beskrivelse[$x] value=\"$beskrivelse\"></td>";
-	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".round($xa,0)."></td>";
-	if ($yb != "-") print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".round($ya,0)."></td>";
+	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".str_replace(".",",",round($xa,1))."></td>";
+	if ($yb != "-") print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".str_replace(".",",",round($ya,1))."></td>";
 	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=str[$x] value=".round($str,0)."></td>";
 	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=color[$x] value=".round($color,0)."></td>";
 	print "<td><SELECT class=\"inputbox\" NAME=justering[$x]>";
@@ -611,9 +625,9 @@ function ordrelinjer($form_nr,$art_nr,$formularsprog){
 	print "<tr><td></td><td></td>\n";
 	print "<input type=hidden name=id[$x] value=$row[id]>\n";
 	print "<input type=hidden name=beskrivelse[$x] value=$row[beskrivelse]>\n";
-	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".round($row['xa'],0)."></td>\n";
-	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".round($row['ya'],0)."></td>\n";
-	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=3 name=xb[$x] value=".round($row['xb'],0)."></td></tr>\n";
+	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".round($row['xa'],1)."></td>\n";
+	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=ya[$x] value=".round($row['ya'],1)."></td>\n";
+	print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=3 name=xb[$x] value=".round($row['xb'],1)."></td></tr>\n";
 	print "<tr><td>Beskrivelse</td>\n";
 	print "<td align=center>X</td>\n";
 	print "<td align=center>H&oslash;jde</td><td align=center> Farve</td>\n";
@@ -639,11 +653,13 @@ $x=0;
 		print "<option>linjesum</option>\n";
 		print "<option>projekt</option>\n";
 		print "<option>procent</option>\n"; #20140709
+		print "<option>lokation</option>\n";
 		if ($form_nr==3) {
 			print "<option>lev_tidl_lev</option>\n";
 			print "<option>lev_antal</option>\n";
 			print "<option>lev_rest</option>\n";
 			print "<option>lokation</option>\n";
+			print "<option>vare_note</option>\n";
 		} 
 		if ($form_nr==9) {
 			print "<option>leveres</option>\n";
@@ -726,7 +742,7 @@ $x=0;
 		}
 		print "</SELECT></td>";
 */		
-		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".round($row['xa'],0)."></td>\n";
+		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".str_replace(".",",",round($row['xa'],1))."></td>\n";
 		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=str[$x] value=".round($row['str'],0)."></td>\n";
 		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=color[$x] value=".round($row['color'],0)."></td>\n";
 		print "<td><SELECT class=\"inputbox\" NAME=justering[$x]>\n";
@@ -744,7 +760,7 @@ $x=0;
 		print "<td align=center><input class=\"inputbox\" type=checkbox name=fed[$x] $row[fed]></td>\n";
 		if ($row['kursiv']=='on') {$row['kursiv']='checked';}
 		print "<td align=center><input class=\"inputbox\" type=checkbox name=kursiv[$x] $row[kursiv]></td>\n";
-		if ($row['beskrivelse']=='beskrivelse'){print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xb[$x] value=".round($row['xb'],0)."></td>\n";}
+		if ($row['beskrivelse']=='beskrivelse'){print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xb[$x] value=".str_replace(".",",",round($row['xb'],1))."></td>\n";}
 		print "</tr>\n";
 	}	 
 	return($x);
@@ -760,8 +776,8 @@ if (!$r=db_fetch_array(db_select("select * from formularer where formular = '$fo
 		$q=db_modify ("insert into formularer (formular, art, beskrivelse, sprog, xa, ya, xb) values ('$form_nr','3','generelt','$formularsprog','4','2',4)",__FILE__ . " linje " . __LINE__);
 		$r=db_fetch_array(db_select("select * from formularer where formular = $form_nr and art = 3 and beskrivelse = 'generelt' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__));
 	}
-	$header=round($r['xa'],0);
-	$footer=round($r['ya'],0);
+	$header=str_replace(".",",",round($r['xa'],1));
+	$footer=str_replace(".",",",round($r['ya'],1));
 	$linespace=round($r['xb'],0);
 	print "<tr><td></td><td></td>\n";
 	print "<input type=hidden name=id[$x] value=\"$r[id]\">\n";
@@ -873,7 +889,7 @@ if (!$r=db_fetch_array(db_select("select * from formularer where formular = '$fo
 			print "<option>bel&oslash;b</option>";
 		}
 		print "</SELECT></td>";
-		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".round($r['xa'],0)."></td>";
+		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xa[$x] value=".str_replace(".",",",round($r['xa'],1))."></td>";
 		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=str[$x] value=".round($r['str'],0)."></td>";
 		print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=color[$x] value=".round($r['color'],0)."></td>";
 		print "<td><SELECT class=\"inputbox\" NAME=justering[$x]>";
@@ -891,7 +907,7 @@ if (!$r=db_fetch_array(db_select("select * from formularer where formular = '$fo
 		print "<td align=center><input class=\"inputbox\" type=checkbox name=fed[$x] $r[fed]></td>";
 		if ($r['kursiv']=='on') {$r['kursiv']='checked';}
 		print "<td align=center><input class=\"inputbox\" type=checkbox name=kursiv[$x] $r[kursiv]></td>";
-		if ($r['beskrivelse']=='beskrivelse'){print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xb[$x] value=".round($r['xb'],0)."></td>";}
+		if ($r['beskrivelse']=='beskrivelse'){print "<td align=center><input class=\"inputbox\" type=text style=text-align:right size=5 name=xb[$x] value=".str_replace(".",",",round($r['xb'],1))."></td>";}
 		print "</tr>";
 	}
 	if ($footer) {
@@ -928,11 +944,14 @@ if (!$r=db_fetch_array(db_select("select * from formularer where formular = '$fo
 function kopier_alt($form_nr,$art_nr,$formularsprog,$kilde) {
 	if ($form_nr&&$art_nr&&$formularsprog) {
 		db_modify("delete from formularer where formular = '$form_nr' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__);
-		$q=db_select("select * from formularer where formular = '$kilde' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__);
+		$qtxt="select * from formularer where formular = '$kilde' and sprog='$formularsprog'";
+		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)) {
 			$xa=$r['xa']*1; $ya=$r['ya']*1; $xb=$r['xb']*1; $yb=$r['yb']*1;$str=$r['str']*1;$color=$r['color']*1;
-# echo "insert into formularer(formular,art,beskrivelse,justering,xa,ya,xb,yb,str,color,font,fed,kursiv,side,sprog) values	('$form_nr','$art_nr','".db_escape_string($r['beskrivelse'])."','$r[justering]','$xa','$ya','$xb','$yb','$str','$color','$r[font]','$r[fed]','$r[kursiv]','$r[side]','$formularsprog')<br>";
-			db_modify("insert into formularer(formular,art,beskrivelse,justering,xa,ya,xb,yb,str,color,font,fed,kursiv,side,sprog) values	('$form_nr','$r[art]','".db_escape_string($r['beskrivelse'])."','$r[justering]','$xa','$ya','$xb','$yb','$str','$color','$r[font]','$r[fed]','$r[kursiv]','$r[side]','$formularsprog')",__FILE__ . " linje " . __LINE__);
+			$qtxt="insert into formularer(formular,art,beskrivelse,justering,xa,ya,xb,yb,str,color,font,fed,kursiv,side,sprog) values	";
+			$qtxt.="('$form_nr','$r[art]','".db_escape_string($r['beskrivelse'])."','$r[justering]','$xa','$ya','$xb','$yb','$str','$color',";
+			$qtxt.="'$r[font]','$r[fed]','$r[kursiv]','$r[side]','$formularsprog')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 #		print "<meta http-equiv=\"refresh\" content=\"10;URL=formularkort.php?formular=$form_nr&art=$art_nr&sprog=$formularsprog\">";
 

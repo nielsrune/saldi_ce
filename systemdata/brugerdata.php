@@ -1,20 +1,29 @@
 <?php
-// -----------------systemdata/brugerdata.php ------lan 2.0.6-----2009.03.02----------
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// -----------------systemdata/brugerdata.php ------ver 3.6.6-----2016.11.04----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public Licenser (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg, dog med med
-// foelgende tilfoejelse:
+// modificere det under betingelserne i GNU General Public License (GPL)
+// som er udgivet af The Free Software Foundation; enten i version 2
+// af denne licens eller en senere version efter eget valg
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// 
+// Programmet må ikke uden forudgående skriftlig aftale anvendes
+// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
-// En dansk oversaetelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
-// copyright (c) 2003-2009 DANOSOFT ApS
+// En dansk oversaettelse af licensen kan laeses her:
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
+//
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 
 @session_start();
@@ -43,22 +52,22 @@ if ($aktiver) {
 	db_modify("update brugere set regnskabsaar = '$aktiver' where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__);
 }
 
+
 if ($_POST) {
 	$popup=$_POST['popup'];
-	$glkode=md5(trim($_POST['glkode']));
-	$nykode1=md5(trim($_POST['nykode1']));
-	$nykode2=md5(trim($_POST['nykode2']));
-	
+	$glkode=trim($_POST['glkode']);
+	$nykode1=trim($_POST['nykode1']);
+	$nykode2=trim($_POST['nykode2']);
 	db_modify("update grupper set box2='$popup' where art = 'USET' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
-	
-	if ($glkode!=$nykode1) {
-		if ($nykode1==$nykode2 && $glkode && $nykode1) {
+	if ($glkode1!=$nykode1) {
+		if ($nykode1 && $nykode1==$nykode2 && $glkode) {
 			$r=db_fetch_array(db_select("select kode from brugere where brugernavn='$brugernavn'",__FILE__ . " linje " . __LINE__));
-			if ($r['kode']==$glkode) {
+			if ($r['kode']==md5($glkode) || $r['kode']==saldikrypt($bruger_id,$glkode)) {
+				$nykode1=saldikrypt($bruger_id,$nykode1);
 				db_modify("update brugere set kode='$nykode1' where brugernavn='$brugernavn'",__FILE__ . " linje " . __LINE__);
-				print "<tr><td align=center> Adgangskode &aelig;ndret!</td></tr>";
-			} elseif ($r['kode']) print "<tr><td align=center> Der er tastet forkert v&aelig;rdi i \"Gl. adgangskode\"</td></tr>";
-		} else print "<tr><td align=center> Der er tastet forskellige v&aelig;rdier i \"Ny adgangskode\" & \"Bekr&aelig;ft ny kode\"</td></tr>";
+				print tekstboks('Adgangskode &aelig;ndret!');
+			} elseif ($r['kode']) print tekstboks('Der er tastet forkert v&aelig;rdi i "Gl. adgangskode"');
+		} else print print tekstboks('Der er tastet forskellige v&aelig;rdier i "Ny adgangskode" & "Bekr&aelig;ft ny kode"');
 	}
 }
 if ($popop=='J') $returside="../includes/luk.php";

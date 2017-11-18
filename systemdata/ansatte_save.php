@@ -1,24 +1,29 @@
 <?php
-// -------systemdata/ansatte_save.php--------lap 3.0.0-------2013-01-22--06:51-----
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+//
+// -------systemdata/ansatte_save.php--------lap 3.0.0-------2015-02-13--06:51-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2013 DANOSOFT ApS
+// Copyright (c) 2003-2016 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20140923 PK - Validering af $nummer. Tjekker om $nummer er et tal, og om talet findes i forvejen 
 // 20140924 PK - Validering af $navn, så der skrives en meddelelse hvis der ikke er udfyldt navn
@@ -26,7 +31,6 @@
 
 
 if ($konto_id=$_POST['konto_id']) {
-
 	$id=$_POST['id']*1;
 	$navn=db_escape_string(trim($_POST['navn']));
 	$nummer=db_escape_string(trim($_POST['nummer']));
@@ -60,7 +64,6 @@ if ($konto_id=$_POST['konto_id']) {
 	$gruppe_id=$_POST['gruppe_id'];
 	$pro_antal=$_POST['pro_antal'];
 
-
 		if (!is_numeric($nummer) && $id) { #20140923
 			$messages = "Skal være et tal";
 		} elseif ($id && $r=db_fetch_array(db_select("SELECT id FROM ansatte WHERE nummer='$nummer' AND id != '$id'",__FILE__ . " linje " . __LINE__))){
@@ -78,7 +81,8 @@ if ($konto_id=$_POST['konto_id']) {
 			db_modify("insert into ansatte (navn,nummer,initialer,konto_id,addr1,addr2,postnr,bynavn,tlf,fax,privattlf,mobil,email,cprnr,notes,afd,lukket,bank,startdate,slutdate,loen,extraloen,trainee) values 
 				('$navn','$nummer','$initialer','$konto_id','$addr1','$addr2','$postnr','$bynavn','$tlf','$fax','$privattlf','$mobil','$email','$cprnr','$notes','$afd','$lukket','$bank','$startdate','$slutdate','$loen','$extraloen','$trainee')",__FILE__ . " linje " . __LINE__);
 			$r = db_fetch_array(db_select("select id from ansatte where konto_id = '$konto_id' and navn='$navn'",__FILE__ . " linje " . __LINE__));
-			if ($menu=='T') $id = $r['id']; header("location:ansatte.php?id=$id&funktion=ret_ansat");
+			$id = $r['id']; 
+			if ($menu=='T') header("location:ansatte.php?id=$id&funktion=ret_ansat");
 		} elseif ($id > 0) {
 			if (!$startdate) $startdate="1900-01-01";
 			if (!$slutdate) $slutdate="9999-12-31";

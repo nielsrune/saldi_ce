@@ -1,8 +1,12 @@
 <?php #topkode_start
 @session_start();
 $s_id=session_id();
-
-// ---------debitor/genfakturer.php-----patch 3.4.0--2014.03.17------
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// ---------debitor/genfakturer.php-----lap 3.6.7-----2017-01-03------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -21,10 +25,12 @@ $s_id=session_id();
 // En dansk oversaetelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // Erstattet addslashes med db_escape_string
 // 2014.03.17 Tilføjet procent til "insert into ordrelinjer... 
+// 2016.08.25 Kontonr blev ikke opdatere hvid der var blevet skiftet kontonr på kunde inden genfakt 21060825
+// 2017.01.03 Funktion find_nextfakt flyttet til ../includes/ordrefunc.php
 
 $id=$_GET['id'];
 $css="../css/standard.css";
@@ -147,6 +153,7 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$slet_gfdato) {
 	transaktion('begin');
 	if ($r=db_fetch_array(db_select("select * from ordrer where id = $id",__FILE__ . " linje " . __LINE__))){
 		$pbs=$r['pbs'];
+		$konto_id=$r['konto_id'];
 		$firmanavn=db_escape_string($r['firmanavn']);
 		$addr1=db_escape_string($r['addr1']);
 		$addr2=db_escape_string($r['addr2']);
@@ -179,8 +186,10 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$slet_gfdato) {
 			$r2=db_fetch_array(db_select("select MAX(ordrenr) as ordrenr from ordrer where art='DO' or art='DK'",__FILE__ . " linje " . __LINE__));
 			$ordrenr=$r2['ordrenr']+1;
 		}
+		$r2=db_fetch_array(db_select("select kontonr from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__)); #20160825
+		$kontonr=$r2['kontonr'];
 		db_modify("insert into ordrer (ordrenr, konto_id, kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,betalingsdage,betalingsbet,cvrnr,ean,institution,notes,art,ordredate,momssats,moms,ref,valuta,sprog,kontakt,kundeordnr,lev_navn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,levdate,fakturadate,nextfakt,sum,status,projekt,email,mail_fakt,pbs,udskriv_til,procenttillag) values 
-				('$ordrenr','$r[konto_id]','$r[kontonr]','$firmanavn','$addr1','$addr2','$r[postnr]','$bynavn','$land','$r[betalingsdage]','$r[betalingsbet]','$cvrnr','$ean','$institution','$notes','$r[art]','$r[ordredate]','$r[momssats]','$r[moms]','$ref','$valuta','$sprog','$kontakt','$kundeordnr','$lev_navn','$lev_addr1','$lev_addr2','$r[lev_postnr]','$lev_bynavn','$fakturadate','$fakturadate','$nextfakt','$r[sum]','2','$projekt','$email','$r[mail_fakt]','$pbs','$udskriv_til','$procenttillag')",__FILE__ . " linje " . __LINE__);
+				('$ordrenr','$konto_id','$kontonr','$firmanavn','$addr1','$addr2','$r[postnr]','$bynavn','$land','$r[betalingsdage]','$r[betalingsbet]','$cvrnr','$ean','$institution','$notes','$r[art]','$r[ordredate]','$r[momssats]','$r[moms]','$ref','$valuta','$sprog','$kontakt','$kundeordnr','$lev_navn','$lev_addr1','$lev_addr2','$r[lev_postnr]','$lev_bynavn','$fakturadate','$fakturadate','$nextfakt','$r[sum]','2','$projekt','$email','$r[mail_fakt]','$pbs','$udskriv_til','$procenttillag')",__FILE__ . " linje " . __LINE__);
 		$r2=db_fetch_array(db_select("select id from ordrer where ordrenr='$ordrenr' and nextfakt='$nextfakt' and (art='DO' or art='DK') order by id desc",__FILE__ . " linje " . __LINE__));
 		$ny_id=$r2['id'];
 		$sum=0;
@@ -216,67 +225,4 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$slet_gfdato) {
 	return($tmp);
 }	
 ########################################################################################
-
-
-function find_nextfakt($fakturadate, $nextfakt) 
-{
-// Denne funktion finder diff mellem fakturadate & nextfakt, tillægger diff til nextfakt og returnerer denne vaerdi. Hvis baade 
-// fakturadate og netffaxt er sidste dag i de respektive maaneder vaelges også sidste dag i maaned i returvaerdien.
-
-list($faktaar, $faktmd, $faktdag) = explode("-", $fakturadate);
-list($nextfaktaar, $nextfaktmd, $nextfaktdag) = explode("-", $nextfakt);
-	
-if (!checkdate($faktmd,$faktdag,$faktaar)) {
-	echo "Fakturadato er ikke en gyldig dato<br>";
-	exit;
-}
-if (!checkdate($nextfaktmd,$nextfaktdag,$nextfaktaar)) {
-	echo "next Fakturadato er ikke en gyldig dato<br>";
-	exit;
-}
-$faktultimo=0;
-$nextfaktultimo=0;
-$tmp=$faktdag+1;
-if (!checkdate($faktmd,$tmp,$faktaar)) $faktultimo=1; # hvis dagen efter fakturadag ikke findes fakureres ultimo"
-$tmp=$nextfaktdag+1;
-if (!checkdate($nextfaktmd,$tmp,$nextfaktaar)) $nextfaktultimo=1;
-$faktmd_len=31;
-while (!checkdate($faktmd,$faktmd_len,$faktaar)) $faktmd_len--; #finder antal dage i fakturamaaneden
-$dagantal=$nextfaktdag-$faktdag;
-$md_antal=$nextfaktmd-$faktmd;
-$aar_antal=$nextfaktaar-$faktaar;
-if ($dagantal<0) {
-	$dagantal=$dagantal+$faktmd_len;
-	$md_antal--;
-}
-while ($md_antal<0) {
-	$aar_antal--;
-	$md_antal=$md_antal+12;
-}
-$nextfaktaar=$nextfaktaar+$aar_antal;
-$nextfaktmd=$nextfaktmd+$md_antal;
-if ($nextfaktmd > 12) {
-	$nextfaktaar++;
-	$nextfaktmd=$nextfaktmd-12;
-}
-if ($faktultimo && $nextfaktultimo) {# fast faktura sidste dag i md.
-	$nextfaktdag=31;
-	if ($dagantal>27) $nextfaktmd++;
-	while (!checkdate($nextfaktmd,$nextfaktdag,$nextfaktaar)) $nextfaktdag--;
-} else {
-	$nextfaktdag=$nextfaktdag+$dagantal;
-if ($nextfaktdag>$faktmd_len) {
-		while (!checkdate($nextfaktmd,$nextfaktdag,$nextfaktaar)) {
-			$nextfaktmd++;
-			if ($nextfaktmd > 12) {
-				$nextfaktaar++;
-				$nextfaktmd=1;
-			} 
-			$nextfaktdag=$nextfaktdag-$faktmd_len;
-		} 
-	} else while (!checkdate($nextfaktmd,$nextfaktdag,$nextfaktaar)) $nextfaktdag--;
-}
-$nextfakt=$nextfaktaar."-".$nextfaktmd."-".$nextfaktdag;
-return($nextfakt);
-}# endfunc find_nextfakt
 ?>

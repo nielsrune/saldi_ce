@@ -1,29 +1,36 @@
 <?php
-// ---------/systemdata/exporter_varer.php---lap 3.4.4--2014-11-19------------------------
+//                      ___   _   _   ___  _     ___  _ _
+//                     / __| / \ | | |   \| |   |   \| / /
+//                     \__ \/ _ \| |_| |) | | _ | |) |  <
+//                     |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ---------/systemdata/exporter_varer.php---lap 3.7.0-----2017-05-09-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20130412 Rettet i formatet
 // 20140516 Sat " om alle tekster.
 // 20140526 .'"'. manglede efter enhed i overskrift
 // 20141119 Fjernet "*1" efter dkdecimal. Søg *1
+// 20161124 erstattet <tab> med ; som skilletegn
+// 20170509 Tilføjet varemærke (trademark);
 
 @session_start();
 $s_id=session_id();
@@ -36,26 +43,26 @@ include("../includes/std_func.php");
 
 $returside="../diverse.php";
 
-$filnavn="../temp/varer.csv";
+$filnavn="../temp/$db/varer.csv";
 
 $fp=fopen($filnavn,"w");
 
-$overskrift='"'."varenr".'"'.chr(9).'"'."stregkode".'"'.chr(9).'"'."beskrivelse".'"'.chr(9).'"'."kostpris".'"'.chr(9).'"'."salgspris".'"'.chr(9).'"'."vejl_pris".'"'.chr(9).'"'."notes".'"'.chr(9).'"'."enhed".'"'.chr(9).'"'."gruppe".'"'.chr(9).'"'."min_lager".'"'.chr(9).'"'."max_lager".'"'.chr(9).'"'."lokation".'"';
+$overskrift='"varenr";"stregkode";"varemærke";"beskrivelse";"kostpris";"salgspris";"vejl_pris";"notes";"enhed";"gruppe";"min_lager";"max_lager";"lokation"';
 if ($charset=="UTF-8") $overskrift=utf8_decode($overskrift);
 
 if (fwrite($fp, "$overskrift\r\n")) {
-	$q=db_select("select varenr,stregkode,beskrivelse,kostpris,salgspris,retail_price,notes,enhed,gruppe,min_lager,max_lager,location from varer order by varenr",__FILE__ . " linje " . __LINE__);
+	$q=db_select("select varenr,stregkode,trademark,beskrivelse,kostpris,salgspris,retail_price,notes,enhed,gruppe,min_lager,max_lager,location from varer order by varenr",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$varenr=$r['varenr'];
 		$beskrivelse=str_replace('"',"''",$r['beskrivelse']);
 		$stregkode=$r['stregkode'];
-		$kostpris=dkdecimal($r['kostpris']);# *1;
-		$salgspris=dkdecimal($r['salgspris']);#*1;
-		$retail_price=dkdecimal($r['retail_price']);#*1;
-		$min_lager=dkdecimal($r['min_lager']);#*1;
-		$max_lager=dkdecimal($r['max_lager']);#*1;
+		$kostpris=dkdecimal($r['kostpris'],2);# *1;
+		$salgspris=dkdecimal($r['salgspris'],2);#*1;
+		$retail_price=dkdecimal($r['retail_price'],2);#*1;
+		$min_lager=dkdecimal($r['min_lager'],2);#*1;
+		$max_lager=dkdecimal($r['max_lager'],2);#*1;
 
-		$linje='"'.$varenr.'"'.chr(9).'"'.$stregkode.'"'.chr(9).'"'.$beskrivelse.'"'.chr(9).$kostpris.chr(9).$salgspris.chr(9).$retail_price.chr(9).'"'.$r['notes'].'"'.chr(9).'"'.$r['enhed'].'"'.chr(9).$r['gruppe'].chr(9).$min_lager.chr(9).$max_lager.chr(9).'"'.$r['location'].'"';
+		$linje='"'.$varenr.'";"'.$stregkode.'";"'.$r['trademark'].'";"'.$beskrivelse.'"'.';'.$kostpris.';'.$salgspris.';'.$retail_price.';'.'"'.$r['notes'].'";"'.$r['enhed'].'"'.';'.$r['gruppe'].';'.$min_lager.';'.$max_lager.';'.'"'.$r['location'].'"';
 		$linje=str_replace("\n","",$linje);
 		if ($charset=="UTF-8") $linje=utf8_decode($linje);
 		fwrite($fp, $linje."\r\n");
@@ -78,7 +85,6 @@ print "<tr><td align=center> H&oslash;jreklik her: </td><td $top_bund><a href='$
 print "<tr><td align=center colspan=2> V&aelig;lg \"gem destination som\"</td></tr>";
 
 print "</tbody></table>";
-
 ?>
 </tbody>
 </table>

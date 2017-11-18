@@ -1,6 +1,11 @@
 <?php
 ob_start(); //Starter output buffering
-// ------------finans/kassekladde.php------lap 3.5.0---2015.01.20------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ------------finans/kassekladde.php------lap 3.6.7---2017.03.21------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -10,7 +15,7 @@ ob_start(); //Starter output buffering
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -19,7 +24,7 @@ ob_start(); //Starter output buffering
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 2012.08.09 søg 20120809 V. openpostopslag viser både kreditorer og debitorer hvis de har samme kontonr - rettet 
@@ -42,17 +47,16 @@ ob_start(); //Starter output buffering
 // 2015.05.21 Indsat begrænsning på antal bilag der kan tilføjes #20150521
 // 2015.12.10 Indført brug af piletaster ctrl-pil - søg formnavi
 // 2015.12.10	Kontrol for dubletposteringer. Søg dublet & $dub
+// 2017.03.21 Forbedring af søgning ved opslag således at finans, debitor & kreditorkonto lister de konto hvor teksten indgår.
+// 2017.04.18 Tilføjet '&& !$faktura[$x]' så der kan laves opslag på falturanr samt ($submit!='Opslag' &&) så der kan laves opslag uden feltindhold. 20170418
+// 2017.04.19 Det autogenererede bilagsnr blev stående hvis nederste linje blev slettet.
+
 
 @session_start();
 $s_id=session_id();
 $title="kassekladde";
 $modulnr=2;
 $css="../css/standard.css";
-
-$browser=strtolower($_SERVER['HTTP_USER_AGENT']);
-if (strstr($browser,'opera')) $browser="opera";
-elseif (strstr($browser,'firefox')) $browser="firefox";
-else $browser="ukendt";
 
 $afd=array(NULL);$amount=array(NULL);$ansat=array(NULL);$belob=array(NULL);$beskrivelse=array();;$betal_id=array(NULL);$bilag=array(NULL);
 $dato=array(NULL);$d_type=array(NULL);$debet=array(NULL);$faktura=array(NULL);$forfaldsdate=array(NULL);$forfaldsdato=array(NULL);
@@ -64,7 +68,9 @@ $belob_ligslut=NULL;$belob_ligstart=NULL;$beskrivelse_ligslut=NULL;$beskrivelse_
 $debet_ligslut=NULL;$debet_ligstart=NULL;$d_type_ligslut=NULL;$d_type_ligstart=NULL;
 $find=NULL;
 $k_type_ligslut=NULL;$k_type_ligstart=NULL;$kontrolkonto=NULL;$kontrolsaldo=NULL;$kredit_ligslut=NULL;$kredit_ligstart=NULL;$kladde_id=NULL;$kladdenote=NULL;$regnstart=NULL;
-$simuler=NULL;$sletstart=NULL;$sletslut=NULL;$opslag_id=NULL;$lukket=NULL;$linjebg=NULL;$submit=NULL;
+$lukket=NULL;$linjebg=NULL;$opslag_id=NULL;
+$restlig=NULL;
+$simuler=NULL;$sletrest=NULL;$sletstart=NULL;$sletslut=NULL;$submit=NULL;
 $vis_afd=NULL;	$vis_ansat=NULL;$vis_bet_liste=NULL;$vis_forfald=NULL;$vis_projekt=NULL;$vis_valuta=NULL;
 $fejl=0;$x=0;$y=0;
 
@@ -170,7 +176,7 @@ if($_GET) {
 	$projekt[$x]=if_isset($_GET['projekt']);
 	$ansat[$x]=if_isset($_GET['ansat']);
 	$valuta[$x]=if_isset($_GET['valuta']);
-
+	$find=if_isset($_GET['find']);
 	$beskrivelse[$x]=trim($beskrivelse[$x]);
 	$d_type[$x]=trim($d_type[$x]);
 	$debet[$x]=trim($debet[$x])*1;
@@ -181,7 +187,7 @@ if($_GET) {
 
 	if ($kksort) db_modify("update grupper set box1='$kksort' where ART='KASKL' and kode='1' and kodenr='$bruger_id'",__FILE__ . " linje " . __LINE__);
 	if (($sort)&&($funktion)) {
-		$funktion($sort,$fokus,$x,$id[$x],$kladde_id,$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$lobenr[$x]);
+		$funktion($find,$sort,$fokus,$x,$id[$x],$kladde_id,$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$lobenr[$x]);
 	}
 	$y=0;
 	$query = db_select("select kontonr from kontoplan where kontotype != 'H' and kontotype != 'Z' and regnskabsaar=$regnaar",__FILE__ . " linje " . __LINE__);
@@ -192,14 +198,18 @@ if($_GET) {
 	if ($kladde_id) {
 		$row =db_fetch_array(db_select("select bogfort from kladdeliste where id = $kladde_id",__FILE__ . " linje " . __LINE__));
 		if (($row['bogfort']=='-')&&(($id[$x])||($lobenr[$x]||($x)))) {
-			if ($id[$x]) db_modify("update tmpkassekl set d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where id='$id[$x]' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
-			elseif ($lobenr[$x]) {
-				db_modify("update tmpkassekl set bilag='$bilag[$x]', d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where lobenr='$lobenr[$x]' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
+			if ($id[$x]) {
+					$qtxt="update tmpkassekl set beskrivelse='$beskrivelse[$x]',d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where id='$id[$x]' and kladde_id='$kladde_id'";
+#				db_modify("update tmpkassekl set d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where id='$id[$x]' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
+			}	elseif ($lobenr[$x]) {
+				$qtxt="update tmpkassekl set bilag='$bilag[$x]',beskrivelse='$beskrivelse[$x]',d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where lobenr='$lobenr[$x]' and kladde_id='$kladde_id'";
+#				db_modify("update tmpkassekl set bilag='$bilag[$x]', beskrivelse='$beskrivelse[$x]',d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where lobenr='$lobenr[$x]' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
+			} else {
+				$qtxt="update tmpkassekl set bilag='$bilag[$x]',d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where lobenr='$x' and kladde_id='$kladde_id'";
+#				db_modify("update tmpkassekl set bilag='$bilag[$x]',d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where lobenr='$x' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
 			}
-			else {
-				db_modify("update tmpkassekl set bilag='$bilag[$x]',d_type='$d_type[$x]', debet='$debet[$x]', k_type='$k_type[$x]', kredit='$kredit[$x]', faktura='$faktura[$x]', amount='$belob[$x]', momsfri='$momsfri[$x]', afd='$afd[$x]', projekt='$projekt[$x]', ansat='$ansat[$x]', valuta='$valuta[$x]',forfaldsdate='$forfaldsdato[$x]',betal_id='$betal_id[$x]' where lobenr='$x' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
-			}
-			kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kontonr,$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x);
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kontonr[$x],$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x);
 		}
 		if ($fejl) $submit="Gem";
 	}
@@ -246,13 +256,7 @@ if ($_POST) {
 
 		$y="bila".$x;
 		$bilag[$x]=trim(if_isset($_POST[$y]));
-#echo "1 bilag $bilag[$x]<br>";		
-#		if ($id[$x] && $bilag[$x]=='') {
-#			$bilag[$x]="-";  
-#echo "2 bilag $bilag[$x]<br>";		
-#			} else
 			if (!$bilag[$x]) $bilag[$x]='0'; # PHR 02.09.06
-#echo "3 bilag $bilag[$x]<br>";		
 		$y="dato".$x;
 		$dato[$x]=trim(if_isset($_POST[$y]));
 		$y="besk".$x;
@@ -287,8 +291,13 @@ if ($_POST) {
 		$betal_id[$x]=trim(if_isset($_POST[$y]));
 		$y="moms".$x;
 		$momsfri[$x]=if_isset($_POST[$y]);
-		if ($bilag[$x]==$bilag[$x-1] && $dato[$x]==$dato[$x-1] && $beskrivelse[$x]==$beskrivelse[$x-1] && !$debet[$x] && !$kredit[$x]) $bilag[$x]='-';
-		elseif (!$bilag[$x] && !$dato[$x] && !$beskrivelse[$x] && !$debet[$x] && !$kredit[$x]) $bilag[$x]='-';
+		if ($submit!='Opslag' && (!$bilag[$x] || $bilag[$x]==$bilag[$x-1] || $bilag[$x]-1==$bilag[$x-1]) && (!$dato[$x] || $dato[$x]==$dato[$x-1]) && (!$beskrivelse[$x] || $beskrivelse[$x]==$beskrivelse[$x-1]) && !$d_type[$x] && !$k_type[$x] && !$debet[$x] && !$kredit[$x] && !$faktura[$x] && !$belob[$x]) $bilag[$x]='-';#20170418
+		elseif (!$bilag[$x] && !$dato[$x] && !$beskrivelse[$x] && !$d_type[$x] && !$k_type[$x] && !$debet[$x] && !$kredit[$x]) $bilag[$x]='-';
+		elseif ($bilag[$x-1] == '-' && $dato[$x] == $dato[$x-2] && !$beskrivelse[$x] && !$d_type[$x] && !$k_type[$x] && !$debet[$x] && !$kredit[$x]) $bilag[$x]='-'; # 20170419
+		if (($bilag[$x]=="-*")) $sletrest=1; 
+		if ($sletrest) $bilag[$x]='-';
+		if (($bilag[$x]=="=*")) $restlig=1; 
+		if ($restlig) $bilag[$x]='=';
 		if ($bilag[$x]=="=") $bilag[$x] = $bilag[$x-1];
 		if ($bilag[$x]=="+") $bilag[$x] = $bilag[$x-1]+1;
 		if (substr($bilag[$x],0,1)=="+") $bilag[$x] = $bilag[$x-1]+1;
@@ -311,7 +320,7 @@ if ($_POST) {
 		if ($kredit[$x]) $kontrolsum=$kontrolsum-$dkkamount[$x];
 		$bilagssum[$x]=$kontrolsum;
 		# fjerner autogenererede linjer hvis bilaget er i balance
-		if (!$kontrolsum && !$debet[$x] && !$kredit[$x] && $bilag[$x]==$bilag[$x-1] && $dato[$x]==$dato[$x-1] && $beskrivelse[$x]==$beskrivelse[$x-1]) $bilag[$x]="-";
+		if (!$kontrolsum && !$d_type[$x] && !$k_type[$x] && !$debet[$x] && !$kredit[$x] && $bilag[$x]==$bilag[$x-1] && $dato[$x]==$dato[$x-1] && $beskrivelse[$x]==$beskrivelse[$x-1]) $bilag[$x]="-";
 		if ((!$sletslut) && ($bilag[$x]=="->")) {
 			$sletstart=$x;
 			$bilag[$x]="-";
@@ -328,6 +337,9 @@ if ($_POST) {
 			$sletstart='';$sletslut='';
 		}
 ## Bilag		
+#		if ($bilag[$x]=='-*') $sletrest=1;
+#		if ($sletrest) $bilag[$x]='-';
+
 		if ((!$bilag_ligslut) && ($bilag[$x]=="=>")) {
 			$bilag_ligstart=$x;
 			$bilag[$x]=$bilag[$x-1];
@@ -537,10 +549,10 @@ if ($_POST) {
 		if ((strpos($bilag[$x],'+'))&&($kladde_id)) {
 			indsaet_linjer($kladde_id,$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x]*1,$k_type[$x],$kredit[$x]*1,$faktura[$x],$belob[$x],$afd[$x]*1,$ansat[$x],$projekt[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x]*1,$momsfri[$x]);
 		}
-		if (($bilag[$x])&&($bilag[$x]!="-")&&($bilag[$x]!="->")&&($bilag[$x]!="<-")&&(!strpos($bilag[$x],'+'))&&(!is_numeric($bilag[$x]))) {
+		if (($bilag[$x])&&($bilag[$x]!="-")&&($bilag[$x]!="->")&&($bilag[$x]!="<-")&&(!strpos($bilag[$x],'+'))&&(substr($bilag[$x],-1)!='r')&&(!is_numeric($bilag[$x]))) {//20160909 undtaget * til brug for bilagsrenum
 			 print "<BODY onLoad=\"javascript:alert('Ulovlig v&aelig;rdi i bilagsfelt (Bilag nr $bilag[$x])')\">";
 			$fejl=1;
-		} elseif (($bilag[$x])&&($bilag[$x]!="-")&&($bilag[$x]!="->")&&($bilag[$x]!="<-")) $bilag[$x]=$bilag[$x]*1;
+		} elseif (($bilag[$x])&&($bilag[$x]!="-")&&($bilag[$x]!="->")&&(substr($bilag[$x],-1)!='r')&&($bilag[$x]!="<-")) $bilag[$x]=$bilag[$x]*1; //20160909 undtaget * til brug for bilagsrenum
 		if ($bilag[$x] == "-") {$dato[$x]='';$beskrivelse[$x]='';$d_type[$x]='';$debet[$x]='';$k_type[$x]='';$kredit[$x]='';$faktura[$x]='';$belob[$x]='';$momsfri[$x]='';$afd[$x]='';$projekt[$x]='';$ansat[$x]='';$valuta[$x]='';$forfaldsdato[$x]='';$betal_id[$x]='';}
 		if (!isset($id[$x])) $id[$x]='0';
 		if (!$id[$x]) $id[$x]='0';
@@ -580,7 +592,6 @@ if ($_POST) {
 				$acc_ant=$x;
 			}
 			if ($submit == "Opslag") $opslag_id=substr($fokus,4,strlen($fokus)-4);
-
 			if ($kladde_id) {
 				$row =db_fetch_array(db_select("select bogfort from kladdeliste where id = $kladde_id",__FILE__ . " linje " . __LINE__));
 				if ($row['bogfort']=='-') {
@@ -601,29 +612,29 @@ if ($_POST) {
 			}
 #******************************
 			if ($submit == "Opslag") {
-				if (strtoupper($debet[$opslag_id])=="K") {$d_type[$opslag_id]="K";}
-				elseif (strtoupper($debet[$opslag_id])=="D") {$d_type[$opslag_id]="D";}
+				if (strtoupper($debet[$opslag_id])=="K") $d_type[$opslag_id]="K";
+				elseif (strtoupper($debet[$opslag_id])=="D") $d_type[$opslag_id]="D";
 #				else {$d_type[$opslag_id]="F";}
-				if (strtoupper($kredit[$opslag_id])=="K") {$k_type[$opslag_id]="K";}
-				elseif (strtoupper($kredit[$opslag_id])=="D") {$k_type[$opslag_id]="D";}
+				if (strtoupper($kredit[$opslag_id])=="K") $k_type[$opslag_id]="K";
+				elseif (strtoupper($kredit[$opslag_id])=="D") $k_type[$opslag_id]="D";
 #				else {$k_type[$opslag_id]="F";}
 				$d_type[$opslag_id]=trim(strtoupper($d_type[$opslag_id]));
 				$k_type[$opslag_id]=trim(strtoupper($k_type[$opslag_id]));
 				if ((strstr($fokus,"debe"))||(strstr($fokus,"d_ty"))) {
-					if($d_type[$opslag_id]=="K") kreditoropslag('firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
-					elseif($d_type[$opslag_id]=="D") debitoropslag('firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
-					else finansopslag($fokus,$opslag_id);
+					if($d_type[$opslag_id]=="K") kreditoropslag($find,'firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
+					elseif($d_type[$opslag_id]=="D") debitoropslag($find,'firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
+					else finansopslag($find,'kontonr',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
 				}
 				if ((strstr($fokus,"kred"))||(strstr($fokus,"k_ty"))) {
-					if($k_type[$opslag_id]=="K") kreditoropslag('firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
-					if($k_type[$opslag_id]=="D") debitoropslag('firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
-					else {finansopslag($fokus,$opslag_id);}
+					if($k_type[$opslag_id]=="K") kreditoropslag($find,'firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
+					if($k_type[$opslag_id]=="D") debitoropslag($find,'firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
+					else finansopslag($find,'kontonr',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
 				}
-				if ((strstr($fokus,"fakt"))||(strstr($fokus,"belo"))) openpost ('firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
-				if (strstr($fokus,"afd")) {afd_opslag ($fokus,$opslag_id,$opslag_id);}
-				if (strstr($fokus,"meda")) {ansat_opslag ($fokus,$opslag_id,$opslag_id);}
-				if (strstr($fokus,"proj")) {projekt_opslag ($fokus,$opslag_id,$opslag_id);}
-				if (strstr($fokus,"valu")) {valuta_opslag ($fokus,$opslag_id,$opslag_id);}
+				if ((strstr($fokus,"fakt"))||(strstr($fokus,"belo"))) openpost($find,'firmanavn',$fokus,$opslag_id,$id[$opslag_id],$kladde_id,$bilag[$opslag_id],$dato[$opslag_id],$beskrivelse[$opslag_id],$d_type[$opslag_id],$debet[$opslag_id],$k_type[$opslag_id],$kredit[$opslag_id],$faktura[$opslag_id],$belob[$opslag_id],$momsfri[$opslag_id],$afd[$opslag_id],$projekt[$opslag_id],$ansat[$opslag_id],$valuta[$opslag_id],$forfaldsdato[$opslag_id],$betal_id[$opslag_id],$opslag_id);
+				if (strstr($fokus,"afd")) afd_opslag ($fokus,$opslag_id,$opslag_id);
+				if (strstr($fokus,"meda")) ansat_opslag ($fokus,$opslag_id,$opslag_id);
+				if (strstr($fokus,"proj")) projekt_opslag ($fokus,$opslag_id,$opslag_id);
+				if (strstr($fokus,"valu")) valuta_opslag ($fokus,$opslag_id,$opslag_id);
 		 	}
 			if (strstr($submit,"Simul")) {
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../finans/bogfor.php?kladde_id=$kladde_id&funktion=simuler\">";
@@ -694,7 +705,6 @@ ob_end_flush();	//Sender det "bufferede" output afsted...
 	$row = db_fetch_array($query);
 	$kladdenote = htmlentities(stripslashes($row['kladdenote']),ENT_QUOTES,$charset);
 	$bogfort = $row['bogfort'];
-
 }
 $x=0;
 if (!$simuler) {
@@ -742,18 +752,18 @@ if (!$udskriv) {
 		if ($kontrolkonto == "-") $kontrolkonto = "";
 		print "<td width=\"80px\"><span title= 'Angiv kontonummer til kontrol af kontobev&aelig;gelser'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=kontrolkonto value=\"$kontrolkonto\" onchange=\"javascript:docChange = true;\"></td>";
 	} elseif ($bogfort!="S") {
-		print "<td width=\"80px\" align=\"center\"><span title=\"Klik her for at opdatere\"><input type=submit style=\"width: 5em\" accesskey=\"o\" value=\"Opdater\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+		print "<td width=\"80px\" align=\"center\"><span title=\"Klik her for at opdatere\"><input type=submit style=\"width:120px;float:left\" accesskey=\"o\" value=\"Opdater\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 	}
 	print "<td width=\"10%\" align=\"right\"><a href=\"../finans/kassekladde.php?kladde_id=$kladde_id&udskriv=1\" target=\"blank\"><img src=\"../ikoner/print.png\" style=\"border: 0px solid;\"></a></td>";
-	#print "</tr><tr><td><br color=\"$bgcolor5\" \"align=center\"></td></tr>\n";
+	#print "</tr><tr><td><br color=\"$bgcolor5\" \"align=\"center\"\"></td></tr>\n";
 	print "</tbody></table>";# Tabel 1.2 <- bemærkningstekst
 	#}
 	# ####################################################################################################
 }
 if ($udskriv) print "<tr><td style=\"width:100%;\">";
 else print "<tr><td style=\"height:100%;width:100%;\"><div class=\"vindue\">"; 
-if(($bogfort && $bogfort!='-')||$udskriv) print "<table cellpadding=\"0\" cellspacing=\"2\" border=\"0\" align = \"center\" valign = \"top\">";
-elseif ($browser=="opera" || $browser=="firefox") print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align = \"center\" valign = \"top\">";
+if(($bogfort && $bogfort!='-')||$udskriv) print "<table cellpadding=\"1\" cellspacing=\"3\" border=\"0\" align = \"center\" valign = \"top\">";
+#elseif ($browser=="opera" || $browser=="firefox") print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align = \"center\" valign = \"top\">";
 else print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align = \"center\" valign = \"top\" class=\"formnavi\">";
 print "<tbody>"; # Tabel 1.3 -> kladdelinjer
 print "<tr>";
@@ -776,6 +786,7 @@ if (db_fetch_array(db_select("select id from kassekladde where kladde_id = '$kla
 	if ($vis_bet_id) print "<td  align=\"center\"><b> <span title= 'Betalingsid fra girokort - Kun nummeret skal skrives'>Betal.id</b></td>";
 }
 print "<td align=\"center\" width=\"30px\"><b> <span title= 'Afm&aelig;rk her, hvis der ikke skal tr&aelig;kkes moms'>&nbsp;u/m</b></td>";
+#print "<td align=\"right\" width=\"30px\"><b> <span title= 'Afm&aelig;rk her, hvis der ikke skal tr&aelig;kkes moms'>&nbsp;u/m</b></td>";
 print "</tr>\n";
 
 #####################################  Output  #################################
@@ -929,7 +940,7 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 			print "<td><br></td>";
 			if ($vis_bet_id) print "<td><br></td>";
 		}
-		if (strstr($momsfri[$y],"on")) {print "<td align=center> V</td>";}
+		if (strstr($momsfri[$y],"on")) {print "<td align=\"center\"> V</td>";}
 		else {print "<td> <br></td>";}
 		if (!$udskriv && $bogfort!='S') print "<td title=\"Tilbagef&oslash;r postering\"><a href='../finans/kassekladde.php?kladde_id=$kladde_id&ompost=$id[$y]'><img alt=\"undo\" src=\"../ikoner/undo.png\" style=\"border: 0px solid ; width: 18px; height: 17px;\"></a></td>";
 		print "</tr>\n";
@@ -1003,34 +1014,34 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 			print "<td>
 			<span onclick=\"return overlib('".$libtxt."', WIDTH=800);\" onmouseout=\"return nd();\">
 			<input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=debe$y $de_fok value =\"$debet[$y]\" onchange=\"javascript:docChange = true;\">
-			</span></td>";
-		} else print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=debe$y $de_fok value =\"$debet[$y]\" title=\"$debettext[$y]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=k_ty$y $de_fok value =\"$k_type[$y]\" onchange=\"javascript:docChange = true;\"></td>";
+			</span></td>\n";
+		} else print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=debe$y $de_fok value =\"$debet[$y]\" title=\"$debettext[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=\"k_ty$y\" $de_fok value =\"$k_type[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		if (($d_type[$y]=='D' || $d_type[$y]=='K') && $debet[$y] && !$kredit[$y]) {
 			$libtxt=sidste_5($debet[$y],$d_type[$y],'K');
 			print "<td>
 			<span onclick=\"return overlib('".$libtxt."', WIDTH=800);\" onmouseout=\"return nd();\">
 			<input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=kred$y $de_fok value =\"$kredit[$y]\" onchange=\"javascript:docChange = true;\">
-			</span></td>";
-		} else print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=kred$y $de_fok value =\"$kredit[$y]\" title= \"$kredittext[$y]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=fakt$y $de_fok value =\"$faktura[$y]\" onchange=\"javascript:docChange = true;\"></td>";
+			</span></td>\n";
+		} else print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=kred$y $de_fok value =\"$kredit[$y]\" title= \"$kredittext[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=fakt$y $de_fok value =\"$faktura[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		if ($valuta[$y]=='DKK') $title="";
 		else $title="DKK: ".dkdecimal($dkkamount[$y]);
-		print "<td title=\"$title\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=belo$y $de_fok value =\"$belob[$y]\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_afd) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=afd_$y $de_fok value =\"$afd[$y]\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_ansat) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=meda$y $de_fok value =\"$ansat[$y]\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_projekt) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=proj$y $de_fok value =\"$projekt[$y]\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_valuta) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px;\" name=valu$y $de_fok value =\"$valuta[$y]\" onchange=\"javascript:docChange = true;\"></td>";
+		print "<td title=\"$title\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=belo$y $de_fok value =\"$belob[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_afd) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=afd_$y $de_fok value =\"$afd[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_ansat) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=meda$y $de_fok value =\"$ansat[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_projekt) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=proj$y $de_fok value =\"$projekt[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_valuta) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px;\" name=valu$y $de_fok value =\"$valuta[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		if ($k_type[$y]=='K' || $d_type[$y]=='D') {
-			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=forf$y $de_fok value =\"$forfaldsdato[$y]\" onchange=\"javascript:docChange = true;\"></td>";
-			if ($vis_bet_id) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=b_id$y $de_fok value =\"$betal_id[$y]\" onchange=\"javascript:docChange = true;\"></td>";
+			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=forf$y $de_fok value =\"$forfaldsdato[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
+			if ($vis_bet_id) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=b_id$y $de_fok value =\"$betal_id[$y]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		} elseif ($vis_forfald) {
-			print "<td><input class=\"inputbox\" readonly=readonly size=10><br></td>";
-			if ($vis_bet_id) print "<td><input class=\"inputbox\" readonly=readonly size=10><br></td>";
+			print "<td><input class=\"inputbox\" style=\"left;width:75px;\" readonly=\"readonly\" size=10><br></td>\n";
+			if ($vis_bet_id) print "<td><input class=\"inputbox\" readonly=\"readonly\" size=10><br></td>\n";
 		}
-		if ($momsfri[$y] == 'on') {print "<td align=\"center\"><input class=\"inputbox\" type=checkbox name=moms$y checked onchange=\"javascript:docChange = true;\" ></td>";}
-		else {print"<td align=\"center\"><input class=\"inputbox\" type=checkbox name=moms$y onchange=\"javascript:docChange = true;\"></td>";}
-		if ($kontrolkonto) {print "<td align=right>".dkdecimal($kontrolsaldo) ."</td>";}
+		if ($momsfri[$y] == 'on') {print "<td align=\"center\"><input class=\"inputbox\" type=checkbox name=moms$y checked onchange=\"javascript:docChange = true;\" ></td>\n";}
+		else {print"<td align=\"center\"><input class=\"inputbox\" type=checkbox name=moms$y onchange=\"javascript:docChange = true;\"></td>\n";}
+		if ($kontrolkonto) {print "<td align=right>".dkdecimal($kontrolsaldo) ."</td>\n";}
 		print "<input type=hidden name=\"id[$y]\" value='$id[$y]'>";
 		print "<input type=hidden name=\"dkka$y\" value='$dkkamount[$y]'>";
 		print "<input type=hidden name=\"transdate[$y]\" value='$transdate[$y]'>";
@@ -1103,31 +1114,31 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 		if (!isset($projekt[$x]))$projekt[$x]=NULL;if (!isset($valuta[$x]))$valuta[$x]=NULL;					if (!isset($ansat[$x]))$ansat[$x]=NULL;
 		print "<tr>";
 		if ($vis_bilag && !$fejl) { #20140425
-			if ($kladde_id && $intern_bilag) print "<td title=\"klik her for at vedh&aelig;fte et bilag\"><a href=\"../includes/bilag.php?kilde=kassekladde&bilag_id=$id[$x]&bilag=$bilag[$x]&ny=ja&kilde_id=$kladde_id&fokus=bila$x\"><img  style=\"border: 0px solid\" src=\"../ikoner/clip.png\"></a></td>";
-			else print "<td></td>";
+			if ($kladde_id && $intern_bilag) print "<td title=\"klik her for at vedh&aelig;fte et bilag\"><a href=\"../includes/bilag.php?kilde=kassekladde&bilag_id=$id[$x]&bilag=$bilag[$x]&ny=ja&kilde_id=$kladde_id&fokus=bila$x\"><img  style=\"border: 0px solid\" src=\"../ikoner/clip.png\"></a></td>\n";
+			else print "<td></td>\n";
 		}
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=bila$x $de_fok value =\"$bilag[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=\"dato$x\" $de_fok value =\"$dato[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:300px;\" name=besk$x $de_fok value =\"$beskrivelse[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=\"d_ty$x\" $de_fok value =\"$d_type[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=debe$x $de_fok value =\"$debet[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=k_ty$x $de_fok value =\"$k_type[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=kred$x $de_fok value=\"$kredit[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=fakt$x $de_fok value=\"$faktura[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=belo$x $de_fok value=\"$belob\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_afd) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=afd_$x $de_fok value=\"$afd[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_ansat) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=meda$x $de_fok value =\"$ansat[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_projekt) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=proj$x $de_fok value =\"$projekt[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_valuta) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px;\" name=valu$x $de_fok value =\"$valuta[$x]\" onchange=\"javascript:docChange = true;\"></td>";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"bila$x\" $de_fok value =\"$bilag[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=\"dato$x\" $de_fok value =\"$dato[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:300px;\" name=\"besk$x\" $de_fok value =\"$beskrivelse[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=\"d_ty$x\" $de_fok value =\"$d_type[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"debe$x\" $de_fok value =\"$debet[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=\"k_ty$x\" $de_fok value =\"$k_type[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"kred$x\" $de_fok value=\"$kredit[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"fakt$x\" $de_fok value=\"$faktura[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"belo$x\" $de_fok value=\"$belob\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_afd) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"afd_$x\" $de_fok value=\"$afd[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_ansat) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"meda$x\" $de_fok value =\"$ansat[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_projekt) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"proj$x\" $de_fok value =\"$projekt[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_valuta) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px;\" name=\"valu$x\" $de_fok value =\"$valuta[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		if ($k_type[$y]=='K' || $d_type[$y]=='D') {
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=forf$x $de_fok value =\"$forfaldsdato[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=b_id$x $de_fok value =\"$betal_id[$x]\" onchange=\"javascript:docChange = true;\"></td>";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=\"forf$x\" $de_fok value =\"$forfaldsdato[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=\"b_id$x\" $de_fok value =\"$betal_id[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		} elseif ($vis_forfald) {
-			print "<td><input  class=\"inputbox\" readonly=readonly size=10><br></td>";
-			if ($vis_bet_id) print "<td><input  class=\"inputbox\" readonly=readonly size=10><br></td>";
+			print "<td><input  class=\"inputbox\" readonly=\"readonly\" style=\"left;width:75px;\" size=10><br></td>\n";
+			if ($vis_bet_id) print "<td><input  class=\"inputbox\" readonly=\"readonly\" size=10><br></td>\n";
 		}
-		if ($momsfri[$x] == 'on') {print"<td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=moms$x checked onchange=\"javascript:docChange = true;\"></td>";}
-		else {print"<td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=moms$x onchange=\"javascript:docChange = true;\"></td>";}
+		if ($momsfri[$x] == 'on') {print"<td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"moms$x\" checked onchange=\"javascript:docChange = true;\"></td>\n";}
+		else {print"<td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"moms$x\" onchange=\"javascript:docChange = true;\"></td>\n";}
 	}
 	if ($x!=1 || $bilag[$x]) $bilagsnr=$bilag[$x];
 	if ($x < 3000) {
@@ -1139,35 +1150,35 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 	if ($x==1) {$bilag[1]='';$dato[1]='';$beskrivelse[1]='';$d_type[1]='';$debet[1]='';$k_type[1]='';$kredit[1]='';$faktura[1]='';$belob[1]='';$momsfri[1]='';$afd[1]='';}
 	for ($z=$x;$z<=$y;$z++) {
 		print "<tr>";
-		if ($vis_bilag && !$fejl) print "<td><br></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=bila$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=dato$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:300px;\" name=besk$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=d_ty$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=debe$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=k_ty$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=kred$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=fakt$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=belo$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_afd) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=afd_$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_ansat) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=meda$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_projekt) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=proj$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-		if ($vis_valuta) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px;\" name=valu$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-#		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=forf$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
-#		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=b_id$z $de_fok onchange=\"javascript:docChange = true;\"></td>";
+		if ($vis_bilag && !$fejl) print "<td><br></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"bila$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=\"dato$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:300px;\" name=\"besk$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=\"d_ty$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"debe$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:25px;\" name=\"k_ty$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"kred$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"fakt$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:75px;\" name=\"belo$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_afd) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"afd_$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_ansat) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"meda$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_projekt) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"proj$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+		if ($vis_valuta) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px;\" name=\"valu$z\" $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+#		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=forf$z $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
+#		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=b_id$z $de_fok onchange=\"javascript:docChange = true;\"></td>\n";
 		if ($vis_forfald) {
-			print "<td><input  class=\"inputbox\" readonly=readonly size=10><br></td>";
-			if ($vis_bet_id) print "<td><input  class=\"inputbox\" readonly=readonly size=10><br></td>";
+			print "<td><input  class=\"inputbox\"  style=\"left;width:75px;\" readonly=\"readonly\" size=\"10\"><br></td>\n";
+			if ($vis_bet_id) print "<td><input  class=\"inputbox\" readonly=\"readonly\" size=\"10\"><br></td>\n";
 		}
-		print "<td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=moms$z onchange=\"javascript:docChange = true;\"></td>";
+		print "<td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"moms$z\" onchange=\"javascript:docChange = true;\"></td>\n";
 		print "</tr>\n";
 	}
-	if (count($bilag)<10) print "<tr><td align=\"center\" colspan=\"8\">Hint - du kan navigere i kassekladen med piletaster hvis du holder [Ctrl] nede (Fungerer ikke i Firefox)</td></tr>";
+	if (count($bilag)<10) print "<tr><td align=\"center\" colspan=\"8\">Hints! - du kan navigere i kassekladen med piletaster hvis du holder [Ctrl] nede (Fungerer ikke i Firefox)</td></tr>";
 	print "<input type=\"hidden\" name=\"fokus\" id=\"fokus\">";
 	print "<input type=hidden name=kladde_id value=$kladde_id>";
 	$tidspkt=microtime();
-	print "<input type=hidden name=tidspkt value=$tidspkt>";
-	print "<input type=hidden name=bilagsnr value=$bilagsnr>";
+	print "<input type=hidden name=tidspkt value=\"$tidspkt\">";
+	print "<input type=hidden name=bilagsnr value=\"$bilagsnr\">";
 	print "<input type=hidden name=antal_ex value='$antal_ex'>";
 	print "<input type=hidden name=antal_ny value='$y'>";
 } #end if $bogfort...else
@@ -1182,40 +1193,40 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 	});
 	</script>
 	<?php
-	print "</tbody></table>$div</td></tr>"; # Tabel 1.3 <- Kladdelinjer
+	print "</tbody></table>$div</td><td></td></tr>"; # Tabel 1.3 <- Kladdelinjer
 	print "<tr><td><br></td></tr>\n";
-	print "<tr><td align=center>";
+	print "<tr><td align=\"center\">";
 	print "<table width=\"800px\" border=\"0\" cellspacing=\"0\" cellpadding=\"1\"><tbody><tr>"; # Tabel 1.4 -> Knapper
 	if (!$udskriv) {
 	if ($bogfort=='V'){
 #		print "<input type=hidden name=ny_kladdenote value=\"$kladdenote\">";
-		print "<tr><td colspan=9 align=center><input type=submit accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+		print "<tr><td colspan=9 align=\"center\"><input type=submit accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 		print "</form>";
 #		print "</tbody></table></td></tr>\n";
 #		print "</tbody></table>";
 	} elseif ($bogfort=='!'){
 #		print "<input type=hidden name=ny_kladdenote value=\"$kladdenote\">";
-		print "<tr><td colspan=9 align=center><input type=submit accesskey=\"b\" value=\"Tilbagef&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+		print "<tr><td colspan=9 align=\"center\"><input type=submit accesskey=\"b\" value=\"Tilbagef&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 		print "</form>";
 #		print "</tbody></table></td></tr>\n";
 #		print "</tbody></table>";
 	} elseif ($bogfort=='S'){
-		print "<tr><td colspan=9 align=center><input type=submit accesskey=\"a\" value=\"Annuller simulering\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+		print "<tr><td colspan=9 align=\"center\"><input type=submit accesskey=\"a\" value=\"Annuller simulering\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 		print "</form>";
 	} else {
-		print "<td align=center><span title=\"Klik her for at gemme\"><input type=submit style=\"width: 5em\" accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
-		print "<td align=center><span title=\"Opslag - din mark&oslash;rs placering angiver hvilken tabel, opslag foretages i\"><input type=submit style=\"width: 5em\" accesskey=\"o\" value=\"Opslag\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+		print "<td align=\"center\"><span title=\"Klik her for at gemme\"><input type=submit style=\"width:120px;float:left\" accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>\n";
+		print "<td align=\"center\"><span title=\"Opslag - din mark&oslash;rs placering angiver hvilken tabel, opslag foretages i\"><input type=submit style=\"width:120px;float:left\" accesskey=\"o\" value=\"Opslag\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 		if ($kladde_id && !$fejl) {
-			print "<td align=center><span title=\"Simulering af bogf&oslash;ring viser bev&aelig;gelser i kontoplanen\"><input type=submit style=\"width: 5em\" accesskey=\"s\" value=\"Simul&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
-			print "<td align=center><span title=\"Bogf&oslash;r - der foretages f&oslash;rst en simulering, som du skal bekr&aelig;fte\"><input type=submit style=\"width: 5em\" accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Simulering af bogf&oslash;ring viser bev&aelig;gelser i kontoplanen\"><input type=submit style=\"width:120px;float:left\" accesskey=\"s\" value=\"Simul&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Bogf&oslash;r - der foretages f&oslash;rst en simulering, som du skal bekr&aelig;fte\"><input type=submit style=\"width:120px;float:left\" accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 			if (!$fejl && db_fetch_array(db_select("select id from ordrer where status=3",__FILE__ . " linje " . __LINE__))) {
-				print "<td align=center><span title=\"Henter afsluttede ordrer fra ordreliste\"><input type=submit style=\"width: 5em\" accesskey=\"h\" value=\"Hent ordrer\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+				print "<td align=\"center\"><span title=\"Henter afsluttede ordrer fra ordreliste\"><input type=submit style=\"width:120px;float:left\" accesskey=\"h\" value=\"Hent ordrer\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 			}
 			if(db_fetch_array(db_select("select * from grupper where art = 'DIV' and kodenr = '2' and box6='on'",__FILE__ . " linje " . __LINE__))) {
-				print "<td align=center><input type=submit style=\"width: 5em\" accesskey=\"d\" value=\"DocuBizz\" name=\"submit\" onclick=\"javascript:docChange = false;\" onclick=\"return confirm('Importer data fra DocuBizz?')\"></td>";
+				print "<td align=\"center\"><input type=submit style=\"width:120px;float:left\" accesskey=\"d\" value=\"DocuBizz\" name=\"submit\" onclick=\"javascript:docChange = false;\" onclick=\"return confirm('Importer data fra DocuBizz?')\"></td>";
 			}
-			print "<td align=center><span title=\"Importerer bankposteringer eller andre data fra .csv-fil (kommasepareret fil)\"><input type=submit style=\"width: 5em\" accesskey=\"i\" value=\"Import\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
-			print "<td align=center><span title=\"Finder &aring;bne poster, som modsvarer bel&oslash;b og fakturanummer\"><input type=submit style=\"width: 5em\" accesskey=\"u\" value=\"Udlign\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Importerer bankposteringer eller andre data fra .csv-fil (kommasepareret fil)\"><input type=submit style=\"width:120px;float:left\" accesskey=\"i\" value=\"Import\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Finder &aring;bne poster, som modsvarer bel&oslash;b og fakturanummer\"><input type=submit style=\"width:120px;float:left\" accesskey=\"u\" value=\"Udlign\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 		}
 	}
 	print "</form>";
@@ -1228,7 +1239,7 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 		
 	}
 ######################################################################################################################################
-function debitoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betalings_id,$lobenr) {
+function debitoropslag($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betalings_id,$lobenr) {
 
 	global $bgcolor2;
 	global $top_bund;
@@ -1246,7 +1257,7 @@ function debitoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$besk
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 	print"<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd' accesskey=L>Luk</a></td>";
 	print"<td width=\"80%\" $top_bund>Debitorliste</td>";
-	print "<td width=\"10%\" $top_bund align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"JavaScript:window.open('../debitor/debitorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'><u>Ny</u></a></td>";
+	print "<td width=\"10%\" $top_bund align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"JavaScript:window.open('../debitor/debitorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'><u>Ny</u></a></td>";
 #	else print"<td width=\"10%\" $top_bund align=\"right\"><a href=../debitor/debitorkort.php?returside=../finans/kasseklade.php&id=$id accesskey=N>Ny</a></td>";
 
 	print"</tbody></table>";
@@ -1254,21 +1265,23 @@ function debitoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$besk
 	print"<tr><td valign=\"top\">";
 	print"<table cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"100%\" valign = \"top\">";
 	print"<tbody><tr>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=kontonr&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Kundenr</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=firmanavn&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Navn</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=addr1&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Adresse</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=addr2&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Adresse2</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=postnr&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Postnr</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=bynavn&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>By</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=kontakt&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Kontaktperson</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=tlf&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Telefon</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=kontonr&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Kundenr</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=firmanavn&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Navn</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=addr1&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Adresse</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=addr2&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Adresse2</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=postnr&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Postnr</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=bynavn&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>By</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=kontakt&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Kontaktperson</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=tlf&funktion=debitoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Telefon</a></b></td>";
 	print" </tr>\n";
 
 	 $sort = $_GET['sort'];
 	 if (!$sort) {$sort = "firmanavn";}
+	if ($find && $find!='*') $qtxt="select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, kontakt, tlf from adresser where art = 'D' and firmanavn like '%$find%' order by $sort";
+	else $qtxt="select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, kontakt, tlf from adresser where art = 'D' order by $sort";
 
-
-	$query = db_select("select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, kontakt, tlf from adresser where art = 'D' order by $sort",__FILE__ . " linje " . __LINE__);
+	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+#	$query = db_select("select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, kontakt, tlf from adresser where art = 'D' order by $sort",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
 		if (!$beskrivelse){
 			$beskr=htmlentities(stripslashes($row['firmanavn']),ENT_QUOTES,$charset);
@@ -1276,8 +1289,8 @@ function debitoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$besk
 		else {$beskr=$beskrivelse;}
 		$kontonr=trim($row['kontonr']);
 		print "<tr>";
-		if ((strstr($fokus,"debe"))||(strstr($fokus,"d_ty"))){$tmp="<a href='../finans/kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$kontonr&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>";}
-		else {$tmp="<a href='../finans/kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kontonr&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>";}
+		if ((strstr($fokus,"debe"))||(strstr($fokus,"d_ty"))){$tmp="<a href='../finans/kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$kontonr&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>";}
+		else {$tmp="<a href='../finans/kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kontonr&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>";}
 		print "<td> $tmp $row[kontonr]</a><br></td>";
 		print "<td> $tmp ". stripslashes($row[firmanavn]) ."</a><br></td>";
 		print "<td> $tmp $row[addr1]</a><br></td>";
@@ -1293,8 +1306,9 @@ function debitoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$besk
 	exit;
 }
 ######################################################################################################################################
-function kreditoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betailngs_id,$lobenr) {
+function kreditoropslag($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betailngs_id,$lobenr) {
 	global $bgcolor2;
+	global $charset;
 	global $top_bund;
 	global $x;
 	global $charset;
@@ -1310,39 +1324,40 @@ function kreditoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$bes
 	$belob=trim($belob);
 
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-	print"<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr' accesskey='L'>Luk</a></td>";
+	print"<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find' accesskey='L'>Luk</a></td>";
 	print"<td width=\"80%\" $top_bund>kreditorliste</td>";
-	print "<td width=\"10%\" $top_bund align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"JavaScript:window.open('../kreditor/kreditorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'><u>Ny</u></a></td>";
+	print "<td width=\"10%\" $top_bund align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"JavaScript:window.open('../kreditor/kreditorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><a href='../finans/kassekladde.php?sort=$sort&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'><u>Ny</u></a></td>";
 	print"</tbody></table>";
 	print"</td></tr>\n";
 	print"<tr><td valign=\"top\">";
 	print"<table cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"100%\" valign = \"top\">";
 	print"<tbody><tr>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=kontonr&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Kundenr</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=firmanavn&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Navn</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=addr1&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Adresse</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=addr2&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Adresse2</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=postnr&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Postnr</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=bynavn&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>By</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=kontakt&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Kontaktperson</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=tlf&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Telefon</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=kontonr&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Kreditornr</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=firmanavn&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Navn</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=addr1&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Adresse</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=addr2&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Adresse2</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=postnr&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Postnr</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=bynavn&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>By</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=kontakt&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Kontaktperson</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=tlf&funktion=kreditoropslag&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Telefon</a></b></td>";
 	print" </tr>\n";
 
 
 	 $sort = $_GET['sort'];
-	 if (!$sort) {$sort = 'firmanavn';}
+	 if (!$sort) $sort = 'firmanavn';
+	if ($find && $find!='*') $qtxt="select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, kontakt, tlf from adresser where art = 'K' and firmanavn like '%$find%' order by $sort";
+	else $qtxt="select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, kontakt, tlf from adresser where art = 'K' order by $sort";
 
-
-	$query = db_select("select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, kontakt, tlf from adresser where art = 'K' order by $sort",__FILE__ . " linje " . __LINE__);
+	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)){
 		if (!$beskrivelse){
 			$beskr=htmlentities(stripslashes($row['firmanavn']),ENT_QUOTES,$charset);
 		}
-		else {$beskr=$beskrivelse;}
+		else $beskr=$beskrivelse;
 		$kontonr=trim($row['kontonr']);
 		print "<tr>";
-		if ((strstr($fokus,"debe"))||(strstr($fokus,"d_ty"))){$tmp = "<a href='../finans/kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$kontonr&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>";}
-		else {$tmp="<a href='../finans/kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kontonr&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>";}
+		if ((strstr($fokus,"debe"))||(strstr($fokus,"d_ty"))){$tmp = "<a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$kontonr&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>";}
+		else {$tmp="<a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kontonr&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>";}
 		print "<td> $tmp $row[kontonr]</a><br></td>";
 		print "<td> $tmp ". stripslashes($row['firmanavn']) ."</a><br></td>";
 		print "<td> $tmp $row[addr1]</a><br></td>";
@@ -1357,7 +1372,8 @@ function kreditoropslag($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$bes
 	exit;
 }
 ######################################################################################################################################
-function openpost($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betailngs_id,$lobenr) {
+function openpost($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betailngs_id,$lobenr){
+# ($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betailngs_id,$lobenr) {
 	global $bgcolor;
 	global $bgcolor2;
 	global $bgcolor5;
@@ -1383,7 +1399,7 @@ function openpost($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivel
 #	print"<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 #	print"<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-	print"<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr' accesskey=L>Luk</a></td>";
+	print"<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find' accesskey=L>Luk</a></td>";
 	print"<td width=\"80%\" $top_bund>&Aring;benposter</td>";
 	print"<td width=\"10%\" $top_bund align=\"right\"><br></td>";
 	print"</tbody></table>";
@@ -1391,12 +1407,12 @@ function openpost($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivel
 	print"<tr><td valign=\"top\">";
 	print"<table cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"100%\" valign = \"top\">";
 	print"<tbody><tr>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=konto_nr&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Kundenr</a></b></td>";
-#	print"<td><b> <a 'href=kassekladde.php?sort=konto_nr&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Kundenr</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=firmanavn&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Navn</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=faktnr&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Fakturanr</a></b></td>";
-	print"<td><b> <a href='../finans/kassekladde.php?sort=transdate&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Dato</a></b></td>";
-	print"<td style=\"text-align:right\"><b> <a href='../finans/kassekladde.php?sort=amount&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>Bel&oslash;b</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=konto_nr&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Kundenr</a></b></td>";
+#	print"<td><b> <a 'href=kassekladde.php?sort=konto_nr&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Kundenr</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=firmanavn&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Navn</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=faktnr&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Fakturanr</a></b></td>";
+	print"<td><b> <a href='../finans/kassekladde.php?sort=transdate&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Dato</a></b></td>";
+	print"<td style=\"text-align:right\"><b> <a href='../finans/kassekladde.php?sort=amount&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>Bel&oslash;b</a></b></td>";
 	print" </tr>\n";
 
 
@@ -1443,14 +1459,15 @@ function openpost($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivel
 			for ($y=1;$y<=$x;$y++) {
 			if ($row['konto_id']==$konto_id[$y]) {
 				$firmanavn[0]=$firmanavn[$y];
+				$faktnr=$row['faktnr'];
 				$art[0]=$art[$y];
 			}
 		}
 		if (!$beskrivelse) {
 #			$beskr=htmlentities($firmanavn[0],ENT_QUOTES,$charset);
-			$beskr="Udligning, nota $faktura";
-		}
-		else	{$beskr=$beskrivelse;}
+			if (!$faktnr && $faktura) $faktnr=$faktura;
+			$beskr="$firmanavn[0] - $faktnr";
+		} else $beskr=$beskrivelse;
 		$konto_nr=trim($row['konto_nr']);
 #		$dato=dkdato($row['transdate']);
 		$valuta=$row['valuta'];
@@ -1465,21 +1482,21 @@ function openpost($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivel
 			$amount=$row['amount']-0.0001; #af hensyn til afrundeingfejl i php
 			$belob=dkdecimal($amount*-1);
 			if (!$kredit) {$kredit=$modkonto[$x];}
-			$tmp="<a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$art[0]&debet=$konto_nr&k_type=$k_type&kredit=$kredit&faktura=$row[faktnr]&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>";
+			$tmp="<a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$art[0]&debet=$konto_nr&k_type=$k_type&kredit=$kredit&faktura=$row[faktnr]&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>";
 			$belob=dkdecimal($amount);
 		}
 		else 	{
 			$amount=$row['amount']+0.0001; #af hensyn til afrundeingfejl i php
 			$belob=dkdecimal($amount);
 			if (!$debet) {$debet=$modkonto[$x];}
-			$tmp="<a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$debet&k_type=$art[0]&kredit=$konto_nr&faktura=$row[faktnr]&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr'>";
+			$tmp="<a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskr&d_type=$d_type&debet=$debet&k_type=$art[0]&kredit=$konto_nr&faktura=$row[faktnr]&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr&find=$find'>";
 		}
 			print "<td> $tmp $row[konto_nr]</a><br></td>";
 #		print "<td> $row[id]<br></td>";
 		#print "<td> $row[konto_nr]<br></td>";
 		print "<td> $tmp $firmanavn[0]</a><br></td>";
 		print "<td> $tmp $row[faktnr]</a><br></td>";
-		print "<td> $tmp $dato</a><br></td>";
+		print "<td> $tmp ".dkdato($row['transdate'])."</a><br></td>";
 		print "<td style=\"text-align:right\"> $tmp $belob</a><br></td>";
 		print "</tr>\n";
 	}
@@ -1488,51 +1505,38 @@ function openpost($sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivel
 	exit;
 }
 ######################################################################################################################################
-function finansopslag($fokus,$x) {
+function finansopslag($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$lobenr) {
 
-	global $id;
-	global $kladde_id;
-	global $bilag;
-	global $dato;
-	global $beskrivelse;
-	global $d_type;
-	global $debet;
-	global $k_type;
-	global $kredit;
-	global $faktura;
-	global $belob;
-	global $momsfri;
-	global $afd;
-	global $ansat;
-	global $projekt;
-	global $valuta;
-	global $regnaar;
-	global $bgcolor;
-	global $bgcolor2;
-	global $bgcolor5;
-	global $fgcolor;
-	global $top_bund;
-	global $lobenr;
+#	global $afd,$ansat;
+	global $bgcolor,$bgcolor2,$bgcolor5;
 	global $charset;
-	global $find;
+#	global $dato,$d_type,$debet;
+	global $fgcolor;
+#	global $id;
+#	global $k_type,$kladde_id,$kredit;
+#	global $lobenr;
+#	global $momsfri;
+#	global $projekt;
+	global $regnaar;
+	global $top_bund;
+#	global $valuta;
 
 	$linjebg=NULL;
 	$spantekst=NULL;
 
-	if (!isset($lobenr[$x]))$lobenr[$x]=NULL;
-#	$beskrivelse[$x]=htmlentities($beskrivelse[$x],ENT_QUOTES,$charset);
-	$beskrivelse[$x]=urlencode($beskrivelse[$x]);
-	$d_type[$x]=trim($d_type[$x]);
-	$debet[$x]=trim($debet[$x]);
-	$k_type[$x]=trim($k_type[$x]);
-	$kredit[$x]=trim($kredit[$x]);
-#	$faktura[$x]=htmlentities($faktura[$x],ENT_QUOTES,$charset);
-	$faktura[$x]=urlencode($faktura[$x]);
-	$belob[$x]=trim($belob[$x]);
-	if ($bilag[$x]=="-") $bilag[$x]="0"; #<- 2009.05.14
-
+	if (!isset($lobenr))$lobenr=NULL;
+#	$beskrivelse=htmlentities($beskrivelse,ENT_QUOTES,$charset);
+	$beskrivelse=urlencode($beskrivelse);
+	$d_type=trim($d_type);
+	$debet=trim($debet);
+	$k_type=trim($k_type);
+	$kredit=trim($kredit);
+#	$faktura=htmlentities($faktura,ENT_QUOTES,$charset);
+	$faktura=urlencode($faktura);
+	$belob=trim($belob);
+	if ($bilag=="-") $bilag="0"; #<- 2009.05.14
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-	print"<td width=\"10%\" $top_bund><a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id[$x]&bilag=$bilag[$x]&dato=$dato[$x]dato&beskrivelse=$beskrivelse[$x]&d_type=$d_type[$x]&debet=$debet[$x]&k_type=$k_type[$x]&kredit=$kredit[$x]&faktura=$faktura[$x]&belob=$belob[$x]&momsfri=$momsfri[$x]&afd=$afd[$x]&projekt=$projekt[$x]&ansat=$ansat[$x]&valuta=$valuta[$x]&lobenr=$lobenr[$x]' accesskey=L>Luk</a></td>\n";
+	print"<td width=\"10%\" $top_bund><a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$datodato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr' accesskey=L>Luk</a></td>\n";
 	print"<td width=\"80%\" $top_bund>Finansopslag</td>\n";
 	print"<td width=\"10%\" $top_bund align=\"right\"><br></td>\n";
 	print"</tbody></table>";
@@ -1555,8 +1559,8 @@ function finansopslag($fokus,$x) {
 		while ($row = db_fetch_array($query)) {
 			if (substr(trim($row['art']),1,1)=='M') {
 				$i++;
-				$moms[$x]=$row['kode'].$row['kodenr'];
-			$momstekst[$x]=$row['beskrivelse'];
+				$moms[$i]=$row['kode'].$row['kodenr'];
+			$momstekst[$i]=$row['beskrivelse'];
 			}
 			$momsantal=$i;
 	}
@@ -1578,7 +1582,7 @@ function finansopslag($fokus,$x) {
 	for($y=1;$y<=count($kontonr);$y++) {
 		($find && ($kontotype[$y]=='H' && $kontotype[$y+1]== 'H'))?$vis=0:$vis=1; 
 		if ($vis) {
-			if ($momskode[$x]){
+			if ($momskode[$y]){
 				for ($i=1;$i<=$momsantal;$i++){
 					if (!isset($momstekst[$i])) $momstekst[$i]=NULL; if (!isset($moms[$i])) $moms[$i]=NULL;
 
@@ -1592,10 +1596,10 @@ function finansopslag($fokus,$x) {
 #			$beskrivelse[$x]=urlencode(trim($beskrivelse[$x]));
 
 			if ((strstr($fokus,"debe"))||(strstr($fokus,"d_ty")))	{
-				$href="<a href='kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id[$x]&bilag=$bilag[$x]&dato=$dato[$x]&beskrivelse=$beskrivelse[$x]&d_type=$d_type[$x]&debet=$kontonr[$y]&k_type=$k_type[$x]&kredit=$kredit[$x]&faktura=$faktura[$x]&belob=$belob[$x]&momsfri=$momsfri[$x]&afd=$afd[$x]&projekt=$projekt[$x]&ansat=$ansat[$x]&valuta=$valuta[$x]&lobenr=$lobenr[$x]' accesskey=$genvej[$y]>";
+				$href="<a href='kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$kontonr[$y]&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr' accesskey=$genvej[$y]>";
 			}
 			if ((strstr($fokus,"kred"))||(strstr($fokus,"k_ty"))) {
-			$href="<a href='kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id[$x]&bilag=$bilag[$x]&dato=$dato[$x]&beskrivelse=$beskrivelse[$x]&d_type=$d_type[$x]&debet=$debet[$x]&k_type=$k_type[$x]&kredit=$kontonr[$y]&faktura=$faktura[$x]&belob=$belob[$x]&momsfri=$momsfri[$x]&afd=$afd[$x]&projekt=$projekt[$x]&ansat=$ansat[$x]&valuta=$valuta[$x]&lobenr=$lobenr[$x]' accesskey=$genvej[$y]>";
+			$href="<a href='kassekladde.php?x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kontonr[$y]&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr' accesskey=$genvej[$y]>";
 			}
 			if ($kontotype[$y]=='H') print "<td colspan=\"5\"><b>$kontobeskrivelse[$y]</font></b></td>\n";
 			else {
@@ -1611,8 +1615,7 @@ function finansopslag($fokus,$x) {
 	exit;
 }# endfunc finansopslag
 ######################################################################################################################################
-function afd_opslag($fokus,$x)
-{
+function afd_opslag($fokus,$x) {
 
 	global $id;
 	global $kladde_id;
@@ -1676,8 +1679,7 @@ function afd_opslag($fokus,$x)
 	exit;
 }
 ######################################################################################################################################
-function projekt_opslag($fokus,$x)
-{
+function projekt_opslag($fokus,$x) {
 
 	global $id;
 	global $kladde_id;
@@ -1740,8 +1742,7 @@ function projekt_opslag($fokus,$x)
 	exit;
 }
 ######################################################################################################################################
-function ansat_opslag($fokus,$x)
-{
+function ansat_opslag($fokus,$x) {
 
 	global $id;
 	global $kladde_id;
@@ -1807,8 +1808,7 @@ function ansat_opslag($fokus,$x)
 	exit;
 }
 ######################################################################################################################################
-function valuta_opslag($fokus,$x)
-{
+function valuta_opslag($fokus,$x) {
 	global $id;
 	global $kladde_id;
 	global $bilag;
@@ -1872,22 +1872,22 @@ function valuta_opslag($fokus,$x)
 }
 ######################################################################################################################################
 function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$kontonr,$kladde_id,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$lobenr) {
-	global $fokus;
-	global $debitornr;
+	global $bilagsrenum; //20160909
+	global $bilagscount; //20160909
 	global $connection;
+	global $debitornr;
+	global $fejl;
+	global $find;
+	global $fokus;
+	global $opslag_id;
+	global $prebilag;
 	global $regnaar;
+	global $sletrest;
+	global $restlig;
+	global $submit;
+	global $x;
 	global $aarstart;
 	global $aarslut;
-	global $prebilag;
-	global $fejl;
-	global $db_type;
-	global $submit;
-	global $find;
-	global $opslag_id;
-	global $x;
-
-	if ($db_type == "mysql") $ilike ="like"; # <- 2009.05.12
-	else $ilike ="ilike"; # <- 2009.05.12
 
 	$lukket=NULL;
 	if ($kladde_id) {
@@ -1917,7 +1917,9 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 	}
 #	(!$bilag) {$bilag=$prebilag;} PHR 02.10.06
 #	if ($bilag=="-"){$bilag="";} PHR 02.10.06
-	if (($bilag)&&($bilag!='0')&&($bilag!='-')) $bilag=$bilag*1;
+#	if ($bilag=='-*') $sletrest=1;
+#	if ($sletrest) $bilag='-';
+	if (($bilag)&&($bilag!='0')&&(substr($bilag,-1)!='r')&&($bilag!='-')) $bilag=$bilag*1; 	//20160909 undtaget * til bilagsrenum
 	$debet=trim($debet);
 	$kredit=trim($kredit);
 	if (($bilag != "-")&&(($bilag)||($beskrivelse)||($kredit)||($debet)||($faktura)||($belob))) {
@@ -1966,7 +1968,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			$query = db_select("select kontonr from kontoplan where genvej='$debet' and regnskabsaar='$regnaar'",__FILE__ . " linje " . __LINE__);
 			if ($row = db_fetch_array($query)) $debet=$row[kontonr];
 			else {
-				$alerttekst=$debet.' er ikke defineret som genvejstast (Bilag nr '.$bilag.')\nKladden en IKKE gemt';
+				$alerttekst=addslashes($debet.' er ikke defineret som genvejstast (Bilag nr '.$bilag.') Kladden en IKKE gemt');
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
@@ -1974,8 +1976,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		if (($d_type=="F")&&(strlen($debet)>1)&&(!is_numeric($debet))) {
 			$tmp=$debet."%";
 			$i=0;
-#cho "select kontonr from kontoplan where beskrivelse $ilike '$tmp' and regnskabsaar='$regnaar' and lukket != 'on' order by beskrivelse<br>";
-			$query = db_select("select kontonr from kontoplan where beskrivelse $ilike '$tmp' and regnskabsaar='$regnaar' and lukket != 'on' order by beskrivelse",__FILE__ . " linje " . __LINE__);
+			$query = db_select("select kontonr from kontoplan where beskrivelse like '$tmp' and regnskabsaar='$regnaar' and lukket != 'on' order by beskrivelse",__FILE__ . " linje " . __LINE__);
 			while ($row = db_fetch_array($query)) {
 				$i++;
 				$tmparray[$i]=$row['kontonr'];
@@ -1984,14 +1985,13 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			elseif ($i>1) {
 				$submit="Opslag";
 				$opslag_id=$x;
-				$find="and beskrivelse ".$ilike." '".$tmp."'";
+				$find="and beskrivelse like '%".$tmp."'";
 			} else {
 				$tmp="%".$debet."%";
-#cho "select kontonr from kontoplan where beskrivelse $ilike '$tmp' and regnskabsaar='$regnaar' and lukket != 'on' order by beskrivelse<br>";
-				$query = db_select("select kontonr from kontoplan where beskrivelse $ilike '$tmp' and regnskabsaar='$regnaar' and lukket != 'on' order by beskrivelse",__FILE__ . " linje " . __LINE__);
+				$query = db_select("select kontonr from kontoplan where beskrivelse like '$tmp' and regnskabsaar='$regnaar' and lukket != 'on' order by beskrivelse",__FILE__ . " linje " . __LINE__);
 				if ($row = db_fetch_array($query)) $debet=$row['kontonr'];
 				else {
-					$alerttekst='Der er ingen konti som indeholder teksten '.$debet.' (Bilag nr '.$bilag.')\nKladden en IKKE gemt';
+					$alerttekst=addslashes('Der er ingen konti som indeholder teksten '.$debet.' (Bilag nr '.$bilag.') Kladden en IKKE gemt');
 					print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 					$fejl=1;
 				}
@@ -1999,7 +1999,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		}
 		if (($k_type=="F")&&(strlen($kredit)>1)&&(!is_numeric($kredit))) {
 			$tmp=$kredit."%";
-			$query = db_select("select kontonr from kontoplan where beskrivelse $ilike '$tmp' and regnskabsaar='$regnaar' order by beskrivelse",__FILE__ . " linje " . __LINE__);
+			$query = db_select("select kontonr from kontoplan where beskrivelse like '$tmp' and regnskabsaar='$regnaar' order by beskrivelse",__FILE__ . " linje " . __LINE__);
 			while ($row = db_fetch_array($query)) {
 				$i++;
 				$tmparray[$i]=$row['kontonr'];
@@ -2008,13 +2008,13 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			elseif ($i>1) {
 				$submit="Opslag";
 				$opslag_id=$x;
-				$find="and beskrivelse ".$ilike." '".$tmp."'";
+				$find="and beskrivelse like '%".$tmp."'";
 			} else {
 				$tmp="%".$kredit."%";
-				$query = db_select("select kontonr from kontoplan where beskrivelse $ilike '$tmp' and regnskabsaar='$regnaar' order by beskrivelse",__FILE__ . " linje " . __LINE__);
+				$query = db_select("select kontonr from kontoplan where beskrivelse like '$tmp' and regnskabsaar='$regnaar' order by beskrivelse",__FILE__ . " linje " . __LINE__);
 				if ($row = db_fetch_array($query)) $kredit=$row['kontonr'];
 				else {
-					$alerttekst='Der er ingen konti som indeholder teksten '.$kredit.' (Bilag nr '.$bilag.')\nKladden en IKKE gemt';
+					$alerttekst=addslashes('Der er ingen konti som indeholder teksten '.$kredit.' (Bilag nr '.$bilag.') Kladden en IKKE gemt');
 					print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 					$fejl=1;
 				}
@@ -2025,7 +2025,7 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			$query = db_select("select kontonr from kontoplan where genvej='$kredit' and regnskabsaar='$regnaar'",__FILE__ . " linje " . __LINE__);
 			if ($row = db_fetch_array($query)) $kredit=$row['kontonr'];
 			else {
-				$alerttekst=$kredit.' er ikke defineret som genvejstast (Bilag nr '.$bilag.')\nKladden en IKKE gemt';
+				$alerttekst=addslashes($kredit.' er ikke defineret som genvejstast (Bilag nr '.$bilag.') Kladden en IKKE gemt');
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			}
@@ -2034,8 +2034,8 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			$alerttekst='';
 
 			if (!in_array($debet,$kontonr)) {
-				$alerttekst='Debetkonto '.$debet.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
-			} elseif (in_array($debet,$lukket)) $alerttekst='Debetkonto '.$debet.' er l&aring;st og m&aring; ikke anvendes (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+				$alerttekst=addslashes('Der er ingen finanskonti hvor '.$debet.' indgår (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
+			} elseif (in_array($debet,$lukket)) $alerttekst=addslashes('Debetkonto '.$debet.' er l&aring;st og m&aring; ikke anvendes (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			if ($alerttekst) {
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
@@ -2044,8 +2044,8 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		if ((!$fejl)&&($k_type=="F")&&($kredit>0)) {
 			$alerttekst='';
 			if (!in_array($kredit,$kontonr)) {
-				$alerttekst='Kreditkonto '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
-			} elseif (in_array($kredit,$lukket)) $alerttekst='Kreditkonto '.$kredit.' er l&aring;st og m&aring; ikke anvendes (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+				$alerttekst=addslashes('B Kreditkonto '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
+			} elseif (in_array($kredit,$lukket)) $alerttekst=addslashes('Kreditkonto '.$kredit.' er l&aring;st og m&aring; ikke anvendes (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			if ($alerttekst) print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 			if ($alerttekst) {
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
@@ -2054,8 +2054,8 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		}
 		if ((!$fejl)&&($d_type=="D")&&($debet)&&(!in_array($debet,$debitornr))) {
 			$alerttekst='';
-			$svar=find_kontonr($debet,'D');
-			if ($svar==$debet) $alerttekst='Debitor '.$debet.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+			$svar=find_kontonr($fokus,'D',$debet,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$x);
+			if ($svar==$debet) $alerttekst=addslashes('Debitor '.$debet.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $debet=$svar;
 			if ($alerttekst) {
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
@@ -2064,8 +2064,8 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		}
 		if ((!$fejl)&&($k_type=="D")&&($kredit)&&(!in_array($kredit,$debitornr))) {
 			$alerttekst='';
-			$svar=find_kontonr($kredit,'D');
-			if ($svar==$kredit) $alerttekst='Debitor '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+			$svar=find_kontonr($fokus,'D',$kredit,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$x);
+			if ($svar==$kredit) $alerttekst=addslashes('Debitor '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $kredit=$svar;
 			if ($alerttekst) {
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
@@ -2074,8 +2074,8 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		}
 		if ((!$fejl)&&($d_type=="K")&&($debet)&&(!in_array($debet,$kreditornr))) {
 			$alerttekst='';
-			$svar=find_kontonr($debet,'K');
-			if ($svar==$debet) $alerttekst='Kreditor '.$debet.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+			$svar=find_kontonr($fokus,'K',$debet,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$x);
+			if ($svar==$debet) $alerttekst=addslashes('Kreditor '.$debet.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $debet=$svar;
 			if ($alerttekst) {
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
@@ -2084,8 +2084,8 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		}
 		if ((!$fejl)&&($k_type=="K")&&($kredit)&&(!in_array($kredit,$kreditornr))) {
 			$alerttekst='';
-			$svar=find_kontonr($kredit,'K');
-			if ($svar==$kredit) $alerttekst='Kreditor '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+			$svar=find_kontonr($fokus,'K',$kredit,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$x);
+			if ($svar==$kredit) $alerttekst=addslashes('Kreditor '.$kredit.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 			else $kredit=$svar;
 			if ($alerttekst) {
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
@@ -2098,10 +2098,9 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		if (($k_type=="D")&&(strtoupper($kredit)=="D")) $kredit=0;
 		$transdate=usdate($dato);
 		list ($year,$month,$day) = explode ('-',$transdate);
-#		$year=substr($year,-2);
 		$ym=$year.$month;
-		if ((!$fejl)&&($ym<$aarstart)||($ym>$aarslut)) {
-			$alerttekst='Dato udenfor regnskabs&aring;r (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+		if (!$fejl && $dato && ($ym<$aarstart || $ym>$aarslut)) {
+			$alerttekst='Dato ('.$dato.') udenfor regnskabs&aring;r (Bilag nr '.$bilag.') Kladden er IKKE gemt!';
 			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 			$fejl=1;
 #			$transdate=date("Y-m-d");
@@ -2109,23 +2108,23 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 		$afd=$afd*1;
 		if (!$fejl&&$afd!='0') {
 			if (!$row= db_fetch_array(db_select("select id from grupper where art='AFD' and kodenr='$afd'",__FILE__ . " linje " . __LINE__))){
-				$alerttekst='Afdeling '.$afd.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+				$alerttekst=addslashes('Afdeling '.$afd.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
-			} # else echo "ID=$row[id]";
+			} 
 		}
 #		$projekt=$projekt*1;
 		if (!$fejl&&$projekt) {
 			if (!$row= db_fetch_array(db_select("select id from grupper where art='PRJ' and kodenr='$projekt'",__FILE__ . " linje " . __LINE__))){
-				$alerttekst='Projekt '.$projekt.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+				$alerttekst=addslashes('Projekt '.$projekt.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
-			} # else echo "ID=$row[id]";
+			} 
 		}
 		if (!$valuta) $valuta='DKK';
 		if (!$fejl&&$valuta!='DKK') {
 			if (!$row= db_fetch_array(db_select("select kodenr from grupper where art='VK' and box1='$valuta'",__FILE__ . " linje " . __LINE__))){
-				$alerttekst='valuta '.$valuta.' eksisterer ikke (Bilag nr '.$bilag.')\nKladden er IKKE gemt!';
+				$alerttekst=addslashes('valuta '.$valuta.' eksisterer ikke (Bilag nr '.$bilag.') Kladden er IKKE gemt!');
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				$fejl=1;
 			} else $valutakode=$row['kodenr'];
@@ -2135,17 +2134,25 @@ function kontroller($id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit
 			}
 		}
 		if ($lobenr) {
+			if (substr($bilag,-1)=='r') { #20160909.  Er der tastet * som en del af bilagsnummerfeltet?
+				$bilagscount = str_replace('r','',$bilag); #20160909 fjern * fra bilagsnummeret
+				$bilagsrenum = true; #20160909 ja, der skal renummereres bilag
+			}
+			if ($bilagsrenum == true) { #20160909 denne bliver loopet igennem for hvert eneste efterfølgende bilag - vi overskriver bilagsunmmeret
+				db_modify("update tmpkassekl set bilag = '$bilagscount', transdate = '$dato', beskrivelse = '$beskrivelse', d_type = '$d_type', debet = '$debet', k_type = '$k_type', kredit = '$kredit', faktura = '$faktura', amount = '$belob', momsfri = '$momsfri', afd= '$afd', projekt= '$projekt', valuta= '$valuta',forfaldsdate='$forfaldsdato',betal_id='$betal_id' where lobenr = '$lobenr' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
+				$bilagscount++; #20160909 og her øger vi bilagsnummeret med 1 inden loop
+			} else {
 			db_modify("update tmpkassekl set bilag = '$bilag', transdate = '$dato', beskrivelse = '$beskrivelse', d_type = '$d_type', debet = '$debet', k_type = '$k_type', kredit = '$kredit', faktura = '$faktura', amount = '$belob', momsfri = '$momsfri', afd= '$afd', projekt= '$projekt', valuta= '$valuta',forfaldsdate='$forfaldsdato',betal_id='$betal_id' where lobenr = '$lobenr' and kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__);
 		}
+	}
 	}
 	elseif (($id)&&($bilag=="-")) {
 		db_modify("delete from kassekladde where id = $id",__FILE__ . " linje " . __LINE__);
 	}
 	$prebilag=$bilag;
-}
+} # endfunc kontroller
 ######################################################################################################################################
-function opdater($kladde_id)
-{
+function opdater($kladde_id) {
 	global $egen_kto_id;
 
 	$forfaldsdate=NULL;
@@ -2186,23 +2193,22 @@ function opdater($kladde_id)
 				$tmp=$k_type;$k_type=$d_type;$d_type=$tmp;
 				$amount=$amount*-1;
 			}
-			if ($r['id']) {
+ 			if ($r['id'] && ($r['bilag'] || $r['bilag']=='0')) {
 				if (!$transdate && isset($_GET['dato'])) $transdate = usdate($_GET['dato']);
 				if (!$transdate) $transdate = date("Y-m-d");
 				db_modify("update kassekladde set bilag = '$r[bilag]', transdate = '$transdate', beskrivelse = '$beskrivelse', d_type = '$d_type', debet = '$debet', k_type = '$k_type', kredit = '$kredit', faktura = '$faktura', amount = '$amount', momsfri = '$momsfri', afd= '$afd', projekt= '$projekt', ansat= '$ansat_id', valuta= '$valutakode' where id = '$r[id]'",__FILE__ . " linje " . __LINE__);
 				if ($forfaldsdate) db_modify("update kassekladde set forfaldsdate='$forfaldsdate', betal_id='$betal_id' where id = '$r[id]'",__FILE__ . " linje " . __LINE__);
 			else db_modify("update kassekladde set forfaldsdate=NULL, betal_id='' where id = '$r[id]'",__FILE__ . " linje " . __LINE__);
-			} elseif (($r['transdate'] || $transdate)&&(($r['beskrivelse'])||($debet)||($kredit)||($r['faktura']))) {
-				$beskrivelse=db_escape_string($r['beskrivelse']);
+			} elseif (($r['transdate'] || $transdate)&&(($transdate && $transdate!=date("Y-m-d"))||$r['beskrivelse']||$debet|$kredit||$r['faktura'])) {
+#				$beskrivelse=db_escape_string($r['beskrivelse']);
 				if ($forfaldsdate) db_modify("insert into kassekladde (bilag, transdate, beskrivelse, d_type, debet, k_type, kredit, faktura, amount, momsfri, afd, projekt, ansat, valuta, kladde_id,forfaldsdate,betal_id) values ('$r[bilag]', '$transdate', '$beskrivelse', '$d_type', '$debet', '$k_type', '$kredit', '$r[faktura]', '$amount', '$momsfri', '$afd', '$projekt', '$ansat_id', '$valutakode', '$kladde_id','$forfaldsdate','$betal_id')",__FILE__ . " linje " . __LINE__);
-				else db_modify("insert into kassekladde (bilag, transdate, beskrivelse, d_type, debet, k_type, kredit, faktura, amount, momsfri, afd, projekt, ansat, valuta, kladde_id) values ('$r[bilag]', '$transdate', '$beskrivelse', '$d_type', '$debet', '$k_type', '$kredit', '$r[faktura]', '$amount', '$momsfri', '$afd', '$projekt', '$ansat_id', '$valutakode', '$kladde_id')",__FILE__ . " linje " . __LINE__);
+				elseif ($r['bilag'] || $r['bilag']=='0') db_modify("insert into kassekladde (bilag, transdate, beskrivelse, d_type, debet, k_type, kredit, faktura, amount, momsfri, afd, projekt, ansat, valuta, kladde_id) values ('$r[bilag]', '$transdate', '$beskrivelse', '$d_type', '$debet', '$k_type', '$kredit', '$r[faktura]', '$amount', '$momsfri', '$afd', '$projekt', '$ansat_id', '$valutakode', '$kladde_id')",__FILE__ . " linje " . __LINE__);
 			}
 		}
 	}
 }
 ######################################################################################################################################
-function tilbagefor($kladde_id)
-{
+function tilbagefor($kladde_id) {
 	global $regnaar;
 	global $connection;
 
@@ -2215,8 +2221,7 @@ function tilbagefor($kladde_id)
 	}
 }
 ######################################################################################################################################
-function kopier_til_ny($kladde_id,$bilagsnr,$ny_dato)
-{
+function kopier_til_ny($kladde_id,$bilagsnr,$ny_dato) {
 	global $regnaar;
 	global $connection;
 	global $brugernavn;
@@ -2228,7 +2233,6 @@ function kopier_til_ny($kladde_id,$bilagsnr,$ny_dato)
 		$fejl="Bilagsnr skal være numerisk eller \"-\"";
 		print tekstboks($fejl); 
 	}
-	
 	if ($bilagsnr && !$fejl) {
 		$gl_bilag=0;
 		$bilag=0;
@@ -2286,8 +2290,7 @@ function kopier_til_ny($kladde_id,$bilagsnr,$ny_dato)
 exit;
 }
 ######################################################################################################################################
-function nextfokus($fokus)
-{
+function nextfokus($fokus) {
 	global $id;
 	global $amount;
 	if ($fokus) {
@@ -2309,8 +2312,8 @@ function nextfokus($fokus)
 
 	return $fokus;
 }
-function regnskabsaar($regnaar)
-{
+##########################################################################################################
+function regnskabsaar($regnaar) {
 	if ($row = db_fetch_array(db_select("select box1, box2, box3, box4 from grupper where art='RA' and kodenr='$regnaar'",__FILE__ . " linje " . __LINE__))){
 		$start=trim($row['box2'])."-".trim($row['box1'])."-01";
 		$slut=usdate("31-".trim($row['box3'])."-".trim($row['box4']))	; #usdate bruges for at sikre korrekt dato.
@@ -2323,8 +2326,7 @@ function regnskabsaar($regnaar)
 }
 
 ######################################################################################################################################
-function indsaet_linjer($kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$afd,$ansat,$projekt,$valuta,$forfaldsdato,$betal_id,$momsfri)
-{
+function indsaet_linjer($kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$afd,$ansat,$projekt,$valuta,$forfaldsdato,$betal_id,$momsfri) {
 	global $fejl;
 
 	$date=usdate($dato);
@@ -2365,8 +2367,7 @@ function indsaet_linjer($kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_t
 	if (!$fokus)$fokus="ny_kladdenote";
 }
 ######################################################################################################################################
-function ompost($ompost)
-{
+function ompost($ompost) {
 	global $sprog_id;
 
 	$ompost_til=isset($_GET['ompost_til'])? $_GET['ompost_til']:Null;
@@ -2398,8 +2399,7 @@ function ompost($ompost)
 	}
 } # endfunc ompost
 ##########################################################################################################
-function valutaopslag($amount, $valuta, $transdate)
-{
+function valutaopslag($amount, $valuta, $transdate) {
 	$r = db_fetch_array(db_select("select * from valuta where gruppe = '$valuta' and valdate <= '$transdate' order by valdate desc",__FILE__ . " linje " . __LINE__));
 	if ($r['kurs']) {
 		$kurs=$r['kurs'];
@@ -2416,7 +2416,7 @@ function valutaopslag($amount, $valuta, $transdate)
 	return array($amount,$diffkonto,$kurs); # 3'die parameter tilfojet 2009.02.10
 }
 ##########################################################################################################
-function find_kontonr($kontonr,$art) {
+function find_kontonr($fokus,$art,$kontonr,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$opslag_id) {
 	$x=0;
 	$tmp=db_escape_string(strtolower($kontonr));
 	$q=db_select("select kontonr from adresser where art = '$art' and lower(firmanavn) like '%$tmp%' and lukket != 'on'",__FILE__ . " linje " . __LINE__);
@@ -2425,9 +2425,12 @@ function find_kontonr($kontonr,$art) {
 		$nr=$r['kontonr'];
 	}
 	if ($x==1) return($nr);
-	else return($kontonr);
+	elseif ($x>1) {
+		if ($art=='D') debitoropslag($tmp,'firmanavn',$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$opslag_id);
+		else kreditoropslag($tmp,'firmanavn',$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldsdato,$betal_id,$opslag_id); 
+	}	else return($kontonr);
 }
-
+##########################################################################################################
 function sidste_5($kontonr,$art,$dk) {
 	global $kladde_id;
 	global $charset;
@@ -2454,7 +2457,7 @@ function sidste_5($kontonr,$art,$dk) {
 	if ($x) return($retur);
 	else return(NULL);
 } # endfunc sidste_5
-
+##########################################################################################################
 function find_dublet($id,$transdate,$d_type,$debet,$k_type,$kredit,$amount) {
 	$r=db_fetch_array(db_select("select bilag,kladde_id from kassekladde where transdate='$transdate' and d_type='$d_type' and debet='$debet' and k_type='$k_type' and kredit='$kredit' and amount = '$amount' and id!='$id' limit 1",__FILE__ . " linje " . __LINE__));
 	return($r['bilag'].",".$r['kladde_id']);

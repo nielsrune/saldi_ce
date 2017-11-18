@@ -1,28 +1,34 @@
 <?php
-// ----systemdata/regnskabskort.php ---------------- lap 3.5.5 -- 2015-01-02 --
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----systemdata/regnskabskort.php ---------------- lap 3.7.0 -- 2017-15-16 --
 // LICENS
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2015 DANOSOFT ApS
+// // Dette program er fri software. Du kan gendistribuere det og / eller
+// // modificere det under betingelserne i GNU General Public License (GPL)
+// // som er udgivet af "The Free Software Foundation", enten i version 2
+// // af denne licens eller en senere version, efter eget valg.
+// // Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// // 
+// // Programmet må ikke uden forudgående skriftlig aftale anvendes
+// // i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// //
+// // Dette program er udgivet med haab om at det vil vaere til gavn,
+// // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
+// // GNU General Public Licensen for flere detaljer.
+// //
+// // En dansk oversaettelse af licensen kan laeses her:
+// // http://www.saldi.dk/dok/GNU_GPL_v2.html
+// //
+// // Copyright (c) 2003-2017 saldi.dk ApS
 // ----------------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2015-01-02 Tilrettet til dynamisk lagerværdi. Søg find_lagervaerdi
 // 20150327 CA  Topmenudesign tilføjet søg 20150327
+// 20170516 Div oprydning samt tilføjelse af laas_lager Søg laas
 
 @session_start();
 $s_id=session_id();
@@ -143,12 +149,13 @@ if ($_POST) {
 	if ((($id!=0)||(!db_fetch_array(db_select("select id from grupper where kodenr = '$kodenr' and art = 'RA'",__FILE__ . " linje " . __LINE__))))&&(($startmd)&&($slutmd)&&($startdato)&&($slutdato)&&($startaar)&&($slutaar)&&($beskrivelse))) {
 		transaktion("begin");
 		if ($id==0){
-			db_modify("insert into grupper (beskrivelse, kodenr, kode, art, box1, box2, box3, box4, box5) values ('".db_escape_string($beskrivelse)."', '$kodenr', '$kode', 'RA', '$startmd','$startaar', '$slutmd', '$slutaar','$aaben')",__FILE__ . " linje " . __LINE__);
+			$qtxt="insert into grupper (beskrivelse,kodenr,kode,art,box1,box2,box3,box4,box5)";
+			$qtxt.=" values ";
+			$qtxt.="('".db_escape_string($beskrivelse)."','$kodenr','$kode','RA','$startmd','$startaar','$slutmd','$slutaar','$aaben')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$query = db_select("select id from grupper where kodenr = '$kodenr' and art = 'RA'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
 			$id = $row['id'];
-#			if (!$)
-			
 		}
 		if ($kodenr==1) {
 			for ($x=1; $x<=$kontoantal; $x++) {
@@ -157,9 +164,11 @@ if ($_POST) {
 				if ($kredit[$x]) $sum-=usdecimal($kredit[$x]);
 				db_modify ("update kontoplan set primo='$sum' where kontonr='$kontonr[$x]' and regnskabsaar=1",__FILE__ . " linje " . __LINE__);
 			}
-				$query = db_select("select * from grupper where art = 'RB'",__FILE__ . " linje " . __LINE__);
-				if (db_fetch_array($query)) {db_modify("update grupper set box1 = '$fakt', box2 = '$modt', box3 = '$faktbill', box4 = '$modtbill', box5 = '$no_faktbill' where art = 'RB'",__FILE__ . " linje " . __LINE__);}
-				else {db_modify("insert into grupper (beskrivelse, kodenr, kode, art, box1, box2, box3, box4, box5) values ('Regnskabsbilag', '1', '1', 'RB', '$fakt', '$modt', '$faktbill', '$modtbill', '$no_faktbill')",__FILE__ . " linje " . __LINE__);}
+			if (db_fetch_array(db_select("select * from grupper where art = 'RB'",__FILE__ . " linje " . __LINE__))) {
+				db_modify("update grupper set box1 = '$fakt', box2 = '$modt', box3 = '$faktbill', box4 = '$modtbill', box5 = '$no_faktbill' where art = 'RB'",__FILE__ . " linje " . __LINE__);
+			} else {
+				db_modify("insert into grupper (beskrivelse,kodenr,kode,art,box1,box2,box3,box4,box5) values ('Regnskabsbilag','1','1','RB','$fakt','$modt','$faktbill','$modtbill','$no_faktbill')",__FILE__ . " linje " . __LINE__);
+			}
 		} 
 		if (($id>0)&&($kodenr>0)) {
 			db_modify("update grupper set beskrivelse = '".db_escape_string($beskrivelse)."', kodenr = '$kodenr', kode = '$kode', box1 = '$startmd', box2 = '$startaar', box3 = '$slutmd', box4 = '$slutaar', box5 = '$aaben' where id = '$id'",__FILE__ . " linje " . __LINE__);
@@ -198,6 +207,12 @@ if ($_POST) {
 				}	
 			}
 		}
+		if ($_POST['laas_lager']) {
+			$fra=$startaar."-".$startmd."01";
+			$til=usdate("31-".$slutmd."-".$slutaar);
+			print "<meta http-equiv=\"refresh\" content=\"1;URL=laas_lager.php?fra=$fra&til=$til\">"; 
+
+		}
 		transaktion("commit");
 	}
 }
@@ -208,7 +223,7 @@ if ($id > 0) {
 		if ($row['kodenr']==1){aar_1($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5']);}
 		else
 		{
-			aar_x($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5']);
+			aar_x($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5'],$row['box9']);
 		}
 	}
 } else {
@@ -238,11 +253,10 @@ if ($id > 0) {
 		$slutmd='12';
 		$aaben='on';
 	}
-	if ($x==0) aar_1($id, 1, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben);
-	else aar_x($id, $x, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben);
+	if ($x==0) aar_1($id, 1, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager);
+	else aar_x($id, $x, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager);
 }
-function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben) {
-	$laast=NULL; 
+function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager) {
 	
 	$row = db_fetch_array(db_select("select MAX(kodenr) as kodenr from grupper where art = 'RA'",__FILE__ . " linje " . __LINE__));
 	if ($row['kodenr'] > $kodenr) $laast=1;  
@@ -319,11 +333,11 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		$debet[$y]="0,00";
 		$kredit[$y]="0,00";
 		if ($row['primo']>0) {
-			$debet[$y]=dkdecimal($row['primo']);
+			$debet[$y]=dkdecimal($row['primo'],2);
 			$debetsum=$debetsum+$row['primo'];
 		}
 		elseif ($row['primo']<0) {
-			$kredit[$y]=dkdecimal($row['primo']*-1);
+			$kredit[$y]=dkdecimal($row['primo']*-1,2);
 			$kreditsum=$kreditsum+($row['primo']*-1);
 		}
 		print "<td>$row[kontonr]</td>";
@@ -331,20 +345,23 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		print "<td align=right><input type=text style=\"text-align:right\" size=10 name=debet[$y] value=$debet[$y] onchange=\"javascript:docChange = true;\"></td>";
 		print "<td align=right><input type=text style=\"text-align:right\" size=10 name=kredit[$y] value=$kredit[$y] onchange=\"javascript:docChange = true;\"></td></tr>\n";
 	}
-	print "<td></td><td></td><td align=right>".dkdecimal($debetsum)."</td><td align=right>".dkdecimal($kreditsum)."</td></tr>\n";
+	print "<td></td><td></td><td align=right>".dkdecimal($debetsum,2)."</td><td align=right>".dkdecimal($kreditsum,2)."</td></tr>\n";
 	if (abs($debetsum-$kreditsum)>0.009) {
 		print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";
 	}
 	
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
-	print "<tr><td colspan='4' align='center'><input type='submit' accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<tr><td colspan='4' align='center'><input type='submit' accesskey=\"g\" value=\"Gem/opdat&eacute;r\" style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 	print "</form>";
 	exit;
 }
 
-function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben) {
+function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager) {
 	global $overfor_til;
+	global $regnaar;
+	$debetsum=0;
+	$kreditsum=0;
 	
 	$r=db_fetch_array(db_select("select max(kodenr) as max_aar from grupper where art = 'RA'",__FILE__ . " linje " . __LINE__));
 	$max_aar=$r['max_aar'];
@@ -356,6 +373,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		$pre_startaar=$row['box2'];
 		$pre_slutmd=$row['box3'];
 		$pre_slutaar=$row['box4'];
+		$pre_laast_lager=$row['box9'];
 	}
 	
 	$pre_slutdato=31;
@@ -378,9 +396,9 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	print "<td align=center><input readonly=readonly style=\"text-align:right\" size=4 name=startaar value=$startaar></td>";
 	print "<td align=center><input type=text style=\"text-align:right\" size=2 name=slutmd value=$slutmd onchange=\"javascript:docChange = true;\"></td>";
 	print "<td align=center><input type=text style=\"text-align:right\" size=4 name=slutaar value=$slutaar onchange=\"javascript:docChange = true;\"></td>";
-	(strstr($aaben,'on'))?$checked='checked':$checked=NULL;
+	(strstr($aaben,'on'))?$aaben='checked':$aaben=NULL;
 	if (!$id) $checked='checked';
-	print "<td align=center><input type=checkbox name=aaben $checked onchange=\"javascript:docChange = true;\"></td>";
+	print "<td align=center><input type=checkbox name=aaben $aaben onchange=\"javascript:docChange = true;\"></td>";
 	print "</tr>\n</tbody></table></td></tr>\n"; #####################################################table 8d slut
 	print "<tr><td colspan=2 align=center> Primotal for $kodenr. regnskabs&aring;r:</td><td align = center> saldo</td><td align = center> overf&oslash;r til</td><td align = center> ny primo</td></tr>\n";
 	$tmp=$kodenr;
@@ -395,28 +413,31 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		$tmp--;
 	}
 	$pre_regnaar=$kodenr-1;
-	
-	$r=db_fetch_array(db_select("select box2 from grupper where kodenr='$pre_regnaar' and art='RA'",__FILE__ . " linje " . __LINE__));
-	($r['box2'] >= '2015')?$aut_lager='on':$aut_lager=NULL;
+	$r=db_fetch_array(db_select("select box2,box9 from grupper where kodenr='$pre_regnaar' and art='RA'",__FILE__ . " linje " . __LINE__));
+	($r['box2'] >= '2015' && !$r['box9'])?$aut_lager='on':$aut_lager=NULL;
 	if (!$pre_regnaar) {
 		echo "regnaar mangler";
 		exit;
 	}	
-
 	if ($aut_lager) {
 		$x=0;
 		$varekob=array();
+		$laas_lager=1;
 		$q=db_select("select box1,box2,box3 from grupper where art = 'VG' and box8 = 'on'",__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)) {
 			if ($r['box1'] && !in_array($r['box3'],$varekob)) {
 				$varelager_i[$x]=$r['box1'];
 				$varelager_u[$x]=$r['box2'];
 				$varekob[$x]=$r['box3'];
+				if ($varelager_i[$x] || $varelager_u[$x]) $laas_lager=0;
 				$x++;
 			}
 		}
+		if ($laas_lager) {
+			db_modify("update grupper set box9='on' where kodenr='$pre_regnaar' and art='RA'");
+			$aut_lager=NULL;
+		}
 	}
-	
 	$ny_sum=0;
 	$resultat=0;
 	$q = db_select("select * from kontoplan where kontotype='D' and regnskabsaar=$pre_regnaar order by kontonr",__FILE__ . " linje " . __LINE__);
@@ -427,15 +448,15 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		while ($r2 = db_fetch_array($q2)) $resultat+=afrund($r2['debet']-$r2['kredit'],2);
 		if ($aut_lager) {
 			if (in_array($r['kontonr'],$varekob)) {
-				$l_a_primo[$x]=find_lagervaerdi($r['kontonr'],$pre_regnstart);
-				$l_a_sum[$x]=find_lagervaerdi($r['kontonr'],$pre_regnslut);
+				$l_a_primo[$x]=find_lagervaerdi($r['kontonr'],$pre_regnstart,'start');
+				$l_a_sum[$x]=find_lagervaerdi($r['kontonr'],$pre_regnslut,'slut');
 # Varekøb (debet) debiteres lager primo og krediteres lager saldo. Dvs tallet mindskes hvis lager øges 
 				$resultat+=$l_a_primo[$x]; 
 				$resultat-=$l_a_sum[$x];		
 			}
 			if (in_array($r['kontonr'],$varelager_i) || in_array($r['kontonr'],$varelager_u)) {
-				$l_a_primo[$x]=find_lagervaerdi($r['kontonr'],$pre_regnstart);
-				$l_a_sum[$x]=find_lagervaerdi($r['kontonr'],$pre_regnslut);
+				$l_a_primo[$x]=find_lagervaerdi($r['kontonr'],$pre_regnstart,'start');
+				$l_a_sum[$x]=find_lagervaerdi($r['kontonr'],$pre_regnslut,'slut');
 # Varelager (debet) krediteres lager primo og og debiteres lager saldo.  Dvs tallet øges hvis lager øges
 				$resultat-=$l_a_primo[$x];
 				$resultat+=$l_a_sum[$x];
@@ -452,9 +473,9 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		print "<td><br /></td>";
 		print "<td>Resultat</td>";
 		print "<input type=hidden name=kontonr[0] value=$sideskift>";
-		print "<td width=10 align=right><input type=hidden name=saldo[0] value=$resultat>".dkdecimal($resultat)."</td>";
+		print "<td width=10 align=right><input type=hidden name=saldo[0] value=$resultat>".dkdecimal($resultat,2)."</td>";
 		print "<td><SELECT NAME=overfor_til[0]>";
-		if ($r['overfor_til']) print "<option>$r[overfor_til]</option>";  
+		if (isset($r['overfor_til']) && $r['overfor_til']) print "<option>$r[overfor_til]</option>";  
 		print "<option>$kontonr[$y]</option>";
 		for ($x=1;$x<=$kontoantal;$x++) print "<option>$kontonr[$x]</option>";
 		print "</SELECT></td>";
@@ -482,15 +503,15 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		}
 		if ($aut_lager) {
 			if (in_array($row['kontonr'],$varekob)) {
-				$l_a_primo[$x]=find_lagervaerdi($row['kontonr'],$pre_regnstart);
-				$l_a_sum[$x]=find_lagervaerdi($row['kontonr'],$pre_regnslut);
+				$l_a_primo[$x]=find_lagervaerdi($row['kontonr'],$pre_regnstart,'');
+				$l_a_sum[$x]=find_lagervaerdi($row['kontonr'],$pre_regnslut,'');
 # Varekøb (debet) debiteres lager primo og krediteres lager saldo. Dvs tallet mindskes hvis lager øges 
 				$belob+=$l_a_primo[$x]; 
 				$belob-=$l_a_sum[$x];		
 			}
 			if (in_array($row['kontonr'],$varelager_i) || in_array($row['kontonr'],$varelager_u)) {
-				$l_a_primo[$x]=find_lagervaerdi($row['kontonr'],$pre_regnstart);
-				$l_a_sum[$x]=find_lagervaerdi($row['kontonr'],$pre_regnslut);
+				$l_a_primo[$x]=find_lagervaerdi($row['kontonr'],$pre_regnstart,'start');
+				$l_a_sum[$x]=find_lagervaerdi($row['kontonr'],$pre_regnslut,'slut');
 # Varelager (debet) krediteres lager primo og og debiteres lager saldo.  Dvs tallet øges hvis lager øges
 				$belob-=$l_a_primo[$x];
 				$belob+=$l_a_sum[$x];
@@ -500,7 +521,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		$saldosum=$saldosum+$belob;
 		print "<td>$row[kontonr]</td>";
 		print "<td>$row[beskrivelse]</td>";
-		print "<td width=10 align=right><input type=hidden name=saldo[$y] value=$belob>".dkdecimal($belob)."</td>";
+		print "<td width=10 align=right><input type=hidden name=saldo[$y] value=$belob>".dkdecimal($belob,2)."</td>";
 		print "<td><SELECT NAME=overfor_til[$y]>";
 		if ($row['overfor_til'] && in_array($row['overfor_til'],$kontonr)) print "<option>$row[overfor_til]</option>";  
 		elseif (in_array($row['kontonr'],$kontonr)) print "<option>$row[kontonr]</option>";
@@ -508,15 +529,20 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		for ($x=1;$x<=$kontoantal;$x++) print "<option>$kontonr[$x]</option>";
 		print "</SELECT></td>";
 		
-		print "<td width=10 align=right><input type=hidden name=ny_primo[$y] value=$ny_primo[$y]>".dkdecimal($ny_primo[$y])."</td></tr>\n";
+		print "<td width=10 align=right><input type=hidden name=ny_primo[$y] value=$ny_primo[$y]>".dkdecimal($ny_primo[$y],2)."</td></tr>\n";
 		$ny_sum=$ny_sum+$ny_primo[$y];
 	}
-	print "<td></td><td></td><td align=right>".dkdecimal($saldosum)."</td><td></td><td align=right>".dkdecimal($ny_sum)."</td></tr>\n";
+	print "<td></td><td></td><td align=right>".dkdecimal($saldosum,2)."</td><td></td><td align=right>".dkdecimal($ny_sum,2)."</td></tr>\n";
 	if ($debetsum-$kreditsum!=0) {print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";}
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
-	print "<tr><td colspan = 5 align = center><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
-	if ($regnaar==$max_aar) print "<input type=submit value=\"Slet\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
+	print "<tr><td colspan = 5 align = center><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
+	if ($aut_lager && date("Y-m-d")>$pre_regnslut) {
+		$title="Bogfører alle lagerbevægelser i det foregående år. Bør gøres umiddelbart efter årsskifte og lageroptælling".
+		$confirmtxt="";
+		print "&nbsp;<a href=laas_lager.php?regnaar=$pre_regnaar&regnaar_id=$id&print=0><input title=\"$title\" type=\"button\" value=\"Lås lagerværdi\" onclick=\"return confirm('Bogfør og lås lagerprimo? Obs - Vær tålmodig det kan tage flere minutter')\"></a>"; 
+	}
+	# if ($regnaar==$max_aar) print "<input type=submit value=\"Slet\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
 	print "</td></tr>\n";
 	print "</form>";
 	exit;

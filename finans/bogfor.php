@@ -1,23 +1,29 @@
 <?php
-// --------------------finans/bogfor.php------ lap 3.4.1 -- 2014-04-28	 --
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// --------------------finans/bogfor.php------ lap 3.7.0 -- 2017-05-16	 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller 
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// modificere det under betingelserne i GNU General Public License (GPL)
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20121122 - Åbne poster udlignes ikke mere automatisk hvis forskelligt projektnummer. Søg 20121122
 // 20130210 - Break ændret til break 1
@@ -33,6 +39,7 @@
 // 20140428 -	Afrundingsfejl ved eu moms (PHR Danosoft jf http://forum.saldi.dk/viewtopic.php?f=5&t=1130)# Søg 20140428  
 // 20141128 -	Fejl i kontrolfunktion minus ændret til plus.
 // 20150527	- Som ovenstående minus ændret til plus.
+// 20170516 - Linjer uden indhold i debet og kredit slettes fra kladde ved bøgføring. 20170516
 
 @session_start();
 $s_id=session_id();
@@ -602,8 +609,9 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 	$y=0;
 	$v_antal=0;
 	$b_diff=0;
-	$query = db_select("select * from kassekladde where kladde_id = $kladde_id and amount !=0 order by bilag",__FILE__ . " linje " . __LINE__);
+	$query = db_select("select * from kassekladde where kladde_id = $kladde_id order by bilag",__FILE__ . " linje " . __LINE__);
 	while ($row =	db_fetch_array($query)) {
+		if ($row['debet'] || $row['kredit']) {
 		$y++;
 		$postid[$y]=$row['id'];
 		if ($row['debet']>0) $transantal++;
@@ -628,7 +636,6 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 		$projekt[$y]=$row['projekt'];
 		$valuta[$y]=$row['valuta']*1;
 		$ordre_id[$y]=$row['ordre_id']*1;
-#		$valutakurs[$y]=$row['valutakurs']*1; Rem'et 2009.02.10
 		if (!$valutakurs[$y]) $valutakurs[$y]=100;
 		$transdate[$y]=$row['transdate'];
 		$forfaldsdate[$y]=$row['forfaldsdate'];
@@ -704,7 +711,11 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 		if (!$afd[$y]){$afd[$y]=0;}
 		if ((!$momsfri[$y])&&($debet[$y]>0)&&($d_amount[$y]>0)&&(substr($momsart,0,1)!='E')&&(substr($momsart,0,1)!='Y')) list ($d_amount[$y], $d_moms[$y], $d_momskto[$y], $d_modkto[$y])=momsberegning($debet[$y], $d_amount[$y], $d_momsart[$y], $k_momsart[$y]);
 		if ((!$momsfri[$y])&&($kredit[$y]>0)&&($k_amount[$y]>0)&&(substr($momsart,0,1)!='E')&&(substr($momsart,0,1)!='Y')) list ($k_amount[$y], $k_moms[$y], $k_momskto[$y], $k_modkto[$y])=momsberegning($kredit[$y], $k_amount[$y], $k_momsart[$y], $d_momsart[$y]);
-	} # end while
+		} elseif (!$row['debet'] && !$row['kredit'] && $row['id']) { #20170516
+			db_modify("delete from kassekladde where id = '$row[id]'",__FILE__ . " linje " . __LINE__);
+		}
+	}
+	# end while
 	$posteringer=$y;
 	for ($y=1; $y<=$posteringer; $y++) {
 		$d_moms[$y]*=1;
@@ -863,18 +874,16 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 			} 
 		}
 	}
-#cho "$tjeksum<br>";
-#xit;
 	if (abs($tjeksum)<=0.01) { # && $transtjek==$transantal){
 		$dato=date("Y-m-d");
 		if ($simuler) {
 			$qtxt="update kladdeliste set bogfort = 'S', bogforingsdate = '$dato', bogfort_af = '$brugernavn' where id = '$kladde_id'";
-#cho "$qtxt<br>";			
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else {
+			$qtxt="delete from kassekladde where debet='0' and kredit='0' and kladde_id='$kladde_id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$qtxt="update kladdeliste set bogfort = 'V', bogforingsdate = '$dato', bogfort_af = '$brugernavn' where id = '$kladde_id'";
-#cho "$qtxt<br>";			
-			db_modify("update kladdeliste set bogfort = 'V', bogforingsdate = '$dato', bogfort_af = '$brugernavn' where id = '$kladde_id'",__FILE__ . " linje " . __LINE__);
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			for ($x=1; $x<=$transtjek; $x++) {
 				$query = db_select("select saldo from kontoplan where id='$kasklid[$x]'",__FILE__ . " linje " . __LINE__);
 				$row= db_fetch_array($query);

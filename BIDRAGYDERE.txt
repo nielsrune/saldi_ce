@@ -1,10 +1,10 @@
-Bidragsydere til SALDI
+Bidragsydere til saldi
 =====================================================================
-SALDI ejes af DANOSOFT ApS (http://www.danosoft.dk/).
+saldi ejes af saldi.dk aps (http://www.saldi.dk/).
 
 Hovedudvikler:
   Peter Rude <peter@saldi.dk>
-    DANOSOFT ApS (http://www.danosoft.dk/) tidligere ITz ApS.
+    saldi.dk aps (http://www.saldi.dk/) tidligere DANOSOFT ApS.
 
 Koordinator og udvikler:
   Claus Agerskov <ca@saldi.dk>
@@ -13,8 +13,10 @@ Koordinator og udvikler:
 
 Andre bidrag
 ^^^^^^^^^^^^
+Asbjørn Holland Christensen fra Musalk
+	-	Rettelse af fejl i projektvisning i ordre.php (3.6.2)
 
-Niels Rune Brandt alias nielsrune fra forum.saldi.dk 
+Niels Rune alias nielsrune fra forum.saldi.dk 
   - Inspirerende kode til overskrifter i regnskab og budget i 3.0.2
 
 Magnus Lund alias Goblin fra forum.saldi.dk
@@ -49,6 +51,6 @@ Niels Svennekjær <oss SNABELA justLinux.dk>
   - Dual-understøttelse af databaseserverne MySQL og PostgreSQL
 
 =====================================================================
-Senest ændret 2010-05-26 af Claus Agerskov <ca@saldi.dk>
+Senest ændret 2014-10-31 af Claus Agerskov <ca@saldi.dk>
 
 © 2003-2010 DANOSOFT ApS http://danosoft.dk          http://saldi.dk/

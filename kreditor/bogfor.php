@@ -1,34 +1,41 @@
 <?php
 @session_start();
 $s_id=session_id();
-// -------------------kreditor/bogfor.php-------lap 3.5.6----2015-04-22--
-/// LICENS
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -------------------kreditor/bogfor.php-------lap 3.5.6----2017-04-04--
+// LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // -------------------------------------------------------------------------
 //
-// 20131108 Fejl v. fifo og varetilgang på varekøb.Søg #20131108
-// 20140611 Indsat if($batch_id) da kostpriser i ordrelinjer ellers bliver ændret på alt som ikke har batch_kob_id v. negativt køb af vare som aldrig har været handlet.
-// 20141005 Div i forbindelse med omvendt betalingspligt, samt nogle generelle ændringer således at varereturnering nu bogføres
+// 2013.11.08 Fejl v. fifo og varetilgang på varekøb.Søg #20131108
+// 2014.06.11 Indsat if($batch_id) da kostpriser i ordrelinjer ellers bliver ændret på alt som ikke har batch_kob_id v. negativt køb af vare som aldrig har været handlet.
+// 2014.10.05 Div i forbindelse med omvendt betalingspligt, samt nogle generelle ændringer således at varereturnering nu bogføres
 //	som negativt køb og ikke som salg.
-// 20141117 Fejl v. fifo og vareafgang v. negativt varekøb.Søg #20141117
-// 20150422 Hvis samme vare købes til forskellige priser blev kostpris sat til sidste pris. Ændret så den nu sættes til snitprisen. Søg snitpris.
+// 2014.11.17 Fejl v. fifo og vareafgang v. negativt varekøb.Søg #20141117
+// 2015.04.22 Hvis samme vare købes til forskellige priser blev kostpris sat til sidste pris. Ændret så den nu sættes til snitprisen. Søg snitpris.
+// 2017.04.04	PHR - Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170404
+// 2017.10.26	PHR Udkommenteret 4 linjer da lagerførte varer fra udland blev bogført på varekøb DK
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -180,18 +187,17 @@ if (!$row['levdate']){
 				if ($box11 && cvrnr_omr(cvrnr_land($cvrnr)) == "EU") $bf_kto=$box11; 
 				elseif ($box13 && cvrnr_omr(cvrnr_land($cvrnr)) == "UD") $bf_kto=$box13;
 				else $bf_kto=$box3;
-#cho "cvr $cvrnr box11 $box11 box13 $box13 bf_kto $bf_kto<br>";
+#cho __line__."cvr $cvrnr box11 $box11 box13 $box13 bf_kto $bf_kto<br>";
 				if ($box8!='on'){
 #cho "update ordrelinjer set bogf_konto='$bf_kto' where id='$linje_id[$x]'<br>";
 					db_modify("update ordrelinjer set bogf_konto='$bf_kto' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
 					db_modify("update batch_kob set pris = '$dkpris[$x]', fakturadate='$levdate' where linje_id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
 				} else {
-					if ($box1) { #Box 1 er konto for lagertilgang,
-#cho "update ordrelinjer set bogf_konto='$box1' where id='$linje_id[$x]'<br>";
-						db_modify("update ordrelinjer set bogf_konto='$box1' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
-					} else {
+#					if ($box1) { #Box 1 er konto for lagertilgang, #udkommenteret 20171026
+#						db_modify("update ordrelinjer set bogf_konto='$box1' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__); #udkommenteret 20171026
+#					} else { #udkommenteret 20171026
 						db_modify("update ordrelinjer set bogf_konto='$bf_kto' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
-					}
+#					} #udkommenteret 20171026
 					if ($antal[$x]>0) {
 #cho "A select * from batch_kob where linje_id=$linje_id[$x]<br>";
 						$query = db_select("select * from batch_kob where linje_id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
@@ -328,8 +334,10 @@ echo "update vare_lev set kostpris='$dkpris[$x]' where vare_id='$vare_id[$x]' an
 		if ($modtagelse<1) $modtagelse=1;
 		
 		db_modify("update ordrer set status=3, fakturadate='$levdate', modtagelse = '$modtagelse', valuta = '$valuta', valutakurs = '$valutakurs' where id=$id",__FILE__ . " linje " . __LINE__);
-		$r = db_fetch_array($q = db_select("select box5 from grupper where art='DIV' and kodenr='3'",__FILE__ . " linje " . __LINE__));
-		if ($r['box5']=='on') bogfor($id);
+		$r = db_fetch_array(db_select("select box5 from grupper where art='DIV' and kodenr='3'",__FILE__ . " linje " . __LINE__));
+	if (strstr($r['box5'],';')) list($tmp,$straksbogfor)=explode(';',$r['box5']); # 20170404
+		else $straksbogfor=$r['box5'];
+		if ($straksbogfor) bogfor($id);
 		transaktion("commit");
 	}
 }

@@ -1,11 +1,16 @@
 <?php
-// ------systemdata/importer_adresser.php---lap 3.4.3---2014-08-11--------
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// ------systemdata/importer_adresser.php---lap 3.6.6---2017-01-04--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
@@ -15,16 +20,16 @@
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
-// En dansk oversaettelse af licensen kan laeses her:
+// En dansk oversaetelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 DANOSOFT ApS
 // -----------------------------------------------------------------------
 
 // 2013.02.10 Break ændret til break 1
 // 2014.07.04 Ansatte og primær kontakt opdateres nu også ved opdatering 
 // 2014.08.11 se $find_kontakt... 
-
+// 2017.01.04 rettet else til elseif ($feltnavn[$y] != 'kontoansvarlig') 20170104
 
 @session_start();
 $s_id=session_id();
@@ -170,8 +175,8 @@ if ($art!='D') {
 		$felt_betegn[$x]=$felt_navn[$x];
 	}
 } else {
-	$felt_navn=array("kontonr","firmanavn","fornavn","efternavn","addr1","husnr","etage","addr2","postnr","bynavn","land","kontakt","tlf","fax","email","mailfakt","web","notes","kreditmax","betalingsbet","betalingsdage","cvrnr","ean","institution","pbs_nr","gruppe","kontoansvarlig","oprettet","felt_1","felt_2","felt_3","felt_4","felt_5","kategori","status","kontakt_navn","kontakt_addr1","kontakt_addr2","kontakt_postnr","kontakt_bynavn","kontakt_tlf","kontakt_fax","kontakt_email","kontakt_notes");
-	$felt_tekst_id=array("357","360","358","359","361","412","413","362","144","146","364","370","377","378","402","677","367","391","381","368","57","376","379","380","414","374","386","65","255","256","257","258","259","388","494","403","404","405","406","407","408","409","410","411");
+	$felt_navn=array("kontonr","firmanavn","fornavn","efternavn","addr1","husnr","etage","addr2","postnr","bynavn","land","kontakt","tlf","fax","email","mailfakt","web","notes","kreditmax","betalingsbet","betalingsdage","bank_reg","bank_konto","cvrnr","ean","institution","pbs_nr","gruppe","kontoansvarlig","oprettet","felt_1","felt_2","felt_3","felt_4","felt_5","kategori","status","kontakt_navn","kontakt_addr1","kontakt_addr2","kontakt_postnr","kontakt_bynavn","kontakt_tlf","kontakt_fax","kontakt_email","kontakt_notes");
+	$felt_tekst_id=array("357","360","358","359","361","412","413","362","144","146","364","398","377","378","402","677","367","391","381","368","57","382","383","376","379","380","414","374","386","65","255","256","257","258","259","388","494","403","404","405","406","407","408","409","410","411");
 	$felt_antal=count($felt_navn);
 	for ($x=0; $x<$felt_antal; $x++) {
 		$felt_betegn[$x]=findtekst($felt_tekst_id[$x],$sprog_id);
@@ -381,9 +386,9 @@ if ($fp) {
 				if ($feltnavn[$y]=='pbs_nr' && $felt[$y]) $felt[$pbs]='on';
 				if ($feltnavn[$y]=="postnr") list($felt[$y],$bynavn[$y]) = explode(" ",$felt[$y],2);
 				if ($feltnavn[$y]=='kontoansvarlig'&&$felt[$y]&&$kontonr){
-					$r=db_fetch_array(db_select("select id from adresser where kontonr='$kontonr'",__FILE__ . " linje " . __LINE__));
-					$konto_id=$r['id']*1;
-					$r=db_fetch_array(db_select("select id from ansatte where initialer='$felt[$y]' and konto_id=$konto_id",__FILE__ . " linje " . __LINE__));
+					$r=db_fetch_array(db_select("select id from adresser where art='S'",__FILE__ . " linje " . __LINE__));
+					#$konto_id=$r['id']*1;
+					$r=db_fetch_array(db_select("select id from ansatte where initialer='$felt[$y]' and konto_id='$r[id]'",__FILE__ . " linje " . __LINE__));
 					$felt[$y]=$r['id']*1;
 				} elseif ($feltnavn[$y]=='kontoansvarlig') $felt[$y]='0';
 				if ($feltnavn[$y]=='oprettet'&&$felt[$y]&&$kontonr){
@@ -423,7 +428,7 @@ if ($fp) {
 						($box4)?$box4.=chr(9).$status_beskrivelse[$x]:$box4=$status_beskrivelse[$x];
 					}
 					db_modify("update grupper set box3='$box3',box4='$box4' where art = 'DebInfo'",__FILE__ . " linje " . __LINE__);  
-				} else {
+				} elseif ($feltnavn[$y] != 'kontoansvarlig')   { # 20170104
 					for ($x=0;$x<$status_antal;$x++) {
 						if ($felt[$y]==$status_beskrivelse[$x]) { 
 							$felt[$y]=$status_id[$x];
@@ -433,7 +438,7 @@ if ($fp) {
 				}
 #cho "$feltnavn[$y]<br>";
 				if ($feltnavn[$y] && $feltnavn[$y]!='husnr'  && $feltnavn[$y]!='etage' ) {
-					$felt[$y]=trim(addslashes($felt[$y]));
+					$felt[$y]=trim(db_escape_string($felt[$y]));
 					if ($feltnavn[$y]=='betalingsdage') $felt[$y]*=1;
 					if (!strstr($feltnavn[$y],"kontakt_")) {
 						if ($addr_a) {
@@ -487,7 +492,8 @@ if ($fp) {
 				}
 			} else {
 				$imp_antal++;
-				db_modify("insert into adresser($addr_a,kontotype,art) values ($addr_b,'$kontotype','$art')",__FILE__ . " linje " . __LINE__);
+				$qtxt="insert into adresser($addr_a,kontotype,art) values ($addr_b,'$kontotype','$art')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				$r=db_fetch_array(db_select("select id from adresser where kontonr='$kontonr' and art = '$art'",__FILE__ . " linje " . __LINE__));
 				$konto_id=$r['id'];
 			}

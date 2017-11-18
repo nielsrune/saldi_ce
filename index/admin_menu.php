@@ -1,20 +1,29 @@
 <?php
-// --index/admin_menu.php------lap 3.1.2------2011-01-30----------------
+//                         ___   _   _   __  _
+//                        / __| / \ | | |  \| |
+//                        \__ \/ _ \| |_| | | |
+//                        |___/_/ \_|___|__/|_|
+//
+// --index/admin_menu.php------lap 3.6.6------2016-11-04----------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
 // af denne licens eller en senere version efter eget valg
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// 
+// Programmet må ikke uden forudgående skriftlig aftale anvendes
+// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2011 DANOSOFT ApS
+// Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 
 
@@ -66,7 +75,7 @@ print"<td  height=\"35\" align=\"center\"><b><big>Administrationsmenu</big></b><
 print"</tr><tr>";
 if ($admin || $oprette) print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/opret.php\"><big>".findtekst(339,$sprog_id)."</big></td>";
 else print "<td $td $stor_knap_bg><span style=\"color:#999;\"><big>".findtekst(339,$sprog_id)."</big></td>\n";
-if ($revisorregnskab) {
+if ($revisorregnskab || $forhandlerregnskab) {
 #	print"</tr><tr>";
 #	print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/stdkontoplan.php\"><br></td>";
 	print"</tr><tr>";
@@ -83,9 +92,10 @@ print"</td></tr>";
 
 
 print"<tr><td align=\"center\" valign=\"bottom\">";
-print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
-print"<td align=\"left\" width=\"100%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000000\">&nbsp;Copyright&nbsp;&copy;&nbsp;2003-2011&nbsp;DANOSOFT&nbsp;ApS</td>";
-print"</tbody></table>";
+#print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+print "<div class=top_bund><small>SALDI&nbsp;version&nbsp;$version&nbsp;-&nbsp;Copyright&nbsp;&copy;&nbsp;$copyright&nbsp;DANOSOFT&nbsp;aps</small></div></td></tr>\n";
+#print"<td align=\"left\" width=\"100%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000000\">&nbsp;Copyright&nbsp;&copy;&nbsp;2003-2011&nbsp;DANOSOFT&nbsp;ApS</td>";
+#print "</tbody></table>";
 print"</td></tr>";
 print"</tbody></table>";
 print"</body></html>";

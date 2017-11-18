@@ -1,29 +1,35 @@
 <?php
-// -------------/includes/udvaelg.php--------lap 3.5.9----2015.01.05-----
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -------------/includes/udvaelg.php--------lap 3.7.0----2017.05.09-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2015.01.05 Retter fejlindtastning til noget brugbart 20150105-1
 // 2015.01.05 sikrer at numeriske værdier er numeriske ved at gange med 1 20150105-2
 // 2015.06.01 Ved beløb skal , ikke erstattes af ":", for så kan man ikke søge på decimaler.
 // 2015.10.19 Ved enkelbeløb findes beløb ikke hvis de ikke stemmer på decimalen da der bogføres med 3 decimaler.
+// 20170509 PHR Søgniing med wildcards i TXT'er
 
 if (!function_exists('udvaelg')){
 	function udvaelg ($tmp, $key, $art){
@@ -67,6 +73,11 @@ if (!function_exists('udvaelg')){
 				$tmp=str_replace("*","%",$tmp);
 				$tmp=db_escape_string($tmp);
 				$udvaelg= " and lower($key) like '$tmp'";
+				}	elseif ($art="TEXT") {
+					if (strstr($tmp,'*')) {
+						$tmp=str_replace('*','%',$tmp);
+						$udvaelg= " and $key like '$tmp'";
+					} else $udvaelg= " and $key = '$tmp'";
 				} else $udvaelg= " and $key = '$tmp'";
 			}
 		return $udvaelg;

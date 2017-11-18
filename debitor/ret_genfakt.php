@@ -1,15 +1,20 @@
 <?php
-// ----------debitor/ret_genfakt.php----------lap 3.6.1-----2015-12-23-------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----------debitor/ret_genfakt.php----------lap 3.7.0-----2017-05-30-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -18,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 16.08.2012 søg 20120816 - Udskriv_til i rødt hvis stamkort siger pbs og dette ikke er valgt.
@@ -31,6 +36,8 @@
 // 2014.04.26 - Indsat '' foran varenr[$x] i kald til opret_ordrelinje grundet ændring i funktionen (PHR - Danosoft) Søg 20140426 
 // 2015.01.06 Formularprint kaldes ikke længere som popup. 20150106
 // 2015.12.23 oioubl kan nu også genfaktureres - søg oioubl
+// 2017.04.11 fakturadato, genfakt & betalingsbetingelser kan nu rettes for alle med samme dato / bet ved af skrive * efter hhv. Søg '"*"'
+// 2017.05.30 Betalingsdage sættes til 0 hvis ikke sat. Søg 20170530
 
 print "<script>
 	function fokuser(that, fgcolor, bgcolor){
@@ -59,6 +66,7 @@ include("../includes/oioublfunk.php");
 $incl_moms='';
 $art='DO';
 $gl_dato=NULL;$ny_dato=NULL;
+$ny_betalingsbet=NULL;$ny_betalingsdage=NULL;
 $gl_genfakt=NULL;$ny_genfakt=NULL;
 
 
@@ -146,19 +154,19 @@ if ($_GET['ordreliste']) {
 			$fakturadato[$x]=$_POST['fakturadato_'.$x];
 			$sync_stamdata[$x]=if_isset($_POST['sync_stamdata_'.$x]);
 #			if ($sync_stamdata[$x]) echo "synkroniserer stamdata<br>";
-			if (substr($fakturadato[$x],-2)=="*=") {
+			if (strpos($fakturadato[$x],"*")) {
 				$r=db_fetch_array(db_select("select fakturadate from ordrer where id = '$ordreliste[$x]' and status<'3'",__FILE__ . " linje " . __LINE__));
 				$gl_dato=dkdato($r['fakturadate']);
-				$fakturadato[$x]=(str_replace("*=","",$fakturadato[$x]));
+				$fakturadato[$x]=(str_replace("*","",$fakturadato[$x]));
 				$ny_dato=dkdato(usdate($fakturadato[$x]));
 			} elseif ($gl_dato && $ny_dato && $fakturadato[$x]==$gl_dato) {
 				$fakturadato[$x]=$ny_dato;
 			}
 			$genfakt[$x]=$_POST['genfakt_'.$x];
-			if (substr($genfakt[$x],-2)=="*=") {
+			if (strpos($genfakt[$x],"*")) {
 				$r=db_fetch_array(db_select("select nextfakt from ordrer where id = '$ordreliste[$x]' and status<'3'",__FILE__ . " linje " . __LINE__));
 				$gl_genfakt=dkdato($r['nextfakt']);
-				$genfakt[$x]=(str_replace("*=","",$genfakt[$x]));
+				$genfakt[$x]=(str_replace("*","",$genfakt[$x]));
 				$ny_genfakt=dkdato(usdate($genfakt[$x]));
 			} elseif ($gl_genfakt && $ny_genfakt && $genfakt[$x]==$gl_genfakt) {
 				$genfakt[$x]=$ny_genfakt;
@@ -167,13 +175,13 @@ if ($_GET['ordreliste']) {
 			$email[$x]=$_POST['email_'.$x];
 			$sync_email[$x]=if_isset($_POST['sync_email_'.$x]);
 			$betalingsbet[$x]=$_POST['betalingsbet_'.$x];
-			$betalingsdage[$x]=$_POST['betalingsdage_'.$x]*1;
+			$betalingsdage[$x]=$_POST['betalingsdage_'.$x];
 			$procenttillag[$x]=usdecimal($_POST['procenttillag_'.$x]);
-			if (substr($betalingsdage[$x],-2)=="*=") {
+			if (strpos($betalingsdage[$x],"*")) {
 				$r=db_fetch_array(db_select("select betalingsbet,betalingsdage from ordrer where id = '$ordreliste[$x]' and status<'3'",__FILE__ . " linje " . __LINE__));
 				$gl_betalingsbet=$r['betalingsbet'];
 				$gl_betalingsdage=$r['betalingsdage'];
-				$betalingsdage[$x]=(str_replace("*=","",$betalingsdage[$x]));
+				$betalingsdage[$x]=(str_replace("*","",$betalingsdage[$x]));
 				$ny_betalingsbet=$betalingsbet[$x];
 				$ny_betalingsdage=$betalingsdage[$x];
 			} elseif ($gl_betalingsbet && $ny_betalingsbet && $betalingsbet[$x]==$gl_betalingsbet && $betalingsdage[$x]==$gl_betalingsdage) {
@@ -181,6 +189,7 @@ if ($_GET['ordreliste']) {
 				$betalingsdage[$x]=$ny_betalingsdage;
 			}
 			if (!$betalingsbet[$x]) $betalingsbet[$x]='Netto';
+			if (!$betalingsdage[$x]) $betalingsdage[$x]='0'; #20170530
 			$firmanavn[$x]=db_escape_string($firmanavn[$x]);
 			$email[$x]=db_escape_string($email[$x]);
 			$fakturadate=usdate($fakturadato[$x]);
@@ -438,10 +447,22 @@ for ($x=0 ; $x<=$ordreantal ; $x++) {
 		print "<input class=\"inputbox\" type=\"checkbox\" name=\"sync_stamdata_$x\">";
 	}
 	print "</td>";
-	print "<td><input class=\"inputbox\" $onfocus type=\"text\" style=\"text-align:center;width:90px\" name=\"fakturadato_$x\" value=\"$fakturadato[$x]\"></td>";
-	print "<td><input class=\"inputbox\" $onfocus type=\"text\" style=\"text-align:center;width:90px\" name=\"genfakt_$x\" value=\"$genfakt[$x]\"></td>";
-	print "<td><select class=\"inputbox\" $onfocus style=\"text-align:left;width:70px\" name=\"betalingsbet_$x\">";
-
+	$spantekst="Du kan rette alle med samme fakturadato ved at sætte en * til sidst<br>";
+	$spantekst.="F.eks. ".date("dmy")."*";
+	print "<td><span onmouseover=\"return overlib('$spantekst', WIDTH=800);\" onmouseout=\"return nd();\">";
+	print "<input class=\"inputbox\" $onfocus type=\"text\" style=\"text-align:center;width:90px\" name=\"fakturadato_$x\" value=\"$fakturadato[$x]\">";
+	print "</span></td>";
+	$spantekst="Du kan rette alle med samme genfaktureringsdato ved at sætte en * til sidst<br>";
+#	$spantekst.="F.eks. ".date("dmy")."	*";
+	print "<td><span onmouseover=\"return overlib('$spantekst', WIDTH=800);\" onmouseout=\"return nd();\">";
+	print "<input class=\"inputbox\" $onfocus type=\"text\" style=\"text-align:center;width:90px\" name=\"genfakt_$x\" value=\"$genfakt[$x]\">";
+	print "</span></td>";
+	$spantekst="Du kan rette alle samme betalingsbetingelser ved at sætte en * efter dage<br>";
+	$spantekst.="f.eks.: ";
+	$spantekst.= $betalingsdage[$x]+5;
+	$spantekst.="*";
+	print "<td><span onmouseover=\"return overlib('$spantekst', WIDTH=800);\" onmouseout=\"return nd();\">";
+	print "<select class=\"inputbox\" $onfocus style=\"text-align:left;width:70px\" name=\"betalingsbet_$x\">";
 	if (!$betalingsbet) $betalingsbet="Netto";
 	print "<option>$betalingsbet[$x]</option>\n";
 	if ($betalingsbet[$x]!='Forud') 	print "<option>Forud</option>\n";
@@ -452,8 +473,10 @@ for ($x=0 ; $x<=$ordreantal ; $x++) {
 	if (($betalingsbet[$x]=='Kontant')||($betalingsbet[$x]=='Efterkrav')||($betalingsbet[$x]=='Forud')) $betalingsdage[$x]='';
 	elseif (!$betalingsdage[$x]) $betalingsdage[$x]='Nul';
 	if ($betalingsdage[$x])	{
-		if ($betalingsdage[$x]=='Nul') $betalingsdage[$x]=0;
-		print "</SELECT>+<input class=\"inputbox\" $onfocus type=\"text\" size=\"1\" style=\"text-align:right\" name=\"betalingsdage_$x\" value=\"$betalingsdage[$x]\"></td>\n";
+		$betalingsdage[$x]*=1; #20170517
+		print "</SELECT>+";
+		print "<input class=\"inputbox\" $onfocus type=\"text\" size=\"1\" style=\"text-align:right\" name=\"betalingsdage_$x\" value=\"$betalingsdage[$x]\">";
+		print "</span></td>\n";	
 	}
 	if ($email[$x] != $stam_email[$x]) {
 		$spantekst="Email på ordre er forskellig fra email i stamdata ($stam_email[$x])<br>Afmærk feltet til højre for at synkronisere med email fra stamdata";

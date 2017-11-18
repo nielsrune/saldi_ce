@@ -1,8 +1,10 @@
 <?php #topkode_start
-@session_start();
-$s_id=session_id();
-
-// -----------------------debitor/ny_rykker.php-----lap 3.4.4--2014.11.06-------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// -----------------------debitor/ny_rykker.php-----lap 3.6.7--2017.03.03-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -12,23 +14,23 @@ $s_id=session_id();
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
-// En dansk oversaetelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// En dansk oversaettelse af licensen kan laeses her:
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.11.05 - Fejl ved renteberegning af posteringer uden forfaldadato. Søg 20121105 
 // 2014.06.28 - Valuta og valutakurs indsættes nu ved oprettesle af ny rykker. Søg 20140628 
 // 2014.07.07 - Hvis ingen valuta sættes til DKK, hvis ingen kurs sættes til sættes til 100. Søg 20140707 
 // 2014.11.06 - Indsat db_escape_string foran div variabler hvor de indsættes i tabeller.
-
+// 2017.03.03 - PHR Tilføjet felt_5 til insert into ordrer aht inkasso. 
 
 // --------------------- Bekrivelse ------------------------
 // Ved generering af en rykker oprettes en ordre med art = R1. Hver ordre der indgår i rykkeren oprettes som en ordrelinje
@@ -38,6 +40,9 @@ $s_id=session_id();
 // ved bogføring.
 // Ved generering af rykker "2" medtages evt gebyr fra rykker 1 på samme måden som v. ovenstående. 
 		
+@session_start();
+$s_id=session_id();
+
 $topniveau=NULL;
 
 include("../includes/connect.php");
@@ -68,6 +73,11 @@ $ffdage1=$r['box5']*1;
 $ffdage2=$r['box6']*1;
 $ffdage3=$r['box7']*1;
 $rykkerfrist1=usdate(forfaldsdag($dd,'netto',$ffdage1));
+
+$r = db_fetch_array(db_select("select id from formularer where beskrivelse LIKE '%inkassotekst'",__FILE__ . " linje " . __LINE__));
+if ($r['id']) {
+	$inkassotekst='';
+}
 
 if ($konto_id[0]=="alle") { 
 	$dd=date("Y-m-d");
@@ -212,8 +222,8 @@ for ($i=0; $i<=$konto_antal; $i++) {
 			}
 			$ryk_antal=$x;
 			if ($ryk_antal) {	
-					db_modify("insert into ordrer (ordrenr, konto_id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, betalingsdage, betalingsbet, cvrnr, ean, institution, notes, art, ordredate, levdate, fakturadate, momssats, hvem, tidspkt, ref, status,valuta, valutakurs,fakturanr,email,betalt,kontakt) 
-					values ('$r_ordrenr', '$konto_id[$i]', '$kontonr', '$firmanavn', '$addr1', '$addr2', '$postnr', '$bynavn', '$land', '$betalingsdage', '$betalingsbet', '$cvrnr', '$ean', '$institution', '$notes', 'R1', '$rykkerdate', '$rykkerdate', '$rykkerdate', '0', '$brugernavn', '$tidspkt', '$ref', '2', '$valuta', '$valutakurs','$r_fakturanr','$email','-','$kontakt')",__FILE__ . " linje " . __LINE__);
+					db_modify("insert into ordrer (ordrenr, konto_id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, betalingsdage, betalingsbet, cvrnr, ean, institution, notes, art, ordredate, levdate, fakturadate, momssats, hvem, tidspkt, ref, status,valuta, valutakurs,fakturanr,email,betalt,kontakt,felt_5) 
+					values ('$r_ordrenr', '$konto_id[$i]', '$kontonr', '$firmanavn', '$addr1', '$addr2', '$postnr', '$bynavn', '$land', '$betalingsdage', '$betalingsbet', '$cvrnr', '$ean', '$institution', '$notes', 'R1', '$rykkerdate', '$rykkerdate', '$rykkerdate', '0', '$brugernavn', '$tidspkt', '$ref', '2', '$valuta', '$valutakurs','$r_fakturanr','$email','-','$kontakt','')",__FILE__ . " linje " . __LINE__);
 				$r= db_fetch_array(db_select("select id from ordrer where ordrenr ='$r_ordrenr' and art = 'R1'",__FILE__ . " linje " . __LINE__));
 				$rykker_id[$i]=$r['id'];
 				$id=$konto_id[$i];

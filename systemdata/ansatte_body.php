@@ -1,31 +1,36 @@
 <?php
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+//
 // -------systemdata/ansatte_body.php--------lap 3.0.0-------2013-01-06---20:03----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2013 DANOSOFT ApS
+// Copyright (c) 2003-2016 saldi.dk aps
 // ----------------------------------------------------------------------
 print "<input type=\"hidden\" name=\"id\" value=\"$id\">";
 print "<input type=\"hidden\" name=\"konto_id\" value=\"$konto_id\">";
 print "<input type=\"hidden\" name=\"returside\" value=\"$returside\">";
 print "<input type=\"hidden\" name=\"fokus\" value=\"$fokus\">";
 
-print "<tr><td colspan=\"2\" width=\"315px\"valign=\"top\"><table valign=\"top\"><tbody>";
+print "<tr><td colspan=\"2\" width=\"315px\"valign=\"top\"><table valign=\"top\"><!-- TABEL body 1 -> --><tbody>";
 if (findtekst(645,$sprog_id)) print "<tr><td width=\"150px\">".findtekst(645,$sprog_id)."<!--tekst 645--></td><td width=\"180px\"><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"nummer\" value=\"$nummer\"></td></tr>\n";
 if (findtekst(646,$sprog_id)) print "<tr><td width=\"150px\">".findtekst(646,$sprog_id)."<!--tekst 646--></td><td><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"navn\" value=\"$navn\"></td></tr>\n";
 if (findtekst(648,$sprog_id)) print "<tr><td width=\"150px\">".findtekst(648,$sprog_id)."<!--tekst 648--></td><td><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"addr1\" value=\"$addr1\"></td></tr>\n";
@@ -44,8 +49,8 @@ if (count($afd_nr)) {
 	}
 	print "</SELECT></td>";
 } 
-print "</tbody></table></td>";
-print "<td colspan=\"2\" width=\"315px\" valign=\"top\"><table valign=\"top\"><tbody>";
+print "</tbody></table><!-- <- TABEL body 1 --></td>";
+print "<td colspan=\"2\" width=\"315px\" valign=\"top\"><table valign=\"top\"><!-- TABEL body 2 -> --><tbody>";
 if (findtekst(661,$sprog_id)) print "<td width=\"150px\">".findtekst(661,$sprog_id)."<!--tekst 661--></td><td><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"cprnr\" value=\"$cprnr\"></td></tr>\n";
 if (findtekst(647,$sprog_id)) print "<td width=\"150px\">".findtekst(647,$sprog_id)."<!--tekst 647--></td><td><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"initialer\" value=\"$initialer\"></td></tr>\n";
 if (findtekst(649,$sprog_id)) print "<td width=\"150px\">".findtekst(649,$sprog_id)."<!--tekst 649--></td><td><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"addr2\" value=\"$addr2\"></td></tr>\n";
@@ -73,7 +78,7 @@ if (findtekst(657,$sprog_id)) {
 	print "<input type=\"hidden\" name=\"pro_antal\" value=\"$x\">";
 }
 */
-print "</tbody></table></td></tr>\n";
+print "</tbody></table><!-- <- TABEL body 2 --></td></tr>\n";
 
 print "<tr><td valign=top width=\"150px\">".findtekst(659,$sprog_id)."<!--tekst 659--></td><td colspan=\"3\"><textarea name=\"notes\" rows=\"3\" style=\"width:600px\">$notes</textarea></td></tr>\n";
 if ($lukket && !$slutdate) { 

@@ -1,5 +1,10 @@
 <?php #topkode_start
-// ----------------debitor/kontoprint-----lap 3.5.5---2015.04.09-------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----------------debitor/kontoprint-----lap 3.6.6---2016.11.24-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -16,14 +21,15 @@
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 //2013.05.10 Tjekker om formular er oprettet og opretter hvis den ikke er.
 //2013.05.12 Virker nu også når der er mere end 1 konto
 //2015.03.16 
 //2015.04.09 Sidste side blev ikke udskrevet v. flere sider. Ændrer $side til $side-1. 20150409
+// 2016.11.24 Hvis konto_fra=konto_til søges specifikt på kontonr.
 
 @session_start();
 $s_id=session_id();
@@ -131,18 +137,20 @@ fwrite($fp,$initext);
 if (!$konto_til && $konto_fra) $konto_til = $konto_fra;
 if (!$konto_til) $konto_til = '9999999999';
 if (!$konto_fra) $konto_fra = '1';
-
 $x=0;
-if (is_numeric($konto_fra)) $qtxt="select id from adresser where kontonr>='$konto_fra' and kontonr<='$konto_til' and art = '$kontoart' and lukket != 'on'";
-elseif ($konto_fra && $konto_fra!='*') {
+if (is_numeric($konto_fra)) {
+	#20161124
+	if ($konto_fra != $konto_fra) $qtxt="select id from adresser where kontonr>='$konto_fra' and kontonr<='$konto_til' and art = '$kontoart' and lukket != 'on'";
+	else $qtxt="select id from adresser where kontonr='$konto_fra' and art = '$kontoart'";
+} elseif ($konto_fra && $konto_fra!='*') {
 		$konto_fra=str_replace("*","%",$konto_fra);
 		$tmp1=strtolower($konto_fra);
 		$tmp2=strtoupper($konto_fra);
 		$qtxt = "select id from adresser where (firmanavn like '$konto_fra' or lower(firmanavn) like '$tmp1' or upper(firmanavn) like '$tmp2') and art = '$kontoart' order by firmanavn";
 	} else $qtxt = "select id from adresser where art = '$kontoart' order by firmanavn";
-
 $q=db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 while($r=db_fetch_array($q)){
+echo "$konto_id[$x]<br>";
 	$konto_id[$x]=$r['id'];
 	$x++;
 }

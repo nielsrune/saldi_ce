@@ -1,15 +1,20 @@
 <?php
+//                         ___   _   _   ___  _  
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |    
+//                        |___/_/ \_|___|___/|_|
+//
 // ----------includes/salgsstat.php-----------------------lap 3.6.0---2015-11-29--
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -18,10 +23,10 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2015 DANOSOFT ApS
+// Copyright (c) 2003-2016 saldi.dk aps
 // ----------------------------------------------------------------------------
 // 
-// 20140704 Oprydning og sproglig forbedring                                 ca
+// 20160309	ændret $antal[$x][$y] til $r['antal'] da antal ikke skal summeres ved sumberegning
 
 @session_start();
 $s_id=session_id();
@@ -150,7 +155,7 @@ while($r=db_fetch_array($q)){
 		$q_pris[$x][$y]=$r['pris'];
 		$q_rabat[$x][$y]=$r['rabat'];
 		$q_antal[$x][$y]+=$r['antal'];
-		$q_sum[$x][$y]+=$q_antal[$x][$y]*($q_pris[$x][$y]-($q_pris[$x][$y]/100*$q_rabat[$x][$y]));
+		$q_sum[$x][$y]+=$r['antal']*($q_pris[$x][$y]-($q_pris[$x][$y]/100*$q_rabat[$x][$y])); #20160309
 	} else {
 		($r['fakturadate'])?$q_faktdato[$x][$y]=dkdato($r['fakturadate']):$q_faktdato[$x][$y]='Ikke faktureret';
 		$q_vare_id[$x][$y]=$r['vare_id'];

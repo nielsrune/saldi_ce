@@ -1,5 +1,6 @@
 <?php
-// ----------------- systemdata/syssetup.php ------- lap 3.5.6 -- 2015-04-24 --
+
+// ----------------- systemdata/syssetup.php ------- lap 3.6.5 -- 2016-10-22 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,7 +19,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// // Copyright (c) 2004-2014 DANOSOFT ApS
+// // Copyright (c) 2004-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // 20132127 Indsat kontrol for at kodenr er numerisk på momskoder.
 // 20140621 Ændret "kontrol for at kodenr er numerisk på momskoder" til at acceptere "-".
@@ -28,6 +29,9 @@
 // 20150130 CA  Test af Lager Tilgang og Lager Træk ved den anden angivet i stedet for ved Lagerført. Søg 20150130
 // 20150424 CA  Omdøbt funktionen udskriv til skriv_formtabel og flyttet den til filen skriv_formtabel.inc.php
 // 20160118 PHR $kode blev ikke sat 20160118 
+// 20160808 PHR function nytaar $box3,$box3 rettet til box2,box3 (Tak til forumbruger 'ht'). 
+// 20161022 PHR tilretning iht flere afd pr lager. 20161022
+// 20170405 PHR	Ganger resultat med 1 for at undgå NULL værdier
 
 @session_start();
 $s_id=session_id();
@@ -291,10 +295,12 @@ if ($_POST){
 					$r1=db_fetch_array(db_select("SELECT kodenr FROM grupper WHERE id=$id[$x]",__FILE__ . " linje " . __LINE__));
 					$q2=db_select("SELECT beholdning,vare_id FROM lagerstatus WHERE lager =  '$r1[kodenr]'",__FILE__ . " linje " . __LINE__);
 					while ($r2=db_fetch_array($q2)) {
+						$b2=$r2['beholdning']*1; # 20170405
 						if ($r3=db_fetch_array(db_select("SELECT * FROM lagerstatus WHERE lager = '0' and vare_id = '$r2[vare_id]'",__FILE__ . " linje " . __LINE__))) {
-							db_modify("update lagerstatus set beholdning = $r3[beholdning]+$r2[beholdning] WHERE id = $r3[id]",__FILE__ . " linje " . __LINE__);
-						} else {
-						db_modify("insert into lagerstatus (beholdning,vare_id,lager) values ('$r2[beholdning]','$r2[vare_id]','0')",__FILE__ . " linje " . __LINE__); 
+							$b3=$r3['beholdning']*1; # 20170405
+							db_modify("update lagerstatus set beholdning = $b3+$b2 WHERE id = $r3[id]",__FILE__ . " linje " . __LINE__);
+						} elseif($b2) {
+						db_modify("insert into lagerstatus (beholdning,vare_id,lager) values ('$b2','$r2[vare_id]','0')",__FILE__ . " linje " . __LINE__); 
 						}
 					}
 					db_modify("delete FROM lagerstatus WHERE lager = '$r1[kodenr]'",__FILE__ . " linje " . __LINE__);
@@ -425,8 +431,8 @@ elseif($valg=='debitor'){
 }
 elseif($valg=='afdelinger'){
 	print "<tr><td></td><td colspan=3 align=\"center\"><b>Afdelinger</td></tr>\n";
-	print "<tr><td></td><td>Nr.</td><td>Beskrivelse</td></tr>\n";
-	$y=skriv_formtabel('AFD',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,'-','2',"-",'2',"-",'2','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
+	print "<tr><td></td><td>Nr.</td><td>Beskrivelse</td><td>Lager</td></tr>\n";
+	$y=skriv_formtabel('AFD',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'10',"-",'2',"-",'2','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 }
 elseif($valg=='projekter'){
 	print "<tr><td></td><td colspan=3 align=\"center\"><b>Projekter</td></tr>\n";
@@ -504,7 +510,7 @@ print "</form>";
 print "</div>";
 
 ###########################################################################################################################
-function nytaar($beskrivelse,$kodenr,$kode,$art,$box1,$box3,$box3,$box4,$box5,$box6) {
+function nytaar($beskrivelse,$kodenr,$kode,$art,$box1,$box2,$box3,$box4,$box5,$box6) {
 	$query = db_select("SELECT id FROM grupper WHERE art = 'RA'",__FILE__ . " linje " . __LINE__);
 	print "<form name=nytaar action=syssetup.php method=post>";
 	print "<tr><td colspan=4 align = center><big><b>Opret Regnskabs&aring;r: $beskrivelse</td></tr>\n";

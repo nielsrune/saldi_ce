@@ -1,29 +1,36 @@
-<?php #topkode_start
-// ----------------debitor/rykkerprint-----lap 3.4.2---2014.06.28-------
+<?php
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----------------debitor/rykkerprint-----lap 3.7.0---2017.03.24-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 20120815 søg 20120815 V. Logoplacering blev ikke fundet v. opslag. 
 // 20130114 Tilføjet 0 som 1. parameter i "send mails"
 // 20140628 Indsat afrund for korrekt sum. Søg 20140628
+// 20170206	Søger efter teksten inkasso i felt 5 og sender mail til inkassofirma hvis den findes
+// 20170324 PHR Tilføjet id i kald til udskriv.php 
 
 @session_start();
 $s_id=session_id();
@@ -157,9 +164,8 @@ for ($q=0; $q<$konto_antal; $q++) {
 	$side=1;
 	$forfalden=0;
 	if (($konto_id[$q])||($rykker_id[$q])) {
-		if (!$rykker_id[$q]) {
-		}
-		$r=db_fetch_array(db_select("select ordrer.mail_fakt as mailfakt,ordrer.email as email,ordrer.art,ordrer.art as art,ordrer.ordredate as rykkerdate,ordrer.sprog as sprog, ordrer.valuta as valuta from ordrer, adresser, grupper where ordrer.id = $rykker_id[$q] and adresser.id=ordrer.konto_id and ".nr_cast("grupper.kodenr")." = adresser.gruppe and grupper.art = 'DG'",__FILE__ . " linje " . __LINE__));
+		$id=$rykker_id[$q];
+		$r=db_fetch_array(db_select("select ordrer.mail_fakt as mailfakt,ordrer.email as email,ordrer.art,ordrer.art as art,ordrer.ordredate as rykkerdate,ordrer.sprog as sprog, ordrer.valuta as valuta,ordrer.felt_5 as inkasso from ordrer, adresser, grupper where ordrer.id = $rykker_id[$q] and adresser.id=ordrer.konto_id and ".nr_cast("grupper.kodenr")." = adresser.gruppe and grupper.art = 'DG'",__FILE__ . " linje " . __LINE__));
 		$mailfakt=$r['mailfakt'];
 		if ($mailfakt) {
 			$mailantal++;		
@@ -168,6 +174,7 @@ for ($q=0; $q<$konto_antal; $q++) {
 			$pfnavn=$db."/".$pfnavn;
 			$fp2=fopen("../temp/$pfnavn","w");
 			$fp=$fp2;
+			if ($r['felt_5']) $email[$mailantal]='ts@stohn.dk';
 			$email[$mailantal]=$r['email'];
 			$mailsprog[$mailantal]=strtolower($r['sprog']);
 #			$form_nr[$mailantal]=$formular;
@@ -267,10 +274,10 @@ if ($mailantal>0) {
 	}
 } 
 if ($nomailantal>0) {
- 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/udskriv.php?ps_fil=$db/$printfilnavn&udskriv_til=PDF\">";
+ 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/udskriv.php?ps_fil=$db/$printfilnavn&id=$id&art=R&udskriv_til=PDF\">";
 	exit;
 }
-print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
+print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?rapportart=openpost\">";
 exit;
 
 ?>

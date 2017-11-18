@@ -1,29 +1,34 @@
 <?php
-// ----------finans/importer.php------------patch 3.4.8-----2015.01.05-----------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----------finans/importer.php----------lap 3.6.7-----2017-01-03-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20130415 - Fejl hvis linje starter med separatortegn.
 // 20150105 - Transdate sættes til dd hvis den ikke er sat20150105
+// 20170307 - Tilføjet loppeafregning.
 
 @session_start();
 $s_id=session_id();
@@ -155,10 +160,10 @@ print "<tr><td width=100% align=center title='$title'> V&aelig;lg datafil: <inpu
 print "<tr><td><br></td></tr>";
 print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
+
 print "<tr><td><br></td></tr>";
 print "<tr><td><hr width=30%></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
-
 $title='Filen skal v&aelig;re af typen "udenopkrævningsarter.csv"';
 print "<tr><td width=100% align=center title='$title'><b>Import af pbs betalinger fra web</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
@@ -170,10 +175,10 @@ print "<tr><td width=100% align=center title='$title'> V&aelig;lg datafil: <inpu
 print "<tr><td><br></td></tr>";
 print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
+
 print "<tr><td><br></td></tr>";
 print "<tr><td><hr width=30%></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
-
 print "<tr><td width=100% align=center><b>Import af andre data</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"importer.php\" method=\"POST\">";
@@ -184,6 +189,13 @@ print "<tr><td width=100% align=center> V&aelig;lg datafil: <input class=\"input
 print "<tr><td><br></td></tr>";
 print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
+
+print "<tr><td><br></td></tr>";
+print "<tr><td><hr width=30%></td></tr>";
+print "<tr><td width=100% align=center><br></td></tr>";
+print "<tr><td width=100% align=center><b>Afregning Kommisionssalg</b></td></tr>";
+print "<tr><td width=100% align=center><br></td></tr>";
+print "<tr><td width=100% align=center><a href='loppeafregning.php?kladde_id=$kladde_id'><button>Start</button></a></td></tr>";
 print "</tbody></table>";
 print "</td></tr>";
 }

@@ -1,26 +1,29 @@
 <?php
-@session_start();
-$s_id=session_id();
-// ------------debitor/pbsfile.php------- patch 3.4.1---2014-04-22------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ------------debitor/pbsfile.php------- patch 3.6.7---2017-04-20------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 23.08.2012 Tilretning til Leverandørservice 
@@ -30,6 +33,12 @@ $s_id=session_id();
 // 22.01.2014 Flyttet variabeltilpasning over if / else. Søg 20140122 
 // 2014.02.07 PNS nr ændret fra '' til '000000000' 20140207
 // 2014.04.22	Kunde slettes fra pbs_kunder ved afmelding #20140422
+// 2017.01.02	Ved betalingsbet Kontant røg man i evig løkke 20170102
+// 2017.04.20 Indsat db_escape_string. Søg db_escape_string
+
+@session_start();
+$s_id=session_id();
+
 $modulnr=5;
 $title="PBS File";
 $css="../css/standard.css";
@@ -78,7 +87,6 @@ else $returside="ordreliste.php?valg=pbs";
 	print "</tbody></table>";
 	print "</td></tr>\n";
 ######## TOPLINJE SLUT #########
-
 if (!$id) {
 	if ($r=db_fetch_array(db_select("select id from pbs_liste where afsendt = ''",__FILE__ . " linje " . __LINE__))) {
 		$id=$r['id'];
@@ -112,7 +120,6 @@ if (!$afsendt) {
 	else while(strlen($pbs_nr[0])<8) $pbs_nr[0]="0".$pbs_nr[0];
 	while(strlen($debitorgruppe)<5) $debitorgruppe="0".$debitorgruppe;
 
-
 	$lnr=0;
 # Initialisering - kun leverandørservice
 	if ($lev_pbs=='L') {
@@ -120,7 +127,6 @@ if (!$afsendt) {
 		$linje[$lnr]=filler(23,"0").filler(13," ")."40".$usdd.filler(6," ")."DAN".filler(9," ").$cvrnr[0]."X".filler(9," ")."\n";
 		if ($afslut) db_modify("insert into pbs_linjer (liste_id,linje) values ('$id','$linje[$lnr]')",__FILE__ . " linje " . __LINE__);
 	}
-
 
 ########## sektion start  - betalingsaftaler #############
 	
@@ -170,7 +176,6 @@ if (!$afsendt) {
 	$antal_rettes=0;
 	if ($antal_rettes>0) ret_exist($antal_rettes,$leverance_id,$dkdd,$cvrnr,$pbs_nr,$ny_kontonr,$kontonr);
 
-	
 	$x=0;
 	$aftaler=array();
 	$q=db_select("select konto_id from pbs_kunder order by konto_id",__FILE__ . " linje " . __LINE__);
@@ -213,7 +218,6 @@ if (!$afsendt) {
 		if ($antal==0) $lnr=0;
 	}
 	
-
 ########## sektion slut  - betalingsaftaler #############
 	$x=0;
 #	if ($lev_pbs=='L') $antal_nye=0;
@@ -270,6 +274,7 @@ if (!$afsendt) {
 		}
 		fclose($fp);
 }
+
 $tmp1="";$tmp2="";
 if (!$afslut) for ($x=1;$x<=$lnr;$x++)	{
 	if ($lev_pbs=='L') $tmp1=substr($linje[$x],0,3);
@@ -416,6 +421,7 @@ function l_inset_ordrer($antal_ordrer,$leverance_id,$dkdd,$ordre_id,$cvrnr,$bank
 	$r022lin=0;
 	$r052lin=0;
 
+	
 	$forfaldsdage=array();
 	$kontonumre=array();
 	$fx=0;
@@ -427,10 +433,12 @@ function l_inset_ordrer($antal_ordrer,$leverance_id,$dkdd,$ordre_id,$cvrnr,$bank
 		$betalingsdage=$r['betalingsdage'];
 		list($dd,$mm,$yy)=explode("-",forfaldsdag($fakturadate, $betalingsbet, $betalingsdage));	
 		$forfaldsdag=substr($yy,-2).$mm.$dd;
+		if ($betalingsbet != 'Kontant') { #20170102
 		while ($forfaldsdag<=$usdd) {
 			$betalingsdage++;
 			list($dd,$mm,$yy)=explode("-",forfaldsdag($fakturadate, $betalingsbet, $betalingsdage));	
 			$forfaldsdag=substr($yy,-2).$mm.$dd;
+		}	
 		}	
 		$ut=mktime(12,0,0,$mm,$dd,$yy);
 	
@@ -603,12 +611,12 @@ function inset_ordrer($antal_ordrer,$leverance_id,$dkdd,$ordre_id,$cvrnr,$bank_r
 		$r=db_fetch_array(db_select("select * from ordrer where id='$ordre_id[$x]'",__FILE__ . " linje " . __LINE__));
 		$fakturanr=$r['fakturanr'];
 		$kontonr=$r['kontonr'];
-		$firmanavn=$r['firmanavn'];
-		$adresse=$r['addr1'];
-		if ($r['addr2']) $adresse=$adresse.", ".$r['addr2'];
+		$firmanavn=db_escape_string($r['firmanavn']);
+		$adresse=db_escape_string($r['addr1']);;
+		if ($r['addr2']) $adresse=$adresse.", ".db_escape_string($r['addr2']);
 		$postnr=$r['postnr'];
 		$ean=$r['ean'];
-		$institution=$r['institution'];
+		$institution=db_escape_string($r['institution']);
 		$sum=$r['sum'];
 		$moms=$r['moms'];
 		$belob=round(($r['sum']+$r['moms'])*100,0);

@@ -1,5 +1,10 @@
 <?php
-// ------------- debitor/debitorkort.php ------ lap 3.5.0 ----2015-01-23-----------
+//                         ___   _   _   ___  _
+//                        / __| / \ | | |   \| |
+//                        \__ \/ _ \| |_| |) | |
+//                        |___/_/ \_|___|___/|_|
+//
+// ------------- debitor/debitorkort.php ------ lap 3.6.6 ----2016-04-12-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,14 +23,15 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2003-2015 DANOSOFT ApS
+// Copyright (c) 2003-2016 DANOSOFT ApS
 // ----------------------------------------------------------------------
 
-// 2012.10.23, ID slettes fra pbs_kunder hvis pbs ikke afmærket, søg 20121023
-// 2012.10.24, Annulleret ændringer fra 2012.10.23 !!
-// 2013.10.04, Indsat ENT_COMPAT,$charset); Søg 20131004
-// 2014.05.07, Indsat db_escabe_string #20140507
+// 2012.10.23 ID slettes fra pbs_kunder hvis pbs ikke afmærket, søg 20121023
+// 2012.10.24 Annulleret ændringer fra 2012.10.23 !!
+// 2013.10.04 Indsat ENT_COMPAT,$charset); Søg 20131004
+// 2014.05.07 Indsat db_escabe_string #20140507
 // 2015.01.23 Indhente virksomhedsdata fra CVR via CVRapi - tak Niels Rune https://github.com/nielsrune
+// 2016.04.12 PHR Indsat link til labelprint
 
 @session_start();
 $s_id=session_id();
@@ -574,7 +580,7 @@ if ($kontotype=='privat') {
 	print "<option value=privat>".findtekst(353,$sprog_id)."<!--tekst 353--></option>\n";
 }
 print "</select></td>\n";
-print "<td align=right>".findtekst(355,$sprog_id)."<!--tekst 355--><input class=\"inputbox\" type=\"checkbox\" name=\"vis_lev_addr\" $vis_lev_addr></td></tr>\n";
+print "<td align=right>".findtekst(355,$sprog_id)."<!--tekst 355--><input class=\"inputbox\" type=\"checkbox\" name=\"vis_lev_addr\" $vis_lev_addr> <a href=\"labelprint.php?id=$id\" target=\"blank\"><img src=\"../ikoner/print.png\" style=\"border: 0px solid;\"></a></td></tr>\n";
 print "<tr><td valign=top height=250px><table border=0 width=100%><tbody>"; # TABEL 1.2.1 ->
 $bg=$bgcolor5;
 print "<tr bgcolor=$bg><td>".findtekst(357,$sprog_id)."<!--tekst 357--></td><td><input class=\"inputbox\" type=text size=25 name=ny_kontonr value=\"$kontonr\" onchange=\"javascript:docChange = true;\" title=\"Tast CVR-nr. omsluttet af *, +, eller / for at importere data fra Erhvervsstyrelsen (Data leveres af CVR API)\" style=\"background-image: url('../img/search-white.png'); background-repeat: no-repeat; background-position: right;\"></td></tr>\n";

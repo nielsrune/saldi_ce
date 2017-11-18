@@ -51,7 +51,7 @@ print "</td></tr>\n";
 print "<tr><td>\n";
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=100% valign = \"center\" align = \"center\"><tbody>\n";
 
-if (($nyt_varenr)&&('$nyt_varenr'!='$varenr')) {
+if (($nyt_varenr) && ($nyt_varenr!=$varenr)) {
 	if ($r=db_fetch_array(db_select("select id from varer where varenr = '$nyt_varenr' ",__FILE__ . " linje " . __LINE__))) {
 		print tekstboks('Varenummer: $nyt_varenr er i brug, varenummer ikke &aelig;ndret');
 	}	elseif (substr($nyt_varenr,0,1)=='=') {
@@ -113,8 +113,11 @@ print "</td></tr>\n";
 print "</tbody></table";
 
 function flet($id,$varenr,$flet_id,$flet_vnr){
+
 	if ($r=db_fetch_array(db_select("select id,shop_id from shop_varer where saldi_id = '$id'",__FILE__ . " linje " . __LINE__))){
 		$shop_id=$r['shop_id'];
+		$r=db_fetch_array(db_select("select samlevare from varer where id = '$flet_id'",__FILE__ . " linje " . __LINE__));
+		$fletsamlevare=$r['samlevare'];
 		if ($r=db_fetch_array(db_select("select id,shop_id from shop_varer where saldi_id = '$flet_id'",__FILE__ . " linje " . __LINE__))) {
 			if ($shop_id!=$r['shop_id']) {
 				print tekstboks("Varenummer: $varenr har en shop_relation til shop vare med id: $shop_id og $fletvnr relaterer til shop vare $r[shop_id]<br> Sammenlægning kan ikke gennemføres");
@@ -126,7 +129,26 @@ function flet($id,$varenr,$flet_id,$flet_vnr){
 	transaktion('begin');
 	print tekstboks("Varenummer: $varenr sammenlægges med $fletvnr");
 	$r=db_fetch_array(db_select("select beholdning from varer where id = '$id'",__FILE__ . " linje " . __LINE__));
-	if ($r['beholdning']) db_modify("update varer set beholdning=beholdning+$r[beholdning] where id = '$flet_id'",__FILE__ . " linje " . __LINE__);
+	if ($r['beholdning']) {
+		$fletbeholdning=$r['beholdning'];
+		if ($fletsamlevare) {
+			$x=0;
+			$q=db_select("select * from styklister where indgaar_i='$flet_id'");
+			while ($r=db_fetch_array($q)) {
+				$vare_id[$x]=$r['vare_id'];
+				$antal[$x]=$r['antal'];
+				$x++;
+			}
+			for ($x=0;$x<count($vare_id);$x++){
+			$r=db_fetch_array(db_select("select gruppe,beholdning from varer where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
+				$r2=db_fetch_array(db_select("select box8 from grupper where art='VG' and kodenr='$r[gruppe]'",__FILE__ . " linje " . __LINE__));
+				if ($r2['box8']=='on') {
+					$ny_beholdning=$r['beholdning']+($antal[$x]*$fletbeholdning);
+					db_modify("update varer set beholdning = '$ny_beholdning' where id ='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
+				}
+			}
+		}	else db_modify("update varer set beholdning=beholdning+$r[beholdning] where id = '$flet_id'",__FILE__ . " linje " . __LINE__);
+	}
 	db_modify("update batch_salg set vare_id = '$flet_id' where vare_id = '$id'",__FILE__ . " linje " . __LINE__);
 	db_modify("update batch_kob set vare_id = '$flet_id' where vare_id = '$id'",__FILE__ . " linje " . __LINE__);
 	db_modify("update ordrelinjer set vare_id = '$flet_id', varenr = '$flet_vnr' where vare_id = '$id'",__FILE__ . " linje " . __LINE__);
