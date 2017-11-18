@@ -59,7 +59,7 @@ if ($_POST['submit']) {
       if ($leveres > 0) {
         if ($valg[$x]>$rest[$x]) {$max_antal[$x]=$rest[$x];}
         else {$max_antal[$x]=$valg[$x];}
-        if ($valg[$x] > $max_antal[$x])  {print "<BODY onload=\"javascript:alert('Ordrenr: $ordrenr[$x] - Der kan ikke v&aelig;lges flere end $max_antal[$x]!')\">";}
+        if ($valg[$x] > $max_antal[$x])  {print "<BODY onLoad=\"javascript:alert('Ordrenr: $ordrenr[$x] - Der kan ikke v&aelig;lges flere end $max_antal[$x]!')\">";}
         $valgt_antal=$valgt_antal+$valg[$x];
         $rest_antal=$rest_antal+$rest[$x];
       }
@@ -67,7 +67,7 @@ if ($_POST['submit']) {
       else {
         if ($valg[$x]<$rest[$x]) {$max_antal[$x]=$rest[$x];}
         else {$max_antal[$x]=$valg[$x];}
-        if ($valg[$x] < $max_antal[$x])  {print "<BODY onload=\"javascript:alert('Ordrenr: $ordrenr[$x] - Der kan ikke v&aelig;lges fÃŠrre end $max_antal[$x]!')\">";}
+        if ($valg[$x] < $max_antal[$x])  {print "<BODY onLoad=\"javascript:alert('Ordrenr: $ordrenr[$x] - Der kan ikke v&aelig;lges fÃŠrre end $max_antal[$x]!')\">";}
         $valgt_antal=$valgt_antal-$valg[$x];
         $rest_antal=$rest_antal-$rest[$x];
       }
@@ -75,7 +75,7 @@ if ($_POST['submit']) {
     if ($leveres >= 0) {
       if ($leveres>$rest_antal) {$max_antal=$rest_antal;}
       else {$max_antal=$leveres;}
-      if ($valgt_antal > $max_antal)  {print "<BODY onload=\"javascript:alert('Der kan ikke v&aelig;lges flere end $max_antal !')\">";}
+      if ($valgt_antal > $max_antal)  {print "<BODY onLoad=\"javascript:alert('Der kan ikke v&aelig;lges flere end $max_antal !')\">";}
       else {
          db_modify("delete from reservation where linje_id=$linje_id");
          $temp=$linje_id*-1;
@@ -168,7 +168,7 @@ if ($antal<0)  {
       while ($r2 = db_fetch_array($q2)) $rest=$rest+$r2['rest'];
       if ($rest>0) { 
         $y++;
-        print "<tr><td onclick=\"javascript:window.open('ordre.php?id=$kred_ordre_id[$x]','$kred_ordrenr[$x]','width=400,height=400,scrollbars=1,resizable=1,menubar=no,location=no');\";><a href>$font $kred_ordrenr[$x]</a></td><td></td><td><td align = right>$font $rest</td>";
+        print "<tr><td onClick=\"javascript:window.open('ordre.php?id=$kred_ordre_id[$x]','$kred_ordrenr[$x]','width=400,height=400,scrollbars=1,resizable=1,menubar=no,location=no');\";><a href>$font $kred_ordrenr[$x]</a></td><td></td><td><td align = right>$font $rest</td>";
         print "<td align = center><input type=radio name=valg_1 value=$y";
         if ($kred_linje_id==$row['id']) print " checked='checked'></td></tr>\n";
         else print "></td></tr>\n";

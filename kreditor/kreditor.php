@@ -68,7 +68,7 @@ while ($row = db_fetch_array($query))
 	else {$linjebg=$bgcolor5; $color='#000000';}
 	print "<tr bgcolor=\"$linjebg\">";
 	if ($popup) { 
-		$href="onclick=\"javascript:kreditorkort=window.open('kreditorkort.php?id=$row[id]&returside=../includes/luk.php','kreditorkort','".$jsvars."');kreditorkort.focus();\" onmouseover=\"this.style.cursor = 'pointer'\";";
+		$href="onClick=\"javascript:kreditorkort=window.open('kreditorkort.php?id=$row[id]&returside=../includes/luk.php','kreditorkort','".$jsvars."');kreditorkort.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\";";
 		print "<td $href><u>$row[kontonr]</u><br></td>";
 	} else 	print "<td> <a href=kreditorkort.php?id=$row[id]>$row[kontonr]</a><br></td>";
   print "<td> ".htmlentities($row['firmanavn'],ENT_COMPAT,$charset)."<br></td>";

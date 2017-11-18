@@ -86,7 +86,7 @@ if($_POST) {
 	$fejl = $_FILES['uploadedfile']['error'];
 	if ($fejl) {
 		switch ($fejl) {
-			case 2: print "<BODY onload=\"javascript:alert('Filen er for stor - er det en SALDI-sikkerhedskopi?')\">";
+			case 2: print "<BODY onLoad=\"javascript:alert('Filen er for stor - er det en SALDI-sikkerhedskopi?')\">";
 		}
  		upload();
 		exit;
@@ -112,11 +112,11 @@ if($_POST) {
 			fclose($fp);
 			unlink($infofil);
 			if ($db_type=='mysql' && $backup_dbtype!='mysql') {
-				print "<BODY onload=\"javascript:alert('En PostgreSQL-sikkerhedskopi kan ikke indl&aelig;ses i et MySQL-baseret system')\">";
+				print "<BODY onLoad=\"javascript:alert('En PostgreSQL-sikkerhedskopi kan ikke indl&aelig;ses i et MySQL-baseret system')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=backup.php\">";
 				exit;
 			} elseif ($db_type!='mysql' && $backup_dbtype=='mysql') {
-				print "<BODY onload=\"javascript:alert('En MySQL-sikkerhedskopi kan ikke indl&aelig;ses i et PostgreSQL-baseret system')\">";
+				print "<BODY onLoad=\"javascript:alert('En MySQL-sikkerhedskopi kan ikke indl&aelig;ses i et PostgreSQL-baseret system')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=backup.php\">";
 				exit;
 			} 
@@ -160,7 +160,7 @@ function upload(){
 	print "<tr><td width=100% align=center></td></tr>";
 	print "<tr><td width=100% align=center>V&aelig;lg datafil: <input class=\"inputbox\" NAME=\"uploadedfile\" type=\"file\"></td></tr>";
 	print "<tr><td><br></td></tr>";
-	print "<tr><td align=center><input type=\"submit\" value=\"Indl&aelig;s\" onclick=\"return confirmSubmit()\"></td></tr>";
+	print "<tr><td align=center><input type=\"submit\" value=\"Indl&aelig;s\" onClick=\"return confirmSubmit()\"></td></tr>";
 	print "<tr><td></form></td></tr>";
 	print "</tbody></table>";
 	print "</td></tr>";
@@ -249,19 +249,19 @@ if ($restore=='OK') {
 		system("export PGPASSWORD=$sqpass\npsql -U $squser $db < $filnavn2");
 	}
 	db_close($connection);
-	print "<BODY onload=\"javascript:alert('Regnskabet er genskabt. Du skal logge ind igen!')\">";
+	print "<BODY ONLOAD=\"javascript:alert('Regnskabet er genskabt. Du skal logge ind igen!')\">";
 	unlink($filnavn);
 	unlink($filnavn_2);
 	print "--> \n"; # Indsat da svar fra pg_dump kan resultere i besked genereres
 	if ($popup) {
-		print "<BODY onload=\"JavaScript:opener.location.reload();\"";
+		print "<BODY ONLOAD=\"JavaScript:opener.location.reload();\"";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 	} else print "<meta http-equiv=\"refresh\" content=\"0;URL=../index/index.php?regnskab=".htmlentities($regnskab,ENT_COMPAT,$charset)."&navn=".htmlentities($brugernavn,ENT_COMPAT,$charset)."\">";
  
 } else {
 	unlink($filnavn);
 	unlink($filnavn_2);
-	print "<BODY onload=\"javascript:alert('Det er ikke en SALDI-sikkerhedskopi, som fors&oslash;ges indl&aelig;st')\">";
+	print "<BODY ONLOAD=\"javascript:alert('Det er ikke en SALDI-sikkerhedskopi, som fors&oslash;ges indl&aelig;st')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=backup.php\">";
 }
 

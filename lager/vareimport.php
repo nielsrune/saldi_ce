@@ -225,7 +225,7 @@ if ($fp) {
 		}
 		print "</tr>";
 	}
-	if ($linjefarve) print "<BODY onload=\"javascript:alert('Røde linjer vil ikke blive importeret - varegruppe findes ikke')\">";
+	if ($linjefarve) print "<BODY onLoad=\"javascript:alert('Røde linjer vil ikke blive importeret - varegruppe findes ikke')\">";
 }
  fclose($fp);
 print "</tbody></table>";

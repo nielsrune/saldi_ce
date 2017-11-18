@@ -87,7 +87,7 @@ function opdat_3_3($under_nr, $lap_nr){
 						$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 						mail('phr@danosoft.dk', 'Dobbelt bogføring', $message, $headers);
 					}
-					print "<BODY onload=\"javascript:alert('Der er konstateret dobbelt bogføring af kassekladde nr $k_id[$x]! \\\nKontakt venligst Danosoft på telefon 4690 2208')\">";
+					print "<BODY onLoad=\"javascript:alert('Der er konstateret dobbelt bogføring af kassekladde nr $k_id[$x]! \\\nKontakt venligst Danosoft på telefon 4690 2208')\">";
 					$dbbf=1;
 				}
 			}

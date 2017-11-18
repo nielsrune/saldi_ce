@@ -188,7 +188,7 @@ if ($spec_func) {
 	include("../includes/spec_func.php");
 	$svar=$spec_func('xx',$id,$kode);
 	if (!is_numeric($svar)) {
-		print "<BODY onload=\"javascript:alert('$svar')\">\n";
+		print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
 	}	else $konto_id=$svar;
 }
  #20140508 ->
@@ -351,7 +351,7 @@ if ($vare_id) {
 				$indbetaling=usdecimal($indbetaling);
 				$modtaget=usdecimal($modtaget);
 			if ($indbetaling>$modtaget) {
-				print "<BODY onload=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
+				print "<BODY onLoad=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
 				$indbetaling=$modtaget;
 			}
 		}
@@ -390,7 +390,7 @@ if ($vare_id) {
 		if ($modtaget2 && (!$betaling2 || $betaling2=="ukendt")) $afslut=NULL;
 		if ($afslut=="OK") {
 			 $svar=afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,NULL,NULL);
-			if ($svar) print "<BODY onload=\"javascript:alert('$svar')\">\n";
+			if ($svar) print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
  			else {
 			  print "<meta http-equiv=\"refresh\" content=\"0;URL=$php_self\">\n";
 			}
@@ -416,13 +416,13 @@ if ($vare_id) {
 				$id=opret_posordre(NULL,$kasse);
 			}
 			if ($id && !is_numeric($id)) {
-				print "<BODY onload=\"javascript:alert('$id')\">\n";
+				print "<BODY onLoad=\"javascript:alert('$id')\">\n";
 			} else {
 #cho "264  $id,$varenr_ny,$antal_ny,'',usdecimal($pris_ny),$rabat_ny<br>\n";
 #cho "C $id,'',$varenr_ny,$antal_ny,'',usdecimal($pris_ny),$rabat_ny,100,'PO','','','0','on','','','0'<br>";
 				$linje_id=opret_ordrelinje($id,'',$varenr_ny,$antal_ny,'',usdecimal($pris_ny),$rabat_ny,100,'PO','','','0','on','','','0'); #20140226
 				if ($linje_id && !is_numeric($linje_id)) {
-					print "<BODY onload=\"javascript:alert('$linje_id')\">\n";
+					print "<BODY onLoad=\"javascript:alert('$linje_id')\">\n";
 					$fokus="pris_ny";
 				} else {
 					$varenr_ny=$next_varenr;
@@ -462,7 +462,7 @@ if (substr($betaling,0,9) == "Kontant p") {
 	$betaling='Kontant';
 	$modtaget=$sum;
 	$svar=afslut($id,$betaling,NULL,$modtaget,0,NULL,NULL,NULL);
-	if ($svar) print "<BODY onload=\"javascript:alert('$svar')\">\n";
+	if ($svar) print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
 	else print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
 }
 if ($varenr_ny=='fejl') fejl($id,"$status");
@@ -795,7 +795,7 @@ if ($betaling=='Kontant' && !$betaling2 && $retur) {
 				}
 			}
 		} elseif (!$indbetaling) {
-			print "<BODY onload=\"javascript:alert('Fejl i øreafrunding, kontakt Danosoft på telefon 46902208')\">";
+			print "<BODY onLoad=\"javascript:alert('Fejl i øreafrunding, kontakt Danosoft på telefon 46902208')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">";
 			exit;
 		}
@@ -829,7 +829,7 @@ if ($betaling=='Kontant' && !$betaling2 && $retur) {
 		$url=str_replace("/debitor/pos_ordre.php","",$url);
 		if ($_SERVER['HTTPS']) $url="s".$url;
 		$url="http".$url;
-		print "<BODY onload=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
+		print "<BODY onLoad=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
 	}
 	print "\n<!-- Function afslut (slut)-->\n";
 	return(NULL);
@@ -912,7 +912,7 @@ function skift_bruger($ny_bruger,$kode) {
 		$brugernavn=$ny_bruger;
 		print "<input type=\"hidden\" name=\"brugernavn\" value=\"$brugernavn\">\n";
 		include("../includes/online.php");
-	} else print "<BODY onload=\"javascript:alert('Forkert adgangskode')\">\n";
+	} else print "<BODY onLoad=\"javascript:alert('Forkert adgangskode')\">\n";
 }
 
 function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny) {
@@ -1067,7 +1067,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny) {
 					print "<td colspan=\"2\" align=\"right\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:40px\" name = \"rabat_ny\" placeholder=\"$rabat_old\"></td>\n";
 				} else {
 					$txt="Manglende varenr til rabat";
-					print "<BODY onload=\"javascript:alert('$txt')\">\n";
+					print "<BODY onLoad=\"javascript:alert('$txt')\">\n";
 					return($txt);
 				}
 			} else {
@@ -1081,7 +1081,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny) {
 	if ($konto_id && $kreditmax && $sum > $kreditmax - $saldo) {
 		$ny_saldo=$saldo+$sum;
 		$txt = "Kreditmax: ".dkdecimal($kreditmax)."\\nGl. saldo :  ".dkdecimal($saldo)."\\nNy saldo :  ".dkdecimal($ny_saldo);
-		print "<BODY onload=\"javascript:alert('$txt')\">\n";
+		print "<BODY onLoad=\"javascript:alert('$txt')\">\n";
 
 	}
 	print "<input type=\"hidden\" name = \"sum\" value = \"$sum\">\n";
@@ -1896,7 +1896,7 @@ print "</tbody></table>\n"; # <- table 1
 } # function menubuttons
 
 function fejl ($id,$fejltekst) {
-  print "<BODY onload=\"javascript:alert('$fejltekst')\">\n";
+  print "<BODY onLoad=\"javascript:alert('$fejltekst')\">\n";
   print "<meta http-equiv=\"refresh\" content=\"0;URL=$php_self\">\n";
 
 }
@@ -1967,7 +1967,7 @@ function posbogfor ($kasse,$regnstart) {
 					$svar=bogfor_nu("$id","Dagsafslutning");
 					if ($svar && $svar!='OK') {
 #cho "$svar<br>";
-						print "<BODY onload=\"javascript:alert('Der er konstateret en uoverenstemmelse i posteringssummen. \\nKontakt Danosoft på telefon 4690 2208 eller 2066 9820')\">\n";
+						print "<BODY onLoad=\"javascript:alert('Der er konstateret en uoverenstemmelse i posteringssummen. \\nKontakt Danosoft på telefon 4690 2208 eller 2066 9820')\">\n";
 						print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
 					} else transaktion('commit');
 				}
@@ -2179,7 +2179,7 @@ function kassebeholdning ($kasse,$optalt,$godkendt,$cookievalue) {
 	$url=str_replace("/debitor/pos_ordre.php","",$url);
 	if ($_SERVER[HTTPS]) $url="s".$url;
 	$url="http".$url;
-	print "<BODY onload=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
+	print "<BODY onLoad=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
 
 }
 function flyt_bord($id,$bordnr,$delflyt) { #20140508
@@ -2233,7 +2233,7 @@ if ($fp=fopen($filnavn,'r')) {
 		if (!$printserver)$printserver='localhost';
 	}
 
-	print "<BODY onload=\"JavaScript:window.open('http://localhost/kundedisplay.php?&antal=$antal&tekst=".urlencode($beskrivelse)."&pris=".dkdecimal($pris)."&ryd=$ryd','','width=200,height=100,top=1024,left=1280');\">\n";
+	print "<BODY onLoad=\"JavaScript:window.open('http://localhost/kundedisplay.php?&antal=$antal&tekst=".urlencode($beskrivelse)."&pris=".dkdecimal($pris)."&ryd=$ryd','','width=200,height=100,top=1024,left=1280');\">\n";
 }
 
 function find_kassesalg($kasse,$optalt) {

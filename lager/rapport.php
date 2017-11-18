@@ -168,8 +168,8 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$vk
 	print "</tbody></table>";
 	print "<tr><td ALIGN=\"center\" Valign=\"top\" height=39%><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>\n";
 #	if ($popup) {
-#		print "<tr><td ALIGN=center onclick=\"javascript:lagerstatus=window.open('lagerstatus.php','lagerstatus','$jsvars');lagerstatus.focus();\"><span title='Se lagerstatus p&aring; vilk&aring;rlig dato'><input type=\"submit\" style=\"width:120px;\" value=\"Lagerstatus\" name=\"submit\"></span></td>";
-#		print "<td ALIGN=center onclick=\"javascript:optalling=window.open('optalling.php','optalling','$jsvars');optalling.focus();\"><span title='Funktion til opt&aelig;lling og regulering af varelager'><input type=\"submit\" style=\"width:120px;\" value=\"Lageropt&aelig;lling\" name=\"submit\"></span></td></tr>";
+#		print "<tr><td ALIGN=center onClick=\"javascript:lagerstatus=window.open('lagerstatus.php','lagerstatus','$jsvars');lagerstatus.focus();\"><span title='Se lagerstatus p&aring; vilk&aring;rlig dato'><input type=\"submit\" style=\"width:120px;\" value=\"Lagerstatus\" name=\"submit\"></span></td>";
+#		print "<td ALIGN=center onClick=\"javascript:optalling=window.open('optalling.php','optalling','$jsvars');optalling.focus();\"><span title='Funktion til opt&aelig;lling og regulering af varelager'><input type=\"submit\" style=\"width:120px;\" value=\"Lageropt&aelig;lling\" name=\"submit\"></span></td></tr>";
 #	} else {
 		print "";
 		print "<tr><td ALIGN=center><span title='Se lagerstatus p&aring; vilk&aring;rlig dato'><input style=\"width:120px;\" type=submit value=\"Lagerstatus\" name=\"submit\"></span></td>";
@@ -396,7 +396,7 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 					$linjepris=$pris[$y]*$k_antal[$y];
 					$kobssum+=$t_kobt;
 					print "<td align=\"right\">".dkdecimal($pris[$y],2)."</td><td align=\"right\">".dkdecimal($moms[$y],2)."</td><td align=\"right\">".dkdecimal($pris[$y]+$moms[$y],2)."</td>";
-					print "<td align=right onclick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$k_ordre_id[$y]&returside=../includes/luk.php','k_ordre','width=800,height=400,$jsvars')\"> <u>Se</u></td></tr>";
+					print "<td align=right onClick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$k_ordre_id[$y]&returside=../includes/luk.php','k_ordre','width=800,height=400,$jsvars')\"> <u>Se</u></td></tr>";
 				}
 			}
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
@@ -498,7 +498,7 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 					print "<td align=right>".dkdecimal($kostpris[$y],2)."</td>";
 					print "<td align=right>".dkdecimal($db[$y],2)."</td>";
 					print "<td align=right> ".dkdecimal($dg[$y],2)."%</td>";
-					print "<td align=right onclick=\"javascript:s_ordre=window.open('../debitor/ordre.php?id=$s_ordre_id[$y]&returside=../includes/luk.php','s_ordre','width=800,height=400,$jsvars')\"> <u>Se</u></td></tr>";
+					print "<td align=right onClick=\"javascript:s_ordre=window.open('../debitor/ordre.php?id=$s_ordre_id[$y]&returside=../includes/luk.php','s_ordre','width=800,height=400,$jsvars')\"> <u>Se</u></td></tr>";
 				}
 			}
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";

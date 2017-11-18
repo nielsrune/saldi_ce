@@ -38,7 +38,7 @@
 		{
 			if ($tidspkt-($row['tidspkt'])<3600) 
 			{
-				print "<BODY onload=\"javascript:alert('Ordren er i brug af $row[hvem]')\">";
+				print "<BODY onLoad=\"javascript:alert('Ordren er i brug af $row[hvem]')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 			}
 			else {db_modify("update ordrer set hvem = '$brugernavn', tidspkt='$tidspkt' where id = '$tjek'");}
@@ -374,8 +374,8 @@
 			else 
 			{			
 				$query = db_select("select hvem from ordrer where id=$id");
-				if ($row = db_fetch_array($query)) {print "<BODY onload=\"javascript:alert('Ordren er overtaget af $row[hvem]')\">";}
-				else {print "<BODY onload=\"javascript:alert('Du er blevet smidt af')\">";}
+				if ($row = db_fetch_array($query)) {print "<BODY onLoad=\"javascript:alert('Ordren er overtaget af $row[hvem]')\">";}
+				else {print "<BODY onLoad=\"javascript:alert('Du er blevet smidt af')\">";}
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 			}	
  
@@ -614,7 +614,7 @@ function ordreside($id)
 			print "<td align=right>$font<small>$ialt</td>";
 			if ($box8[$x]=='on') 
 			{
-				if ($serienr[$x]) {print "<td onclick=\"serienummer($linje_id[$x])\" align=right>$font<small><u>$solgt[$x]</u></td>";}
+				if ($serienr[$x]) {print "<td onClick=\"serienummer($linje_id[$x])\" align=right>$font<small><u>$solgt[$x]</u></td>";}
 				else {print "<td align=right>$font<small>$solgt[$x]</td>";}
 			}
 			else {print "<td align=right>$font<small><br></td>";}
@@ -775,7 +775,7 @@ function ordreside($id)
 					print "<td>$font<small>($tidl_lev[$x])</td>";
 				}
 			}
-			if (($status>0)&&($serienr[$x])){print "<td onclick=\"serienummer($linje_id[$x])\"><input type=button value=\"Serienr.\" name=\"vis_snr$x\"></td>";}
+			if (($status>0)&&($serienr[$x])){print "<td onClick=\"serienummer($linje_id[$x])\"><input type=button value=\"Serienr.\" name=\"vis_snr$x\"></td>";}
 
 			print "</tr>";
 		}
@@ -998,7 +998,7 @@ function indset_konto($id)
 	}
 	else
 	{
-		print "<BODY onload=\"javascript:alert('Stamdata ikke oprettet')\">";
+		print "<BODY onLoad=\"javascript:alert('Stamdata ikke oprettet')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 		exit;
 	}
@@ -1024,8 +1024,8 @@ function indset_konto($id)
 		else 
 		{			
 			$query = db_select("select hvem from ordrer where id=$id");
-			if ($row = db_fetch_array($query)) {print "<BODY onload=\"javascript:alert('Ordren er overtaget af $row[hvem]')\">";}
-			else {print "<BODY onload=\"javascript:alert('Du er blevet smidt af')\">";}
+			if ($row = db_fetch_array($query)) {print "<BODY onLoad=\"javascript:alert('Ordren er overtaget af $row[hvem]')\">";}
+			else {print "<BODY onLoad=\"javascript:alert('Du er blevet smidt af')\">";}
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 		}	
 	}

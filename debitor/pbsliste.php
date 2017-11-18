@@ -66,21 +66,21 @@ while ($r=db_fetch_array($q)) {
 	if ($x==1 && $r['afsendt']) {
 		$liste_dato=date('d-m-Y');
 		$tmp=$id[$x]+1;
-    if ($popup) print "<tr><td onclick=\"javascript:pbsfile=window.open('pbsfile.php?id=$tmp','pbsfile','".$jsvars."');pbsfile.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><u>$tmp</u></td>\n";
+    if ($popup) print "<tr><td onClick=\"javascript:pbsfile=window.open('pbsfile.php?id=$tmp','pbsfile','".$jsvars."');pbsfile.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><u>$tmp</u></td>\n";
 		else print "<tr><td><a href=pbsfile.php?id=$tmp>$tmp</a></td>";
 		print "<td>$liste_dato</td>";
 		if ($kan_afsluttes) {
-			if ($popup) print "<td onclick=\"javascript:pbsfile=window.open('pbsfile.php?id=$tmp&afslut=ok','pbsfile','".$jsvars."');pbsfile.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\" align=right><u>afslut</u></td>\n";
+			if ($popup) print "<td onClick=\"javascript:pbsfile=window.open('pbsfile.php?id=$tmp&afslut=ok','pbsfile','".$jsvars."');pbsfile.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\" align=right><u>afslut</u></td>\n";
 			else print "<td align=right><a href=pbsfile.php?id=$tmp&afslut=ok>afslut</a></td>";
 			print "</tr>";
 		}
 	}
- 	if ($popup) print "<tr><td onclick=\"javascript:pbsfile=window.open('pbsfile.php?id=$id[$x]','pbsfile','".$jsvars."');pbsfile.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><u>$r[id]</u></td>\n";
+ 	if ($popup) print "<tr><td onClick=\"javascript:pbsfile=window.open('pbsfile.php?id=$id[$x]','pbsfile','".$jsvars."');pbsfile.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><u>$r[id]</u></td>\n";
 	else print "<tr><td><a href=pbsfile.php?id=$id[$x]>$id[$x]</a></td>";
 	$liste_dato=dkdato($r['liste_date']);
 	print "<td>$liste_dato</td>";
 	if (!$r['afsendt'])	{
-		if ($popup) print "<td onclick=\"javascript:pbsfile=window.open('pbsfile.php?id=$id[$x]&afslut=ok','pbsfile','".$jsvars."');pbsfile.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\" align=right><u>afslut</u></td>\n";
+		if ($popup) print "<td onClick=\"javascript:pbsfile=window.open('pbsfile.php?id=$id[$x]&afslut=ok','pbsfile','".$jsvars."');pbsfile.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\" align=right><u>afslut</u></td>\n";
 		else	print "<td align=right><a href=pbsfile.php?id=$id[$x]&afslut=ok>afslut</a></td>";
 #		$vis_ny=1;
 	}
@@ -89,10 +89,10 @@ while ($r=db_fetch_array($q)) {
  if ($vis_ny) {
 	$liste_dato=date('d-m-Y');
 	$tmp=$r['id']+1;
-	if ($popup) print "<tr><td onclick=\"javascript:pbsfile=window.open('pbsfile.php?id=$r[id]','pbsfile','".$jsvars."');pbsfile.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><u>C $r[id]</u></td>\n";
+	if ($popup) print "<tr><td onClick=\"javascript:pbsfile=window.open('pbsfile.php?id=$r[id]','pbsfile','".$jsvars."');pbsfile.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><u>C $r[id]</u></td>\n";
 	else print "<tr><td><a href=pbsfile.php?id=1>C 1</a></td>";
 	print "<td>CC $liste_dato</td>";
-	if ($popup) print "<td onclick=\"javascript:pbsfile=window.open('pbsfile.php?id=$r[id]&afslut=ok','pbsfile','".$jsvars."');pbsfile.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\" align=right>afslut</td>\n";
+	if ($popup) print "<td onClick=\"javascript:pbsfile=window.open('pbsfile.php?id=$r[id]&afslut=ok','pbsfile','".$jsvars."');pbsfile.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\" align=right>afslut</td>\n";
 	else	print "<td align=right><a href=pbsfile.php?id=$tmp&afslut=ok><u>afslut</u></a></td>";
 	print "</tr>";
 	}

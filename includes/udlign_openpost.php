@@ -103,7 +103,7 @@ if (isset($_POST['submit'])) {
 				} else $alerttekst="Fakturanummer ikke gyldigt, postering ikke opsplittet";
 			}	else $alerttekst="For at opsplitte en betaling skal posteringen tilknyttes et gyldigt fakturanummer";
 		}	else $alerttekst="Bel&oslash;b m&aring; ikke &oslash;ges";
-		if ($alerttekst) print "<BODY onload=\"javascript:alert('$alerttekst')\">";
+		if ($alerttekst) print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 	} 
 } else {
 	$post_id[0]=$_GET['post_id']*1;
@@ -274,7 +274,7 @@ if (isset($submit) && $submit=='udlign') {
 		$ym=$year.$month;
 
 		if (($ym<$aarstart || $ym>$aarslut))	{ #20140505
-#			print "<BODY onload=\"javascript:alert('Udligningsdato udenfor regnskabs&aring;r')\">";
+#			print "<BODY onLoad=\"javascript:alert('Udligningsdato udenfor regnskabs&aring;r')\">";
 #			print "<meta http-equiv=\"refresh\" content=\"0;../includes/udlign_openpost.php?post_id=$post_id[0]&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&returside=$returside&retur=$retur\">";
 #			exit;
 			$udlign_date=date("Y-m-d");
@@ -302,7 +302,7 @@ if (isset($submit) && $submit=='udlign') {
 		$r=db_fetch_array(db_select("select max(regnskabsaar) as tmp from kontoplan",__FILE__ . " linje " . __LINE__));
 		if (!db_fetch_array(db_select("select id from kontoplan where kontonr='$samlekonto' and regnskabsaar='$r[tmp]'",__FILE__ . " linje " . __LINE__))) {
 			$tekst=findtekst(177,$sprog_id);
-			print "<BODY onload=\"javascript:alert('$tekst')\">";
+			print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 		}
 		($kontoart=='D')?$bogf_besk="Debitor: $kontonr[0]":$bogf_besk="Kreditor: $kontonr[0]";
 		if ($dkkdiff!=$diff) {
@@ -312,7 +312,7 @@ if (isset($submit) && $submit=='udlign') {
 			$message=$db." | udlign_openpost | ".$brugernavn." ".date("Y-m-d H:i:s")." | Diff: $diff DKKdiff: $dkkdiff Maxdiff $maxdiff";
 			$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 			mail('fejl@saldi.dk', 'SALDI Opdat fejl', $message, $headers);
-			print "<BODY onload=\"javascript:alert('Differencen overstiger det maksimalt tilladte')\">"; #20131129
+			print "<BODY onLoad=\"javascript:alert('Differencen overstiger det maksimalt tilladte')\">"; #20131129
 			exit;
 		}
 		if (abs($diff)<$maxdiff) { #20150311
@@ -351,7 +351,7 @@ if (isset($submit) && $submit=='udlign') {
 			$message=$db." | udlign_openpost | ".$brugernavn." ".date("Y-m-d H:i:s")." | Diff: $diff DKKdiff: $dkkdiff Maxdiff $maxdiff";
 			$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 			mail('fejl@saldi.dk', 'SALDI Opdat fejl', $message, $headers);
-			print "<BODY onload=\"javascript:alert('Det er konstateret en posteringsdifference, udligning afbrudt')\">";
+			print "<BODY onLoad=\"javascript:alert('Det er konstateret en posteringsdifference, udligning afbrudt')\">";
 			exit;
 		}
 	}

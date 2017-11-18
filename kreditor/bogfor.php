@@ -73,13 +73,13 @@ if ($valuta && $valuta!='DKK') {
 		$valutakurs=$r['kurs']*1;
 		$difkto=$r['difkto']*1;
 		if (!db_fetch_array(db_select("select id from kontoplan where kontonr='$difkto' and regnskabsaar='$regnaar'",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onload=\"javascript:alert('Kontonr $difkto (kursdiff) eksisterer ikke')\">";
+			print "<BODY onLoad=\"javascript:alert('Kontonr $difkto (kursdiff) eksisterer ikke')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;
 		}
 	} else {
 		$tmp = dkdato($levdate);
-		print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $tmp')\">";
+		print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $tmp')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		exit;
 	}
@@ -89,17 +89,17 @@ if ($valuta && $valuta!='DKK') {
 }
 	
 if (!$row['levdate']){
-	print "<BODY onload=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
+	print "<BODY onLoad=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
 } elseif (!trim($row['fakturanr'])){
-	print "<BODY onload=\"javascript:alert('Fakturanummer SKAL udfyldes og m&aring; ikke v&aelig;re 0')\">";
+	print "<BODY onLoad=\"javascript:alert('Fakturanummer SKAL udfyldes og m&aring; ikke v&aelig;re 0')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
 } else {
 	$fejl=0;
 	if ($row['levdate']<$row['ordredate']){
-		print "<BODY onload=\"javascript:alert('Leveringsdato er f&oslash;r ordredato')\">";
+		print "<BODY onLoad=\"javascript:alert('Leveringsdato er f&oslash;r ordredato')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		exit;
 	}
@@ -108,7 +108,7 @@ if (!$row['levdate']){
 	$year=substr($year,-2);
 	$ym=$year.$month;
 	if (($ym<$aarstart)||($ym>$aarslut)){
-		print "<BODY onload=\"javascript:alert('Leveringsdato udenfor regnskabs&aring;r')\">";
+		print "<BODY onLoad=\"javascript:alert('Leveringsdato udenfor regnskabs&aring;r')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		exit;
 	}
@@ -163,7 +163,7 @@ if (!$row['levdate']){
 				$vgbeskrivelse=$row['beskrivelse']; $box1=trim($row['box1']); $box2=trim($row['box2']); $box3=trim($row['box3']); $box4=trim($row['box4']); $box8=trim($row['box8']); $box9=trim($row['box9']);
 				$box11=trim($row['box11']);$box13=trim($row['box13']);
 				if (!$box3) {
-					print "<BODY onload=\"javascript:alert('Der er ikke opsat kontonummer for varek&oslash;b p&aring; varegruppen: $vgbeskrivelse.')\">";
+					print "<BODY onLoad=\"javascript:alert('Der er ikke opsat kontonummer for varek&oslash;b p&aring; varegruppen: $vgbeskrivelse.')\">";
 					print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 					exit;
 				}
@@ -403,13 +403,13 @@ function bogfor($id) {
 		if ($kontonr) {
 			$r = db_fetch_array(db_select("select id from kontoplan where kontonr='$kontonr' and regnskabsaar = '$regnaar' and lukket!='on'",__FILE__ . " linje " . __LINE__));
 			if (!$r['id']) {
-				print "<BODY onload=\"javascript:alert('$tekst')\">"; 
+				print "<BODY onLoad=\"javascript:alert('$tekst')\">"; 
 			exit;			
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;
 			}
 		} else {
-			print "<BODY onload=\"javascript:alert('$tekst')\">";
+			print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;
 		}
@@ -577,12 +577,12 @@ function bogfor($id) {
 			db_modify("insert into transaktioner (bilag,transdate,beskrivelse,kontonr,faktura,debet,kredit,kladde_id,afd,logdate,logtime,projekt,ansat,ordre_id) values ('$bilag','$transdate','$beskrivelse','$difkto','$fakturanr','$debet','$kredit','0','$afd','$logdate','$logtime','$projekt[0]','$ansat','$id')",__FILE__ . " linje " . __LINE__);
 
 		} else {
-			print "<BODY onload=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, kontakt DANOSOFT p&aring; telefon 4690 2208')\">";
+			print "<BODY onLoad=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, kontakt DANOSOFT p&aring; telefon 4690 2208')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;
 		}
 	} 
-#print "<BODY onload=\"javascript:alert('xxxxxxxxxxxxxxxxxxxx')\">";
+#print "<BODY onLoad=\"javascript:alert('xxxxxxxxxxxxxxxxxxxx')\">";
 #xit;
 #	genberegn($regnaar);
 }

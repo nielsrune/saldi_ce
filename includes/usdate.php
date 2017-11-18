@@ -60,7 +60,7 @@ if (!function_exists('usdate')) {
 				else $g3=$slutaar;
 			} else {
 				$alerttekst='Regnskabs&aring;r ikke oprettet!';
-				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				exit;
 			}	
 			$date=$g1."-".$g2."-".$g3;

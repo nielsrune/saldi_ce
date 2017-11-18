@@ -43,7 +43,7 @@ if (isset($_POST) && $_POST) {
 	}	
 echo "update grupper set box2='$vis_K' where art = 'KV' and box1 = '$brugernavn'<br>";	
 	db_modify("update grupper set box2='$vis_K' where art = 'KV' and box1 = '$brugernavn'");
-	print "<BODY onload=\"javascript=opener.location.reload();\">";
+	print "<BODY onLoad=\"javascript=opener.location.reload();\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 }
 

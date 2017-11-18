@@ -91,13 +91,13 @@ if(($_GET)||($_POST)) {
 		if ($row = db_fetch_array($query)) $kontonr=$row[kontonr];
 		else {
 			$kontonr='';
-			print "<BODY onload=\"javascript:alert('Angivet kontonummer findes ikke')\">";
+			print "<BODY onLoad=\"javascript:alert('Angivet kontonummer findes ikke')\">";
 		}
 	}
 	elseif ($kontonr)	 {
 		$tmp=$kontonr*1;
 		if (!$row=db_fetch_array(db_select("select id from kontoplan where kontonr=$tmp",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onload=\"javascript:alert('Kontonummer $kontonr findes ikke i kontoplanen')\">";
+			print "<BODY onLoad=\"javascript:alert('Kontonummer $kontonr findes ikke i kontoplanen')\">";
 			$submit='Vis';
 		}
 	}
@@ -287,11 +287,11 @@ print "<input type=\"hidden\" name=\"filnavn\" value=$filnavn>";
 print "<input type=\"hidden\" name=\"feltantal\" value=$feltantal>";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 print "&nbsp; <input type=\"submit\" name=\"submit\" value=\"Vis\" />";
-if (!in_array("dato",$feltnavn)) print "<BODY onload=\"javascript:alert('Kolonne for dato ikke valgt')\">";
-elseif (!in_array("beskrivelse",$feltnavn)) print "<BODY onload=\"javascript:alert('Kolonne for beskrivelse ikke valgt')\">";
-elseif (!in_array("belob",$feltnavn)) print "<BODY onload=\"javascript:alert('Kolonne for bel&oslash;b ikke valgt')\">";
-elseif (!$splitter) print "<BODY onload=\"javascript:alert('Separatortegn ikke valgt')\">";
-elseif (!$kontonr) print "<BODY onload=\"javascript:alert('Der skal angives et kontonummer til den bankkonto hvor posteringer skal f&oslash;res')\">";
+if (!in_array("dato",$feltnavn)) print "<BODY onLoad=\"javascript:alert('Kolonne for dato ikke valgt')\">";
+elseif (!in_array("beskrivelse",$feltnavn)) print "<BODY onLoad=\"javascript:alert('Kolonne for beskrivelse ikke valgt')\">";
+elseif (!in_array("belob",$feltnavn)) print "<BODY onLoad=\"javascript:alert('Kolonne for bel&oslash;b ikke valgt')\">";
+elseif (!$splitter) print "<BODY onLoad=\"javascript:alert('Separatortegn ikke valgt')\">";
+elseif (!$kontonr) print "<BODY onLoad=\"javascript:alert('Der skal angives et kontonummer til den bankkonto hvor posteringer skal f&oslash;res')\">";
 elseif (($kladde_id)&&($filnavn)&&($splitter)&&($kontonr)) print "&nbsp; <input type=\"submit\" name=\"submit\" value=\"Flyt\" /></td></tr>";
 print "<tr><td colspan=$cols><hr></td></tr>\n";
 #if ((!$splitter)||($splitter=='Semikolon')) {$splitter=';';}
@@ -301,15 +301,15 @@ $splitter=chr(9);
 print "<tr><td><span title='Angiv 1. bilagsnummer'><input type=text size=4 name=bilag value=$bilag></span></td>";
 for ($y=0; $y<=$feltantal; $y++) {
 	if (($feltnavn[$y]=='dato') &&($dato==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='beskrivelse') &&($beskr==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='belob')&&($belob==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bel&oslash;b')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bel&oslash;b')\">";
 		$feltnavn[$y]='';
 	}
 	if ($feltnavn[$y]=='belob') print "<td align=right><select name=feltnavn[$y]>\n";

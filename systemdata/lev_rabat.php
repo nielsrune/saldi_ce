@@ -55,7 +55,7 @@ if (isset($_POST['gem']) && !$lev_id) {
 			exit;
 		} else {
 			$title=str_replace('$kontonr',$kontonr,findtekst(433,$sprog_id));
-			print "<BODY onload=\"javascript:alert('Ingen leverand&oslash;r med kontonummer $kontonr')\"><!--tekst 433-->\n";
+			print "<BODY onLoad=\"javascript:alert('Ingen leverand&oslash;r med kontonummer $kontonr')\"><!--tekst 433-->\n";
 		}
 	} else {
 		db_modify("update grupper set  box4='' where id='$id'",__FILE__ . " linje " . __LINE__);

@@ -42,7 +42,7 @@ if (isset($_POST) && $_POST) {
 		else $vis_liste=$vis_liste.'0';
 	}
 	db_modify("update grupper set box2='$vis_liste' where art = 'HV' and box1 = '$brugernavn'");
-	print "<BODY onload=\"javascript=opener.location.reload();\">";
+	print "<BODY onLoad=\"javascript=opener.location.reload();\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 }
 

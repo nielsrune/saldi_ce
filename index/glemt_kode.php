@@ -108,7 +108,7 @@ if (isset($_POST['retur']) && $_POST['retur']=='Retur') {
 	elseif (!$email  && !$firmamail) $alerttxt="Hverken bruger $brugernavn eller regnskab $regnskab er tilknyttet en mailadresse";
 	elseif ($brugernavn && !$bruger_id && $db) $alerttxt="Brugernavnet $brugernavn findes ikke i regnskabet $regnskab!\\n Lad feltet være tomt for at få sendt en liste over oprettede brugere";
 	
-	if ($alerttxt) print "<BODY onload=\"javascript:alert('$alerttxt')\">";
+	if ($alerttxt) print "<BODY onLoad=\"javascript:alert('$alerttxt')\">";
 	else {
 
 	#		if (!file_exists ("../temp/$db")) system ("mkdir ../temp/$db\n");
@@ -209,7 +209,7 @@ echo "Mailer Error: " . $mail->ErrorInfo;
 		if ($email && $firmamail) $tekst="Mail sendt til $email\\nBCC til $firmamail.";
 		elseif ($email) $tekst="Mail sendt til $email.";
 		elseif ($firmamail) $tekst="Mail sendt til $firmamail.";
-		print "<BODY onload=\"javascript:alert('$tekst')\">";
+		print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 	}
 }
 PRINT "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n
@@ -225,7 +225,7 @@ print "<td style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;;ba
 print "<td style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;;background:url(../img/grey1.gif)\" width=\"45%\" align = \"right\">&nbsp;</td></tr>\n";
 print "</tbody></table></td></tr><tr><td align=\"center\" valign=\"middle\">\n"; # <- tabel 1.1 slut
 print "<table width=\"350\" align=\"center\" border=\"5\" cellspacing=\"5\" cellpadding=\"5\"><tbody>"; # tabel 1.2 ->
-print "<tr><td><FORM name=\"login\" METHOD=\"POST\" ACTION=\"glemt_kode.php\" onsubmit=\"return handleLogin(this);\"><table width=\"100%\" align=center border=\"0\" cellspacing=\"0\" cellpadding=\"1\"><tbody>"; # tabel 1.2.1 ->
+print "<tr><td><FORM name=\"login\" METHOD=\"POST\" ACTION=\"glemt_kode.php\" onSubmit=\"return handleLogin(this);\"><table width=\"100%\" align=center border=\"0\" cellspacing=\"0\" cellpadding=\"1\"><tbody>"; # tabel 1.2.1 ->
 if (isset($mastername)&&$mastername) $tmp="<big><big><big><b>$mastername</b></big></big></big>";   
 elseif (strpos($_SERVER['PHP_SELF'],"beta")) $tmp="<big><big><big><b>!!! BETA !!!</b></big></big></big>";
 else $tmp="<big><big><big><b>SALDI</b></big></big></big>";

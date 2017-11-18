@@ -48,7 +48,7 @@ print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cell
 	print "</tbody></table></tr>\n"; # <- Tabel 1.1
 
 if (!in_array($felt,$felter)) {
- print "<BODY onload=\"javascript:alert('Forsøg på manipulation konstateret - handling afbrudt')\">";
+ print "<BODY onLoad=\"javascript:alert('Forsøg på manipulation konstateret - handling afbrudt')\">";
  exit;
 }
 

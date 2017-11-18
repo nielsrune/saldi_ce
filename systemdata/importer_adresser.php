@@ -182,7 +182,7 @@ $kontotype=NULL;
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x] && $felt_aktiv[$x]==1) {
-			print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
+			print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
 			$feltnavn[$y]='';
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
@@ -236,7 +236,7 @@ if ($fp) {
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if ($feltnavn[$y]=='kontonr'&&!is_numeric($felt[$y])) {
 					$skriv_linje=2;
-					print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
+					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
 				}
 			}
  		}
@@ -297,7 +297,7 @@ fclose($fp);
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]&& $felt_aktiv[$x]==1) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
 		$feltnavn[$y]='';
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
@@ -517,7 +517,7 @@ fclose($fp);
 transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";
-print "<BODY onload=\"javascript:alert('$imp_antal adresser importeret')\">";
+print "<BODY onLoad=\"javascript:alert('$imp_antal adresser importeret')\">";
 if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 else print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/diverse.php\">";
 exit;

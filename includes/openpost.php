@@ -188,7 +188,7 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ar
 				if ($linjebg!=$bgcolor) $linjebg=$bgcolor;
 				elseif ($linjebg!=$bgcolor5) $linjebg=$bgcolor5;
 				print "<tr style=\"background-color:$linjebg ; color: $color;\">";
-				print "<td onclick=\"window.open('rykker.php?rykker_id=$r1[id]','rykker','$jsvars')\" onmouseover=\"this.style.cursor = 'pointer'\"><span title='Klik for detaljer' style=\"text-decoration: underline;\"><a>$r1[ordrenr]</a></td>";
+				print "<td onClick=\"window.open('rykker.php?rykker_id=$r1[id]','rykker','$jsvars')\" onMouseOver=\"this.style.cursor = 'pointer'\"><span title='Klik for detaljer' style=\"text-decoration: underline;\"><a>$r1[ordrenr]</a></td>";
 				print "<td>$r1[firmanavn]</td><td colspan=2 align=center>$r1[ordredate]</td><td align=center>$rykkernr</td>";
 				if ($udlignet || $delsum >= $sum[$x]) {
 					$color="#00aa00";
@@ -215,14 +215,14 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ar
 			print "<input type=hidden name=kontoantal value=$x>";
 			if ($x) {
 				print "<tr><td colspan=10><hr></td></tr>\n";
-				if ($taeller==1) print "<tr><td colspan=10 align=center><input type=submit value=\"  Slet  \" name=\"submit\" onclick=\"return confirmSubmit('Slet valgte ?')\">&nbsp;";
+				if ($taeller==1) print "<tr><td colspan=10 align=center><input type=submit value=\"  Slet  \" name=\"submit\" onClick=\"return confirmSubmit('Slet valgte ?')\">&nbsp;";
 				else print "<tr><td colspan=10 align=center>";
-				print "<input type=submit value=\"Udskriv\" name=\"submit\" onclick=\"return confirmSubmit('Udskriv valgte ?')\">";
+				print "<input type=submit value=\"Udskriv\" name=\"submit\" onClick=\"return confirmSubmit('Udskriv valgte ?')\">";
 				if ($taeller==2) {
-					print " &nbsp;<span title='Registrerer rykker som afsluttet og fjernde den fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onclick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
+					print " &nbsp;<span title='Registrerer rykker som afsluttet og fjernde den fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onClick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
 					print " &nbsp;<input type=submit value=\"Ny rykker\" name=\"submit\">";
 				}
-				if ($taeller==1) print " &nbsp;<input type=submit value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"return confirmSubmit('Bogf&oslash;r valgte ?')\"></td></tr>\n";
+				if ($taeller==1) print " &nbsp;<input type=submit value=\"Bogf&oslash;r\" name=\"submit\" onClick=\"return confirmSubmit('Bogf&oslash;r valgte ?')\"></td></tr>\n";
 				else print "</td></tr>\n";
 				}
 #		if ($taeller==1) print "<tr><td>Bogf&oslash;rte</td><td colspan=9><hr></td></tr>\n";
@@ -436,7 +436,7 @@ $regnstart = $startaar. "-" . $startmaaned . "-" . '01';
 			$sum=$sum+$y;
 			
 			print "<tr bgcolor=\"$linjebg\">";
-			if ($popup) print "<td onclick=\"window.open('rapport.php?rapportart=kontokort&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok','kreditorrapport','$jsvars')\" onmouseover=\"this.style.cursor = 'pointer'\"><a>";
+			if ($popup) print "<td onClick=\"window.open('rapport.php?rapportart=kontokort&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok','kreditorrapport','$jsvars')\" onMouseOver=\"this.style.cursor = 'pointer'\"><a>";
 			else print "<td><a href=rapport.php?rapportart=kontokort&kilde=openpost&kto_fra=$konto_fra&kilde_kto_til=$konto_til&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok>";
 			print "<span title='Klik for detaljer' style=\"text-decoration: underline;\">$kontonr[$x]</span></a></td>";
 			print "<td>$firmanavn[$x]</td>";
@@ -564,7 +564,7 @@ $regnstart = $startaar. "-" . $startmaaned . "-" . '01';
 #					transaktion('commit');
 				} else {
 				$fejl=1;
-				print "<BODY onload=\"javascript:alert('Der er anvendt en lagerf&oslash;rt vare som gebyr - rykker kan ikke bogf&oslash;res')\">";
+				print "<BODY onLoad=\"javascript:alert('Der er anvendt en lagerf&oslash;rt vare som gebyr - rykker kan ikke bogf&oslash;res')\">";
 			}
 		}
 	} 
@@ -686,7 +686,7 @@ function bogfor_nu($id)
 	$d_kontrol=round($d_kontrol,2);
 	$k_kontrol=round($k_kontrol,2);
 	if ($d_kontrol!=$k_kontrol) {
-		print "<BODY onload=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, kontakt administrator')\">";
+		print "<BODY onLoad=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, kontakt administrator')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?id=$id\">";
 		exit;
 	} 

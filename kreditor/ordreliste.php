@@ -152,9 +152,9 @@ if ($submit=="Udskriv"){
 		}
 	}
 	if ($y>0) {
-		print "<BODY onload=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+		print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
 	}
-	else print "<BODY onload=\"javascript:alert('Ingen fakturaer er markeret til udskrivning!')\">";
+	else print "<BODY onLoad=\"javascript:alert('Ingen fakturaer er markeret til udskrivning!')\">";
 }
 if (isset($_POST['check'])||isset($_POST['uncheck'])) {
 	$ordre_antal = if_isset($_POST['ordre_antal']);
@@ -179,7 +179,7 @@ else print "<td width = 20% align=center><a href='ordreliste.php?sort=$sort&valg
 
 print "</tbody></table></td>";
 
-if ($popup) print "<td width=10% $top_bund onclick=\"javascript:ordre=window.open('ordre.php?returside=ordreliste.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=ordreliste.php?sort=$sort>Ny</a></td>";
+if ($popup) print "<td width=10% $top_bund onClick=\"javascript:ordre=window.open('ordre.php?returside=ordreliste.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=ordreliste.php?sort=$sort>Ny</a></td>";
 else print "<td width=10% $top_bund><a href=ordre.php?returside=ordreliste.php>Ny</a></td>";
 print "</td></tr>\n";
 #print "<tr><td></td><td align=center><table border=1	cellspacing=0 cellpadding=0><tbody>";
@@ -349,7 +349,7 @@ if ($valg=="forslag") {
 		$valutakurs=$row['valutakurs'];
 		if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn)) {
 			if ($popup) {
-				$javascript="onclick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" ";
+				$javascript="onClick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
 				$understreg='<span style="text-decoration: underline;">';
 				$hrefslut="";
 			} else {
@@ -359,7 +359,7 @@ if ($valg=="forslag") {
 			}
 				$linjetext="";
 		}	else {
-			$javascript="onclick=\"javascript:$ordre.focus();\"";
+			$javascript="onClick=\"javascript:$ordre.focus();\"";
 			$understreg='';
 			$linjetext="<span title= 'Ordre er l&aring;st af $row[hvem]'>";
 		}
@@ -403,7 +403,7 @@ if ($valg=="forslag") {
 		$valutakurs=$row['valutakurs'];
 		if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn)){
 			if ($popup) {
-				$javascript="onclick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"";
+				$javascript="onClick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"";
 				$understreg='<span style="text-decoration: underline;">';
 				$hrefslut="";
 			} else {
@@ -504,7 +504,7 @@ if ($valg=="forslag") {
 		$sum=$row['sum'];
 		$kostpris=$row['kostpris'];
 		$valutakurs=$row['valutakurs'];
-		$javascript="onclick=\"javascript:$ordre=window.open('ordre.php?&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"";
+		$javascript="onClick=\"javascript:$ordre=window.open('ordre.php?&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"";
 		if ($linjebg!=$bgcolor) {
 			$linjebg=$bgcolor; $color='#000000';
 		} else {

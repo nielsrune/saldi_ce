@@ -83,7 +83,7 @@ echo "Skriv $skriv<br>";
 				bogfor($ordre_id);
 			}
 		}
-		if ($skriv) print "<BODY onload=\"JavaScript:window.open('../debitor/formularprint.php?id=-1&skriv=$skriv' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";			
+		if ($skriv) print "<BODY onLoad=\"JavaScript:window.open('../debitor/formularprint.php?id=-1&skriv=$skriv' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";			
 		echo "A pluk $pluk<br>";
 */	
 }	elseif ($varenr) {
@@ -101,12 +101,12 @@ echo "Skriv $skriv<br>";
 		$diff=$bestilt_antal-$modtaget_antal;
 			
 		if ($diff<0) $diff=0;
-		if (!$diff && $bestilt_antal) print "<BODY onload=\"javascript:alert('alle bestilte varer med varenr: $varenr er modtaget')\">";
+		if (!$diff && $bestilt_antal) print "<BODY onLoad=\"javascript:alert('alle bestilte varer med varenr: $varenr er modtaget')\">";
 		elseif (!$diff) {
-			print "<BODY onload=\"javascript:alert('Der er ikke nogle &aring;bne indk&oslash;bsordrer p&aring; varenr $varenr')\">";
+			print "<BODY onLoad=\"javascript:alert('Der er ikke nogle &aring;bne indk&oslash;bsordrer p&aring; varenr $varenr')\">";
 			$varenr='';
 		} elseif ($id && $antal>$diff) {
-			print "<BODY onload=\"javascript:alert('Der kan maksimalt modtages $diff af varenr: $varenr')\">";
+			print "<BODY onLoad=\"javascript:alert('Der kan maksimalt modtages $diff af varenr: $varenr')\">";
 			$antal=$diff;
 		} elseif($id) {
 			if ($antal>0) {
@@ -156,7 +156,7 @@ echo "Skriv $skriv<br>";
 				$r=db_fetch_array(db_select("select max(id) as id from modtagelser where varenr='$varenr' and antal='$antal'",__FILE__ . " linje " . __LINE__));
 				$id=$r['id'];
 				$fokus="antal_ny";
-			} else print "<BODY onload=\"javascript:alert('Varenummer $varenr eksisterer ikke')\">";
+			} else print "<BODY onLoad=\"javascript:alert('Varenummer $varenr eksisterer ikke')\">";
 		}
 		
 	}	

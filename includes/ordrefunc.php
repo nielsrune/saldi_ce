@@ -181,11 +181,11 @@ if ($hurtigfakt && $fakturadate && (!$ordredate || $ordredate>$fakturadate)) {
 $r=db_fetch_array(db_select("select * from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__));
 if ($fakturadate && !$r['levdate']){
 	if ($webservice) return('Manglende leveringsdato');  
-	else print "<BODY onload=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
+	else print "<BODY onLoad=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
 	exit;
 } else {
 	if (!$hurtigfakt && $r['levdate']<$r['ordredate']) {
-		 print "<BODY onload=\"javascript:alert('Leveringsdato er f&oslash;r ordredato $r[levdate]<$r[ordredate]')\">";
+		 print "<BODY onLoad=\"javascript:alert('Leveringsdato er f&oslash;r ordredato $r[levdate]<$r[ordredate]')\">";
 		 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		 exit;
 	}
@@ -193,7 +193,7 @@ if ($fakturadate && !$r['levdate']){
 	$year=trim($year);
 	$tmp=date("Y");
 	if (!$hurtigfakt && $art!='PO' && !$webservice && !$genfakt && ($year<$tmp-10||$year>$tmp+10)) {
-		 print "<BODY onload=\"javascript:alert('Tjek leveringsdato $levdate')\">";
+		 print "<BODY onLoad=\"javascript:alert('Tjek leveringsdato $levdate')\">";
 		 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		 exit;
 	}
@@ -245,7 +245,7 @@ if ($fakturadate && !$r['levdate']){
 			}
 			if ($hurtigfakt=='on') $leveres[$x]=$antal[$x]-$tidl_lev;
 			if (($antal[$x]>0)&&($antal[$x]<$leveres[$x]+$tidl_lev)) {
-				print "<BODY onload=\"javascript:alert('Der er sat for meget til levering (pos nr. $posnr[$x])')\">";
+				print "<BODY onLoad=\"javascript:alert('Der er sat for meget til levering (pos nr. $posnr[$x])')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 				exit;
 			}
@@ -254,7 +254,7 @@ if ($fakturadate && !$r['levdate']){
 				$query = db_select("select * from serienr where salgslinje_id = '$linje_id[$x]' and batch_salg_id=0",__FILE__ . " linje " . __LINE__);
 				while ($row =db_fetch_array($query)) $sn_antal[$x]++; 
 			 if ($leveres[$x]!=$sn_antal[$x]) {
-					 print "<BODY onload=\"javascript:alert('Der er sat $leveres[$x] til levering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
+					 print "<BODY onLoad=\"javascript:alert('Der er sat $leveres[$x] til levering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
 					 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 					 exit;
 				}
@@ -271,7 +271,7 @@ if ($fakturadate && !$r['levdate']){
 				}
 			 if ($leveres[$x]+$sn_antal[$x]!=0){
 					$tmp=$leveres[$x]*-1;
-					print "<BODY onload=\"javascript:alert('Der er sat $tmp til returnering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
+					print "<BODY onLoad=\"javascript:alert('Der er sat $tmp til returnering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
 					 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 					 exit;
 				}
@@ -297,7 +297,7 @@ if ($fakturadate && !$r['levdate']){
 #				for ($a=1; $a<=$leveres[$x]; $a++) samlevare($vare_id[$x], $linje_id[$x]);
 			}
 			if (!$gruppe[$x]) {
-				print "<BODY onload=\"javascript:alert('Vare tilh&oslash;rer ikke nogen varegruppe - kontroller vare og indstillinger! (pos nr: $posnr[$x])')\">";
+				print "<BODY onLoad=\"javascript:alert('Vare tilh&oslash;rer ikke nogen varegruppe - kontroller vare og indstillinger! (pos nr: $posnr[$x])')\">";
 				if ($art=='PO') print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">";
 				else print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 				exit;
@@ -341,12 +341,12 @@ function linjeopdat($id ,$gruppe, $linje_id, $beholdning, $vare_id, $antal, $pri
 		$box1=trim($row['box1']); $box2=trim($row['box2']); $box3=trim($row['box3']); $box4=trim($row['box4']); $box8=trim($row['box8']); $box9=trim($row['box9']);
 	} else {
 		$r=db_fetch_array(db_select("select posnr from ordrelinjer where id = '$linje_id'",__FILE__ . " linje " . __LINE__));
-		print "<BODY onload=\"javascript:alert('Varegruppe ikke opsat korrekt, pos nr $r[posnr]')\">";
+		print "<BODY onLoad=\"javascript:alert('Varegruppe ikke opsat korrekt, pos nr $r[posnr]')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	}
 	if (!$box3 || !$box4) { # box3 & box4 er kontonumre for varekøb og varesalg
 		$fejltekst="Varegruppe $gruppe mangler kontonummer for varek&oslash;b og/eller varesalg (Indstillinger -> Varegrp)";
-		print "<BODY onload=\"javascript:alert('$fejltekst')\">";
+		print "<BODY onLoad=\"javascript:alert('$fejltekst')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	}
 	if ($box8!='on'){ #box 8 angiver om vare(gruppen) er lagerført #20130408
@@ -567,7 +567,7 @@ function batch_salg_lev($id, $levdate, $fakturadate, $beholdning, $vare_id, $ant
 			lagerstatus($vare_id, $lager, $rest); 
 		}
 		else {
-			print "<BODY onload=\"javascript:alert('Reserveret antal stemmer ikke overens med antal til levering (pos nr: $posnr)')\">";
+			print "<BODY onLoad=\"javascript:alert('Reserveret antal stemmer ikke overens med antal til levering (pos nr: $posnr)')\">";
 			$r2 =db_fetch_array(db_select("select art from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__)); #20131105
 			if ($r2['art']=='PO') print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">";
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
@@ -598,7 +598,7 @@ function batch_salg_lev($id, $levdate, $fakturadate, $beholdning, $vare_id, $ant
 			lagerstatus($vare_id, $lager, $rest);
 			$rest=0;
 		}	else {
-			print "<BODY onload=\"javascript:alert('Hmm - Indkbsordre kan ikke findes - levering kan ikke foretages - Kontakt systemadministrator')\">";
+			print "<BODY onLoad=\"javascript:alert('Hmm - Indkbsordre kan ikke findes - levering kan ikke foretages - Kontakt systemadministrator')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;
 		}
@@ -1129,7 +1129,7 @@ echo "<!--function bogfor start-->";
 	$ym=$year.$month;
 
 	if ($art!='PO' && !$webservice && ($ym<$aarstart || $ym>$aarslut))	{
-		print "<BODY onload=\"javascript:alert('Fakturadato udenfor regnskabs&aring;r')\">";
+		print "<BODY onLoad=\"javascript:alert('Fakturadato udenfor regnskabs&aring;r')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		exit;
 	}
@@ -1656,7 +1656,7 @@ function bogfor_indbetaling($id,$webservice) {
 		$kontonr=$r['box2']; # Kontonr aendres fra at vaere leverandoerkontonr til finanskontonr
 		$tekst="Kontonummer for Debitorgruppe `$r[beskrivelse]` er ikke gyldigt";
 		if (!$kontonr && $webservice) return($tekst);
-		elseif(!$kontonr) print "<BODY onload=\"javascript:alert('$tekst')\">";
+		elseif(!$kontonr) print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 
 		$logdate=date("Y-m-d");
 		$logtime=date("H:i");
@@ -1944,14 +1944,14 @@ include("../includes/genberegn.php");
 #cho "select id from transaktioner where ordre_id='$ordre_id'<br>";
 		if ($r=db_fetch_array(db_select("select id,ordre_id from transaktioner where ordre_id='$ordre_id'",__FILE__ . " linje " . __LINE__))) {
 			$tekst="Bogf&oslash;ring afbrudt - tjek kontrolspor (id $r[id] oid $r[ordre_id])";
-			print "<BODY onload=\"javascript:alert('$tekst')\">";
+			print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 			return($tekst);
 		}
 		if ($kontonr && $openpost) {
 				$tmp=$sum;
 			if (db_fetch_array(db_select("select id from openpost where konto_id='$konto_id' and konto_nr='$kontonr' and faktnr='$fakturanr' and amount='$tmp' and beskrivelse='$beskrivelse' and udlignet='$udlign' and transdate='$transdate' and kladde_id='$udlign' and refnr='$id' and valuta='$valuta' and valutakurs='$valutakurs' and forfaldsdate='$forfaldsdate'",__FILE__ . " linje " . __LINE__))) {
 				$tekst="Bogf&oslash;ring afbrudt - tjek kontrolspor";
-				print "<BODY onload=\"javascript:alert('$tekst')\">";
+				print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 				return($tekst);
 			}
 			if ($udlign && $udlign_id && $udlign_date) db_modify("insert into openpost (konto_id,konto_nr,faktnr,amount,beskrivelse,udlignet,udlign_id,udlign_date,transdate,kladde_id,refnr,valuta,valutakurs,forfaldsdate,projekt) values ('$konto_id','$kontonr','$fakturanr','$tmp','$beskrivelse','$udlign','$udlign_id','$udlign_date','$transdate','$udlign','$id','$valuta','$valutakurs','$forfaldsdate','$projekt[0]')",__FILE__ . " linje " . __LINE__);
@@ -1963,7 +1963,7 @@ include("../includes/genberegn.php");
 			$kontonr=$r['box2']; # Kontonr aendres fra at vaere leverandoerkontonr til finanskontonr
 			$tekst="Kontonummer for Debitorgruppe `$r[beskrivelse]` er ikke gyldigt";
 			if (!$kontonr && $webservice) return($tekst);
-			elseif(!$kontonr) print "<BODY onload=\"javascript:alert('$tekst')\">";
+			elseif(!$kontonr) print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 		}
 		if (!in_array($kontonr,$kontoplan) && $art!='PO') {
 			$tekst="Kontonummer $kontonr findes ikke i kontoplanen for regnskabsaar $regnaar";
@@ -2167,7 +2167,7 @@ include("../includes/genberegn.php");
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					} elseif ($pris[$y]) {
 						$svar="Fejl i kontoopsætning";
-						if (!$webservice) print "<BODY onload=\"javascript:alert('$svar')\">";
+						if (!$webservice) print "<BODY onLoad=\"javascript:alert('$svar')\">";
 						else return("$svar");
 						exit;
 					}
@@ -2406,7 +2406,7 @@ function kontoopslag($art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$po
 	}
 	print "</tbody></table></td></tr></tbody></table>";
 	if ($art=='PO')	print "<script language=\"javascript\">document.kontoopslag.kontonr.focus();</script>";
-	else print "<BODY onload=\"javascript:document.getElementById('fokus').focus()\">";
+	else print "<BODY onLoad=\"javascript:document.getElementById('fokus').focus()\">";
 	exit;
 }
 ######################################################################################################################################
@@ -2563,7 +2563,7 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 		$lagerfort = $r2['box8'];
 		if (!$bogfkto) 	{
 			$alerttekst=findtekst(319,$sprog_id)." ".$varegruppe."!";
-			print "<BODY onload=\"javascript:alert('$alerttekst')\">";
+			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 		  return ("$alerttekst");
 		}
 #cho __LINE." P: ".$pris." ".$pris*1 ."<br>";
@@ -2627,7 +2627,7 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 		if (!$tmp) $tmp=1;
 		if ($raadig<=$tmp) {
 			$alerttxt="Beholdning:\\t$beholdning\\nI ordre:\\t\\t$i_ordre\\nTil rådighed:\\t$raadig";
-			print "<BODY onload=\"javascript:alert('$alerttxt')\">";
+			print "<BODY onLoad=\"javascript:alert('$alerttxt')\">";
 		}
 	}
 	if ($linje_id && $art=='DO') $tmp="id='$linje_id'";
@@ -3447,7 +3447,7 @@ function opret_ordre($sag_id,$konto_id) {
 		$r = db_fetch_array(db_select("select box2 from grupper where art='SM' and kodenr='$tmp'",__FILE__ . " linje " . __LINE__));
 		$momssats=$r['box2']*1;
 	} elseif ($konto_id) {
-			print "<BODY onload=\"javascript:alert('Debitoren er ikke tilknyttet en debitorgruppe')\">\n";
+			print "<BODY onLoad=\"javascript:alert('Debitoren er ikke tilknyttet en debitorgruppe')\">\n";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=debitorkort.php?id=$konto_id&returside=../debitor/ordre.php&ordre_id=$id&fokus=$fokus?id=$id\">\n";
 			exit;
 	}
@@ -3632,7 +3632,7 @@ function opret_ordre_kopi($sag_id,$konto_id) { #20140730
 		$r = db_fetch_array(db_select("select box2 from grupper where art='SM' and kodenr='$tmp'",__FILE__ . " linje " . __LINE__));
 		$momssats=$r['box2']*1;
 	} elseif ($konto_id) {
-			print "<BODY onload=\"javascript:alert('Debitoren er ikke tilknyttet en debitorgruppe')\">\n";
+			print "<BODY onLoad=\"javascript:alert('Debitoren er ikke tilknyttet en debitorgruppe')\">\n";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=debitorkort.php?id=$konto_id&returside=../debitor/ordre.php&ordre_id=$id&fokus=$fokus?id=$id\">\n";
 			exit;
 	}

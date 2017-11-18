@@ -72,7 +72,7 @@ if ($row = db_fetch_array($query)) {
  $r=db_fetch_array(db_select("select box3 from grupper where art='VK' and box1='$valuta'",__FILE__ . " linje " . __LINE__));
 #cho "$diffkto=$r[box3]<br>";
  if (!$diffkto=$r['box3']) {
-	print "<BODY onload=\"javascript:alert('Kontonummer for valutadifferencer ikke fundet')\">";
+	print "<BODY onLoad=\"javascript:alert('Kontonummer for valutadifferencer ikke fundet')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$retur?rapport=kontokort.php\">";
 	exit;
  }

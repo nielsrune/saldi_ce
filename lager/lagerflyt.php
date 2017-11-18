@@ -135,7 +135,7 @@ print "<input type=hidden name=vare_id value='$vare_id'>";
 print "<input type=hidden name=lager value='$lager'>";
 print "<input type=hidden name=batch_kob_antal value='$batch_kob_antal'>";
 print "<tr><td colspan=4><hr></td></tr>";
-print "<tr><td align=center colspan=4 onclick=\"javascript=opener.location.reload()\"><input type=submit value=\"Gem\" name=\"submit\">&nbsp;&nbsp;<input type=submit value=\"Luk\" name=\"submit\"></td></tr>";
+print "<tr><td align=center colspan=4 onClick=\"javascript=opener.location.reload()\"><input type=submit value=\"Gem\" name=\"submit\">&nbsp;&nbsp;<input type=submit value=\"Luk\" name=\"submit\"></td></tr>";
 print "</form> </tr>";
 print "</td></tr></tbody></table>";
 print "</form>";

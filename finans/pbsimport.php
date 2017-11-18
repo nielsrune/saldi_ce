@@ -249,39 +249,39 @@ print "<tr>";
 if (!in_array('bilag',$feltnavn)) print "<td><span title='Angiv 1. bilagsnummer'><input class=\"inputbox\" type=text size=4 name=bilag value=$bilag></span></td>";
 for ($y=0; $y<=$feltantal; $y++) {
 	if (in_array('bilag',$feltnavn) && $feltnavn[$y]=='bilag' && $bilag==1) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bilag')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bilag')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='dato') &&($dato==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='beskrivelse') &&($beskr==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='debitor') &&($debitor==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Debitor')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Debitor')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='kreditor') &&($kreditor==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kreditor')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kreditor')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='debet') &&($debet==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Debet')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Debet')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='kredit') &&($kredit==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kredit')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kredit')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='fakturanr') &&($fakturanr==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Fakturanr')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Fakturanr')\">";
 		$feltnavn[$y]='';
 	}
 	if (($feltnavn[$y]=='belob')&&($belob==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bel&oslash;b')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bel&oslash;b')\">";
 		$feltnavn[$y]='';
 	}
 

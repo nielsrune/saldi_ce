@@ -45,7 +45,7 @@ if (!function_exists('fuld_stykliste')) {
 #					exit;
 				}
 				if ($x>1000) {
-					print "<BODY onload=\"javascript:alert('Fejl i stykliste eller stykliste indeholder over 1000 enheder')\">\n";
+					print "<BODY onLoad=\"javascript:alert('Fejl i stykliste eller stykliste indeholder over 1000 enheder')\">\n";
 					exit;
 				}
 			}

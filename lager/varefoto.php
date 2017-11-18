@@ -149,12 +149,12 @@ function upload_foto($id,$filnavn,$fotonavn){
 				db_modify("update $kilde set dokument='".db_escape_string($filnavn)."' where id='$bilag_id'",__FILE__ . " linje " . __LINE__);
 			}
 			if (file_exists($langt_filnavn)) { #20141105
-				print "<BODY onload=\"javascript:alert('$filnavn er indl&aelig;st')\">";
+				print "<BODY onLoad=\"javascript:alert('$filnavn er indl&aelig;st')\">";
 			} else {
-				print "<BODY onload=\"javascript:alert('A indl&aelig;sning af $filnavn fejlet')\">";
+				print "<BODY onLoad=\"javascript:alert('A indl&aelig;sning af $filnavn fejlet')\">";
 			}
 		}
-	} #print "<BODY onload=\"javascript:alert('B indl&aelig;sning af $filnavn fejlet')\">";
+	} #print "<BODY onLoad=\"javascript:alert('B indl&aelig;sning af $filnavn fejlet')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">";
 }
 */

@@ -290,7 +290,7 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 		}
 	}
 	if ($csv){ fclose($fp);
-		print "<BODY onload=\"JavaScript:window.open('../temp/$db/kontrolspor.csv' ,'' ,'$jsvars');\">\n";
+		print "<BODY onLoad=\"JavaScript:window.open('../temp/$db/kontrolspor.csv' ,'' ,'$jsvars');\">\n";
 	}
 	if (!$csv && ($debetsum || $kreditsum)) {
 		($vis_projekt)?$colspan=12:$colspan=11;

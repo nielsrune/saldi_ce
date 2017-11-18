@@ -55,12 +55,12 @@ if ($hurtigfakt && $fakturadate && $fakturadate != $levdate) {
 }
 $r=db_fetch_array(db_select("select * from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__));
 if (!$r['levdate']){
-	print "<BODY onload=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
+	print "<BODY onLoad=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
 } else {
 	if ($r['levdate']<$r['ordredate']) {
-		 print "<BODY onload=\"javascript:alert('Leveringsdato er f&oslash;r ordredato')\">";
+		 print "<BODY onLoad=\"javascript:alert('Leveringsdato er f&oslash;r ordredato')\">";
 		 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		 exit;
 	}
@@ -68,7 +68,7 @@ if (!$r['levdate']){
 	$year=trim($year);
 	$ym=$year.$month;
 	if (!$webservice && ($ym<$aarstart||$ym>$aarslut)) {
-		print "<BODY onload=\"javascript:alert('Leveringsdato uden for regnskabs&aring;r')\">";
+		print "<BODY onLoad=\"javascript:alert('Leveringsdato uden for regnskabs&aring;r')\">";
 		 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		 exit;
 	}
@@ -113,7 +113,7 @@ if (!$r['levdate']){
 			} 
 			if ($hurtigfakt=='on') $leveres[$x]=$antal[$x]-$tidl_lev;
 			if (($antal[$x]>0)&&($antal[$x]<$leveres[$x]+$tidl_lev)) {
-				print "<BODY onload=\"javascript:alert('Der er sat for meget til levering (pos nr. $posnr[$x])')\">";
+				print "<BODY onLoad=\"javascript:alert('Der er sat for meget til levering (pos nr. $posnr[$x])')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 				exit;
 			}
@@ -122,7 +122,7 @@ if (!$r['levdate']){
 				$query = db_select("select * from serienr where salgslinje_id = '$linje_id[$x]' and batch_salg_id=0",__FILE__ . " linje " . __LINE__);
 				while ($row =db_fetch_array($query)) {$sn_antal[$x]=$sn_antal[$x]+1; }
 			 if ($leveres[$x]!=$sn_antal[$x]) {
-					 print "<BODY onload=\"javascript:alert('Der er sat $leveres[$x] til levering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
+					 print "<BODY onLoad=\"javascript:alert('Der er sat $leveres[$x] til levering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
 					 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 					 exit;
 				}
@@ -135,7 +135,7 @@ if (!$r['levdate']){
 				}
 			 if ($leveres[$x]+$sn_antal[$x]!=0){
 					$tmp=$leveres[$x]*-1;
-					print "<BODY onload=\"javascript:alert('Der er sat $tmp til returnering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
+					print "<BODY onLoad=\"javascript:alert('Der er sat $tmp til returnering men valgt $sn_antal[$x] serienumre (pos nr: $posnr[$x])')\">";
 					 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 					 exit;
 				}
@@ -160,7 +160,7 @@ if (!$r['levdate']){
 #				for ($a=1; $a<=$leveres[$x]; $a++) samlevare($vare_id[$x], $linje_id[$x]);
 #			}
 			if (!$gruppe[$x]) {
-				print "<BODY onload=\"javascript:alert('Vare tilhrer ikke nogen varegruppe - kontroller vare og indstillinger! (pos nr: $posnr[$x])')\">";
+				print "<BODY onLoad=\"javascript:alert('Vare tilhrer ikke nogen varegruppe - kontroller vare og indstillinger! (pos nr: $posnr[$x])')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 				exit;
 			}
@@ -192,12 +192,12 @@ function linjeopdat($id ,$gruppe, $linje_id, $beholdning, $vare_id, $antal, $pri
 		$box1=trim($row[box1]); $box2=trim($row[box2]); $box3=trim($row[box3]); $box4=trim($row[box4]); $box8=trim($row[box8]); $box9=trim($row[box9]);
 	} else {
 		$r=db_fetch_array(db_select("select posnr from ordrelinjer where id = '$linje_id'",__FILE__ . " linje " . __LINE__));
-		print "<BODY onload=\"javascript:alert('Varegruppe ikke opsat korrekt, pos nr $r[posnr]')\">";
+		print "<BODY onLoad=\"javascript:alert('Varegruppe ikke opsat korrekt, pos nr $r[posnr]')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	} 
 	if (!$box3 || !$box4) {
 		$fejltekst="Varegruppe $gruppe mangler kontonummer for varek&oslash;b og/eller varesalg (Indstillinger -> Varegrp)";
-		print "<BODY onload=\"javascript:alert('$fejltekst')\">";
+		print "<BODY onLoad=\"javascript:alert('$fejltekst')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	}			
 	if (($box8!='on')||($samlevare=='on')){
@@ -261,7 +261,7 @@ function batch_salg_lev($id, $levdate, $fakturadate, $beholdning, $vare_id, $ant
 			lagerstatus($vare_id, $lager, $rest);	
 		}
 		else {
-			print "<BODY onload=\"javascript:alert('Reserveret antal stemmer ikke overens med antal til levering (pos nr: $posnr)')\">";
+			print "<BODY onLoad=\"javascript:alert('Reserveret antal stemmer ikke overens med antal til levering (pos nr: $posnr)')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;
 		}
@@ -290,7 +290,7 @@ function batch_salg_lev($id, $levdate, $fakturadate, $beholdning, $vare_id, $ant
 			$rest=0;
 		}
 		else {
-			print "<BODY onload=\"javascript:alert('Hmm - Indkbsordre kan ikke findes - levering kan ikke foretages - Kontakt systemadministrator')\">";
+			print "<BODY onLoad=\"javascript:alert('Hmm - Indkbsordre kan ikke findes - levering kan ikke foretages - Kontakt systemadministrator')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;
 		}
@@ -496,7 +496,7 @@ function bogfor($id,$webservice) {
 	
 	if ($row['status']!=2){
 		return("invoice allready created for order id $id"); 
-#		print "<BODY onload=\"javascript:alert('Fakturerering er allerede udf&oslash;rt')\">";
+#		print "<BODY onLoad=\"javascript:alert('Fakturerering er allerede udf&oslash;rt')\">";
 #		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 #		exit;
 	}
@@ -528,7 +528,7 @@ function bogfor($id,$webservice) {
 				if ($webservice) return("Kontonr $difkto (kursdiff) eksisterer ikke");
 				else {
 					return("Kontonr $difkto (kursdiff) eksisterer ikke");
-#					print "<BODY onload=\"javascript:alert('Kontonr $difkto (kursdiff) eksisterer ikke')\">";
+#					print "<BODY onLoad=\"javascript:alert('Kontonr $difkto (kursdiff) eksisterer ikke')\">";
 #					print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 #					exit;
 				}
@@ -536,7 +536,7 @@ function bogfor($id,$webservice) {
 		} else {
 			$tmp = dkdato($fakturadate);
 			return("Der er ikke nogen valutakurs for $valuta den $tmp (fakturadatoen).");
-#			print "<BODY onload=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $tmp (fakturadatoen).')\">";
+#			print "<BODY onLoad=\"javascript:alert('Der er ikke nogen valutakurs for $valuta den $tmp (fakturadatoen).')\">";
 #			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 #			exit;
 		}
@@ -546,28 +546,28 @@ function bogfor($id,$webservice) {
 	}
 	if (!$levdate){
 		return ("Missing deliverydate");
-#		print "<BODY onload=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
+#		print "<BODY onLoad=\"javascript:alert('Leveringsdato SKAL udfyldes')\">";
 #		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 #		exit;
 	}	
 
 	if ($levdate<$ordredate){
 		return ("Deliverydate prior to orderdate");
-#	 	print "<BODY onload=\"javascript:alert('Leveringsdato er f&oslash;r ordredato')\">";
+#	 	print "<BODY onLoad=\"javascript:alert('Leveringsdato er f&oslash;r ordredato')\">";
 #	 	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 # 	exit;
 	}
 
 	if ($fakturadate<$levdate)	{
 		return ("Invoicedate prior to orderdate");
-#		print "<BODY onload=\"javascript:alert('Fakturadato er f&oslash;r leveringsdato')\">";
+#		print "<BODY onLoad=\"javascript:alert('Fakturadato er f&oslash;r leveringsdato')\">";
 #		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 #		exit;
 	}	
 
 	if (($nextfakt)&& ($nextfakt<=$fakturadate)){
 		return ("Next_invoicedate prior to invoicedate");
-#		print "<BODY onload=\"javascript:alert('Genfaktureringsdato skal v&aelig;re efter fakturadato')\">";
+#		print "<BODY onLoad=\"javascript:alert('Genfaktureringsdato skal v&aelig;re efter fakturadato')\">";
 #		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 # 	exit;
 	}
@@ -576,7 +576,7 @@ function bogfor($id,$webservice) {
 	$ym=$year.$month;
 
 	if (!$webservice && ($ym<$aarstart || $ym>$aarslut))	{
-		print "<BODY onload=\"javascript:alert('Fakturadato udenfor regnskabs&aring;r')\">";
+		print "<BODY onLoad=\"javascript:alert('Fakturadato udenfor regnskabs&aring;r')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 		exit;
 	}
@@ -852,7 +852,7 @@ function bogfor_nu($id,$webservice)
 			$kontonr=$r['box2']; # Kontonr aendres fra at vaere leverandoerkontonr til finanskontonr
 			$tekst="Kontonummer for Debitorgruppe `$r[beskrivelse]` er ikke gyldigt";
 			if (!$kontonr && $webservice) return($tekst);
-			elseif(!$kontonr) print "<BODY onload=\"javascript:alert('$tekst')\">";
+			elseif(!$kontonr) print "<BODY onLoad=\"javascript:alert('$tekst')\">";
 		} else $kontonr="58200"; # midleritdig kun til brug med POS
 		if ($sum>0) {$debet=$sum; $kredit='0';}
 		else {$debet='0'; $kredit=$sum*-1;}
@@ -967,7 +967,7 @@ function bogfor_nu($id,$webservice)
 			$message=$db." | Uoverensstemmelse i posteringssum: ordre_id=$id, d=$d_kontrol, k=$k_kontrol | ".__FILE__ . " linje " . __LINE__." | ".$brugernavn." ".date("Y-m-d H:i:s");
 			$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 			mail('fejl@saldi.dk', 'SALDI Fejl', $message, $headers);
-			if (!$webservice) print "<BODY onload=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, ordre $ordrenr, kontakt DANOSOFT p&aring; telefon 4690 2208')\">";
+			if (!$webservice) print "<BODY onLoad=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, ordre $ordrenr, kontakt DANOSOFT p&aring; telefon 4690 2208')\">";
 			else return("Der er konstateret en uoverensstemmelse i posteringssummen, ordre $ordrenr, kontakt DANOSOFT p&aring; telefon 4690 2208' debet $debet != kredit $kredit");
 #     	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 			exit;

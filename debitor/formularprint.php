@@ -47,7 +47,7 @@ if (isset($_GET['id']) && $_GET['id']){
 
 	$svar=formularprint($id,$formular,$lev_nr,$charset,$udskriv_til);
 	if ($svar && $svar!='OK') {
-		print "<BODY onload=\"javascript:alert('$svar')\">";
+		print "<BODY onLoad=\"javascript:alert('$svar')\">";
 		if ($returside) {
 			print "<meta http-equiv=\"refresh\" content=\"1;URL=$returside\">";
 			exit;

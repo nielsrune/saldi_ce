@@ -64,7 +64,7 @@ if ($_POST['bilag'] || $_POST['bilag']=='0') {
 	$dato=if_isset($_POST['dato']);
 	$bilag=if_isset($_POST['bilag']);
 	if(!is_numeric($bilag) || strlen($bilag)>9) {
-		print "<BODY onload=\"javascript:alert('Bilagsnummer skal v&aelig;re et positivt tal og m&aring; maks indeholder 9 cifre')\">";	
+		print "<BODY onLoad=\"javascript:alert('Bilagsnummer skal v&aelig;re et positivt tal og m&aring; maks indeholder 9 cifre')\">";	
 		$fejl=1;
 	}
 	$transdate=usdate($dato);
@@ -72,11 +72,11 @@ if ($_POST['bilag'] || $_POST['bilag']=='0') {
 	$ym=$y.$m;
 	if (checkdate($m,$d,$y)) {
 		if ($ym<$aarstart || $ym>$aarslut) {
-			print "<BODY onload=\"javascript:alert('Dato udenfor regnskabs&aring;r')\">";
+			print "<BODY onLoad=\"javascript:alert('Dato udenfor regnskabs&aring;r')\">";
 			$fejl=1;
 		}
 	} else {
-		print "<BODY onload=\"javascript:alert('Dato skal v&aelig;re i formatet 'dd-mm-yyyy')\">";	
+		print "<BODY onLoad=\"javascript:alert('Dato skal v&aelig;re i formatet 'dd-mm-yyyy')\">";	
 		$fejl=1;
 	}
 }
@@ -133,7 +133,7 @@ if ($antal>=1) {
 						('0','$id[$x]','0','$transdate','$transdate','0','$tmp','$stkpris','1')",__FILE__ . " linje " . __LINE__);
 					}
 					db_modify("update varer set beholdning='$ny_beholdning[$x]' where id='$id[$x]'",__FILE__ . " linje " . __LINE__);
-				} else print "<BODY onload=\"javascript:alert('Kontonummer for lagerregulering mangler (Indstillinger -> Varegrp.)')\">";	
+				} else print "<BODY onLoad=\"javascript:alert('Kontonummer for lagerregulering mangler (Indstillinger -> Varegrp.)')\">";	
 			}
 		}	
 		transaktion('commit');

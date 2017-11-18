@@ -49,7 +49,7 @@ if ($id && $id>=1) {
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=bogfor.php?id=$id&genfakt=$genfakt&mail_fakt=$mail_fakt&pbs=$pbs\">";
 			exit;
 		} else print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
-	} else print "<BODY onload=\"javascript:alert('$svar')\">";
+	} else print "<BODY onLoad=\"javascript:alert('$svar')\">";
 }
 
 ?>

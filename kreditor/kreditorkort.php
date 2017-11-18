@@ -111,7 +111,7 @@ if ($_POST) {
 			$tmp2=$tmp2.$y;
 		}
 		$tmp2=$tmp2*1;
-		if ($tmp2!=$ny_kontonr) {print "<BODY onload=\"javascript:alert('Kontonummer m&aring; kun best&aring; af heltal uden mellemrum')\">\n";}
+		if ($tmp2!=$ny_kontonr) {print "<BODY onLoad=\"javascript:alert('Kontonummer m&aring; kun best&aring; af heltal uden mellemrum')\">\n";}
 		$ny_kontonr=$tmp2;
 	
  
@@ -126,7 +126,7 @@ if ($_POST) {
 			}
 			$ny_kontonr=1000;
 			while(in_array($ny_kontonr, $ktoliste)) $ny_kontonr++;
-			print "<BODY onload=\"javascript:alert('Kontonummer $ny_kontonr tildelt automatisk')\">\n";
+			print "<BODY onLoad=\"javascript:alert('Kontonummer $ny_kontonr tildelt automatisk')\">\n";
 		} 
 		if ($postnr && !$bynavn) $bynavn=bynavn($postnr);
 
@@ -137,7 +137,7 @@ if ($_POST) {
 			$query = db_select("select id from adresser where kontonr = '$ny_kontonr' and art = 'K'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
 			if ($row[id]) {
-			 print "<BODY onload=\"javascript:alert('Der findes allerede en kreditor med Leverand&oslash;rnr: $ny_kontonr')\">\n";
+			 print "<BODY onLoad=\"javascript:alert('Der findes allerede en kreditor med Leverand&oslash;rnr: $ny_kontonr')\">\n";
 				$id=0;
 			} elseif($ny_kontonr) {
 				db_modify("insert into adresser (kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,tlf,fax,email,web,betalingsdage,kreditmax,betalingsbet,cvrnr,notes,art,gruppe,bank_navn,bank_reg,bank_konto,bank_fi,erh,swift,felt_1,felt_2,felt_3,felt_4,felt_5,lukket) values ('$ny_kontonr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$land','$kontakt','$tlf','$fax','$email','$web','$betalingsdage','$kreditmax','$betalingsbet','$cvrnr','$notes','K',$gruppe,'$bank_navn','$bank_reg','$bank_konto','$bank_fi','$erh','$swift','$felt_1','$felt_2','$felt_3','$felt_4','$felt_5','$lukket')",__FILE__ . " linje " . __LINE__);
@@ -153,7 +153,7 @@ if ($_POST) {
 					$ktoliste[$x]=$row['kontonr'];
 				}
 				if (in_array($ny_kontonr, $ktoliste)) {
-					 print "<BODY onload=\"javascript:alert('Kontonummer findes allerede, ikke &aelig;ndret')\">\n";
+					 print "<BODY onLoad=\"javascript:alert('Kontonummer findes allerede, ikke &aelig;ndret')\">\n";
 				} else $kontonr=$ny_kontonr;
 			}
 			db_modify("update adresser set kontonr = '$kontonr',	firmanavn = '$firmanavn', addr1 = '$addr1', addr2 = '$addr2', postnr = '$postnr', bynavn = '$bynavn', land = '$land', kontakt = '$kontakt', tlf = '$tlf', fax = '$fax', email = '$email', web = '$web', betalingsdage= '$betalingsdage', kreditmax = '$kreditmax', betalingsbet = '$betalingsbet', cvrnr = '$cvrnr', notes = '$notes', gruppe = '$gruppe' ,bank_navn='$bank_navn',bank_reg='$bank_reg',bank_konto='$bank_konto',bank_fi='$bank_fi',erh='$erh',swift='$swift',felt_1='$felt_1',felt_2='$felt_2',felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',lukket='$lukket' where id = '$id'",__FILE__ . " linje " . __LINE__);
@@ -161,12 +161,12 @@ if ($_POST) {
 				 $y=trim($posnr[$x]);
 				 if ($y && is_numeric($y) && $ans_id[$x]) db_modify("update ansatte set posnr = '$y' where id = '$ans_id[$x]'",__FILE__ . " linje " . __LINE__);
 				 elseif (($y=="-")&&($ans_id[$x])) db_modify("delete from ansatte	where id = '$ans_id[$x]'",__FILE__ . " linje " . __LINE__);
-			 	else print "<BODY onload=\"javascript:alert('Hint!	Du skal s&aelig;tte et - (minus) som pos nr for at slette en kontaktperson')\">\n";
+			 	else print "<BODY onLoad=\"javascript:alert('Hint!	Du skal s&aelig;tte et - (minus) som pos nr for at slette en kontaktperson')\">\n";
 			}
 		}
 	}	else {
 		if(db_fetch_array(db_select("select vare_id from vare_lev where lev_id = '$id'",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onload=\"javascript:alert('Det er tilknyttet varer til denne kreditor')\">\n";
+			print "<BODY onLoad=\"javascript:alert('Det er tilknyttet varer til denne kreditor')\">\n";
 		} else {
 			db_modify("delete from adresser where id = $id",__FILE__ . " linje " . __LINE__);
 			$id=0;
@@ -177,7 +177,7 @@ $tekst=findtekst(154,$sprog_id);
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n";#tabel 1 start
 print "<tr bgcolor=$bg><td colspan=\"3\" align=\"center\" valign=\"top\">\n";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>\n";#tabel 1.1 start
-if ($popup) print "<td onclick=\"JavaScript:opener.location.reload();\" width=\"10%\" $top_bund><a href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L>Luk</a></td>";
+if ($popup) print "<td onClick=\"JavaScript:opener.location.reload();\" width=\"10%\" $top_bund><a href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L>Luk</a></td>";
 else print "<td $top_bund><a href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L>Luk</a></td>";
 print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">SALDI - Kreditorkort</td>\n";
 print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=\"javascript:confirmClose('kreditorkort.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=N>Ny</a><br></td>\n";
@@ -383,11 +383,11 @@ print	"<tr><td colspan=\"3\" align=\"center\" valign=\"bottom\">";
 print	"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"1\" cellpadding=\"0\"><tbody>";#tabel 1.3. start
 print "<td width=\"40%\" $top_bund>&nbsp;</td>";
 $tekst=findtekst(132,$sprog_id);
-if ($popup) print "<td width=\"10%\" $top_bund onclick=\"javascript:kontokort=window.open('rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../includes/luk.php','kontokort','".$jsvars."');kontokort.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><!--tekst 132-->".findtekst(133,$sprog_id)."<!--tekst 133--></td>\n";
+if ($popup) print "<td width=\"10%\" $top_bund onClick=\"javascript:kontokort=window.open('rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../includes/luk.php','kontokort','".$jsvars."');kontokort.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\"><!--tekst 132-->".findtekst(133,$sprog_id)."<!--tekst 133--></td>\n";
 		else print "<td width=\"10%\" $top_bund  title=\"$tekst\"><a href=rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../kreditor/kreditorkort.php?id=$id>".findtekst(133,$sprog_id)."</td>\n";
 if (substr($rettigheder,5,1)=='1') {
 		$tekst=findtekst(129,$sprog_id);
-    if ($popup) print "<td width=\"10%\" $top_bund onclick=\"javascript:d_ordrer=window.open('ordreliste.php?kontonumre=$kontonr&valg=faktura','d_ordrer','".$jsvars."');d_ordrer.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(134,$sprog_id)."</td>\n";
+    if ($popup) print "<td width=\"10%\" $top_bund onClick=\"javascript:d_ordrer=window.open('ordreliste.php?kontonumre=$kontonr&valg=faktura','d_ordrer','".$jsvars."');d_ordrer.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(134,$sprog_id)."</td>\n";
 	else print "<td width=\"10%\" $top_bund  title=\"$tekst\"><a href=ordreliste.php?kontonumre=$kontonr&valg=faktura&returside=../kreditor/kreditorkort.php?id=$id>".findtekst(134,$sprog_id)."</td>\n";
 } else print "<td width=\"10%\" $stor_knap_bg><span style=\"color:#999;\">".findtekst(134,$sprog_id)."</span></td>\n";
 print "<td width=\"40%\" $top_bund>&nbsp;</td>";

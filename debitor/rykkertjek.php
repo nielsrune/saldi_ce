@@ -77,7 +77,7 @@ else {
 #echo "$ff_antal && $bruger_id == $mailmodt_id<br>";
 		$tmp=findtekst(240,$sprog_id);
 #echo "$tmp<br>";
-		print "<BODY onload=\"javascript:alert('$tmp')\">";
+		print "<BODY onLoad=\"javascript:alert('$tmp')\">";
 	}
 # exit;
 }
@@ -126,7 +126,7 @@ echo "tekst	$mailtext<br>";
 		echo "Mailer Error: " . $mail->ErrorInfo;
 		exit;
 	}
-#	if ($mailantal==1) print "<BODY onload=\"javascript:alert('Mail sendt til $email')\">";
+#	if ($mailantal==1) print "<BODY onLoad=\"javascript:alert('Mail sendt til $email')\">";
 #	else echo "Mail sendt til $email<br>";
 
 }

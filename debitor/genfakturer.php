@@ -75,7 +75,7 @@ if ($_POST) {
 
 	$afbryd=findtekst(81,$sprog_id);
 	if ($afbryd==if_isset($_POST[$afbryd])) {
- 		print "<BODY onload=\"javascript:alert('Genfakturering afbrudt')\">";
+ 		print "<BODY onLoad=\"javascript:alert('Genfakturering afbrudt')\">";
 		print "<meta http-equiv=\"refresh\" content=\"1;URL=ordreliste.php\">";
 		exit;
 	}	elseif ($ok==if_isset($_POST[$ok])) {	
@@ -100,7 +100,7 @@ if ($_POST) {
 				if ($svar != 'OK') {
 					if (strpos($svar,'invoicedate prior to')) $tekst="Genfaktureringsdato før fakturadato";
 					else $tekst="Der er konstateret en ubalance i posteringssummen,\\nkontakt venligst Danosoft på tlf. +45 46902208";
-					print "<BODY onload=\"javascript:alert('$tekst')\">\n";
+					print "<BODY onLoad=\"javascript:alert('$tekst')\">\n";
 					print "<meta http-equiv=\"refresh\" content=\"0;URL=ordreliste.php\">";
 					exit;
 				}
@@ -122,11 +122,11 @@ if ($_POST) {
 		} 	
 	}
 #echo $udskriv;
-	if ($udskriv && $komplet) print "<BODY onload=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$udskriv_antal&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+	if ($udskriv && $komplet) print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$udskriv_antal&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
 	else {
 		print "<meta http-equiv=\"refresh\" content=\"1;URL=ret_genfakt.php?ordreliste=$ny_liste\">";	
 	}
-#	print "<BODY onload=\"javascript:alert('Genfakturering udf&oslash;rt')\">";
+#	print "<BODY onLoad=\"javascript:alert('Genfakturering udf&oslash;rt')\">";
 #	print "<meta http-equiv=\"refresh\" content=\"1;URL=../includes/luk.php\">";	
 	
 } else {

@@ -147,7 +147,7 @@ if ($antal>0) {
 		$kobsordre=db_fetch_array(db_select("select ordre_id from ordrelinjer where id='$row[kobslinje_id]'",__FILE__ . " linje " . __LINE__));
 		$kobsordre=$kobsordre['ordre_id'];
 		$sn_antal++;
-		print "<tr><td>$row[serienr]</td><td onclick=\"window.open('../kreditor/ordre.php?id=$kobsordre')\"; align=right>$kobsordre</td></tr>";
+		print "<tr><td>$row[serienr]</td><td onClick=\"window.open('../kreditor/ordre.php?id=$kobsordre')\"; align=right>$kobsordre</td></tr>";
 	}
 	if ($sn_antal<$antal){
 		$gem=1;
@@ -163,7 +163,7 @@ if ($antal>0) {
 				$tmp='';
 				if ($r['salgslinje_id']>0) $tmp= "checked";
 				print "<tr><td><input type=\"text\" name=\"serienr[$sn_antal]\" value=\"$r[serienr]\"></td>";
-				print "<td onclick=\"window.open('../kreditor/ordre.php?id=$kobsordre_id')\"; align=\"center\"><u>$kobsordre</u></td>";
+				print "<td onClick=\"window.open('../kreditor/ordre.php?id=$kobsordre_id')\"; align=\"center\"><u>$kobsordre</u></td>";
 				print "<td><input type=\"checkbox\" name=\"valg[$sn_antal]\" $tmp></td></tr>";
 				print "<input type=\"hidden\" name=\"sn_id[$sn_antal]\" value=\"$r[id]\">";
 				#print "<input type=\"hidden\" name=\"serienr[$sn_antal]\" value='$r[serienr]'>";

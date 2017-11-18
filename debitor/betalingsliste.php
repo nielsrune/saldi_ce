@@ -50,7 +50,7 @@ if (!$sort) {
 		<table width="100%" align="center" border="0" cellspacing="2" cellpadding="0"><tbody>
 		<td width="10%" <?php echo $top_bund ?>><font face="Helvetica, Arial, sans-serif" color="#000066"><a href=../includes/luk.php accesskey=L>Luk</a></td>
 		<td width="80%" <?php echo $top_bund ?> ><font face="Helvetica, Arial, sans-serif" color="#000066">betalingsliste</td>
-		<td width="10%" <?php echo $top_bund ?> onclick="javascript:liste=window.open('betalinger.php?returside=betalingsliste.php&tjek=-1','liste','scrollbars=1,resizable=1');liste.focus();"><font face="Helvetica, Arial, sans-serif" color="#000066"><?php echo"<a href=betalingsliste.php?sort=$sort&rf=$rf&vis=$vis accesskey=N>"?>Ny</a></td>
+		<td width="10%" <?php echo $top_bund ?> onClick="javascript:liste=window.open('betalinger.php?returside=betalingsliste.php&tjek=-1','liste','scrollbars=1,resizable=1');liste.focus();"><font face="Helvetica, Arial, sans-serif" color="#000066"><?php echo"<a href=betalingsliste.php?sort=$sort&rf=$rf&vis=$vis accesskey=N>"?>Ny</a></td>
 		</tbody></table>
 		</td></tr>
 		<tr><td valign="top">
@@ -86,7 +86,7 @@ print "</tr>\n";
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
 		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
-			print "<td onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$liste=window.open('betalinger.php?tjek=$row[id]&liste_id=$row[id]&returside=betalingsliste.php','$liste','scrollbars=1,resizable=1');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
+			print "<td onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$liste=window.open('betalinger.php?tjek=$row[id]&liste_id=$row[id]&returside=betalingsliste.php','$liste','scrollbars=1,resizable=1');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 		}
 		else print "<td><span title= 'liste er l&aring;st af $row[hvem]'>$row[id]</span></td>";
 		$listedato=dkdato($row['listedate']);
@@ -104,7 +104,7 @@ print "</tr>\n";
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
 		if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn)) {
-			print "<td  onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$liste=window.open('betalinger.php?liste_id=$row[id]&returside=betalingsliste.php','$liste','scrollbars=1,resizable=1');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
+			print "<td  onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$liste=window.open('betalinger.php?liste_id=$row[id]&returside=betalingsliste.php','$liste','scrollbars=1,resizable=1');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 		}
 		else print "<td><span title= 'liste er l&aring;st af $row[hvem]'>$row[id]</span></td>";
 #		print "<tr>";
@@ -123,7 +123,7 @@ print "</tr>\n";
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		print "<td  onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$liste=window.open('betalinger.php?liste_id=$row[id]&returside=betalingsliste.php','$liste','scrollbars=1,resizable=1');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
+		print "<td  onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$liste=window.open('betalinger.php?liste_id=$row[id]&returside=betalingsliste.php','$liste','scrollbars=1,resizable=1');$liste.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 #		print "<td><a href=kasseliste.php?liste_id=$row[id]&returside=betalingsliste.php>$row[id]</a><br></td>";
 		$listedato=dkdato($row['listedate']);
 		print "<td>$listedato<br></td>";

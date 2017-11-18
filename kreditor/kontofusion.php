@@ -55,7 +55,7 @@ $r=db_fetch_array(db_select("select id,lukket from adresser where art='K' and ko
 if (!$ny_id) {
 	$alerttekst="Der findes ikke andre kreditorer med kontonr: $kontonr";  
 #	$alerttekst=findtekst(345,$sprog_id);
-	print "<BODY onload=\"javascript:alert('$alerttekst')\"><!--tekst 345-->";
+	print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 345-->";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=kreditorkort.php?returside=$returside&ordre_id=$ordre_id&id=$id&fokus=$fokus\">\n";
 } 
 

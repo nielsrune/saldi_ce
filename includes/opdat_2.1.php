@@ -367,7 +367,7 @@ function opdat_2_1($under_nr, $lap_nr){
 		db_modify("UPDATE grupper set box1 = '3.0.0' where art = 'VE'",__FILE__ . " linje " . __LINE__);
 		include("../includes/connect.php");
 		db_modify("UPDATE regnskab set version = '3.0.0' where db = '$db'",__FILE__ . " linje " . __LINE__);
-			print "<BODY onload=\"JavaScript:window.open('../doc/nyt_i_3.0.0.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
+			print "<BODY onLoad=\"JavaScript:window.open('../doc/nyt_i_3.0.0.html','','statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,location=1');\">";
 
 	}
 #	db_modify("UPDATE regnskab set version = '$version' where db = '$db'",__FILE__ . " linje " . __LINE__);

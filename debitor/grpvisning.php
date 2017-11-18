@@ -51,7 +51,7 @@ if (isset($_POST) && $_POST) {
 	}
 # brugernavn i box1 er en pre 2.0.7 ting - fremover skal der identificeres paa kodenr / bruger_id.
 	db_modify("update grupper set $box='$vis_liste', kodenr = '$bruger_id', kode = '$brugernavn' where art = 'DGV' and (box1 = '$brugernavn' or kodenr = '$bruger_id')",__FILE__ . " linje " . __LINE__);
-	if ($popup) print "<BODY onload=\"javascript=opener.location.reload();\">";
+	if ($popup) print "<BODY onLoad=\"javascript=opener.location.reload();\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 }
 

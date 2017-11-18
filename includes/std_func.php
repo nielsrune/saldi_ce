@@ -118,7 +118,7 @@ if (!function_exists('usdate')) {
 				else $g3=$slutaar;
 			} else {
 				$alerttekst='Regnskabs&aring;r ikke oprettet!';
-				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
 				exit;
 			}	
 			$date=$g1."-".$g2."-".$g3;
@@ -616,7 +616,7 @@ if (!function_exists('tekstboks')) {
 		$boksindhold.=$bokstekst."</p>\n";
 		$boksindhold.="<p style='font-size: 12pt; text-align:center'>\n";
                 $boksindhold.="<button type='button' style='width:100px; height:30px'";
-                $boksindhold.=" onclick=\"document.getElementById('".$boksid."').style.display = 'none';\">Luk</button>\n";
+                $boksindhold.=" onClick=\"document.getElementById('".$boksid."').style.display = 'none';\">Luk</button>\n";
 		if ( $boksflytbar==='span' ) {
 			$boksindhold.="<br />";
 			$boksindhold.=bokshjoerne($boksid, 'tv', 'span');
@@ -636,7 +636,7 @@ if (!function_exists('tekstboks')) {
 	                $boksindhold.="<td>&nbsp;</td></tr>\n";
 	                $boksindhold.="<tr>";
 			$boksindhold.=bokshjoerne($boksid, 'bv', 'td');
-	#                $boksindhold.="<td onclick=\"document.getElementById('".$boksid."').style.top = '68%'; document.getElementById('".$boksid."').style.left = '68%'; \">&#9698;</td>\n";
+	#                $boksindhold.="<td onClick=\"document.getElementById('".$boksid."').style.top = '68%'; document.getElementById('".$boksid."').style.left = '68%'; \">&#9698;</td>\n";
 			$boksindhold.=bokshjoerne($boksid, 'bh', 'td');
 	                $boksindhold.="</tr></table>\n";
 		}
@@ -675,7 +675,7 @@ if (!function_exists('bokshjoerne')) {
 		}
 
 		$bokshjoerne="<".$visning." title='".$popopbesked."'";
-		$bokshjoerne.=" onclick=\"document.getElementById('".$boksid."').style.top = '".$vertikal_kant."';";
+		$bokshjoerne.=" onClick=\"document.getElementById('".$boksid."').style.top = '".$vertikal_kant."';";
 		$bokshjoerne.=" document.getElementById('".$boksid."').style.left = '".$horisontal_kant."'; \">";
                 $bokshjoerne.=$tv_tegn."</".$visning.">\n";
 		return $bokshjoerne;
@@ -733,7 +733,7 @@ if (!function_exists('infoboks')) {
 		if ( ! $visning ) return "";
 
 		$infoboks.="<".$visning." title='Hjælpetekst til siden'";
-		$infoboks.=" onclick=\"document.getElementById('".$boksid."').style.display = 'block'; \">";
+		$infoboks.=" onClick=\"document.getElementById('".$boksid."').style.display = 'block'; \">";
                 $infoboks.=$infosymbol."</".$visning.">\n";
 		return $infoboks;
 	}
@@ -749,7 +749,7 @@ function find_lagervaerdi($kontonr,$slut,$tidspkt) {
 	$salg=0;
 	
 	if (!$slut) {
-		print "<BODY onload=\"javascript:alert('737 | $slut | $linje')\">";
+		print "<BODY onLoad=\"javascript:alert('737 | $slut | $linje')\">";
 		return('stop');	
 	}
 	$q=db_select("select kodenr,box1,box2,box3 from grupper where art = 'VG' and box8 = 'on' and (box1 = '$kontonr' or box2 = '$kontonr' or box3 = '$kontonr')",__FILE__ . " linje " . __LINE__);
@@ -827,7 +827,7 @@ if (!function_exists('ftptest')) {
 		$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$bruger.":".$kode."@".$server." < ftpscript2 > ftp2.log ";
 		system ($kommando);
 		(file_exists("../temp/$db/test.txt"))?$txt="FTP tjek OK":$txt="Fejl i FTP oplysninger";
-		print "<BODY onload=\"JavaScript:alert('$txt')\">";
+		print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
 		unlink ("../temp/$db/test.txt");
 		unlink ("../temp/$db/ftpscript1");
 		unlink ("../temp/$db/ftpscript2");
@@ -846,7 +846,7 @@ function valutaopslag($amount, $valuta, $transdate) {
 		$r = db_fetch_array(db_select("select box1 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 		$tmp=dkdato($transdate);
 		$fejltext="---";
-		print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";	
+		print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";	
 	}
 	$r = db_fetch_array(db_select("select box3 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 	$diffkonto=$r['box3'];

@@ -64,7 +64,7 @@ if ($_POST['submit']){
 			if ($leveres > 0) {
 				if ($valg[$x]>$rest[$x]) {$max_antal[$x]=$rest[$x];}
 				else {$max_antal[$x]=$valg[$x];}
-				if ($valg[$x] > $max_antal[$x])	{print "<BODY onload=\"javascript:alert('Ordrenr: $ordrenr[$x] - Der kan ikke v&aelig;lges flere end $max_antal[$x]!')\">";}
+				if ($valg[$x] > $max_antal[$x])	{print "<BODY onLoad=\"javascript:alert('Ordrenr: $ordrenr[$x] - Der kan ikke v&aelig;lges flere end $max_antal[$x]!')\">";}
 				$valgt_antal=$valgt_antal+$valg[$x];
 				$rest_antal=$rest_antal+$rest[$x];
 			}
@@ -72,7 +72,7 @@ if ($_POST['submit']){
 		if ($leveres >= 0) {
 			if ($leveres>$rest_antal) {$max_antal=$rest_antal;}
 			else {$max_antal=$leveres;}
-			if ($valgt_antal > $max_antal)	{print "<BODY onload=\"javascript:alert('Der kan ikke v&aelig;lges flere end $max_antal !')\">";}
+			if ($valgt_antal > $max_antal)	{print "<BODY onLoad=\"javascript:alert('Der kan ikke v&aelig;lges flere end $max_antal !')\">";}
 			else {
 				 db_modify("delete from reservation where linje_id=$linje_id",__FILE__ . " linje " . __LINE__);
 				 $temp=$linje_id*-1;
@@ -163,7 +163,7 @@ if (($antal>=0)&&($art!="DK")){
 		print "<td align = right>".reducer($rest[$x])."</td>";
 		print "<td align = right><input type=text style=\"text-align:right\" size=3 name=valg_$x value=".reducer($valg[$x])."></td>";
 			if (($status>0)&&($valg[$x]>0)&&($serienr)){
-				print "<td onclick=\"javascript:batch=window.open('serienummer.php?linje_id=$linje_id&batch_kob_id=$batch_kob_id[$x]','batch','left=60,top=60,width=400,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no')\">";
+				print "<td onClick=\"javascript:batch=window.open('serienummer.php?linje_id=$linje_id&batch_kob_id=$batch_kob_id[$x]','batch','left=60,top=60,width=400,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no')\">";
 				print "<input type=button value=\"Serienr.\" name=\"vis_snr$x\"></td>";
 			}
 		print "</tr>\n";
@@ -239,13 +239,13 @@ if (($antal>=0)&&($art!="DK")){
 		$query = db_select("select id, antal from ordrelinjer where ordre_id=$kred_ordre_id[$x] and vare_id = $vare_id and antal > 0",__FILE__ . " linje " . __LINE__);
 		while ($row = db_fetch_array($query)) {
 			$y++;
-			print "<tr><td onclick=\"javascript:window.open('ordre.php?id=$kred_ordre_id[$x]','$kred_ordrenr[$x]','width=400,height=400,scrollbars=1,resizable=1,menubar=no,location=no');\";><a href> $kred_ordrenr[$x]</a></td><td></td><td><td align = right>".reducer($row['antal'])."</td>";
+			print "<tr><td onClick=\"javascript:window.open('ordre.php?id=$kred_ordre_id[$x]','$kred_ordrenr[$x]','width=400,height=400,scrollbars=1,resizable=1,menubar=no,location=no');\";><a href> $kred_ordrenr[$x]</a></td><td></td><td><td align = right>".reducer($row['antal'])."</td>";
 	#		 print "<td align = right><input type=text style=\"text-align:right\" size=3 name=valg_$x value=$valg[$x]></td></tr>\n";
 			print "<td align = center><input type=radio name=valg_1 value=$y";
 			if ($kred_linje_id==$row[id]) print " checked='checked'></td>";
 			else print "></td>";
 			if ($serienr){
-				print "<td onclick=\"javascript:batch=window.open('serienummer.php?linje_id=$linje_id&batch_kob_id=$batch_kob_id[$x]','batch','left=60,top=60,width=400,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no')\">";
+				print "<td onClick=\"javascript:batch=window.open('serienummer.php?linje_id=$linje_id&batch_kob_id=$batch_kob_id[$x]','batch','left=60,top=60,width=400,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no')\">";
 				print "<input type=button value=\"Serienr.\" name=\"vis_snr$x\"></td>";
 			}
 			print "<input type=hidden name=kred_linje_id[$y] value=$row[id]>";

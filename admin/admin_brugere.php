@@ -60,7 +60,7 @@ if ($_POST) {
 
 	if ($kode && $kode != $kode2) {
 			$alerttext="Adgangskoder er ikke ens";
-			print "<BODY onload=\"javascript:alert('$alerttext')\">";
+			print "<BODY onLoad=\"javascript:alert('$alerttext')\">";
 			$kode=NULL;
 			$ret_id=$id;
 	}
@@ -74,7 +74,7 @@ if ($_POST) {
 		$query = db_select("select id from brugere where brugernavn = '$ret_bruger'");
 		if ($row = db_fetch_array($query)) {
 			$alerttext="Der findes allerede en bruger med brugenavn: $ret_bruger!";
-			print "<BODY onload=\"javascript:alert('$alerttext')\">";
+			print "<BODY onLoad=\"javascript:alert('$alerttext')\">";
 #			print "<tr><td align=center>Der findes allerede en bruger med brugenavn: $ret_bruger!</td></tr>\n";
 		}	else {
 			db_modify("insert into brugere (brugernavn, kode,rettigheder) values ('$ret_bruger', '$kode','rettigheder')");

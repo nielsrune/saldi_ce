@@ -80,7 +80,7 @@ if(($_GET)||($_POST)) {
 	}else{
 		$startdate=$r1[box2]."_".$r1[box1]."-01";
 		if ($r2=db_fetch_array(db_select("select id from transaktioner where transdate >= '$startdate'",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onload=\"javascript:alert('Der er foretaget transaktioner i regnskabs&aring;ret: $r1[beskrivelse] - import afbrudt')\">";
+			print "<BODY onLoad=\"javascript:alert('Der er foretaget transaktioner i regnskabs&aring;ret: $r1[beskrivelse] - import afbrudt')\">";
 			if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=div_io\">";
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=div_io\">";
 			exit;
@@ -143,27 +143,27 @@ print "&nbsp; <input type=\"submit\" name=\"submit\" value=\"Vis\" />";
 
 for ($y=0; $y<=$feltantal; $y++) {
 	if (($feltnavn[$y]=='Kontonr') &&($kontonr==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontonr') $kontonr=1;
 	if (($feltnavn[$y]=='Beskrivelse')&&($beskrivelse==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Beskrivelse') $beskrivelse=1;
 	if ((strstr($feltnavn[$y],'Kontotype'))&&($kontotype==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kontotype')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kontotype')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontotype') $kontotype=1; 
 	if ((strstr($feltnavn[$y],'Moms'))&&($moms==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Moms')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Moms')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Moms') $moms=1;
 	if ((strstr($feltnavn[$y],'Fra_kto'))&&($fra_kto==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med fra_kto')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med fra_kto')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Fra_kto') $fra_kto=1;
 	if ((strstr($feltnavn[$y],'primo'))&&($primo==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med primo')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med primo')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='primo') $fra_kto=1;
 }
@@ -209,14 +209,14 @@ if ($fp) {
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if (($feltnavn[$y]=='Kontonr')&&(($felt[$y]!=$felt[$y]*1)||(in_array($felt[$y],$kontonumre)))) {
 					$skriv_linje=2;
-					print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#					print "<BODY onload=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
+					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
+#					print "<BODY onLoad=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
 				} elseif ($feltnavn[$y]=='Kontonr') $kontonumre[$x]=$felt[$y];
 				if ($feltnavn[$y]=='Kontotype') {
 					if (!in_array($felt[$y],$kontotyper)) {
 					$skriv_linje=2;
-					print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#					print "<BODY onload=\"javascript:alert('Kontotype skal v&aelig;re H,D,S eller Z')\">";
+					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
+#					print "<BODY onLoad=\"javascript:alert('Kontotype skal v&aelig;re H,D,S eller Z')\">";
 					} else if ($felt[$y]=='Z') $sumkonto=1;
 					else $sumkonto=0;
 				}	
@@ -225,16 +225,16 @@ if ($fp) {
 					$b=substr($felt[$y],1);
 					if (($felt[$y])&&((!in_array($a,$momstyper))||($b!=$b*1))) {
 						$skriv_linje=2;
-						print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#						print "<BODY onload=\"javascript:alert('Momstype skal begynde med S eller K efterfulgt af en numerisk vaerdi')\">";
+						print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
+#						print "<BODY onLoad=\"javascript:alert('Momstype skal begynde med S eller K efterfulgt af en numerisk vaerdi')\">";
 					}				
 				}
 				if (($feltnavn[$y]=='Fra_kto')&&($sumkonto))  {
 					if (!$felt[$y]) $felt[$y]='0';
 					if ($felt[$y]!=$felt[$y]*1) {
 						$skriv_linje=2;
-						print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#						print "<BODY onload=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
+						print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
+#						print "<BODY onLoad=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
 					}		
 				} elseif ($feltnavn[$y]=='Fra_kto') $felt[$y]='';
 #				if ($feltnavn[$y]=='primo')  {
@@ -291,27 +291,27 @@ fclose($fp);
 
 for ($y=0; $y<=$feltantal; $y++) {
 	if (($feltnavn[$y]=='Kontonr') &&($kontonr==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontonr') $kontonr=1;
 	if (($feltnavn[$y]=='Beskrivelse') &&($beskrivelse==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Beskrivelse') $beskrivelse=1;
 	if ((strstr($feltnavn[$y],'Kontotype'))&&($kontotype==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kontotype')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kontotype')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontotype') $kontotype=1; 
 	if ((strstr($feltnavn[$y],'Moms'))&&($moms==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Moms')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Moms')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Moms') $moms=1;
 	if ((strstr($feltnavn[$y],'Fra_kto'))&&($fra_kto==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med fra_kto')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med fra_kto')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Fra_kto') $fra_kto=1;
 	if ((strstr($feltnavn[$y],'primo'))&&($primo==1)) {
-		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med primo')\">";
+		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med primo')\">";
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='primo') $primo=1;
 }
@@ -408,8 +408,8 @@ $q=db_modify("update kontoplan set til_kto=kontonr where kontotype='Z' and regns
 transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";
-if ($regnaar==1 && $balance) print "<BODY onload=\"javascript:alert('&Aring;bningsbalance stemmer ikke - kontroller sum')\">";
-else print "<BODY onload=\"javascript:alert('Kontoplan importeret - husk at overf&oslash;re &aring;bningstal')\">";
+if ($regnaar==1 && $balance) print "<BODY onLoad=\"javascript:alert('&Aring;bningsbalance stemmer ikke - kontroller sum')\">";
+else print "<BODY onLoad=\"javascript:alert('Kontoplan importeret - husk at overf&oslash;re &aring;bningstal')\">";
 print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 } # endfunc overfoer_data
 

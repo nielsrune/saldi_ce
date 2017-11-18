@@ -157,12 +157,12 @@ if ($tilmeld=(if_isset($_POST['tilmeld']))) {
 		} 
 		if ($metode=='PBS') {
 			$txt="Tak for din tilmelding";
-			print "<BODY onload=\"javascript:alert('$txt')\">";
+			print "<BODY onLoad=\"javascript:alert('$txt')\">";
 		} else {
 			kortbetaling($regnskab,$ordrenr,$ordre_id,$amount,$kontakt,$cvrnr,$firmanavn,$addr1,$postnr,$bynavn,$email,$tlf,$korttxt);
 		}
 	} else {
-		print "<BODY onload=\"javascript:alert('$alert')\">";
+		print "<BODY onLoad=\"javascript:alert('$alert')\">";
 		$alert=NULL;
 	}
 }
@@ -370,7 +370,7 @@ function kortbetaling($regnskab,$ordernumber,$ordre_id,$sum,$kontakt,$cvrnr,$fir
 	print "<tr><td colspan=\"3\" align=\"left\"><b>I alt til betaling</b></td><td align=\"right\"><b>".number_format($sum,2,',','.')."</b></td></tr>";
 	print "</tbody></table></td></tr>";
 	$spantekst="<big>Klik her for at l&aelig;se handelsbetingelserne.</big>";
-	print "<tr><td>Accepterer <span onmouseover=\"return overlib('$spantekst', WIDTH=800);\" onmouseout=\"return nd();\"><a onmouseover=\"this.style.cursor = 'pointer'\" onclick=\"javascript:betingelser=window.open('betingelser.html','betingelser','left=10,top=10,width=400,height=400,scrollbars=1,resizable=1');betingelser.focus();\"><u>betingelser</u></a></span></td>\n";
+	print "<tr><td>Accepterer <span onmouseover=\"return overlib('$spantekst', WIDTH=800);\" onmouseout=\"return nd();\"><a onMouseOver=\"this.style.cursor = 'pointer'\" onClick=\"javascript:betingelser=window.open('betingelser.html','betingelser','left=10,top=10,width=400,height=400,scrollbars=1,resizable=1');betingelser.focus();\"><u>betingelser</u></a></span></td>\n";
 	print "<td colspan= \"1\" align=\"right\"><input type=\"checkbox\" name=\"betingelser\" $betingelser></td></tr>";
 	print "<tr><td colspan=\"2\"><input style=\"width:100%\" type=\"submit\" value=\"Gå til betaling\" /><td></tr></form>";
 	print "<form action=\"kortbetaling.php?regnskab=$regnskab&ordre_id=$ordre_id&ordernumber=$ordernumber\" method=\"post\">";#

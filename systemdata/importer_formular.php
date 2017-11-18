@@ -57,7 +57,7 @@ if ($_POST) {
 			print "<div style=\"text-align: center;\">Formularimport succesfuld - vinduet lukkes<br></div>";
 			print "<meta http-equiv=\"refresh\" content=\"3;URL=../includes/luk.php\">";
 			exit;
-		} else  print "<BODY onload=\"JavaScript:alert('Formularimport succesfuld')\">";
+		} else  print "<BODY onLoad=\"JavaScript:alert('Formularimport succesfuld')\">";
 	} else {
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 		exit;

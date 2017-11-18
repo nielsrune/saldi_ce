@@ -61,7 +61,7 @@ if ($gem) {
 		$projektnr=db_escape_string(trim($projektnr));
 #		echo "cfg $cfg $projekt_nr<br";
 		if(db_fetch_array(db_select("SELECT id FROM grupper where beskrivelse='$beskrivelse' and art = 'PRJ' and kodenr = '$projektnr' and id != '$id'",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onload=\"javascript:alert('Projektnummer er allerede i brug')\">";
+			print "<BODY onLoad=\"javascript:alert('Projektnummer er allerede i brug')\">";
 		} elseif (!$slet) {
 			if($id) db_modify("update grupper set kodenr='$projektnr',beskrivelse='$beskrivelse' where id='$id'",__FILE__ . " linje " . __LINE__);
 			elseif ($beskrivelse && $projektnr) {

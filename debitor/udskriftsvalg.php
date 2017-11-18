@@ -61,7 +61,7 @@ if ($valg) {
 	if ($valg!=-1) $ps_fil="formularprint.php?id=$id&formular=3&lev_nr=$valg";
 	echo "<meta http-equiv=refresh content=0;url=$ps_fil>";
 	exit;
-#	print "<BODY onload=\"JavaScript:window.open('$ps_fil&id=$id' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+#	print "<BODY onLoad=\"JavaScript:window.open('$ps_fil&id=$id' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
 #	print "<body onload=\"javascript:window.close();\">";
 }
 
