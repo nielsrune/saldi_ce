@@ -696,7 +696,7 @@ $tjek=0;
 						}
 #cho "tjek $tjek --> ID $id<br>";	
 					}
-				} else print "<BODY onLoad=\"javascript:alert('Manglende kontonummer for lagerregulering (Varegruppe $gruppe[$x])')\">\n";
+				} else print "<BODY onload=\"javascript:alert('Manglende kontonummer for lagerregulering (Varegruppe $gruppe[$x])')\">\n";
 			}
 		}
 		if (!$aut_lager) {

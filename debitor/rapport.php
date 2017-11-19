@@ -199,7 +199,7 @@ if (isset($_POST['submit']) || $rapportart) {
 			} elseif ($submit=="inkasso" && $tmp2>0) {
 			echo "SASASA";
 				print "<META HTTP-EQUIV=\"refresh\" CONTENT=\"0; url=inkasso.php?rykker_id=$tmp&kontoantal=$tmp2\">";
-#				print "<BODY \"onLoad=location.href='inkasso.php?rykker_id=$tmp&kontoantal=$tmp2'\">";
+#				print "<BODY \"onload=location.href='inkasso.php?rykker_id=$tmp&kontoantal=$tmp2'\">";
 #				$ny_rykker=1;
 				exit;
 			} 

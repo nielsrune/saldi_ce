@@ -308,7 +308,7 @@ if(!isset($afbryd)){
 							$fp=fopen("../temp/$db/shoptidspkt.txt","w");
 							fwrite($fp,date("U"));
 							fclose ($fp);
-							print "<BODY onLoad=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
+							print "<BODY onload=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
 						}
 					}
 				}

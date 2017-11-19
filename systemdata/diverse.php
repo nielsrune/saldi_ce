@@ -196,7 +196,7 @@ if ($_POST) {
 				if ($kostmetode) {
 			if ($r=db_fetch_array(db_select("select id from grupper WHERE art = 'VG' and box1 != box2",__FILE__ . " linje " . __LINE__))) {
 				$txt = findtekst(733,$sprog_id);
-				print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/konv_lager.php\">\n"; # 20140424b
 				exit;
 			}
@@ -430,7 +430,7 @@ if ($_POST) {
 			else {
 				if ($mellemkonti[$x]) $txt=str_replace("<variable>",$mellemkonti[$x],findtekst(717,$sprog_id));
 				else $txt = findtekst(718,$sprog_id);
-				if ($txt) print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				if ($txt) print "<BODY onload=\"JavaScript:alert('$txt')\">";
 			}
 			$qtxt="select id from kontoplan WHERE kontonr = '$diffkonti[$x]'";
 			if (($diffkonti[$x] && is_numeric($diffkonti[$x]) && db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))));

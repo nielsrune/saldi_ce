@@ -3127,7 +3127,7 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 			if ($samlevare == 'on') db_modify("update ordrelinjer set antal=antal/$r[antal]*$antal where samlevare = '$linje_id'",__FILE__ . " linje " . __LINE__);
 			$r2=db_fetch_array(db_select("select sum(antal) as antal from ordrelinjer where vare_id='$vare_id' and pris='$pris' and rabat='0' and ordre_id='$id'",__FILE__ . " linje " . __LINE__));
 			$tmpantal=$r2['antal'];
-			} else print "<BODY onLoad=\"javascript:alert('Antal (".dkdecimal($antal).") er for stort, reducer antal')\">";
+			} else print "<BODY onload=\"javascript:alert('Antal (".dkdecimal($antal).") er for stort, reducer antal')\">";
 			if ($m_antal && $tmpantal >= $m_antal) {
 				m_rabat($r['id'],$vare_id,$r['posnr'],$tmpantal,$id,$pris);
 			} else {
@@ -3190,7 +3190,7 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 			$qtxt.="'$serienr','$variant_id','$leveres','$samlevare','$omvbet','$saet','$fast_db','$lev_varenr','','$lager')";
 #cho "$qtxt<br>";
 			if ($antal < 100000000000) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			else print "<BODY onLoad=\"javascript:alert('Antal (".dkdecimal($antal).") er for stort, reducer antal')\">";
+			else print "<BODY onload=\"javascript:alert('Antal (".dkdecimal($antal).") er for stort, reducer antal')\">";
 			if ($samlevare && !$beholdning) {
 				$r=db_fetch_array(db_select("select max(id) as id from ordrelinjer where vare_id='$vare_id' and ordre_id='$id'",__FILE__ . " linje " . __LINE__));
 #				samlevare($id,$art,$r['id'],$vare_id,$antal); udkommenteret 20131129

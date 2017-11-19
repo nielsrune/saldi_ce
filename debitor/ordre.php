@@ -1173,7 +1173,7 @@ if ($status<3 && $b_submit) {
 					# 20170906 Tilføjet $kostpris[$x]y
 					else $qtxt="update ordrelinjer set varenr='$varenr[$x]',beskrivelse='$beskrivelse[$x]',leveres='$leveres[$x]',pris='$pris[$x]',kostpris='$kostpris[$x]',rabat='$rabat[$x]',procent='$procent[$x]',projekt='$projekt[$x]',kdo='$kdo[$x]',omvbet='$omvbet[$x]',saet='0',samlevare='$samlevare[$x]',lager='$lager[$x]' where id='$linje_id[$x]'";
 			if ($antal[$x] < 100000000000) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			else print "<BODY onLoad=\"javascript:alert('Antal (".dkdecimal($antal).") er for stort, reducer antal')\">";
+			else print "<BODY onload=\"javascript:alert('Antal (".dkdecimal($antal).") er for stort, reducer antal')\">";
 					if ($samlevare[$x]) {
 						if ($antal[$x]) {
 							$q=db_select("SELECT id,antal FROM ordrelinjer WHERE samlevare = '$linje_id[$x]'",__FILE__ . " linje " . __LINE__);

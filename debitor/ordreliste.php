@@ -883,7 +883,7 @@ if ($apifil=$r['box2']) {
 				$fp=fopen("../temp/$db/shoptidspkt.txt","w");
 				fwrite($fp,date("U"));
 				fclose ($fp);
-				if ($db=='bizsys_49') print "<BODY onLoad=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
+				if ($db=='bizsys_49') print "<BODY onload=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
 				else system ("/usr/bin/wget --spider $api_fil &\n");
 	}
 		} else print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop' onclick=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">SHOP import</span></td></tr>";	

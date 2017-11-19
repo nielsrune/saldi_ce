@@ -109,7 +109,7 @@ print "<tr><td>HTML koder accepteres</td></tr>";
 print "<tr><td><textarea rows='16' cols='100' name='mailtekst'>$mailtekst</textarea></td></tr>";
 print "<tr><td></td></tr>";
 print "<tr><td style=\"text-align:center;\"><input type='submit' name='opdater' value='Opdater'>&nbsp;";
-print "<input type='submit' name='send_mails' value='Send mail' onClick=\"return confirm('send $mailantal mails nu?')\">&nbsp;";
+print "<input type='submit' name='send_mails' value='Send mail' onclick=\"return confirm('send $mailantal mails nu?')\">&nbsp;";
 print "<input type='submit' name='testmail' value='Send testmail'></td></tr>";
 print "<tr><td></td></tr>";
 print "<tr><td><b>Eksempel</b> (Første 4 modtagere af $mailantal)</td></tr>";

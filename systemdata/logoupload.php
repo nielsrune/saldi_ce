@@ -120,7 +120,7 @@ if(isset($_POST['bgfil'])||($_POST['bilagfil'])) {
 		if (!file_exists("../logolib/$db_id")) system ("mkdir ../logolib/$db_id");
 		$til = "../logolib/$db_id/$valg.pdf";
 	} else {
-		print "<BODY onLoad=\"javascript:alert('Filformatet skal være PDF')\">";
+		print "<BODY onload=\"javascript:alert('Filformatet skal være PDF')\">";
 		//echo "Filformatet er ikke genkendt<br>";
 		upload();
 		exit;

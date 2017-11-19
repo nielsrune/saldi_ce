@@ -55,7 +55,7 @@ if (!$txt) {
 }
 for ($x=0;$x<count($fy_ord);$x++) {
 	if (strpos($txt,$fy_ord[$x])) {
-		print "<BODY onLoad=\"JavaScript:alert('Illegal værdi i labeltekst')\">";
+		print "<BODY onload=\"JavaScript:alert('Illegal værdi i labeltekst')\">";
 		exit;
 	}
 }
@@ -97,7 +97,7 @@ $fp=fopen("../temp/$db/label.html",'w');
 fwrite($fp,$txt);
 fclose($fp);
 include ("../temp/$db/label.html");
-print "<body onLoad=\"javascript:window.print()\">\n";
+print "<body onload=\"javascript:window.print()\">\n";
 
 print " <br>\n";
 ?>

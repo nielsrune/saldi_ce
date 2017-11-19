@@ -95,7 +95,7 @@ if ($row = db_fetch_array(db_select("select box1, box2, box3, box4 from grupper 
 		$regnslut=usdate("31-".trim($row['box3'])."-".trim($row['box4']))	; #usdate bruges for at sikre korrekt dato.
 } else {
 	$alerttekst='Regnskabs&aring;r ikke oprettet!';
-	print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+	print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$retur?rapport=kontokort.php\">";
 }
 if (!$bfdate) {
