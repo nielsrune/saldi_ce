@@ -130,7 +130,16 @@ if ($_POST) {
 		if (strstr($kode,'**********')) {
 			db_modify("update brugere set brugernavn='$brugernavn', rettigheder='$rettigheder', ansat_id=$ansat_id[0] where id=$id",__FILE__ . " linje " . __LINE__);
 		} else {
-			$kode=saldikrypt($id,$kode);
+/*
+    remove_bad_pwd_hashing
+
+	#		$kode=saldikrypt($id,$kode);
+
+*/
+            if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+            if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+            $kode = password_hash($kode, PWD_ALGO, PWD_OPTS);
+/*  slut    */
 		db_modify("update brugere set brugernavn='$brugernavn', kode='$kode', rettigheder='$rettigheder', ansat_id=$ansat_id[0] where id=$id",__FILE__ . " linje " . __LINE__);
 	}
 	}

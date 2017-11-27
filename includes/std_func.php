@@ -998,6 +998,10 @@ function lagerreguler($vare_id,$ny_beholdning,$kostpris,$lager,$transdate) {
 #
 #xit;
 }}
+
+/*  BAD BAD BAD !! 
+beholdes alene for legacy
+*/
 if (!function_exists('saldikrypt')) {
 function saldikrypt($id,$pw) {
 	$tmp='';
@@ -1010,6 +1014,8 @@ function saldikrypt($id,$pw) {
 	}
 	return($pw);
 }}
+
+
 if (!function_exists('find_beholdning')) {
 function find_beholdning($vare_id, $udskriv) {
 

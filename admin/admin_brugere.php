@@ -73,7 +73,15 @@ if ($_POST) {
 			$ret_id=$id;
 	}
 	if (($kode) && (!strstr($kode,'**********'))) {
-		$kode=saldikrypt($id,$kode);
+/*  remove_bad_pwd_hashing
+
+	#	$kode=saldikrypt($id,$kode);
+
+*/
+    if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+    if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+    $kode = password_hash($kode, PWD_ALGO, PWD_OPTS);
+/*  slut    */
 	} elseif($kode)	{
 		$query = db_select("select * from brugere where id = '$id'");
 		if ($row = db_fetch_array($query))
@@ -88,7 +96,15 @@ if ($_POST) {
 		}	else {
 			db_modify("insert into brugere (brugernavn,rettigheder) values ('$ret_bruger','rettigheder')",__FILE__ . " linje " . __LINE__);
 			$r=db_fetch_array(db_select("select id from brugere where brugernavn = '$ret_bruger'",__FILE__ . " linje " . __LINE__));
-			$kode=saldikrypt($r['id'],$kode);
+/*  remove_bad_pwd_hashing
+
+	#		$kode=saldikrypt($r['id'],$kode);
+
+*/
+            if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+            if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+            $kode = password_hash($kode, PWD_ALGO, PWD_OPTS);
+/*  slut    */
 			db_modify("update brugere set kode='$kode' where id=$r[id]",__FILE__ . " linje " . __LINE__);
 		}
 	} elseif ((strstr($submit,'Opdat'))&&($ret_bruger)&&($ret_bruger!="-")) {

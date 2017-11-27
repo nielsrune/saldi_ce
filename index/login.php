@@ -193,9 +193,20 @@ if (isset ($brug_timestamp)) {
 	$bruger_id=$row['id'];
 } else {
 	$row = db_fetch_array(db_select("select * from brugere where brugernavn='".db_escape_string($brugernavn)."'",__FILE__ . " linje " . __LINE__));
+/*  remove_bad_pwd_hashing */
+
 	$pw1=md5($password);
 	$pw2=saldikrypt($row['id'],$password);
 	if ($row['kode']==$pw1 || $row['kode']==$pw2) {
+        if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+        if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+        $pw3 = password_hash($password, PWD_ALGO, PWD_OPTS);
+        db_modify("update brugere set kode='$pw3' where brugernavn='".db_escape_string($brugernavn)."'",__FILE__ . " linje " . __LINE__);
+        unset($pw3);
+    	$row = db_fetch_array(db_select("select * from brugere where brugernavn='".db_escape_string($brugernavn)."'",__FILE__ . " linje " . __LINE__));
+    }
+    if (password_verify($password, $row['kode'])) {
+/* slut  */
 	$bruger_id=$row['id'];
 	$rettigheder=trim($row['rettigheder']);
 	$regnskabsaar=$row['regnskabsaar'];
@@ -342,10 +353,25 @@ function online($regnskab,$db,$bruger_id,$brugernavn,$password,$timestamp,$s_id)
 		if (!$connection) die( "Unable to connect to PostgreSQL");
 	}
 	$row=db_fetch_array(db_select("select * from brugere where brugernavn='".db_escape_string($brugernavn)."'",__FILE__ . " linje " . __LINE__));
+
+/*  remove_bad_pwd_hashing */
 	$pw1=md5($password);
 	$pw2=saldikrypt($row['id'],$password);
-	if ($row['kode']==$pw1 || $row['kode']==$pw2) $pw_ok=1;
-	else $pw_ok=0;
+    if ($row['kode']==$pw1 || $row['kode']==$pw2){
+        if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+        if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+        $pw3 = password_hash($password, PWD_ALGO, PWD_OPTS);
+        db_modify("update brugere set kode='$pw3' where brugernavn='".db_escape_string($brugernavn)."'",__FILE__ . " linje " . __LINE__);
+        unset($pw3);
+    	$row = db_fetch_array(db_select("select * from brugere where brugernavn='".db_escape_string($brugernavn)."'",__FILE__ . " linje " . __LINE__));
+    }
+    if (password_verify($password, $row['kode'])) {
+        $pw_ok=1;
+    }
+	else {
+        $pw_ok=0;
+    }
+/* slut */
 	if ($pw_ok) {
 		print "<FORM METHOD=POST NAME=\"login\" ACTION=\"login.php\">";
 		print "<INPUT TYPE=\"hidden\" NAME=\"regnskab\" VALUE=\"$regnskab\">";

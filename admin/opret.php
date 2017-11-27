@@ -336,7 +336,16 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 	}
 	db_modify("INSERT INTO brugere (brugernavn,rettigheder,regnskabsaar) values ('$brugernavn','11111111111111111111',1)",__FILE__ . " linje " . __LINE__);
 	$r=db_fetch_array(db_select("select id from brugere where brugernavn='$brugernavn'",__FILE__ . " linje " . __LINE__));
-	$pw=saldikrypt($r['id'],$passwd);
+/*
+    remove_bad_pwd_hashing
+
+	# $pw=saldikrypt($r['id'],$passwd);
+
+*/
+    if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+    if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+    $pw = password_hash($passwd, PWD_ALGO, PWD_OPTS);
+/*  slut    */
 	db_modify("UPDATE brugere set kode ='$pw' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
 	db_modify("insert into grupper (beskrivelse,art,box1) values ('Version','VE','$version')",__FILE__ . " linje " . __LINE__);
 	db_modify("insert into grupper (beskrivelse,kodenr,art,box4,box5) values ('Div_valg','2','DIV','','')",__FILE__ . " linje " . __LINE__);

@@ -168,7 +168,16 @@ if (isset($_POST['opret'])){
 	db_modify("CREATE TABLE brugere(id serial NOT NULL, brugernavn text, kode text, status boolean, regnskabsaar integer, rettigheder text, PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("INSERT INTO brugere (brugernavn, kode, rettigheder) values ('$adm_navn' ,'$adm_password', '11111111111111111111')",__FILE__ . " linje " . __LINE__);
 	$r=db_fetch_array(db_select("SELECT id FROM brugere where brugernavn='$adm_navn'",__FILE__ . " linje " . __LINE__));	
-	$adm_password=saldikrypt($r['id'],$adm_password);
+/*
+    remove_bad_pwd_hashing
+
+	# $adm_password=saldikrypt($r['id'],$adm_password);
+
+*/
+    if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+    if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+    $adm_password = password_hash($adm_password, PWD_ALGO, PWD_OPTS);
+/*  slut    */
 	db_modify("UPDATE brugere SET kode='$adm_password' where id = '$r[id]'",__FILE__ . " linje " . __LINE__); 
 	db_modify("CREATE TABLE regnskab (id serial NOT NULL,	regnskab text, dbhost text, dbuser text, db text, version text, sidst text, brugerantal numeric, posteringer numeric, posteret numeric, lukket text,administrator text,lukkes date, betalt_til date,logintekst text,email text,bilag numeric(1,0), PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("INSERT INTO regnskab (regnskab, dbhost, dbuser, db, version,bilag) values ('$db_navn' ,'$host', '$db_bruger', '$db_navn', '$version','0')",__FILE__ . " linje " . __LINE__);

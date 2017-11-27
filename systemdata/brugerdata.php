@@ -62,8 +62,17 @@ if ($_POST) {
 	if ($glkode1!=$nykode1) {
 		if ($nykode1 && $nykode1==$nykode2 && $glkode) {
 			$r=db_fetch_array(db_select("select kode from brugere where brugernavn='$brugernavn'",__FILE__ . " linje " . __LINE__));
-			if ($r['kode']==md5($glkode) || $r['kode']==saldikrypt($bruger_id,$glkode)) {
+/* added password_verify to OR-chain */
+			if (password_verify($glkode, $r['kode']) || $r['kode']==md5($glkode) || $r['kode']==saldikrypt($bruger_id,$glkode)) {
+/*
+    remove_bad_pwd_hashing
+
 				$nykode1=saldikrypt($bruger_id,$nykode1);
+*/
+                if (!defined("PWD_ALGO")) define("PWD_ALGO", PASSWORD_DEFAULT);
+                if (!defined("PWD_OPTS")) define("PWD_OPTS", array());
+                $nykode1 = password_hash($nykode1, PWD_ALGO, PWD_OPTS);
+/*  slut    */
 				db_modify("update brugere set kode='$nykode1' where brugernavn='$brugernavn'",__FILE__ . " linje " . __LINE__);
 				print tekstboks('Adgangskode &aelig;ndret!');
 			} elseif ($r['kode']) print tekstboks('Der er tastet forkert v&aelig;rdi i "Gl. adgangskode"');
