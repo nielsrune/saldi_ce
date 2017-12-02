@@ -57,9 +57,9 @@ if (!function_exists('nr_cast')) {
 	}
 }
 if (!function_exists('dkdecimal')) {
-	function dkdecimal($tal,$decimaler) {
-		if (!isset($decimaler)) $decimaler=2;
-		elseif (!$decimaler && $decimaler!='0') $decimaler=2;
+	function dkdecimal($tal,$decimaler = 2) {
+/*		if (!isset($decimaler)) $decimaler=2;
+		elseif (!$decimaler && $decimaler!='0') $decimaler=2; */
 		if (is_numeric($tal)) { 
 			if ($tal) $tal=afrund($tal,$decimaler); #Afrunding tilfoejet 2009.01.26 grundet diff i ordre 98 i saldi_104
 			$tal=number_format($tal,$decimaler,",",".");
@@ -179,8 +179,8 @@ if (!function_exists('usdate')) {
 	}
 }
 if (!function_exists('usdecimal')) {
-	function usdecimal($tal,$decimaler) {
-		if (!$decimaler && $decimaler!='0') $decimaler=2;
+	function usdecimal($tal,$decimaler = 2) {
+/*		if (!$decimaler && $decimaler!='0') $decimaler=2; */
 		if (!$tal){
 			$tal="0";
 			if ($decimaler) {
