@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------debitor/pbsfile.php------- patch 3.6.7---2017-04-20------
+// ------------debitor/pbsfile.php------- patch 3.7.1---2018-01-16------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 23.08.2012 Tilretning til Leverandørservice 
@@ -35,6 +35,7 @@
 // 2014.04.22	Kunde slettes fra pbs_kunder ved afmelding #20140422
 // 2017.01.02	Ved betalingsbet Kontant røg man i evig løkke 20170102
 // 2017.04.20 Indsat db_escape_string. Søg db_escape_string
+// 2018.01.16 PHR - Tilføjet '&& $betalingsbet && ($betalingsdage || $betalingsdage=='0')' Søg 20180116
 
 @session_start();
 $s_id=session_id();
@@ -433,7 +434,7 @@ function l_inset_ordrer($antal_ordrer,$leverance_id,$dkdd,$ordre_id,$cvrnr,$bank
 		$betalingsdage=$r['betalingsdage'];
 		list($dd,$mm,$yy)=explode("-",forfaldsdag($fakturadate, $betalingsbet, $betalingsdage));	
 		$forfaldsdag=substr($yy,-2).$mm.$dd;
-		if ($betalingsbet != 'Kontant') { #20170102
+		if ($betalingsbet != 'Kontant' && $betalingsbet && ($betalingsdage || $betalingsdage=='0')) { #20170102 + 20180116
 		while ($forfaldsdag<=$usdd) {
 			$betalingsdage++;
 			list($dd,$mm,$yy)=explode("-",forfaldsdag($fakturadate, $betalingsbet, $betalingsdage));	

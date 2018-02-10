@@ -193,16 +193,16 @@ if ($fp) {
 	$x=0;
 	$kontonumre=array();
 	while (!feof($fp)) {
-		$skriv_linje=0;
+		$skriv_linje[$x]=0;
 		if ($linje=fgets($fp)) {
 			$x++;
 #cho "$x | $linje<br>";		
-			$skriv_linje=1;
+			$skriv_linje[$x]=1;
 			if ($charset=='UTF-8') $linje=utf8_encode($linje);
 			$felt=array();
 			$felt = opdel($splitter, $linje);
 			for ($y=0; $y<=$feltantal; $y++) {
-#cho "$feltnavn[$y] => $felt[$y]<br>";
+
 				$fejl[$y]='';
 				$feltfejl[$y]=0;
 				$felt[$y]=trim($felt[$y]);
@@ -216,7 +216,7 @@ if ($fp) {
 						}
 					}
 					if (!$tmp) {
-						$skriv_linje=2;
+						$skriv_linje[$x]=2;
 						$fejl[$y].="varenr $felt[$y] ikke fundet, "; 
 					}
 				}
@@ -224,7 +224,7 @@ if ($fp) {
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
 					if ($tmp && !is_numeric($tmp)) {
-						$skriv_linje=2;
+						$skriv_linje[$x]=2;
 						$fejl[$y].="kostpris $tmp ikke numerisk, "; 
 					}	
 				}
@@ -232,7 +232,7 @@ if ($fp) {
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
 					if ($tmp && !is_numeric($tmp)) {
-						$skriv_linje=2;
+						$skriv_linje[$x]=2;
 						$fejl[$y].="salgspris $tmp ikke numerisk, "; 
 					}
 				}
@@ -240,23 +240,23 @@ if ($fp) {
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
 					if ($tmp && !is_numeric($tmp)) {
-						$skriv_linje=2;
+						$skriv_linje[$x]=2;
 						$fejl[$y].="vejl pris $tmp ikke numerisk, "; 
 					}
 				}
 #				if ($feltnavn[$y]=='varenr'&&!is_numeric($felt[$y])) {
-#					$skriv_linje=2;
+#					$skriv_linje[$x]=2;
 #					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
 #					print "<BODY onLoad=\"javascript:alert('varenrnummer skal v&aelig;re numerisk')\">";
 #				} 
 			}
  		}
-		if ($skriv_linje==2) print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer/felter indeholder fejl og bliver ikke importeret')\">";
-		if ($skriv_linje>=1){
+		if ($skriv_linje[$x]==2) print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer/felter indeholder fejl og bliver ikke importeret')\">";
+		if ($skriv_linje[$x]>=1){
 			print "<tr>";
 #			print "<tr><td>$bilag</td>";
 			for ($y=0; $y<=$feltantal; $y++) {
-				if ($skriv_linje==2) $color="#e00000";
+				if ($skriv_linje[$x]==2) $color="#e00000";
 				elseif ($feltfejl[$y]) $color="#e00000";
 				else $color="#000000";
 				if ($feltnavn[$y]) {print "<td title=\"$fejl[$y]\"><span style=\"color: $color;\">$felt[$y]&nbsp;</span></td>";}
@@ -273,6 +273,13 @@ print "</td></tr>";
 
 function overfoer_data($filnavn, $splitter, $feltnavn, $feltantal,$tegnset){
 global $charset;
+
+$qtxt="SELECT column_name FROM information_schema.columns WHERE table_name='variant_varer' and column_name='variant_id'";
+if (!$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+	db_modify("ALTER TABLE variant_varer add column	variant_id int",__FILE__ . " linje " . __LINE__);
+	db_modify("UPDATE variant_varer set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
+}
+
 
 $fp=fopen("$filnavn","r");
 if ($fp) {
@@ -329,10 +336,10 @@ $q=db_select("select varenr,id,varianter from varer",__FILE__ . " linje " . __LI
 while ($r=db_fetch_array($q)) {
 	$varer_id[$x]=$r['id'];
 	$varer_nr[$x]=$r['varenr'];
+#cho $r['varianter']."<br>";
 	$varer_varianter[$x]=$r['varianter'];
 	$x++;
 }
-
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]&& $felt_aktiv[$x]==1) {
@@ -347,11 +354,7 @@ if ((!$splitter)||($splitter=='Semikolon')) {$splitter=';';}
 elseif ($splitter=='Komma') {$splitter=',';}
 elseif ($splitter=='Tabulator') {$splitter=chr(9);}
 
-# print "<tr><td><span title='Angiv 1. bilagsnummer'><input type=text size=4 name=bilag value=$bilag></span></td>";
-
 transaktion('begin');
- #echo "delete from kontoplan where regnskabsaar='$regnskabsaar'<br>";
-#db_modify("delete from de where regnskabsaar='$regnskabsaar'");attrelid    	attname   
 
 $r=db_fetch_array(db_select("SELECT relfilenode FROM pg_class WHERE relname = 'variant_varer'",__FILE__ . " linje " . __LINE__)) ;
 $relfilenode=$r['relfilenode']*1;
@@ -367,6 +370,7 @@ $r=db_fetch_array(db_select("SELECT * FROM pg_attribute WHERE attrelid= '$relfil
 if ($r['attisdropped']!='f' || !$r['attname']) {
 	db_modify("alter TABLE variant_varer ADD variant_vejlpris numeric(15,3)",__FILE__ . " linje " . __LINE__);
 }
+#cho "$filnavn<br>";
 $fp=fopen("$filnavn","r");
 if ($fp) {
 	$kontonumre=array();
@@ -378,10 +382,10 @@ if ($fp) {
 	$variant_type=NULL;
 	$varenr="";	
 	while (!feof($fp)) {
-		$skriv_linje=0;
+		$skriv_linje[$x]=0;
 		if ($linje=fgets($fp)) {
 			$x++;
-			$skriv_linje=1;
+			$skriv_linje[$x]=1;
 			if ($charset=='UTF-8' && $tegnset!='UTF-8') $linje=utf8_encode($linje);
 			elseif ($charset!='UTF-8' && $tegnset=='UTF-8') $linje=utf8_decode($linje);
 			$variant_type=NULL;
@@ -398,9 +402,40 @@ if ($fp) {
 				$feltnavn[$y]=strtolower($feltnavn[$y]);
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if ($feltnavn[$y]=='stregkode') {
-					if (!$stregkode=$felt[$y]) $skriv_linje=0;
+					if (!$stregkode=$felt[$y]) $skriv_linje[$x]=0;
 				}
-				if ($feltnavn[$y]=='vare_id')	{
+				if ($feltnavn[$y]=='variant_kostpris')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje[$x]=0;
+					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
+					$kostpris=$felt[$y]*1;
+				}
+				if ($feltnavn[$y]=='variant_salgspris')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje[$x]=0;
+					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
+					$salgspris=$felt[$y]*1;
+				}
+				if ($feltnavn[$y]=='variant_vejlpris')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje[$x]=0;
+					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
+					$vejlpris=$felt[$y]*1;
+				}
+				if (in_array($feltnavn[$y],$varianter_beskrivelse) && !$felt[$y]) $skriv_linje[$x]=0;
+
+				if ($skriv_linje && in_array($feltnavn[$y],$varianter_beskrivelse)) {
+					if ($felt[$y]) {
+						for($i=0;$i<count($varianter_id);$i++) {
+							if ($varianter_beskrivelse[$i]==$feltnavn[$y]) $variant_id=$varianter_id[$i];
+						}
+#cho "variant_id=$variant_id<br>";
+					} else $skriv_linje[$x]=0;
+				}
+				if ($feltnavn[$y]=='vare_id'&& $skriv_linje[$x])	{
 					for($i=0;$i<count($varer_id);$i++) {
 						if ($felt[$y]==$varer_nr[$i]) {
 							$felt[$y]=$varer_id[$i];
@@ -409,27 +444,6 @@ if ($fp) {
 						}
 					}
 					$felt[$y]*=1;
-				}
-				if ($feltnavn[$y]=='variant_kostpris')	{
-					$tmp=str_replace(",","",$felt[$y]);
-					$tmp=str_replace(".","",$tmp);
-					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
-					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
-					$kostpris=$felt[$y]*1;
-				}
-				if ($feltnavn[$y]=='variant_salgspris')	{
-					$tmp=str_replace(",","",$felt[$y]);
-					$tmp=str_replace(".","",$tmp);
-					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
-					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
-					$salgspris=$felt[$y]*1;
-				}
-				if ($feltnavn[$y]=='variant_vejlpris')	{
-					$tmp=str_replace(",","",$felt[$y]);
-					$tmp=str_replace(".","",$tmp);
-					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
-					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
-					$vejlpris=$felt[$y]*1;
 				}
 #cho "F $feltnavn[$y]<br>";
 				if (in_array(strtolower($feltnavn[$y]),$varianter_beskrivelse)) {
@@ -445,8 +459,8 @@ if ($fp) {
 							}		
 						}
 					}
-					#echo strtolower($feltnavn[$y])."==".$varianter_beskrivelse[$i]."<br>";
-#echo "Felt = $felt[$y]<br>"; 
+					#cho strtolower($feltnavn[$y])."==".$varianter_beskrivelse[$i]."<br>";
+#cho "Felt = $felt[$y]<br>"; 
 						$tmp=NULL;
 						for($t=0;$t<count($variant_type_id);$t++) {
 #cho "$felt[$y]!=$variant_type_beskrivelse[$t]<br>";
@@ -473,10 +487,10 @@ if ($fp) {
 				if ($feltnavn[$y]=='variant_stregkode')	$stregkode=$felt[$y];
 			}
  		}
- 		if ($skriv_linje==1) {
-			$vare_a="variant_type";
-			$vare_b="'".$variant_type."'";
-			$upd="variant_type='".$variant_type."'";
+ 		if ($skriv_linje[$x]==1) {
+			$vare_a="variant_type,variant_id";
+			$vare_b="'".$variant_type."','".$variant_id."'";
+			$upd="variant_type='".$variant_type."',variant_id='".$variant_id."'";
 			for ($y=0; $y<=$feltantal; $y++) {
 				if ($feltnavn[$y] && $medtag_felt[$y]) {
 					if ($nyt_feltnavn[$y]) $feltnavn[$y]=$nyt_feltnavn[$y];
@@ -486,25 +500,25 @@ if ($fp) {
 					$upd=$upd.",".$feltnavn[$y]."='".$felt[$y]."'";
 				}
 			}
-#cho "select id from variant_varer where variant_stregkode='$stregkode'<br>";
-				if ($r=db_fetch_array(db_select("select id from variant_varer where variant_stregkode='$stregkode'",__FILE__ . " linje " . __LINE__))) {
+			$qtxt="select id from variant_varer where variant_stregkode='$stregkode'";
+			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 					$variant_id=$r['id'];
 					$upd_antal++;
-#cho "update variant_varer set $upd where id='$variant_id'<br>";
-					db_modify("update variant_varer set $upd where id='$variant_id'",__FILE__ . " linje " . __LINE__);
+					$qtxt="update variant_varer set $upd where id='$variant_id'";
 				} else {
 					$imp_antal++;
-#cho "insert into variant_varer($vare_a) values ($vare_b)<br>";
-					db_modify("insert into variant_varer($vare_a) values ($vare_b)",__FILE__ . " linje " . __LINE__);
+					$qtxt="insert into variant_varer($vare_a) values ($vare_b)";
 				}
+				if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
 }
 fclose($fp);
-
+/*
 for($v=0;$v<count($varer_id);$v++) {
-	if ($varer_varianter[$v]) {
+#	if ($varer_varianter[$v]) {
 		$v_var=explode(chr(9),$varer_varianter[$v]);
+#cho __line__." $varer_id[$v] -> $varer_varianter[$v]<br>";
 		$v2=array();
 		$tmp=NULL;
 		for ($i=0;$i<count($v_var);$i++){
@@ -513,9 +527,47 @@ for($v=0;$v<count($varer_id);$v++) {
 			}
 			$v2[$i]=$v_var[$i];
 		}
-		db_modify("update varer set varianter = '$tmp' where id='$varer_id[$v]'",__FILE__ . " linje " . __LINE__);
+#cho __line__." $varer_id[$v] -> $tmp<br>";
+		$qtxt="update varer set varianter = '$tmp' where id='$varer_id[$v]'";
+#cho $qtxt."<br>";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+#	}
+}
+*/
+$qtxt="update varer set varianter = ''";
+echo $qtxt."<br>";
+db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+$x=0;
+$vare_id=array();
+$qtxt="select vare_id,variant_id from variant_varer order by vare_id,variant_id";
+$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+while ($r=db_fetch_array($q)) {
+	if (in_array($r['vare_id'],$vare_id)) {
+		if (!in_array($r['variant_id'],$vv)) {
+			$vare_varianter[$x].=chr(9).$r['variant_id'];
+			$y++;
+			$vv[$y]=$r['variant_id'];
+		}
+	} else {
+		$x++;
+		$vare_id[$x]=$r['vare_id'];
+		$vare_varianter[$x]=$r['variant_id'];
+		$y=0;
+		$vv=array($r['variant_id']);
 	}
 }
+$qtxt="select id from varer order by id";
+$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+while ($r=db_fetch_array($q)) {
+	for ($x=1;$x<=count($vare_id);$x++) {
+		if ($r['id']==$vare_id[$x]) { 
+			$qtxt="update varer set varianter = '$vare_varianter[$x]' where id='$vare_id[$x]'";
+echo $qtxt."<br>";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		}
+	}
+}
+
 transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";

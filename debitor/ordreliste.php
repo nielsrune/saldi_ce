@@ -35,7 +35,8 @@
 // 2016.12.17	PHR Tilføjet vis_lagerstatus. Søg vis_lagerstatus: 
 // 2017.02.09	PHR Tilføjet mulighed for at slette ordrer direkte fra liste.
 // 2017.05.20	PHR fjernet valutaberegning på kostpriser da det gav forlert DB/DG
-// 2017.06.01 PHR	Delvis tilbageført ændringer fra 20141106 da alle fakturaer ikke kommer men ved opslag fra debitorkort 20170601
+// 2017.06.01 PHR	Delvis tilbageført ændringer fra 20141106 da alle fakturaer ikke kommer med ved opslag fra debitorkort 20170601
+
 
 #ob_start();
 @session_start();
@@ -44,6 +45,7 @@ $s_id=session_id();
 $check_all=NULL; 
 $ialt_m_moms=NULL;
 $ny_sort=NULL;
+$shop_ordre_id=NULL;
 $uncheck_all=NULL;
 
 print "
@@ -67,19 +69,19 @@ $css="../css/standard.css";
 $modulnr=5;
 $title="Ordreliste - Debitorer";
 $dk_dg=NULL; 
-$checked=NULL;
-$fakturadatoer=NULL;$fakturanumre=NULL;$firma=NULL;$firmanavn=NULL;$firmanavn_ant=NULL; 
-$genfakt=NULL;$genfaktdatoer=NULL;
-$hreftext=NULL;$hurtigfakt=NULL; 
-$konto_id=NULL;$kontonumre=NULL; 
-$lev_datoer=NULL;$linjebg=NULL; 
-$ordredatoer=NULL;$ordrenumre=NULL;
+$checked=$cols=NULL;
+$fakturadatoer=$fakturanumre=$firma=$firmanavn=$firmanavn_ant=NULL; 
+$genfakt=$genfaktdatoer=$genfakturer=NULL;
+$hreftext=$hurtigfakt=NULL; 
+$konto_id=$kontonumre=NULL; 
+$lev_datoer=$linjebg=NULL; 
+$ordredatoer=$ordrenumre=NULL;
 $ref=NULL;
 $summer=NULL;
-$totalkost=NULL;$tr_title=NULL; 
+$totalkost=$tr_title=NULL; 
 $understreg=NULL;
-$vis_projekt=NULL;$vis_ret_next=NULL;
-$find=array();
+$vis_projekt=$vis_ret_next=NULL;
+$find=array(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -710,7 +712,7 @@ while ($row=db_fetch_array($query)) {
 			print "</td>"; 
 		}
 		if ($uncheck_all) $checked[$id]=NULL;
-		elseif ($checked[$id]=='on' || $check_all) $checked[$id]='checked';
+		elseif ((isset($checked[$id]) && $checked[$id]=='on') || $check_all) $checked[$id]='checked';
 		if ($valg=='faktura' || ($valg=='ordrer' && $nextfakt)) {
 			$vis_ret_next=1;
 			print "<td align=right><input class=\"inputbox\" type=\"checkbox\" name=\"checked[$id]\" $checked[$id]></td>";
@@ -848,44 +850,76 @@ if ($r['box1'] && $ialt!="0,00") {
 $r=db_fetch_array(db_select("select box4 from grupper where art='API'",__FILE__ . " linje " . __LINE__));
 $api_fil=trim($r['box4']);
 if ($api_fil) {
-	#echo __line__." $api_fil<br>";
-	system ("/usr/bin/wget --spider $api_fil?put_new_orders=1 &\n");
+	if (file_exists("../temp/$db/shoptidspkt.txt")) {
+		$fp=fopen("../temp/$db/shoptidspkt.txt","r");
+		$tidspkt=fgets($fp);
+	} else $tidspkt = 0;
+	fclose ($fp);
+	if ($tidspkt < date("U")-300 || $shop_ordre_id) {
+		$fp=fopen("../temp/$db/shoptidspkt.txt","w");
+		fwrite($fp,date("U"));
+		fclose ($fp);
+	$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
+#cho 	"/usr/bin/wget --spider --no-check-certificate --header='$header' $api_fil?put_new_orders=1 \n<br>";
+	exec ("nohup /usr/bin/wget --spider --no-check-certificate --header='$header' $api_fil?put_new_orders=1 > /dev/null 2>&1 &\n");
+}	
 }
 $r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));
+
 if ($apifil=$r['box2']) {
 	(strpos($r['box2'],'opdat_status=1'))?$opdat_status=1:$opdat_status=0;
 	(strpos($r['box2'],'shop_fakt=1'))?$shop_fakt=1:$shop_fakt=0;
 	(strpos($r['box2'],'betaling=kort'))?$kortbetaling=1:$kortbetaling=0;
 	($kortbetaling)?$betalingsbet='betalingskort':$betalingsbet='netto+8';
-	
 	if (substr($apifil,0,4)=='http') {
-		$apifil=str_replace("/?","/hent_ordrer.php?",$apifil);
-		
+		$apifil=trim(str_replace("/?","/hent_ordrer.php?",$apifil));
 		$apifil=$apifil."&saldi_db=$db";
 		$saldiurl="://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 		if ($_SERVER['HTTPS']) $saldiurl="s".$saldiurl;
 		$saldiurl="http".$saldiurl;
 		if ($shop_fakt) {
-			$r=db_fetch_array(db_select("select max(shop_id) as shop_id from shop_ordrer",__FILE__ . " linje " . __LINE__));
+			$qtxt="select max(shop_id) as shop_id from shop_ordrer";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$next_id=$r['shop_id']+1;
 			$apifil.="&next_id=$next_id";
 		}
-		if ($shop_fakt) $apifil.="&shop_fakt=$shop_fakt&popup=1";
+		if ($shop_fakt) {
+			$shop_ordre_id=if_isset($_GET['shop_ordre_id']);
+			$shop_ordre_id*=1;
+			$apifil.="&shop_fakt=$shop_fakt&popup=1&shop_ordre_id=$shop_ordre_id";
+		}	
 		$apifil.="&saldiurl=$saldiurl";
 		$apifil.="&random=".rand();
 		if ($shop_fakt) {
 			if (file_exists("../temp/$db/shoptidspkt.txt")) {
 				$fp=fopen("../temp/$db/shoptidspkt.txt","r");
 				$tidspkt=fgets($fp);
-			} else $tidspkt = date('U')-61;
+			} else $tidspkt = 0;
 			fclose ($fp);
-			if ($tidspkt < date("U")-6) {
+			if ($tidspkt < date("U")-300 || $shop_ordre_id) {
 				$fp=fopen("../temp/$db/shoptidspkt.txt","w");
 				fwrite($fp,date("U"));
 				fclose ($fp);
-				if ($db=='bizsys_49') print "<BODY onLoad=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
-				else system ("/usr/bin/wget --spider $api_fil &\n");
+				if ($db=='bizsys_49') {
+					print "<BODY onLoad=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
+				} else exec ("nohup /usr/bin/wget --spider $api_fil  > /dev/null 2>&1 &\n");
+			} else {
+				$tjek=$next_id-50;
+				$qtxt="select shop_id from shop_ordrer where shop_id >= '$tjek'";
+				$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+				while ($r=db_fetch_array($q)) {
+					while ($r['shop_id']!=$tjek && $tjek<$next_id) {
+						echo "Shop ordre $r[shop_id] $tjek mangler<br>";
+						$tmp=$apifil."&shop_ordre_id=$tjek";
+#cho "$tmp<br>";						
+						print "<BODY onLoad=\"JavaScript:window.open('$tmp'	,'hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
+						$tjek++;
+					} 					
+					echo "Shop ordre $r[shop_id] $tjek OK<br>";
+					$tjek++;
+				}
 	}
+			if ($db=='bizsys_49')	print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop' onclick=\"javascript:window.open('$apifil')\"><a href>Hent ordrer fra shop</a></span></td></tr>";	
 		} else print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop' onclick=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">SHOP import</span></td></tr>";	
 }
 }

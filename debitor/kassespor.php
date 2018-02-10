@@ -38,7 +38,7 @@ ob_start();
 @session_start();
 $s_id=session_id();
 $title="Kassespor";
-$modulnr=4;
+$modulnr=12;
 $css="../css/standard.css";
 $hreftext=0;
 $udskriv=NULL;

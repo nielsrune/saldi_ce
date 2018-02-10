@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------debitor/ordre.php----------lap 3.7.0-----2017-09-11-------
+// ----------debitor/ordre.php----------lap 3.7.1-----2018-01-16-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012-08-22 Tilrettet til NETS leverandørservice - søg 20120822
@@ -108,6 +108,7 @@
 // 2017.10.04 PHR	-	En del rettelser omkring betailngskort - primært styres betalingsbet nu fra valg af betalingsmåde når vis_saet er aktiv.
 // 2017.10.09 PHR - GLS funktion ændret - skal tilrettes så gls værdier kan sættes under ordrerelaterede valg- søg $gls_username
 // 2017.10.26 PHR - $db ændret til $dkb(dækningsbidrag) da $db bruges til databaseinfo. 
+// 2018.01.16 PHR - Mulighed for at medsende standardbilag. Søg std_bilag & mail_bilag
 
 @session_start();
 $s_id=session_id();
@@ -2563,9 +2564,18 @@ function ordreside($id,$regnskab) {
 			if ($pbs_nr && !$pbs_fi) print "<td colspan=\"2\" title=\"$title\">Opkr&aelig;v via PBS (BS)</td><td title=\"$title\"><input class=\"inputbox\" type=\"checkbox\" name=\"pbs_bs\" \"$pbs_bs\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
 		} else print "</tr>\n";
 */
+		if(!$hurtigfakt && $status<=1) $std_bilag="tilbud"; 
+		elseif($status<=2) $std_bilag="ordrer";
+		elseif($status>=4) $std_bilag="faktura";
+		else $std_bilag=NULL;
+
+		if ($std_bilag && !file_exists("../logolib/".$db_id."/".$std_bilag."_bilag.pdf")) $std_bilag=NULL;
+
 		($mail_bilag=='on')?$checked="checked='checked'":$checked=NULL;
-		if ($udskriv_til=="email" && (strpos($_SERVER['SERVER_NAME'],'ackup') || strpos($_SERVER['SERVER_NAME'],'sl3'))) print "<tr><td>Mail bilag</td><td><input type=\"checkbox\" name=\"mail_bilag\" $checked></td>"; #20131122 Checkbox til mail_bilag
-		else print "<tr><td colspan=\"2\"><input type=\"hidden\" name=\"mail_bilag\" value=\"$mail_bilag\"></td>";
+		if ($std_bilag && $udskriv_til=="email") {
+		$titletext="Afmærk her for at medsende standard bilag"; 
+		print "<tr><td title='$titletext'>Mail bilag</td><td title='$titletext'><input type=\"checkbox\" name=\"mail_bilag\" $checked></td>"; #20131122 Checkbox til mail_bilag
+		} else print "<tr><td colspan=\"2\"><input type=\"hidden\" name=\"mail_bilag\" value=\"$mail_bilag\"></td>";
 		if ($procentvare) print "<td>&nbsp;</td><td>Procenttillæg</td><td><input class=\"inputbox\" style=\"text-align:right;width:35px\" type=\"text\" name=\"procenttillag\" value=\"".dkdecimal($procenttillag)."\" onchange=\"javascript:docChange = true;\" $disabled>%</td></tr>\n";
 		else print "</tr>\n";
 		if (db_fetch_array(db_select("select distinct sprog from formularer where sprog != 'Dansk'",__FILE__ . " linje " . __LINE__))) {

@@ -29,6 +29,8 @@ if (!function_exists('forfaldsdag')) {
 	function forfaldsdag($fakturadate, $betalingsbet, $betalingsdage) {
 		$betalingsbet=strtolower($betalingsbet);
 		
+		if (!$fakturadate) return (NULL);
+		
 		list($faktaar, $faktmd, $faktdag) = explode("-", $fakturadate);
 		$forfaldsaar=$faktaar; 
 		$forfaldsmd=$faktmd;

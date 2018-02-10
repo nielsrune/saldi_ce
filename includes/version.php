@@ -1,4 +1,4 @@
 <?php 
-	$version = "3.6.9";
+	$version = "3.7.0";
 	$copyright= "2003-2017";
 ?>

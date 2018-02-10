@@ -50,6 +50,7 @@ ob_start(); //Starter output buffering
 // 2017.03.21 Forbedring af søgning ved opslag således at finans, debitor & kreditorkonto lister de konto hvor teksten indgår.
 // 2017.04.18 Tilføjet '&& !$faktura[$x]' så der kan laves opslag på falturanr samt ($submit!='Opslag' &&) så der kan laves opslag uden feltindhold. 20170418
 // 2017.04.19 Det autogenererede bilagsnr blev stående hvis nederste linje blev slettet.
+// 2017.11.29 Bilagsnummer manglede ved import når der var oprette kladdelinjer Søg 20171129
 
 
 @session_start();
@@ -654,6 +655,10 @@ if ($_POST) {
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../finans/hentordrer.php?kladde_id=$kladde_id\">";
 			}
 			if (strstr($submit,"Impor")) {
+				if (!$bilagsnr) { #20171129
+					$r=db_fetch_array(db_select("select max(bilag) as bilagsnr from kassekladde where kladde_id='$kladde_id'",__FILE__ . " linje " . __LINE__));
+					$bilagsnr=$r['bilagsnr'];
+				}
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../finans/importer.php?kladde_id=$kladde_id&bilagsnr=$bilagsnr\">";
 			}
 			if (strstr($submit,"Udlig")) {
@@ -752,7 +757,7 @@ if (!$udskriv) {
 		if ($kontrolkonto == "-") $kontrolkonto = "";
 		print "<td width=\"80px\"><span title= 'Angiv kontonummer til kontrol af kontobev&aelig;gelser'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=kontrolkonto value=\"$kontrolkonto\" onchange=\"javascript:docChange = true;\"></td>";
 	} elseif ($bogfort!="S") {
-		print "<td width=\"80px\" align=\"center\"><span title=\"Klik her for at opdatere\"><input type=submit style=\"width:120px;float:left\" accesskey=\"o\" value=\"Opdater\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+		print "<td width=\"80px\" align=\"center\"><span title=\"Klik her for at opdatere\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"o\" value=\"Opdater\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 	}
 	print "<td width=\"10%\" align=\"right\"><a href=\"../finans/kassekladde.php?kladde_id=$kladde_id&udskriv=1\" target=\"blank\"><img src=\"../ikoner/print.png\" style=\"border: 0px solid;\"></a></td>";
 	#print "</tr><tr><td><br color=\"$bgcolor5\" \"align=\"center\"\"></td></tr>\n";
@@ -1200,33 +1205,33 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 	if (!$udskriv) {
 	if ($bogfort=='V'){
 #		print "<input type=hidden name=ny_kladdenote value=\"$kladdenote\">";
-		print "<tr><td colspan=9 align=\"center\"><input type=submit accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+		print "<tr><td colspan=9 align=\"center\"><input type='submit' accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 		print "</form>";
 #		print "</tbody></table></td></tr>\n";
 #		print "</tbody></table>";
 	} elseif ($bogfort=='!'){
 #		print "<input type=hidden name=ny_kladdenote value=\"$kladdenote\">";
-		print "<tr><td colspan=9 align=\"center\"><input type=submit accesskey=\"b\" value=\"Tilbagef&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+		print "<tr><td colspan=9 align=\"center\"><input type='submit' accesskey=\"b\" value=\"Tilbagef&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 		print "</form>";
 #		print "</tbody></table></td></tr>\n";
 #		print "</tbody></table>";
 	} elseif ($bogfort=='S'){
-		print "<tr><td colspan=9 align=\"center\"><input type=submit accesskey=\"a\" value=\"Annuller simulering\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+		print "<tr><td colspan=9 align=\"center\"><input type='submit' accesskey=\"a\" value=\"Annuller simulering\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 		print "</form>";
 	} else {
-		print "<td align=\"center\"><span title=\"Klik her for at gemme\"><input type=submit style=\"width:120px;float:left\" accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>\n";
-		print "<td align=\"center\"><span title=\"Opslag - din mark&oslash;rs placering angiver hvilken tabel, opslag foretages i\"><input type=submit style=\"width:120px;float:left\" accesskey=\"o\" value=\"Opslag\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+		print "<td align=\"center\"><span title=\"Klik her for at gemme\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>\n";
+		print "<td align=\"center\"><span title=\"Opslag - din mark&oslash;rs placering angiver hvilken tabel, opslag foretages i\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"o\" value=\"Opslag\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 		if ($kladde_id && !$fejl) {
-			print "<td align=\"center\"><span title=\"Simulering af bogf&oslash;ring viser bev&aelig;gelser i kontoplanen\"><input type=submit style=\"width:120px;float:left\" accesskey=\"s\" value=\"Simul&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
-			print "<td align=\"center\"><span title=\"Bogf&oslash;r - der foretages f&oslash;rst en simulering, som du skal bekr&aelig;fte\"><input type=submit style=\"width:120px;float:left\" accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Simulering af bogf&oslash;ring viser bev&aelig;gelser i kontoplanen\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"s\" value=\"Simul&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Bogf&oslash;r - der foretages f&oslash;rst en simulering, som du skal bekr&aelig;fte\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 			if (!$fejl && db_fetch_array(db_select("select id from ordrer where status=3",__FILE__ . " linje " . __LINE__))) {
-				print "<td align=\"center\"><span title=\"Henter afsluttede ordrer fra ordreliste\"><input type=submit style=\"width:120px;float:left\" accesskey=\"h\" value=\"Hent ordrer\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+				print "<td align=\"center\"><span title=\"Henter afsluttede ordrer fra ordreliste\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"h\" value=\"Hent ordrer\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 			}
 			if(db_fetch_array(db_select("select * from grupper where art = 'DIV' and kodenr = '2' and box6='on'",__FILE__ . " linje " . __LINE__))) {
-				print "<td align=\"center\"><input type=submit style=\"width:120px;float:left\" accesskey=\"d\" value=\"DocuBizz\" name=\"submit\" onclick=\"javascript:docChange = false;\" onclick=\"return confirm('Importer data fra DocuBizz?')\"></td>";
+				print "<td align=\"center\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"d\" value=\"DocuBizz\" name=\"submit\" onclick=\"javascript:docChange = false;\" onclick=\"return confirm('Importer data fra DocuBizz?')\"></td>";
 			}
-			print "<td align=\"center\"><span title=\"Importerer bankposteringer eller andre data fra .csv-fil (kommasepareret fil)\"><input type=submit style=\"width:120px;float:left\" accesskey=\"i\" value=\"Import\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
-			print "<td align=\"center\"><span title=\"Finder &aring;bne poster, som modsvarer bel&oslash;b og fakturanummer\"><input type=submit style=\"width:120px;float:left\" accesskey=\"u\" value=\"Udlign\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Importerer bankposteringer eller andre data fra .csv-fil (kommasepareret fil)\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"i\" value=\"Import\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
+			print "<td align=\"center\"><span title=\"Finder &aring;bne poster, som modsvarer bel&oslash;b og fakturanummer\"><input type='submit' style=\"width:120px;float:left\" accesskey=\"u\" value=\"Udlign\" name=\"submit\" onclick=\"javascript:docChange = false;\"></span></td>";
 		}
 	}
 	print "</form>";
@@ -2283,7 +2288,7 @@ function kopier_til_ny($kladde_id,$bilagsnr,$ny_dato) {
 		print "<span style=center title=\"Bilagsnummer for 1. bilag. De &oslash;vrige beregnes automatisk. S&aelig;ttes et lighedstegn anvendes orginalt bilagsnummer\">Skriv 1. bilagsnr <input type=\"text\" style=\"text-align:left;width:40px;\" name=bilagsnr value=$bilagsnr><br><br><br></span>";
 		print "<span style=center title=\"S&aelig;ttes et lighedstegn, anvendes orginal bilagsdato\">Skriv dato for alle bilag <input type=\"text\" size=8 name=ny_dato value=$dato><br><br><br></span>";
 		print "<input type=hidden name=kladde_id value=$kladde_id>";
-		print "<input type=submit accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\">&nbsp;<input type=button value=fortryd onClick=\"location.href='../includes/luk.php'\"><br></span>\n";
+		print "<input type='submit' accesskey=\"k\" value=\"Kopi&eacute;r til ny\" name=\"submit\" onclick=\"javascript:docChange = false;\">&nbsp;<input type=button value=fortryd onClick=\"location.href='../includes/luk.php'\"><br></span>\n";
 		print "</form>";
 		exit;
 	}

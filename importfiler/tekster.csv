@@ -82,7 +82,7 @@
 82	Genfakturering
 83	Ja
 84	Nej
-85	Vælg om priser skal opdateres fra vareliste eller overføres uændrede.
+85	Vælg om priser skal opdateres fra varekort eller overføres uændrede.
 86	Opdater priser.
 87	Priser opdateres fra vareliste
 88	Priser forbliver uændrede.
@@ -273,15 +273,15 @@
 273	Vælg den afdeling som kassen skal konteres under
 274	Afdeling
 275	Vælg det kontonummer hvor bevægelser skal konteres
-276	Kontonummer
-277	Kontonummer <variable> eksisterer ikke
-278	Kontonummer skal udfyldes for alle kasser
+276	Kontonr.
+277	Kontonr. <variable> eksisterer ikke
+278	Kontonr skal udfyldes for alle kasser
 279	Skriv her hvor mange forskellige kreditkort der modtages
 280	Antal kreditkort
 281	Type af kredikort, f.eks Dankort, Mastercard eller lign.
 282	Vælg det kontonummer hvor betalinger skal konteres.
 283	Kreditkort
-284	Kontonummer
+284	Kontonr
 285	Vælg momsgruppe for kontantkunder.
 286	Momsgruppe
 287	Varenr. for rabat
@@ -647,7 +647,7 @@
 712	Andre kort
 713	Udfyldes dette felt, vises kun 1 betalingskort på kasseskærmen og der bogføres automatisk på det kortnavn som terminalen returnerer. Hvis kortet ikke er oprettet herover, bogføres på denne konto.  
 714	Advar ved for lav lagerbeholdning
-715	Mellemkto
+715	Mlm.kto
 716	Mellemkonto for beløb som udtages fra kasse ved dagsafslutning.
 717	Mellemkonto <variable> eksisterer ikke
 718	Mellemkonto skal udfyldes for alle kasser
@@ -657,7 +657,7 @@
 722	Difference konto for kassedifferencer dagsafslutning.
 723	Difference konto <variable> eksisterer ikke
 724	Difference konto skal udfyldes for alle kasser
-725	Køkkenprint.&nbsp;IP
+725	Køkken&nbsp;IP
 726	Skriv ipnummeret til køkkenprinteren, hvis der anvendes en sådan.
 727	Omvendt betalingspligt ved salg
 728	Afmærk hvis det skal være muligt at sælge varer med omvendt betalingspligt
@@ -697,7 +697,7 @@
 762	Er du sikker på at du vil nulstille dit regnskab? Tag en sikkerhedskopi først!
 763	Direkte print til lokal printer.
 764	Hvis du vil kunne udskrive direkte til en lokal printer skal din router redirrigere data på port 9100 fra $myip direkte til din lokale printer. Herudover skal din printer være oprettet på saldi serveren. Kontakt saldi for uddybning.   
-765	Font størrelse
+765	Font str.
 766	Fontstørrelse på tekster som ikke er knap tekster i POS
 767
 768
@@ -775,3 +775,7 @@
 840	Tvungen brugervalg
 841	Kreditor kontonummer til inkassoselskab 
 842	Ved udfyldelse af dette felt sendes relevante dokumenter til inkassoselskab pr mail eller via API, når en rykker markeres til Inkasso. 
+843	Vælg om varetekster skal opdateres fra varekort eller overføres uændrede.
+844	Opdater varetekster.
+845	Varetekster opdateres fra varekort
+846	Varetekster forbliver uændrede

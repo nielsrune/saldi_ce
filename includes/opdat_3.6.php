@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------ includes/opdat_3.5.php-------lap 3.6.9 ------2017-05-05---------------
+// ------ includes/opdat_3.6.php-------lap 3.7.0 ------2017-11-14---------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -218,6 +218,30 @@ function opdat_3_6($under_nr, $lap_nr){
 		include("../includes/connect.php");
 		db_modify("UPDATE regnskab set version = '$nextver' where db = '$db'",__FILE__ . " linje " . __LINE__);
 	}
+	$nextver='3.7.0';
+	include("../includes/connect.php");
+	$r=db_fetch_array(db_select("select * from regnskab where id='1'",__FILE__ . " linje " . __LINE__));
+	$tmp=$r['version'];
+	if ($tmp<$nextver) {
+		echo "opdaterer hovedregnskab til ver $nextver<br />";
+		db_modify("UPDATE regnskab set version = '$nextver' where id = '1'",__FILE__ . " linje " . __LINE__);
+	}
+	include("../includes/online.php");
+	if ($db!=$sqdb){
+		echo "opdaterer regnskab til ver $nextver<br />";
+		db_modify("ALTER TABLE shop_varer add column saldi_variant int",__FILE__ . " linje " . __LINE__);
+		db_modify("ALTER TABLE shop_varer add column shop_variant int",__FILE__ . " linje " . __LINE__);
+		db_modify("ALTER TABLE batch_kob add column variant_id int",__FILE__ . " linje " . __LINE__);
+		db_modify("ALTER TABLE batch_salg add column variant_id int",__FILE__ . " linje " . __LINE__);
+		db_modify("ALTER TABLE lagerstatus add column variant_id int",__FILE__ . " linje " . __LINE__);
+		db_modify("UPDATE shop_varer set saldi_variant='0',shop_variant='0'",__FILE__ . " linje " . __LINE__);
+		db_modify("UPDATE batch_kob set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
+		db_modify("UPDATE batch_salg set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
+		db_modify("UPDATE lagerstatus set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
+		db_modify("UPDATE grupper set box1='$nextver' where art = 'VE'",__FILE__ . " linje " . __LINE__);
+	}
+	include("../includes/connect.php");
+	db_modify("UPDATE regnskab set version = '$nextver' where db = '$db'",__FILE__ . " linje " . __LINE__);
 }
 
 ?>

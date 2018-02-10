@@ -107,6 +107,7 @@ print "<tr><td><br></td></tr>\n";
 
 function vis_data($filnavn,$splitter,$feltnavn,$feltantal,$varenr,$bilag,$tegnset){
 global $charset;
+#cho "$charset<br>";
 
 $fp=fopen("$filnavn","r");
 if ($fp) {
@@ -285,7 +286,7 @@ print "</tbody></table>";
 print "</td></tr>";
 } # end function vis_data
 
-function overfoer_data($filnavn,$splitter,$feltnavn,$feltantal,$charset){
+function overfoer_data($filnavn,$splitter,$feltnavn,$feltantal,$tegnset) {
 global $charset;
 
 $x=0;
@@ -469,7 +470,8 @@ if ($fp) {
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			} else {
 				$imp_antal++;
-				db_modify("insert into varer($vare_a) values ($vare_b)",__FILE__ . " linje " . __LINE__);
+				$qtxt="insert into varer($vare_a) values ($vare_b)";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				$r=db_fetch_array(db_select("select id from varer where varenr='$varenr'",__FILE__ . " linje " . __LINE__));
 				$vare_id=$r['id'];
 			}
@@ -491,6 +493,7 @@ if ($fp) {
 	}
 }
 fclose($fp);
+#xit;
 transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";

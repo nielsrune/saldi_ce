@@ -23,7 +23,7 @@
 // 20130412 Rettet i formatet
 // 20140516 Grundet timeout ved mange varer eksporteres nu max 1000 hvorefter rutinen genstarter der hvor den er nået til. Søg $start,$slut & $z; 
 // 20140516 Indsat dkdecimal ved udskrivning af kost',salgs', og vejl.pris. 
-// 20140526 Rettet $varianter_id til $varianttypre_id 
+// 20140526 Rettet $varianter_id til $varianttype_id 
 
 @session_start();
 $s_id=session_id();
