@@ -30,6 +30,7 @@
 // 20140729 CA  - Listeanvisning ændres fra kvartal til måned - ca. Søg 20140729
 // 20160602 PHR	- Tilføjet hhv "$euvarekonto &&" & "$euydelseskonto &&" da der blev lavet lister på varelinjer uden kontonr.  
 // 20160824 PHR	- Hack til at vise lister hvis $euvarekonto mm ikke er udfyldt. #20160824
+// 20171130 PHR - varer.varenr ændret til varer.vare_id så varer der har ændret varenr også kommer med. Søg 20171130
 
 @session_start();
 $s_id=session_id();
@@ -121,7 +122,7 @@ while ($row = db_fetch_array($query)) {
 	$varesumdkk=0;
 	$ydelsessumdkk=0;
 	$fakturaer=0;
-	$debitorcvrnr=$row[cvrnr];
+	$debitorcvrnr=$row['cvrnr'];
 	if ( cvrnr_omr(cvrnr_land($debitorcvrnr)) == "EU" ) { 
 		echo "<!-- <p>Hvis i EU </p> -->\n" ;
 	} else { 
@@ -142,7 +143,10 @@ while ($row = db_fetch_array($query)) {
 		$modtagerfirma=$r['firmanavn'];
 		$modtagerlandekode = strtoupper(substr($modtagercvrnr, 0, 2));
 		$modtagercvrnr = strtoupper(substr($modtagercvrnr, 2));
-		$qq=db_select("select ordrelinjer.pris as pris, ordrelinjer.antal as antal, ordrelinjer.rabat as rabat, grupper.box12 as konto from ordrelinjer, varer, grupper where ordrelinjer.ordre_id = '$r[id]' and ordrelinjer.varenr=varer.varenr and varer.gruppe=grupper.kodenr and grupper.art='VG'",__FILE__ . " linje " . __LINE__);
+		$qtxt="select ordrelinjer.pris as pris, ordrelinjer.antal as antal, ordrelinjer.rabat as rabat, grupper.box12 as konto from "; #20171130
+		$qtxt.="ordrelinjer, varer, grupper where ordrelinjer.ordre_id = '$r[id]' and ordrelinjer.vare_id=varer.id ";
+		$qtxt.="and varer.gruppe=grupper.kodenr and grupper.art='VG' order by ordrelinjer.posnr";
+		$qq=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($rr = db_fetch_array($qq)) {
 			$debughtml.="<tr><td>".$rr['antal']." a ".$rr['pris']." (-".$rr['rabat']."</td><td>Konto: ".$rr['konto']."</td></tr>\n";
 			if (( $euvarekonto && $rr['konto'] == $euvarekonto) ||  ($rr['konto'] && $rr['konto'] != $euydelseskonto) || (!$rr['konto'] && !$euydelseskonto)) { #20160824 #20160602

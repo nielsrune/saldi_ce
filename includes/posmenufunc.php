@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//----------------- includes/posmenufunc.php -----ver 3.6.6---- 2017.02.07 ----------
+//----------------- includes/posmenufunc.php -----ver 3.7.1---- 2018.01.25 ----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -14,7 +14,7 @@
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 DANOSOFT ApS
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2015.08.20 Mulig for pris på varegenveje. Søg $pris
 // 2015.10.23	Diverse nye ændringer 
@@ -35,6 +35,8 @@
 // 2016.10.06 !$sum rettet til (!$sum && $a!='Kontant') da det skal være muligt at afslutte en 0 bon 20161006
 // 2017.02.07	Tilføjet knap sæt
 // 2017.03.24 Afd kommer nu fra global (pos_ordre).
+// 2017.12.10 Hvis ip ikke er sat disables terminal knap. #20171210
+// 2018.01.25 Tilføjet $varenr_ny så det også fungerer med variant stregkoder # 20180125 
 
 if (!function_exists('menubuttons')) {
 function menubuttons($id,$menu_id,$vare_id,$plads) {
@@ -56,7 +58,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 	$tt=date("H:i:s");
 	
 	if ($kasse=="?") find_kasse($kasse);
-	($vare_id || $vare_id_ny)?$disabled="disabled=\"disabled\"":$disabled=NULL; 
+	($vare_id || $vare_id_ny || $varenr_ny)?$disabled="disabled=\"disabled\"":$disabled=NULL;  #20180125
 	$r = db_fetch_array(db_select("select box2,box3,box4,box7,box10 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
 	$x=$kasse-1;
 	$optalassist=$r['box2'];
@@ -281,6 +283,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp NAME=\"krediter\" VALUE=\"$a\">\n";
 					} elseif ($c=='22') { #Kortterminal
 						$dis=$disabled;
+						if ($terminal_ip) { #20171210
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						if ($terminal_ip=='box' && isset($_COOKIE['salditerm'])) $terminal_ip=$_COOKIE['salditerm'];
 						if (!$terminal_ip || $terminal_ip=='box') {
@@ -288,10 +291,10 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 							if ($fp=fopen($filnavn,'r')) {
 								$terminal_ip=trim(fgets($fp));
 								fclose ($fp);
-							} else {
-								$dis=" disabled='disabled' ";
+									setcookie("salditerm",$terminal_ip,time()+3600);
+								} else $dis=" disabled='disabled' ";
 							}
-						} #else setcookie("salditerm",$terminal_ip,time()+3600);
+						} else $dis=" disabled='disabled' ";
 						if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']) $url='https://';
 						else $url='http://';
 						$url.=$_SERVER['SERVER_NAME'];#.$_SERVER['PHP_SELF'];

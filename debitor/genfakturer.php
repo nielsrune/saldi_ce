@@ -1,12 +1,10 @@
-<?php #topkode_start
-@session_start();
-$s_id=session_id();
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+<?php
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------debitor/genfakturer.php-----lap 3.6.7-----2017-01-03------
+// ---------debitor/genfakturer.php-----lap 3.7.0-----2018-01-05------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -25,12 +23,16 @@ $s_id=session_id();
 // En dansk oversaetelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2003-2017 DANOSOFT ApS
+// Copyright (c) 2003-2018 DANOSOFT ApS
 // ----------------------------------------------------------------------
 // Erstattet addslashes med db_escape_string
 // 2014.03.17 Tilføjet procent til "insert into ordrelinjer... 
 // 2016.08.25 Kontonr blev ikke opdatere hvid der var blevet skiftet kontonr på kunde inden genfakt 21060825
 // 2017.01.03 Funktion find_nextfakt flyttet til ../includes/ordrefunc.php
+// 2018.01.05 Tilføjet opdatering af varetekster. $opdat_text 
+
+@session_start();
+$s_id=session_id();
 
 $id=$_GET['id'];
 $css="../css/standard.css";
@@ -56,7 +58,7 @@ include("pbsfakt.php");
 
 $r=db_fetch_array(db_select("select id,box1 from grupper where art = 'GF' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
 $gf_id=$r['id'];
-list($org_nr,$komplet,$fakt_dato,$opdat_pris,$slet_gfdato) = explode(",",$r['box1']);
+list($org_nr,$komplet,$fakt_dato,$opdat_pris,$slet_gfdato,$opdat_text) = explode(",",$r['box1']);
 if ($org_nr) {$org_nr_on='checked';$org_nr_off='';}
 else {$org_nr_on='';$org_nr_off='checked';}
 if ($komplet) {$komplet_on='checked';$komplet_off='';}
@@ -65,6 +67,8 @@ if ($fakt_dato) {$fakt_dato_on='checked';$fakt_dato_off='';}
 else {$fakt_dato_on='';$fakt_dato_off='checked';}
 if ($opdat_pris) {$opdat_pris_on='checked';$opdat_pris_off='';}
 else {$opdat_pris_on='';$opdat_pris_off='checked';}
+if ($opdat_text) {$opdat_text_on='checked';$opdat_text_off='';}
+else {$opdat_text_on='';$opdat_text_off='checked';}
 if ($slet_gfdato) {$slet_gfdato_on='checked';$slet_gfdato_off='';}
 else {$slet_gfdato_on='';$slet_gfdato_off='checked';}
 
@@ -73,6 +77,7 @@ if (!$gf_id) {
 	$komplet_off='checked';
 	$fakt_dato_on='checked';
 	$opdat_pris_on='checked';
+	$opdat_text_on='checked';
 	$slet_gfdato_on='checked';
 }
 
@@ -89,16 +94,17 @@ if ($_POST) {
 		$komplet=if_isset($_POST['komplet']);
 		$fakt_dato=if_isset($_POST['fakt_dato']);
 		$opdat_pris=if_isset($_POST['opdat_pris']);
+		$opdat_text=if_isset($_POST['opdat_text']);
 		$slet_gfdato=if_isset($_POST['slet_gfdato']);
 
-		$box1="$org_nr,$komplet,$fakt_dato,$opdat_pris,$slet_gfdato";
+		$box1="$org_nr,$komplet,$fakt_dato,$opdat_pris,$slet_gfdato,$opdat_text";
 		if ($gf_id)  db_modify("update grupper set box1='$box1' where id='$gf_id'",__FILE__ . " linje " . __LINE__);
 		else db_modify("insert into grupper (beskrivelse,art,kodenr,box1) values ('Genfakturering','GF','$bruger_id','$box1')",__FILE__ . " linje " . __LINE__);
 
 		$udskriv_antal=0;
 		$ny_liste='';
 		for ($q=0; $q<$ordre_antal; $q++) {
-			list($id,$pbs)=explode(",",genfakt($ordre_id[$q],$org_nr,$fakt_dato,$opdat_pris,$slet_gfdato));
+			list($id,$pbs)=explode(",",genfakt($ordre_id[$q],$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato));
 
 			if ($komplet) {
 				levering($id,'on','on');
@@ -114,12 +120,8 @@ if ($_POST) {
 				if ($ny_liste) $ny_liste.=",$id";
 				else $ny_liste="$id";
 			}
-#				if ($q) $udskriv.=",$id";
-#				else $udskriv ="$id";
 			if ($komplet && $pbs) {
-#				echo "A PBS pbsfakt($id)";
 				pbsfakt($id);
-#				echo "B PBS pbsfakt($id)";
 			} else {
 				if ($udskriv_antal) $udskriv.=",$id";
 				else $udskriv ="$id";
@@ -127,13 +129,10 @@ if ($_POST) {
 			}
 		} 	
 	}
-#echo $udskriv;
-	if ($udskriv && $komplet) print "<BODY onload=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$udskriv_antal&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+	if ($udskriv && $komplet) print "<BODY onload=\"javascript:window.open('formularprint.php?id=-1&ordre_antal=$udskriv_antal&skriv=$udskriv&formular=4' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
 	else {
 		print "<meta http-equiv=\"refresh\" content=\"1;URL=ret_genfakt.php?ordreliste=$ny_liste\">";	
 	}
-#	print "<BODY onload=\"javascript:alert('Genfakturering udf&oslash;rt')\">";
-#	print "<meta http-equiv=\"refresh\" content=\"1;URL=../includes/luk.php\">";	
 	
 } else {
 	print "<form name=genfakturer action=genfakturer.php?id=$id&ordre_antal=$ordre_antal&genfakt=$ordreliste method=post>";
@@ -143,13 +142,14 @@ if ($_POST) {
 	print "<tr><td title='".findtekst(72,$sprog_id)."'>".findtekst(73,$sprog_id)."</td><td align=center><input type=radio name=komplet value=1 title='".findtekst(74,$sprog_id)."' $komplet_on></td><td align=center><input type=radio name=komplet value=0 title='".findtekst(75,$sprog_id)."' $komplet_off></td></tr>";
 	print "<tr><td title='".findtekst(76,$sprog_id)."'>".findtekst(77,$sprog_id)."</td><td align=center><input type=radio name=fakt_dato value=1 title='".findtekst(78,$sprog_id)."' $fakt_dato_on></td><td align=center	><input type=radio name=fakt_dato value=0 title='".findtekst(79,$sprog_id)."' $fakt_dato_off></td></tr>";
 	print "<tr><td title='".findtekst(85,$sprog_id)."'>".findtekst(86,$sprog_id)."</td><td align=center><input type=radio name=opdat_pris value=1 title='".findtekst(87,$sprog_id)."' $opdat_pris_on></td><td align=center	><input type=radio name=opdat_pris value=0 title='".findtekst(88,$sprog_id)."' $opdat_pris_off></td></tr>";
+	print "<tr><td title='".findtekst(843,$sprog_id)."'>".findtekst(844,$sprog_id)."</td><td align=center><input type=radio name=opdat_text value=1 title='".findtekst(845,$sprog_id)."' $opdat_text_on></td><td align=center	><input type=radio name=opdat_text value=0 title='".findtekst(846,$sprog_id)."' $opdat_text_off></td></tr>";
 	print "<tr><td title='".findtekst(220,$sprog_id)."'>".findtekst(221,$sprog_id)."</td><td align=center><input type=radio name=slet_gfdato value=1 title='".findtekst(222,$sprog_id)."' $slet_gfdato_on></td><td align=center	><input type=radio name=slet_gfdato value=0 title='".findtekst(223,$sprog_id)."' $slet_gfdato_off></td></tr>";
 	print "<tr><td colspan=3 align=center><input type=submit name=Ok value=".findtekst(80,$sprog_id).">&nbsp;<input type=submit name=Afbryd value=".findtekst(81,$sprog_id)."></td></tr>";
 	print "</tbody></table>";
 	print "</form>";
 }
 	
-function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$slet_gfdato) {
+function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato) {
 	transaktion('begin');
 	if ($r=db_fetch_array(db_select("select * from ordrer where id = $id",__FILE__ . " linje " . __LINE__))){
 		$pbs=$r['pbs'];
@@ -175,12 +175,14 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$slet_gfdato) {
 		$lev_bynavn=db_escape_string($r['lev_bynavn']);
 		$email=db_escape_string($r['email']);
 		$udskriv_til=db_escape_string($r['udskriv_til']);
+		if (strstr($udskriv_til,'PBS')) $udskriv_til='PBS';
 		$procenttillag=db_escape_string($r['procenttillag']);
 		if ($r['nextfakt']) $tmp=$r['nextfakt'];
 		else $tmp=date("Y-m-d");			
 		$nextfakt=find_nextfakt($r['fakturadate'],$tmp);
 		if ($fakt_dato) $fakturadate=$r['nextfakt'];
 		else $fakturadate=date("Y-m-d");
+		if (!$fakturadate) $fakturadate=date("Y-m-d");
 		if ($org_nr) $ordrenr=$r['ordrenr'];
 		else {
 			$r2=db_fetch_array(db_select("select MAX(ordrenr) as ordrenr from ordrer where art='DO' or art='DK'",__FILE__ . " linje " . __LINE__));
@@ -202,22 +204,34 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$slet_gfdato) {
 				$gruppe=$r2['gruppe'];
 				$r2=db_fetch_array(db_select("select box7 from grupper where art='VG' and kodenr='$gruppe'",__FILE__ . " linje " . __LINE__));
 				$momsfri=$r2['box7'];
-				if (!$opdat_pris) {
-					$pris=$r['pris']*1;
-					$kostpris=$r['kostpris']*1;
-				} else {
+				if ($opdat_pris) {
 					$r2=db_fetch_array(db_select("select salgspris,kostpris from varer where id='$r[vare_id]'",__FILE__ . " linje " . __LINE__));
 					$pris=$r2['salgspris']*1;
 					$kostpris=$r2['kostpris']*1;
 					$sum=$sum+$r['antal']*$pris-($r['antal']*$pris*$r['rabat']/100);
+				} else {
+					$pris=$r['pris']*1;
+					$kostpris=$r['kostpris']*1;
 				}
-				db_modify("insert into ordrelinjer (ordre_id,posnr,varenr,vare_id,beskrivelse,enhed,antal,pris,rabat,procent,lev_varenr,momsfri,samlevare,kostpris,leveres,projekt) values ('$ny_id','$r[posnr]','".db_escape_string($r['varenr'])."','$r[vare_id]','".db_escape_string($r['beskrivelse'])."','$r[enhed]','$r[antal]','$pris','$r[rabat]','$r[procent]','".db_escape_string($r['lev_varenr]'])."','$momsfri','$r[samlevare]','$kostpris','$r[antal]','".db_escape_string($projekt)."')",__FILE__ . " linje " . __LINE__);
+				if ($opdat_text) {
+					$r2=db_fetch_array(db_select("select beskrivelse from varer where id='$r[vare_id]'",__FILE__ . " linje " . __LINE__));
+					$beskrivelse=$r2['beskrivelse'];
+				} else {
+					$beskrivelse=$r['beskrivelse'];
+				}
+				$qtxt="insert into ordrelinjer ";
+				$qtxt.="(ordre_id,posnr,varenr,vare_id,beskrivelse,enhed,antal,pris,rabat,procent,lev_varenr,momsfri,samlevare,kostpris,leveres,projekt) ";
+				$qtxt.="values ";
+				$qtxt.="('$ny_id','$r[posnr]','".db_escape_string($r['varenr'])."','$r[vare_id]','".db_escape_string($beskrivelse)."','$r[enhed]','$r[antal]',";
+				$qtxt.="'$pris','$r[rabat]','$r[procent]','".db_escape_string($r['lev_varenr]'])."','$momsfri','$r[samlevare]','$kostpris','$r[antal]',";
+				$qtxt.="'".db_escape_string($projekt)."')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}	else {
-				db_modify("insert into ordrelinjer (ordre_id, posnr, beskrivelse) values ('$ny_id','$r[posnr]','".db_escape_string($r['beskrivelse'])."')",__FILE__ . " linje " . __LINE__);
+				$qtxt="insert into ordrelinjer (ordre_id, posnr, beskrivelse) values ('$ny_id','$r[posnr]','".db_escape_string($r['beskrivelse'])."')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 		}	
 		if ($opdat_pris) db_modify("update ordrer set sum=$sum where id='$ny_id'",__FILE__ . " linje " . __LINE__);	
-#echo "SLET : $slet_gfdato<br>";		
 		if ($slet_gfdato) db_modify("update ordrer set nextfakt=NULL where id='$id'",__FILE__ . " linje " . __LINE__);	
 	}
 	transaktion('commit');

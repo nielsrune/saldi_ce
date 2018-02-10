@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------kreditor/modtag.php------- patch 3.6.6 ------- 2016.10.22 -----
+// -------kreditor/modtag.php------- patch 3.7.1 ------- 2018.01.23 -----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -33,6 +33,7 @@
 // 20141005 Ændret + til - pga fejl ved netagiv modtagelse på samme lev ordre.
 // 20150118 sætter kobsdate hvis ikke sat. Søg kobsdate.
 // 20161022 PHR - tilretning iht flere afd pr lager. 20161022
+// 20170123 PHR - Diverse i forhold til varianter
 
 
 @session_start();
@@ -111,8 +112,9 @@ if ($fejl==0) {
 			$leveres[$x]=$row['leveres'];
 #			$pris[$x]=$row['pris']-($row['pris']*$row['rabat']/100);
 			$serienr[$x]=trim($row['serienr']);
-			$variant_id[$x]=trim($row['variant_id']);
+			$variant_id[$x]=$row['variant_id']*1;
 			$lager[$x]=$row['lager']*1;
+			if (!$lager[$x]) $lager[$x]=1;
 		}
 	}
 	$linjeantal=$x;
@@ -148,11 +150,15 @@ if ($fejl==0) {
 	}
 	for ($x=1; $x<=$linjeantal; $x++) {
 		$sn_start=0;
-		$query = db_select("select id, gruppe, beholdning from varer where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
-		$row = db_fetch_array($query);
-#		$vare_id[$x]=$row[id];
-		$gruppe[$x]=$row['gruppe'];
-		$beholdning=$row['beholdning']+$leveres[$x];
+		$qtxt="select id, gruppe, beholdning from varer where id='$vare_id[$x]'";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$gruppe[$x]=$r['gruppe'];
+		$vare_beholdning=$r['beholdning']+$leveres[$x];
+		if ($variant_id[$x]) {
+			$qtxt="select variant_beholdning from variant_varer where id = '$variant_id[$x]'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$variant_beholdning=$r['variant_beholdning']+$leveres[$x];
+		}
 		if (($vare_id[$x])&&($leveres[$x]!=0)) {
 			$query = db_select("select * from grupper where art='VG' and kodenr='$gruppe[$x]'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
@@ -165,10 +171,10 @@ if ($fejl==0) {
 				}
 				db_modify("update ordrelinjer set bogf_konto='$box4' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
 # PHR - Pris fjernet 06.04.08 - Prisen skal ikke saettes ved modtagelse
-				db_modify("insert into batch_kob(vare_id,linje_id,kobsdate,ordre_id,antal,lager) values ($vare_id[$x],$linje_id[$x],'$levdate',$id,$leveres[$x],$lager[$x])",__FILE__ . " linje " . __LINE__);
+				db_modify("insert into batch_kob(vare_id,variant_id,linje_id,kobsdate,ordre_id,antal,lager) values ('$vare_id[$x]','$variant_id[$x]','$linje_id[$x]','$levdate','$id','$leveres[$x]','$lager[$x]')",__FILE__ . " linje " . __LINE__);
 			} else { #hvis varen ER lagerfoert
-				db_modify("update varer set beholdning='$beholdning' where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
-				if ($variant_id[$x]) db_modify("update variant_varer set variant_beholdning=variant_beholdning+$leveres[$x] where id='$variant_id[$x]'",__FILE__ . " linje " . __LINE__);
+				db_modify("update varer set beholdning='$vare_beholdning' where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
+				if ($variant_id[$x]) db_modify("update variant_varer set variant_beholdning='$variant_beholdning' where id='$variant_id[$x]'",__FILE__ . " linje " . __LINE__);
 				 if (!$lager[$x]) { #20161022
 					$r=db_fetch_array(db_select("select afd from ansatte where navn = '$ref'",__FILE__ . " linje " . __LINE__));
 					if ($afd=$r['afd']) {
@@ -182,12 +188,14 @@ if ($fejl==0) {
 				}
 				
 				$lager[$x]*=1;
-				$q=db_select("select * from lagerstatus where vare_id='$vare_id[$x]' and lager='$lager[$x]'",__FILE__ . " linje " . __LINE__);
+				$qtxt="select * from lagerstatus where vare_id='$vare_id[$x]' and variant_id='$variant_id[$x]'";
+				($lager > 1)?$qtxt.=" and lager = '$lager[$x]'":$qtxt.=" and lager <= '1";
+				$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				if ($r=db_fetch_array($q)) $qtxt="update lagerstatus set beholdning=$r[beholdning]+$leveres[$x] where id=$r[id]";
-				else $qtxt="insert into lagerstatus (vare_id, lager, beholdning) values ($vare_id[$x], $lager[$x], $leveres[$x])";
+				else $qtxt="insert into lagerstatus (vare_id, variant_id, lager, beholdning) values ('$vare_id[$x]', '$variant_id[$x]', '$lager[$x]', '$leveres[$x]')";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
 				if ($box9=='on') {
-					if ($leveres[$x]<0) returnering($id,$linje_id[$x],$leveres[$x],$vare_id[$x],$pris[$x],$serienr[$x],$lager[$x],$kred_linje_id[$x],$levdate);#Varereturnering
+					if ($leveres[$x]<0) returnering($id,$linje_id[$x],$leveres[$x],$vare_id[$x], $variant_id[$x],$pris[$x],$serienr[$x],$lager[$x],$kred_linje_id[$x],$levdate);#Varereturnering
 					else 	reservation($linje_id[$x],$leveres[$x],$vare_id[$x],$serienr[$x],$lager[$x]);
 				} else {
 					db_modify("update ordrelinjer set bogf_konto='$box4' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
@@ -196,7 +204,7 @@ if ($fejl==0) {
 #						if ($rest<0) $rest=0;
 #						elseif ($rest>$leveres[$x])$rest=$leveres[$x];	
 #cho __LINE__." insert into batch_kob(vare_id,linje_id,kobsdate,ordre_id,antal,rest) values ($vare_id[$x],$linje_id[$x],'$levdate','$id','$leveres[$x]','$leveres[$x]')<br>";
-						db_modify("insert into batch_kob(vare_id,linje_id,kobsdate,ordre_id,antal,rest,lager) values ($vare_id[$x],$linje_id[$x],'$levdate','$id','$leveres[$x]','$leveres[$x]',$lager[$x])",__FILE__ . " linje " . __LINE__);
+						db_modify("insert into batch_kob(vare_id,variant_id,linje_id,kobsdate,ordre_id,antal,rest,lager) values ('$vare_id[$x]','$variant_id[$x]','$linje_id[$x]','$levdate','$id','$leveres[$x]','$leveres[$x]','$lager[$x]')",__FILE__ . " linje " . __LINE__);
 #					} else {
 					#Pris fjernet fra nedenstaende 06.04.08 - Prisen skal ikke saettes ved modtagelse
 #cho "insert into batch_kob(vare_id, linje_id, kobsdate, ordre_id, antal,rest) values ($vare_id[$x],$linje_id[$x],'$levdate','$id','$leveres[$x]','$leveres[$x]')<br>";
@@ -208,12 +216,21 @@ if ($fejl==0) {
 			$r=db_fetch_array(db_select("select box2 from grupper where art = 'DIV' and kodenr = '5' ",__FILE__ . " linje " . __LINE__));
 			$shopurl=trim($r['box2']);
 			if (strlen($shopurl)>1) { #20131001
-				$r=db_fetch_array(db_select("select beholdning,publiceret from varer where id = '$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
+				$qtxt="select beholdning,publiceret from varer where id = '$vare_id[$x]'";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				if ($r['publiceret']) {
 					$shop_beholdning=$r['beholdning'];
-					$r=db_fetch_array(db_select("select sum(ordrelinjer.antal-ordrelinjer.leveret) as antal from ordrer,ordrelinjer where ordrelinjer.vare_id = '$vare_id[$x]' and ordrelinjer.ordre_id = ordrer.id and (ordrer.art='DO' or ordrer.art='DK') and (ordrer.status='1' or ordrer.status='2') and ordrer.id!='$id'",__FILE__ . " linje " . __LINE__));
+					if ($variant_id[$x]) {
+						$qtxt="select variant_beholdning from variant_varer where id = '$variant_id[$x]'";
+						$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+						$shop_beholdning=$r['variant_beholdning'];
+					}
+					$qtxt="select shop_id from shop_varer where saldi_id = '$variant_id[$x]'";
+					$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+					$shop_beholdning=$r['variant_beholdning'];
+					$r=db_fetch_array(db_select("select sum(ordrelinjer.antal-ordrelinjer.leveret) as antal from ordrer,ordrelinjer where ordrelinjer.vare_id = '$vare_id[$x]' and ordrelinjer.variant_id = '$variant_id[$x]' and ordrelinjer.ordre_id = ordrer.id and (ordrer.art='DO' or ordrer.art='DK') and (ordrer.status='1' or ordrer.status='2') and ordrer.id!='$id'",__FILE__ . " linje " . __LINE__));
 					$shop_beholdning-=$r['antal'];
-					$r=db_fetch_array($q=db_select("select shop_id from shop_varer where saldi_id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
+					$r=db_fetch_array($q=db_select("select shop_id from shop_varer where saldi_id='$vare_id[$x]' and saldi_variant='$variant_id[$x]'",__FILE__ . " linje " . __LINE__));
 					$shop_id=$r['shop_id'];
 					$url=$shopurl."/opdat_beholdning.php?vare_id=$vare_id[$x]&shop_id=$shop_id&beholdning=$shop_beholdning";
 					print "<body onload=\"javascript:window.open('$url','opdat:beholdning');\">";
@@ -233,7 +250,7 @@ if ($fejl==0) {
 #cho  __LINE__." Rest $rest<br>"; 
 				if ($rest) {
 					$qtxt="select * from batch_kob where ordre_id='$id' and vare_id='$vare_id[$x]' and rest>'0' and linje_id!='$linje_id[$x]'";
-					if (count($lager)) $qtxt.=" and lager='$lager[$x]'";
+					($lager > 1)?$qtxt.=" and lager = '$lager[$x]'":$qtxt.=" and lager <= '1";
 #cho __LINE__." $qtxt<br>";
 					$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 					while ($r2=db_fetch_array($q2)) {
@@ -257,7 +274,7 @@ if ($fejl==0) {
 				}
 				if ($rest) {
 					$qtxt="select * from batch_kob where ordre_id!='$id' and vare_id='$vare_id[$x]' and rest>'0' and linje_id!='$linje_id[$x]'";
-					if ($lager[$x]) $qtxt.=" and lager='$lager[$x]'";
+					($lager > 1)?$qtxt.=" and lager = '$lager[$x]'":$qtxt.=" and lager <= '1";
 					$qtxt.=" order by id";
 #cho __line__." $qtxt<br>";
 					$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
@@ -311,7 +328,9 @@ if ($fejl==0) {
 				}
 				if ($rest) {
 #cho __LINE__." Rest $rest<br>";
-					$q2=db_select("select * from batch_kob where antal='0' and ordre_id='0' and vare_id='$vare_id[$x]' and lager='$lager[$x]' and rest<'0' and linje_id!='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
+					$qtxt="select * from batch_kob where antal='0' and ordre_id='0' and vare_id='$vare_id[$x]' and rest<'0' and linje_id!='$linje_id[$x]'";
+					($lager > 1)?$qtxt.=" and lager = '$lager[$x]'":$qtxt.=" and lager <= '1";
+					$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 					while ($r2=db_fetch_array($q2)) {
 						if ($rest) {
 #cho __LINE__." $r2[rest]+$rest>=0<br>";
@@ -412,8 +431,7 @@ function reservation($linje_id, $leveres, $vare_id, $serienr,$lager) {
 	}
 }
 
-function returnering ($id,$linje_id,$leveres,$vare_id, $pris, $serienr,$lager,$kred_linje_id, $levdate)
-{
+function returnering ($id,$linje_id,$leveres,$vare_id, $variant_id,$pris, $serienr,$lager,$kred_linje_id, $levdate) {
 	global $id;
 	$rest=$leveres;
 
@@ -425,9 +443,9 @@ function returnering ($id,$linje_id,$leveres,$vare_id, $pris, $serienr,$lager,$k
 	}
 	$query = db_select("select * from batch_kob where linje_id=$kred_linje_id",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
-		$batch_kob_id=$row[id];
-		$batch_antal=$row[antal];
-		$batch_rest=$row[rest];
+		$batch_kob_id=$row['id'];
+		$batch_antal=$row['antal'];
+		$batch_rest=$row['rest'];
 		$batch_pris=$row['pris'];
 		if ($batch_rest+$leveres>=0) {
 			db_modify("update batch_kob set rest=$batch_rest+$leveres where id=$batch_kob_id",__FILE__ . " linje " . __LINE__);
@@ -437,7 +455,7 @@ function returnering ($id,$linje_id,$leveres,$vare_id, $pris, $serienr,$lager,$k
 			}
 		}
 	}
-	db_modify("insert into batch_kob(linje_id, ordre_id, vare_id, kobsdate,antal,rest,lager) values ($linje_id, $id, $vare_id, '$levdate', $leveres,'0',$lager)",__FILE__ . " linje " . __LINE__);
+	db_modify("insert into batch_kob(linje_id, ordre_id, vare_id, variant_id, kobsdate,antal,rest,lager) values ('$linje_id', '$id', '$vare_id', '$variant_id','$levdate', '$leveres','0',$lager)",__FILE__ . " linje " . __LINE__);
 }
 
 

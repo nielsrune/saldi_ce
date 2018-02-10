@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------/admin/opret.php-----patch 3.6.9------ 2017-09-07 --------
+// ------------/admin/opret.php-----patch 3.7.0------ 2017-11-17 --------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -56,7 +56,8 @@
 // 2017.02.16 PHR	Indextabeller oprettes kun for postgresql baser da der opstår fejl på mysql
 // 2017.03.02 PK Tilføjet tabel bilag_tjekskema, se opdat_3.6.php ver 3.6.6
 // 2017.05.02 PHR Tilføjet lager til tabel ordrer se opdat_3.6.php ver 3.6.8
-// 2017.09.07 PHR Advokaternes Inkassoservice indsættes son default inkassovirksomhed. ver. 3.7.0  
+// 2017.09.07 PHR Advokaternes Inkassoservice indsættes som default inkassovirksomhed. ver. 3.6.9  
+// 2017.11.17 PHR variant_id indsat i lagerstatus,batch_køb & batch_salg samt shop_varer som shop_variant & saldi_variant. 3.7.0
 
 @session_start();
 $s_id=session_id();
@@ -242,9 +243,9 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 	db_modify("CREATE TABLE transaktioner (id serial NOT NULL,kontonr numeric(15,0),bilag numeric(15,0),transdate date,logtime time,beskrivelse text,debet numeric(15,3),kredit numeric(15,3),faktura text,kladde_id integer,projekt text,ansat numeric(15,0),logdate date,afd integer,ordre_id integer,valuta text,valutakurs numeric(15,3),moms numeric(15,3),adresser_id int4,kasse_nr numeric(15,0),land varchar(3),PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE simulering (id serial NOT NULL,kontonr numeric(15,0),bilag numeric(15,0),transdate date,beskrivelse text,debet numeric(15,3),kredit numeric(15,3),faktura text,kladde_id int4,projekt text,ansat numeric(15,0),logdate date,logtime time,afd int4,ordre_id int4,valuta text,valutakurs numeric(15,3),moms numeric(15,3),adresser_id int4,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE varer (id serial NOT NULL,varenr text,stregkode text,beskrivelse text,enhed text,enhed2 text,indhold numeric(15,3),forhold numeric(15,3),gruppe text,salgspris numeric(15,3),kostpris numeric(15,3),provisionsfri varchar(2),notes text,lukket varchar(2),serienr text,beholdning numeric(15,3),samlevare varchar(2),delvare varchar(2),min_lager numeric(15,3),max_lager numeric(15,3), trademark text,location text,retail_price numeric(15,3),special_price numeric(15,3),campaign_cost numeric(15,3),tier_price numeric(15,3),open_colli_price numeric(15,3),colli numeric(15,3),outer_colli numeric(15,3),outer_colli_price numeric(15,3),special_from_date date,special_to_date date,special_from_time time,special_to_time time,komplementaer text,circulate integer,operation integer,prisgruppe integer,tilbudgruppe integer,rabatgruppe integer,dvrg integer,m_type varchar(10),m_rabat text,m_antal text,folgevare text,kategori text,varianter text,publiceret varchar(2),montage numeric(15,3),demontage numeric(15,3),fotonavn text,tilbudsdage text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE lagerstatus (id serial NOT NULL,lager integer,vare_id integer,beholdning numeric(15,3),lok1 text,lok2 text,lok3 text,lok4 text,lok5 text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE batch_kob (id serial NOT NULL,kobsdate date,fakturadate date,vare_id integer,linje_id integer,ordre_id integer,pris numeric(15,3),antal numeric(15,3),rest numeric(15,3),lager integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE batch_salg (id serial NOT NULL,salgsdate date,fakturadate date,batch_kob_id integer,vare_id integer,linje_id integer,ordre_id integer,pris numeric(15,3),antal numeric(15,3),lev_nr integer,lager integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	db_modify("CREATE TABLE lagerstatus (id serial NOT NULL,lager integer,vare_id integer,variant_id integer,beholdning numeric(15,3),lok1 text,lok2 text,lok3 text,lok4 text,lok5 text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	db_modify("CREATE TABLE batch_kob (id serial NOT NULL,kobsdate date,fakturadate date,vare_id integer,variant_id integer,linje_id integer,ordre_id integer,pris numeric(15,3),antal numeric(15,3),rest numeric(15,3),lager integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	db_modify("CREATE TABLE batch_salg (id serial NOT NULL,salgsdate date,fakturadate date,batch_kob_id integer,vare_id integer,variant_id integer,linje_id integer,ordre_id integer,pris numeric(15,3),antal numeric(15,3),lev_nr integer,lager integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE serienr (id serial NOT NULL,vare_id integer,kobslinje_id integer,salgslinje_id integer,batch_kob_id integer,batch_salg_id integer,serienr text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE styklister (id serial NOT NULL,vare_id integer,indgaar_i integer,antal numeric(15,3),posnr integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE enheder (id serial NOT NULL,betegnelse text,beskrivelse text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
@@ -294,7 +295,7 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 	db_modify("CREATE TABLE bilag_tjekskema (id serial NOT NULL,tjekskema_id integer,bilag_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	
 	db_modify("CREATE TABLE shop_adresser (id serial NOT NULL,saldi_id integer,shop_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE shop_varer (id serial NOT NULL,saldi_id integer,shop_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	db_modify("CREATE TABLE shop_varer (id serial NOT NULL,saldi_id integer,saldi_variant integer,shop_id integer,shop_variant integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE shop_ordrer (id serial NOT NULL,saldi_id integer,shop_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE varianter (id serial NOT NULL,beskrivelse text,shop_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE variant_typer (id serial NOT NULL,variant_id integer,shop_id integer,beskrivelse text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);

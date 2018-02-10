@@ -1,16 +1,20 @@
 <?php
-
-// --------------includes/tjek4opdat.php----------lap 3.6.2----- 2016-01-16------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// --------------includes/tjek4opdat.php----------lap 3.7.0----- 2017-11-14------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -19,12 +23,14 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk ApS
 // ----------------------------------------------------------------------
+//
 // 2013.09.06 Indsat $b=3;$c=0;  Søg 20130906  
 // 2014.05.02 Indsat $b==4{ osv. PHR Danosoft Søg 20140502
 // 2015.02.09 Indsat $b==5{ osv. PHR Danosoft Søg 20150209
 // 2016.01.16 Indsat $b==6{ osv. PHR Danosoft Søg 20160116
+// 2017.11.14 Indsat $b==7{ osv. PHR Søg 20171114
 
 if (!function_exists('tjek4opdat')) {
 	function tjek4opdat($dbver,$version) {
@@ -100,6 +106,11 @@ if (!function_exists('tjek4opdat')) {
 					include("../includes/opdat_3.6.php");
 					opdat_3_6($b,$c);
 					$b=7;$c=0;
+				}
+				if ($b==7) { #20171114
+					include("../includes/opdat_3.7.php");
+					opdat_3_7($b,$c);
+					$b=8;$c=0;
 				}
 			}
 		}

@@ -48,7 +48,7 @@ include("../includes/std_func.php");
 
 $id=if_isset($_GET['id'])*1;
 $img=if_isset($_GET['src']);
-
+$stregkode=if_isset($_GET['stregkode']);
 
 $banned=array('<?','<?php','?>');
 $r=db_fetch_array(db_select("select box1 from grupper where art='LABEL'",__FILE__ . " linje " . __LINE__));
@@ -80,8 +80,12 @@ $dkkpris=str_replace(',00',',-',dkdecimal($salgspris));
 $txt=str_replace('$beskrivelse',$r['beskrivelse'],$txt);
 $txt=str_replace('$varenr',$r['varenr'],$txt);
 $txt=str_replace('$trademark',$r['trademark'],$txt);
+if ($stregkode) {
+	$txt=str_replace('$stregkode',$stregkode,$txt);
+} else {
 if ($r['stregkode']) $txt=str_replace('$stregkode',$r['stregkode'],$txt);
 else $txt=str_replace('$stregkode',$r['varenr'],$txt);
+}
 if (strpos($txt,'$enhedspris/$enhed')) {
 	if ($r['enhed'] && $r['indhold']) {
 		$txt=str_replace('$enhedspris',dkdecimal(($r['pris']/$r['indhold'])),$txt);

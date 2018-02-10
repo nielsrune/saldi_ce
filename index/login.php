@@ -38,6 +38,7 @@ ob_start(); //Starter output buffering
 // 2016.11.04	PHR - Div ændringer relateret til bedre sikkerhed
 // 2017.02.10	PHR - Aktivering af nyt API 20170217
 // 2017.09.11	PHR	- Tilføjet db_type til global og rettet $sqdb til $db grundet db fejl ved login fra anden session uden logaf. 20170911 
+// 2018.01.08	PHR	-	Udfaset gammelt API kald 20180108
 
 @session_start();
 session_unset();
@@ -276,7 +277,9 @@ if(!isset($afbryd)){
 		if ($api_fil) { #20170210
 			system ("/usr/bin/wget --spider $api_fil?get_stock=* &\n");
 			system ("/usr/bin/wget --spider $api_fil?put_new_orders=1 &\n");
-		} else { # skal udfases
+		} 
+/*		
+		else { # skal udfases
 			$r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));
 			if ($apifil=$r['box2']) {
 				(strpos($r['box2'],'opdat_status=1'))?$opdat_status=1:$opdat_status=0;
@@ -314,6 +317,7 @@ if(!isset($afbryd)){
 				}
 			}
 		}
+*/		
 		if (!$sag_rettigheder&&$rettigheder) print "<meta http-equiv=\"refresh\" content=\"0;URL=menu.php\">";
 		elseif (substr($sag_rettigheder,2,1)) print "<meta http-equiv=\"refresh\" content=\"0;URL=../sager/sager.php\">";
 		elseif (substr($sag_rettigheder,0,1)) print "<meta http-equiv=\"refresh\" content=\"0;URL=../sager/loen.php\">";

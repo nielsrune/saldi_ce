@@ -616,12 +616,23 @@ function ordrelinjer($form_nr,$art_nr,$formularsprog){
 	print "<td align=center>Y</td>\n";
 	print "<td align=center>Linafs.</td></tr>\n";
 	#		print "<td align=center>Understr.</td></tr>";
-	$query=db_select("select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse = 'generelt' and sprog='$formularsprog' order by xa",__FILE__ . " linje " . __LINE__);
-	if (!$row=db_fetch_array($query)) {
-		$query=db_modify ("insert into formularer (formular, art, beskrivelse, xa, ya, xb,sprog) values ($form_nr, $art_nr, 'generelt', 34, 185, 4,'$formularsprog')",__FILE__ . " linje " . __LINE__);
-		$query=db_select("select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse = 'generelt' and sprog='$formularsprog' order by xa",__FILE__ . " linje " . __LINE__);
-		$row=db_fetch_array($query);
+	$qtxt="select id from formularer where formular = $form_nr and art = $art_nr and beskrivelse = 'generelt' and sprog='$formularsprog' order by xa";
+	$x=0;
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r=db_fetch_array($q)) {
+		if ($x >= 1) { #der er dubletter i nogle regnskaber som giver bøvl...
+			$qtxt="delete from formularer where id='$r[id]'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		} 
+		$x++;
 	}
+	if ($x==0) {
+		$qtxt="insert into formularer (formular, art, beskrivelse, xa, ya, xb,sprog) values ($form_nr, $art_nr, 'generelt', 34, 185, 4,'$formularsprog')";
+		db_modify ($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+	$qtxt="select * from formularer where formular = $form_nr and art = $art_nr and beskrivelse = 'generelt' and sprog='$formularsprog' order by xa";
+	$query=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	$row=db_fetch_array($query);
 	print "<tr><td></td><td></td>\n";
 	print "<input type=hidden name=id[$x] value=$row[id]>\n";
 	print "<input type=hidden name=beskrivelse[$x] value=$row[beskrivelse]>\n";
