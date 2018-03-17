@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------includes/rapportfunc.php ----- lap 3.6.7 ---- 2017.04.03 ---------------------------
+// --------includes/rapportfunc.php ----- lap 3.7.1 ---- 2018.02.07 ---------------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.11.06 Kontrol for aktivt regnskabsaar v. bogføring af rykker.Søg 20121106  
@@ -44,6 +44,8 @@
 // 2017.03.03 Tilføjet inkasso.
 // 2017.03.16 Tilføjet 'flueben' ved PBS kunder. Søg $pbs.
 // 2017.04.03 Debitorrapportvisning oprettes i grupper hvis den ikke findes. 20170403
+// 2018.02.07 - PHR Tilføjet mulig for udligning af alle med saldo 0,00. Søg udlign.
+
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 #cho "A $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart<br>";
@@ -418,6 +420,7 @@ function vis_aabne_poster($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,
 	$kontoantal=$x;
 	$sum=0;
 	$kontrolsum=0;
+	$udlign=NULL;
 	for ($x=1; $x<=$kontoantal; $x++) {
 		$amount=0;
 		$udlignet=1;
@@ -583,6 +586,7 @@ $ks=0;
 				$tmp=dkdecimal($kontrol,2);
 			} else $tmp=dkdecimal($y,2);
 			if (abs($y)<0.01 && abs($kontrol)<0.01) {
+				$udlign.=$konto_id[$x].",";
 				print "<td align=right title=\"Klik her for at udligne &aring;bne poster\"><a href=\"rapport.php?submit=ok&rapportart=openpost&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&udlign=$konto_id[$x]\">$tmp</a></td>";
 			}
 			else {print "<td align=right>$tmp</td>";}
@@ -625,18 +629,30 @@ $ks=0;
 #if ($konto_id[$x]=='19') #cho "K: $kontrolsum S: $sum<br>";
   ($sum<=$kontrolsum)?$tmp=dkdecimal($kontrolsum,2):$tmp=dkdecimal($sum,2);
 # $tmp=dkdecimal($sum,2);
-	print "<td align=right><span style='color: $color;'>$tmp</span></td>";
-				
+	print "<td align=right><span style='color: $color;'>$tmp</span>";
 	print "<input type=hidden name=rapportart value=\"openpost\">";
 	print "<input type=hidden name=dato_fra value=$dato_fra>";
 	print "<input type=hidden name=dato_til value=$dato_til>";
 	print "<input type=hidden name=konto_fra value=$konto_fra>";
 	print "<input type=hidden name=konto_til value=$konto_til>";
-	print "<input type=hidden name=kontoantal value=$kontoantal>";
+	print "<input type=hidden name=kontoantal value=$kontoantal></td></tr>";
+#	print "<tr><td colspan='10' align='right'><a href='rapport.php?udlig_alle=1'>Udlign alle</a></td></tr>"; 
 
-	if ($kontoart=='D') print "<tr><td colspan='10' align='center'><span title=\"Klik her for at maile kontoudtog til de modtagere som er afm&aelig;rket herover\"><input type=submit value=\"Mail kontoudtog\" name=\"submit\"></span>&nbsp;
-		<span title='Klik her for at oprette rykker til de som er afm&aelig;rkede herover'><input type=submit value=\"Opret rykker\" name=\"submit\"></span>&nbsp;
-		<span onmouseover=\"return overlib('".findtekst(242,$sprog_id)."', WIDTH=800);\" onmouseout=\"return nd();\"><input type=submit value=\"Ryk alle\" name=\"submit\"></span></td></tr>\n";
+	if ($kontoart=='D') {
+		print "<tr><td colspan='3'></td>";
+		print "<td colspan='3' align='center'><span title=\"Klik her for at maile kontoudtog til de modtagere som er afm&aelig;rket herover\">";
+		print "<input type=submit value=\"Mail kontoudtog\" name=\"submit\"></span>&nbsp;";
+		print "<span title='Klik her for at oprette rykker til de som er afm&aelig;rkede herover'>";
+		print "<input type=submit value=\"Opret rykker\" name=\"submit\"></span>&nbsp;";
+		print "<span onmouseover=\"return overlib('".findtekst(242,$sprog_id)."', WIDTH=800);\" onmouseout=\"return nd();\">";
+		print "<input type=submit value=\"Ryk alle\" name=\"submit\"></span></td>";
+		if ($udlign) {
+			$udlign=trim($udlign,"'");
+			print "<td colspan='3' align='right' title='Klik her for at udligne alle med saldoen \"0\"'>";
+			print "<a href='rapport.php?rapportart=openpost&udlign=$udlign'>Udlign alle</a></td>"; 
+		}
+		print "</tr>\n";
+	}
 	print "</form>\n";
 	print "<tr><td colspan=10><hr></td></tr>\n";
 	print "</tbody></table>";

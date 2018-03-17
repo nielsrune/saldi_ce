@@ -855,13 +855,13 @@ if ($api_fil) {
 		$tidspkt=fgets($fp);
 	} else $tidspkt = 0;
 	fclose ($fp);
-	if ($tidspkt < date("U")-300 || $shop_ordre_id) {
+	if ($tidspkt < date("U")-30 || $shop_ordre_id) {
 		$fp=fopen("../temp/$db/shoptidspkt.txt","w");
 		fwrite($fp,date("U"));
 		fclose ($fp);
 	$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
 #cho 	"/usr/bin/wget --spider --no-check-certificate --header='$header' $api_fil?put_new_orders=1 \n<br>";
-	exec ("nohup /usr/bin/wget --spider --no-check-certificate --header='$header' $api_fil?put_new_orders=1 > /dev/null 2>&1 &\n");
+	exec ("nohup /usr/bin/wget  -O - -q  --no-check-certificate --header='$header' $api_fil?put_new_orders=1 > /dev/null 2>&1 &\n");
 }	
 }
 $r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));
@@ -900,7 +900,7 @@ if ($apifil=$r['box2']) {
 				$fp=fopen("../temp/$db/shoptidspkt.txt","w");
 				fwrite($fp,date("U"));
 				fclose ($fp);
-				if ($db=='bizsys_49') {
+				if ($db=='bizsys_52') {
 					print "<BODY onload=\"javascript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
 				} else exec ("nohup /usr/bin/wget --spider $api_fil  > /dev/null 2>&1 &\n");
 			} else {
@@ -909,17 +909,17 @@ if ($apifil=$r['box2']) {
 				$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				while ($r=db_fetch_array($q)) {
 					while ($r['shop_id']!=$tjek && $tjek<$next_id) {
-						echo "Shop ordre $r[shop_id] $tjek mangler<br>";
+#						echo "Shop ordre $r[shop_id] $tjek mangler<br>";
 						$tmp=$apifil."&shop_ordre_id=$tjek";
 #cho "$tmp<br>";						
 						print "<BODY onload=\"javascript:window.open('$tmp'	,'hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
 						$tjek++;
 					} 					
-					echo "Shop ordre $r[shop_id] $tjek OK<br>";
+#					echo "Shop ordre $r[shop_id] $tjek OK<br>";
 					$tjek++;
 				}
 	}
-			if ($db=='bizsys_49')	print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop' onclick=\"javascript:window.open('$apifil')\"><a href>Hent ordrer fra shop</a></span></td></tr>";	
+#			if ($db=='bizsys_49')	print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop' onclick=\"javascript:window.open('$apifil')\"><a href>Hent ordrer fra shop</a></span></td></tr>";	
 		} else print "<tr><td colspan=\"3\"><span title='Klik her for at hente nye ordrer fra shop' onclick=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">SHOP import</span></td></tr>";	
 }
 }

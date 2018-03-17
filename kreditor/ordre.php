@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------kreditor/ordre.php----------lap 3.6.9-----2017.05.05----
+// -------------kreditor/ordre.php----------lap 3.7.1-----2018.03.05----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.08.14 søg 20120814
@@ -39,6 +39,7 @@
 // 2015.02.09 Ved negativt lager var det ikke muligt at hjemkøbe mindre en det antal det manglede på lager.  20150209
 // 2015.04.15	Omvbet på ordrelinje forsvandt ved gem # 201504015
 // 2017.05.05 Mange småforbedringer samt tilføjelse af afdeling og lager.
+// 2018.03.05 htmlentities foran beskrivelse og varenr. 20180305 
 
 @session_start();
 $s_id=session_id();
@@ -1072,7 +1073,7 @@ function ordreside($id) {
 		if (!$hurtigfakt) print "<td align=\"center\"><b>solgt</b></td>";
 		print "</tr>\n";
 		$x=0;
-		if (!$ordre_id){$ordre_id=0;}
+		if (!$ordre_id) $ordre_id=0;
 		$query = db_select("select * from ordrelinjer where ordre_id = '$ordre_id' order by posnr",__FILE__ . " linje " . __LINE__);
 		while ($row = db_fetch_array($query)) {
 			if ($row['posnr']>0) {
@@ -1410,11 +1411,11 @@ function ordreside($id) {
 			print "<input type=\"hidden\" name=\"omvbet[$x]\" value=\"$omvbet[$x]\">";
 			print "<tr>";
 			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=3 name=posn$x value='$x' onchange=\"javascript:docChange = true;\"></td>";
-			print "<td title='Varenummer kan ikke &aelig;ndres. Opret i stedet en ny linje og slet denne linje ved at skrive et minustegn i Pos.-feltet til venstre. Flyt om p&aring; linjerne ved at angive nye numre i Pos.-feltet eventuelt som decimaltal.'><input class=\"inputbox\" type=\"text\" style=\"background: none repeat scroll 0 0 #e4e4ee\" readonly=readonly size=7 name=vare$x onfocus=\"document.forms[0].fokus.value=this.name;\" value='$varenr[$x]'></td>";
-			print "<td><input class=\"inputbox\" type=text size=7 name=lev_varenr$x value='$lev_varenr[$x]' onchange=\"javascript:docChange = true;\"></td>";
+			print "<td title='Varenummer kan ikke &aelig;ndres. Opret i stedet en ny linje og slet denne linje ved at skrive et minustegn i Pos.-feltet til venstre. Flyt om p&aring; linjerne ved at angive nye numre i Pos.-feltet eventuelt som decimaltal.'><input class=\"inputbox\" type=\"text\" style=\"background: none repeat scroll 0 0 #e4e4ee\" readonly=readonly size=7 name=vare$x onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"".htmlentities($varenr[$x])."\"></td>"; #20180305
+			print "<td><input class=\"inputbox\" type=text size=7 name=lev_varenr$x value=\"".htmlentities($lev_varenr[$x])."\" onchange=\"javascript:docChange = true;\"></td>";
 			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=4 name=anta$x value='$dkantal[$x]' onchange=\"javascript:docChange = true;\"></td>";
 			print "<td><input class=\"inputbox\" type=\"text\" style=\"background: none repeat scroll 0 0 #e4e4ee\" readonly=readonly size=3 value=\"$enhed[$x]\"></td>";
-			print "<td><input class=\"inputbox\" type=\"text\" size=58 name=beskrivelse$x value=\"$beskrivelse[$x]\" onchange=\"javascript:docChange = true;\"></td>";
+			print "<td><input class=\"inputbox\" type=\"text\" size=58 name=beskrivelse$x value= \"".htmlentities($beskrivelse[$x])."\" onchange=\"javascript:docChange = true;\"></td>";
 			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=10 name=pris$x value='$dkpris' onchange=\"javascript:docChange = true;\"></td>";
 			print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=4 name=raba$x value='$dkrabat' onchange=\"javascript:docChange = true;\"></td>";
 			if ($art=='KK') $ialt=$ialt*-1;

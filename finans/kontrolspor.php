@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------finans/kontrolspor.php-------------lap 3.7.0-----2017-05-09-----
+// ----------finans/kontrolspor.php-------------lap 3.7.0-----2017-05-24-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -27,7 +27,8 @@
 // ----------------------------------------------------------------------
 // 20160226 PHR Diverse oprydning...
 // 20170424 PHR Medtager nu transaktioner selvom konto mangler i kontoplan.
-// 20170509 PHR Søgniing med wildcards i beskrivelse dysfunktionel
+// 20170509 PHR Søgning med wildcards i beskrivelse dysfunktionel
+// 20170524 PHR Rettet lidt i CSV.
 
 ob_start();
 @session_start();
@@ -142,7 +143,7 @@ print "<td width=10% $top_bund>";
 	if ($popup) print "<a href=../includes/luk.php accesskey=L>Luk</a></td>";
 	else print "<a href=rapport.php accesskey=L>Luk</a></td>";
 print "<td width=80% $top_bund>Kontrolspor</td>";
-print "<td width=10% $top_bund><a href=kontrolspor.php?sort=$sort&valg=$valg$hreftext&csv=1' title=\"".findtekst(505,$sprog_id)."\">CSV</a></td>";
+	print "<td width=10% $top_bund><a href=kontrolspor.php?csv=1&valg=$valg $hreftext' title=\"".findtekst(505,$sprog_id)."\">CSV</a></td>";
 print "</tr>\n";
 	print "</tbody></table></td></tr>";
 }	
@@ -169,6 +170,7 @@ print " </td></tr><tr><td align=center valign=top>";
 print "<table cellpadding=1 cellspacing=1 border=0 width=100% valign = top>";
 
 print "<tbody>";
+
 print "<tr>";
 print "<td align=center><b><a href='kontrolspor.php?nysort=id&sort=$sort&valg=$valg$hreftext'>Id</b></td>";
 print "<td align=center><b><a href='kontrolspor.php?nysort=transdate&sort=$sort&valg=$valg$hreftext'>Dato</a></b></td>";
@@ -204,6 +206,7 @@ print "<td align=\"right\"><span title= 'Angiv et bel&oslash;b eller angiv to ad
 if ($vis_projekt) print "<td align=\"right\"><span title= 'Angiv et projektnummer eller angiv to adskilt af kolon (f.eks 5:7)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:200px\" name=\"projektnumre\" value=\"$projektnumre\"></td>";
 print "<td><span title= 'Angiv en s&oslash;getekst. Der kan anvendes * f&oslash;r og efter teksten'><input class=\"inputbox\" type=\"text\"  style=\"text-align:left;width:200px\" size=35 name=beskrivelse value=\"$beskrivelse\"></td>";
 print "<td><input type=submit value=\"OK\" name=\"submit\"></td>";
+
 print "</form></tr>\n";
 udskriv($idnumre,$bilagsnumre,$kladdenumre,$fakturanumre,$kontonumre,$transdatoer,$logdatoer,$debetbelob,$kreditbelob,$logtid,$beskrivelse,$sort,$start,'skriv',$projektnumre);
 ####################################################################################
@@ -222,7 +225,7 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 
 	if ($csv) {
 		$fp=fopen("../temp/$db/kontrolspor.csv","w");
-		fwrite($fp,"Id".chr(9)."Dato".chr(9)."Logdato".chr(9)."Logtid".chr(9)."Kladde id".chr(9)."Bilag".chr(9)."Kontonr".chr(9)."Kontonavn".chr(9)."Faktura".chr(9)."Debet".chr(9)."Kredit".chr(9)."Projekt".chr(9)."Beskrivelse\n");
+		fwrite($fp,"\"Id\";\"Dato\";\"Logdato\";\"Logtid\";\"Kladde id\";\"Bilag\";\"Kontonr\";\"Kontonavn\";\"Faktura\";\"Debet\";\"Kredit\";\"Projekt\";\"Beskrivelse\"\n");
 	}
 	$udvaelg='';
 	if ($idnumre)		$udvaelg=$udvaelg.udvaelg($idnumre, 'transaktioner.id', 'NR');
@@ -261,7 +264,7 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 
 	$z=0;
 	
-	$qtxt="SELECT kontonr,beskrivelse from kontoplan where regnskabsaar='$regnaar' order by kontonr";
+	$qtxt="SELECT kontonr,beskrivelse from kontoplan where regnskabsaar='$regnaar' and (kontotype='D' or kontotype='S') order by kontonr";
 #cho $qtxt."<br>";	
 	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row =db_fetch_array($query)) {
@@ -269,7 +272,6 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 		$kpnr[$z]=$row['kontonr'];
 		$z++;
 	}
-
 	$z=0;
 	if (substr($udvaelg,-3)=='and') $udvaelg=substr($udvaelg,0,strlen($udvaelg)-3);
 	
@@ -320,17 +322,19 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 				$logdato=dkdato($logdate[$z]);
 				$debetsum=afrund($debetsum+$debet[$z],2);
 				$kreditsum=afrund($kreditsum+$kredit[$z],2);
-				if ($skriv && !$csv) {
+				if ($skriv) {
 				if (!$kontonavn[$z] && in_array($kontonr[$z],$kpnr)) {
 					for ($i=0;$i<count($kpnr);$i++){
 						if ($kpnr[$i]==$kontonr[$z]) {
 							$kontonavn[$z]=$kpnavn[$i];
+#							echo "$kontonavn[$z]<br>";
 							$i=count($kpnr);
 						}
 					}
-				} #elseif (!in_array($kontonr[$z],$kpnr)) {
-					#print tekstboks("kontonr $kontonr[$z] mangler i kontoplan!!");
-				#}
+				} elseif ($kontonr[$z] && !in_array($kontonr[$z],$kpnr)) {
+					print "<BODY onload=\"javascript:alert('Kontroller konto $kontonr[$z]!')\">";
+				}
+			if (!$csv)	{
 					if ($linjebg!=$bgcolor) {$linjebg=$bgcolor; $color='#000000';}
 					else {$linjebg=$bgcolor5; $color='#000000';}
 #					if ($z>1 && $id[$z]+1 != $id[$z-1]) {
@@ -361,14 +365,15 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 					print "<td> &nbsp; $transtxt[$z]<br></td>";
 					print "</tr>\n";
 				}
+				}
 				if ($csv) {
-					fwrite($fp,$id[$z].chr(9).$transdato.chr(9).$logdato.chr(9).substr($logtime[$z],0,5).chr(9).$kladde_id[$z].chr(9).$bilag[$x].chr(9).$kontonr[$z].chr(9).utf8_decode(stripslashes($kontonavn[$z])).chr(9).$row['faktura'].chr(9).dkdecimal($debet[$z],2).chr(9).dkdecimal($kredit[$z],2).chr(9).$row['projekt'].chr(9).utf8_decode(stripslashes($kontonavn[$z]))."\n");
+					fwrite($fp,"\"".$id[$z]."\";\"".$transdato."\";\"".$logdato."\";\"".substr($logtime[$z],0,5)."\";\"".$kladde_id[$z]."\";\"".$bilag[$x]."\";\"".$kontonr[$z]."\";\"".utf8_decode(stripslashes($kontonavn[$z]))."\";\"".$row['faktura']."\";\"".dkdecimal($debet[$z],2)."\";\"".dkdecimal($kredit[$z],2)."\";\"".$row['projekt']."\";\"".utf8_decode(stripslashes($transtxt[$z]))."\"\n");
 				}
 			}
 		}
 	}
-	if ($csv){ fclose($fp);
-		print "<BODY onload=\"JavaScript:window.open('../temp/$db/kontrolspor.csv' ,'' ,'$jsvars');\">\n";
+	if ($csv && $skriv){ fclose($fp);
+		print "<tr></tr><td></td><tr><td colspan='12' align='center'><a href=\"../temp/$db/kontrolspor.csv\">Klik for at åbne, højreklik fra at gemme</a></td></tr>";
 	}
 	if (!$csv && ($debetsum || $kreditsum)) {
 		($vis_projekt)?$colspan=12:$colspan=11;

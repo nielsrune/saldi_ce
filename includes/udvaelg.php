@@ -29,7 +29,8 @@
 // 2015.01.05 sikrer at numeriske værdier er numeriske ved at gange med 1 20150105-2
 // 2015.06.01 Ved beløb skal , ikke erstattes af ":", for så kan man ikke søge på decimaler.
 // 2015.10.19 Ved enkelbeløb findes beløb ikke hvis de ikke stemmer på decimalen da der bogføres med 3 decimaler.
-// 20170509 PHR Søgniing med wildcards i TXT'er
+// 20170509 PHR Søgning med wildcards i TXT'er
+// 20180228 PHR Fejlrettelse i ovenstående.
 
 if (!function_exists('udvaelg')){
 	function udvaelg ($tmp, $key, $art){
@@ -46,7 +47,7 @@ if (!function_exists('udvaelg')){
 			}
 		}
 		list ($tmp1, $tmp2)=explode(":", $tmp);
-		if ((strstr($tmp,':'))&&($art!='TID')){
+		if (strstr($tmp,':') && ($art!='TID' && $art!='TEXT')){
 			if ($art=="DATO"){
 				$tmp1=usdate($tmp1);
 				$tmp2=usdate($tmp2);
@@ -73,7 +74,7 @@ if (!function_exists('udvaelg')){
 				$tmp=str_replace("*","%",$tmp);
 				$tmp=db_escape_string($tmp);
 				$udvaelg= " and lower($key) like '$tmp'";
-				}	elseif ($art="TEXT") {
+				}	elseif ($art=="TEXT") {
 					if (strstr($tmp,'*')) {
 						$tmp=str_replace('*','%',$tmp);
 						$udvaelg= " and $key like '$tmp'";

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------------------debitor/rapport.php-------patch 3.6.7----2017-03-03-----------
+// ------------------------debitor/rapport.php-------patch 3.6.7----2018-02-07-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,11 +23,12 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.11.05 - Fejl ved "masseudligning (Klik på 0,00 i åbenpostoversigt) når kun 1 dato sat. Søg 20121105 
 // 2017.03.03 - Inlføjet inkasso (ikke aktiv)
+// 2018.02.07 - PHR Udlign kan nu bestå af flere kontonumre. Søg udlign
 
 @session_start();
 $s_id=session_id();
@@ -60,7 +61,13 @@ if (isset($_GET['ny_rykker'])) {
 	$dato_til=$_GET['dato_til'];
 	$konto_fra=$_GET['konto_fra'];
 	$konto_til=$_GET['konto_til'];
-	if ($udlign=$_GET['udlign']) autoudlign($udlign);
+	if (isset($_GET['udlign'])) {
+		$udlign=explode(",",$_GET['udlign']);
+#		$autoudlign=array($udlign);
+		for ($x=0;$x<count($udlign);$x++) {
+			autoudlign($udlign[$x]);
+		}
+	}	
 	$rapportart($dato_fra, $dato_til,$konto_fra,$konto_til,$rapportart, 'D');
 	exit;
 }

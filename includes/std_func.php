@@ -469,6 +469,7 @@ if (!function_exists('transtjek')) {
 	function transtjek () {
 		global $db;
 		$r=db_fetch_array(db_select("select sum(debet) as debet,sum(kredit) as kredit from transaktioner",__FILE__ . " linje " . __LINE__));
+#cho __line__." ".$r['debet']."-".$r['kredit']."<br>";
 		$diff=abs(afrund($r['debet']-$r['kredit'],2));
 		if ($diff >= 1) { 
 			$message=$db." | Ubalance i regnskab: kr: $diff";
@@ -928,7 +929,7 @@ function regnstartslut($regnaar) {
 
 if (!function_exists('lagerreguler')) {
 function lagerreguler($vare_id,$ny_beholdning,$kostpris,$lager,$transdate,$variant_id) {
-
+    global $api_fil;
 	if ($lager<1) $lager=1;
 	$ny_beholdning*=1;
 	$vare_id*=1;
@@ -989,6 +990,22 @@ function lagerreguler($vare_id,$ny_beholdning,$kostpris,$lager,$transdate,$varia
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 		}
+	if ($api_fil) {
+		$qtxt="select shop_id,shop_variant from shop_varer where saldi_id='$vare_id' and saldi_variant='$variant_id'";
+		if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			if ($r['shop_variant']) $shop_id=$r['shop_variant'];
+			else $shop_id=$r['shop_id'];
+		} else {
+			$qtxt="select varenr from varer where id='$vare_id'";
+			if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) $shop_id=$r['varenr'];
+		}
+		if ($shop_id) {
+			$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
+			$txt="/usr/bin/wget --spider --no-check-certificate --header='$header' '$api_fil?update_stock=$shop_id&stock=$ny_beholdning&stockno=$lager'";
+			exec ("nohup $txt > /dev/null 2>&1 &\n");
+		}
+	}
+
 	$qtxt="select sum(beholdning) as beholdning from lagerstatus where vare_id='$vare_id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$beholdning=$r['beholdning']*1;
