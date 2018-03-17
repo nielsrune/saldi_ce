@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------lager/varer.php-------------lap 3.6.7-----2017-09-20--------
+// ---------lager/varer.php-------------lap 3.7.1-----2018-01-12--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 2013.01.15 Wildcard forsvinder efter søgning - tak til Henrik Thomsen fra Basslab for rettelse - søg 20130115
@@ -36,6 +36,8 @@
 // 2016.12.17	PHR Fjernet funktion find_beholdning (Flyttet til includes/std_func.php)
 // 2017.05.02	PHR Hvis der er flere lagre og lagernavn <= 2 tegn vises lagernavn i stedet for bogstav
 // 2017.09.20	Hele varelinjen er nu klikbar. Søg 20170920
+// 2018.01.12 Tilføjet søgning på variant stregkode 20180112
+// 2018.02.12 Liste kan nu gemmen som csv. Sæg scv eller csvfil
 
 @session_start();
 $s_id=session_id();
@@ -71,6 +73,7 @@ function lagerflyt(vare_id, lager){
 
 	
 if (isset($_GET)) {
+	$csv=if_isset($_GET['csv']);
 	$vis_lev=if_isset($_GET['vis_lev']);
 	$alle_varer=if_isset($_GET['alle_varer']);
 	
@@ -231,8 +234,23 @@ if (!$forslag) {
 	print "<input type=\"hidden\" name=\"start\" value=\"$start\">";
 } else 	print "<form name=\"vareliste\" action=\"varer.php?sort=$sort\" method=\"post\">";
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\"><tbody>\n";
+$x=0;
+$query = db_select("select beskrivelse, kodenr from grupper where art='LG' order by kodenr",__FILE__ . " linje " . __LINE__);
+while ($row = db_fetch_array($query)) {
+	$x++;
+	$lagernavn[$x]=$row['beskrivelse'];
+}
+$lagerantal=$x;
+if (!$lagerantal) {
+	$lagernavn[1]='Lager';
+	$lagerantal=1;
+}
 
 if (!$forslag) {
+	if ($csv) {
+		if (file_exists("../temp/$db/vareliste.csv")) unlink("../temp/$db/vareliste.csv"); 
+		$csvfil=fopen("../temp/$db/vareliste.csv","w");
+	}
 	print "<tr>";
 	if ($start>=$linjeantal) {
 		$tmp=$start-$linjeantal;
@@ -244,7 +262,8 @@ if (!$forslag) {
 	print "<input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px\" name=\"start\" title= \"1 linje\" value=\"$start\"> - ";
 	print "<input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px\" name=\"linjeantal\" title= \"Antal linjer pr side\" value=\"$linjeantal\"></td>";
 	$tmp=$start+$linjeantal;
-	print "<td colspan=4></td>";
+	$colspan=$lagerantal+1;
+	print "<td colspan='$colspan'></td>";
 	if ($next>=$slut) {
 		print "<td align=right><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;beholdning=$beholdning'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 	}
@@ -255,22 +274,23 @@ print "<tr>";
 print "<td><b><a href=\"varer.php?sort=varenr&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">Varenr.</a></b></td>\n";
 print "<td><b><a href=\"varer.php?sort=enhed&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">Enhed</a></b></td>\n";
 print "<td><b><a href=\"varer.php?sort=beskrivelse&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">Beskrivelse</a></b></td>\n";
+if ($csv) fwrite($csvfil,"\"Varenr\";\"Enhed\";\"Beskrivelse\";");
+
 if (!$vis_lev){
-	$x=0;
-	$query = db_select("select beskrivelse, kodenr from grupper where art='LG' order by kodenr",__FILE__ . " linje " . __LINE__);
-	while ($row = db_fetch_array($query)) {
-		$x++;
-		$lagernavn[$x]=$row['beskrivelse'];
-	}
-	$lagerantal=$x;
 	if ($lagerantal>1 && !$forslag) {
 		for ($x=1;$x<=$lagerantal; $x++) {
 			print "<td align='center'><b>";
-			if (strlen($lagernavn[$x])<=2) print "<span title='Lager $x'>$lagernavn[$x]";
-			else print "<span title='$lagernavn[$x]'>L $x";
+			if (strlen($lagernavn[$x])<=2) {
+				print "<span title='Lager $x'>$lagernavn[$x]";
+				if ($csv) fwrite($csvfil,"\"$lagernavn[$x]\";");
+			} else {
+				print "<span title='$lagernavn[$x]'>L $x";
+				if ($csv) fwrite($csvfil,"\"$lagernavn[$x]\";");
+			}
 			print "</b></td>\n";
 		}
 	print "<td align=right><b><a href=\"varer.php?sort=beholdning&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">Ialt</a></b></td>\n";
+		if ($csv) fwrite($csvfil,"\"Ialt\";");
 	}
 	else {
 		if ($beholdning) {	
@@ -284,10 +304,10 @@ if (!$vis_lev){
 if ($forslag) {
 	print "<td align=right><span title='Klik her for at oprette indk&oslash;bsordrer med nedenst&aring;ende antal'>";
 	print "<input type=\"submit\" value=\"Bestil\" name=\"submit\"></span></td>\n";
-}	
-else {
+}	else {
 	($incl_moms)?$tekst="<br>(incl.moms)":$tekst="";
 	print "<td align=\"right\" valign=\"top\" rowspan=\"2\"><b><a href=\"varer.php?sort=salgspris&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">Salgspris</a></b>$tekst</td>\n";
+	if ($csv) fwrite($csvfil,"\"Salgspris\"\n");
 }
 if ($vis_lev) {
 	print "<td align=right><b> Kostpris</b></td>\n";
@@ -329,14 +349,20 @@ if ($varenummer) {
 	$v_strlen=strlen($varenummer);
 #	$udvalg=$udvalg." and varenr LIKE '$varenummer'";
 #	else $udvalg=$udvalg." and (varenr ~ '$varenummer' or stregkode ~ '$varenummer')"; 
+	} else { # 20180112
+		$qtxt="select vare_id from variant_varer where upper(variant_stregkode)='".strtoupper($varenummer)."'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			$qtxt="select varenr from varer where id='$r[vare_id]'";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $varenummer=$r['varenr']; 
+		}
 	} 
-#	else 
 	$low=strtolower($varenummer);
 	$upp=strtoupper($varenummer);
 	$udvalg.=" and (varenr LIKE '$varenummer' or lower(varenr) LIKE '$low' or upper(varenr) LIKE '$upp' or stregkode = '$varenummer')";
 }
 $next = udskriv($start, $slut, $sort, '1', $udvalg);
 # if ($next<$slut) lukkede_varer();
+
 if ($next > 25 && $linjeantal > 25) {
 	if ($start>=$linjeantal){
 		$tmp=$start-$linjeantal;
@@ -346,17 +372,26 @@ if ($next > 25 && $linjeantal > 25) {
 	print "<td colspan=3></td>";
 	$tmp=$start+$linjeantal;
 	if ($next>=$slut && !$forslag) {
-		print "<td colspan=4 align=right><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;beholdning=$beholdning'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+		print "<td colspan='$colspan' align=right><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;beholdning=$beholdning'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 	}
 	else print  "<td></td>"; 
 	print "</tr>\n";
 }
+print "<tr><td colspan='3'>";
+if ($csv) {
+	fclose($csvfil);
+	print "<a href=\"../temp/$db/vareliste.csv\">csvfil</a>";
+} else {
+ print "<a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$beholdning&amp;csv=1'>csv</a>";
+}
+print "</td></tr>";
 print "</tbody></table>";
 print "</form>";
 #print "</td></tr>";
 
 	
 function udskriv($start, $slut, $sort, $udskriv, $udvalg) {
+global $csv,$csvfil;
 global $lagerantal;
 global $varenummer;
 global $v_startstjerne;
@@ -429,14 +464,13 @@ if (!$vis_K[0]) {
 		$lev_vare_liste[$y]=$r['vare_id'];
 	}
 }
-if ($forslag) { 
 	$x=0;
 	$lagergrupper=array();
 	$q=db_select("select * from grupper where art='VG' and box8='on'",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)){ 
 		$x++;
 		$lagergrupper[$x]=$r['kodenr'];
-	}
+#cho "$lagergrupper[$x]<br>";
 }		
 if (($beholdning||$forslag)&&!$udskriv) $varer_i_ordre=find_varer_i_ordre(); 
 if (!$slut) $slut=$start+50; 
@@ -481,13 +515,16 @@ if ($udskriv && $forslag && !$alle_varer) {
 			print "<td $js><FONT style=\"color:$color\">".htmlentities(stripslashes($row['enhed']),ENT_COMPAT,$charset)."</font><br></td>";
 			print "<td $js><FONT style=\"color:$color\">".htmlentities(stripslashes($row['beskrivelse']),ENT_COMPAT,$charset)."</font><br></td>";
 			print "</span>";
+			if ($csv) fwrite($csvfil,"\"".utf8_decode($row['varenr'])."\";\"".utf8_decode($row['enhed'])."\";\"".utf8_decode($row['beskrivelse'])."\";");
 			if (!$vis_lev){
 				if ($lagerantal>1  && !$forslag) {
 					$r2=db_fetch_array(db_select("select sum(beholdning) as lagersum from lagerstatus where vare_id = $row[id]",__FILE__ . " linje " . __LINE__));
 					$diff=$row['beholdning']-$r2['lagersum'];
 					for ($x=1;$x<=$lagerantal; $x++) {
 						$qtxt="select id, lager, beholdning from lagerstatus where vare_id = $row[id] and lager = $x";
+#						echo "$qtxt<br>";
 						$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+#						echo $r2['beholdning']."<br>";
 						$y=$r2['beholdning'];
 /*
 						if ($x==1) {
@@ -499,12 +536,19 @@ if ($udskriv && $forslag && !$alle_varer) {
 						}
 */						
 #						if ($y >= 1) print "<td align=center onClick=\"lagerflyt($row[id], $x)\" onMouseOver=\"this.style.cursor = 'pointer'\"><span title= 'Flyt til andet lager'><u>".dkdecimal($y)."</u></td>";
-						if ($y >= 1) print "<td align=center><span title= 'Flyt til andet lager'><a href='lagerflyt.php?lager=$x&vare_id=$row[id]'>".dkdecimal($y,2)."</a></td>";
-						else print "<td align=center>".dkdecimal($y,2)."</td></td>";	
+						print "<td align=center>";
+#echo "$row[gruppe],$lagergrupper<br>";						
+						if (in_array($row['gruppe'],$lagergrupper)) {
+							if ($y >= 1) print "<span title= 'Flyt til andet lager'><a href='lagerflyt.php?lager=$x&vare_id=$row[id]'>".dkdecimal($y,2)."</a>";
+							else print dkdecimal($y,2);
+						}
+						print "</td>";
+						if ($csv) fwrite($csvfil,"\"".dkdecimal($y,2)."\";");
 					}
 				}
 #				if (($beholdning||$forslag)&&!$udskriv) {
 #				if (in_array($row['id'],$varer_i_ordre))	{
+				if (in_array($row['gruppe'],$lagergrupper)) {
 				if ($forslag || $beholdning)	{
 					$tmp=find_beholdning($row['id'],$udskriv);
 					$i_tilbud[$z]=$tmp[1];
@@ -525,6 +569,7 @@ if ($udskriv && $forslag && !$alle_varer) {
 					print "<td align=\"right\" $title>$bestilt[$z]</td>";
 				}
 				print "<td align=right>".dkdecimal($row['beholdning'],2)."</td>";
+				if ($csv) fwrite($csvfil,"\"".dkdecimal($row['beholdning'],2)."\";");
 				if ($forslag){
 					$tmp=$row['beholdning']-$i_ordre[$z];
 					if ($row['min_lager']*1>$tmp || $alle_varer) {
@@ -536,10 +581,12 @@ if ($udskriv && $forslag && !$alle_varer) {
 						print "<input type=\"hidden\" name=\"genbestil_ant\" value=\"$gb\">";
 					} else print "<td></td>";
 				}
-			}
+			} else print "<td></td>";
+			} else print "<td></td>";
 			if (!$forslag) {
 				$salgspris=dkdecimal($row['salgspris']*(100+$incl_moms)/100,2);
 				print "<td align=right>$salgspris<br></td>";
+				if ($csv) fwrite($csvfil,"\"$salgspris\"\n");
 			}
 			if ($vis_lev=='on') {
 				$query2 = db_select("select kostpris, lev_id, lev_varenr from vare_lev where vare_id = $row[id] order by posnr",__FILE__ . " linje " . __LINE__);

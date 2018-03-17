@@ -64,6 +64,7 @@
 // 2017.02.16	PHR	Fjernet tilsyneladende overføldig linje i funktion utf8_iso8859 20170216
 // 2017.05.01	PHR Ved udskriv til 'Ingen' returneres med OK : 20170501
 // 2017.08.22	PHR Tilføjet lokation og vare note på pluklister & følgesedler - Søg 'lokation' og 'vare_note'; 
+// 2018.03.02 PHR Samlevarefelt sættes til '' hvis NULL da kommentarer tilføjet efter fakturering ellers ikke kommer med på følgesedler #20180302
 
 if (!function_exists('skriv')) {
 function skriv($str, $fed, $italic, $color, $tekst, $tekstinfo, $x, $y, $format, $form_font,$formular) {
@@ -1105,6 +1106,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 		$momssum=0;
 		$tmp=0;
 		$saetnr=0;
+		$posnr=array();
 #cho "$formular<br>";
 #xit;
 		if ($preview) {
@@ -1116,8 +1118,8 @@ for ($o=0; $o<$ordre_antal; $o++) {
 			}
 		} else {
 		if ($brugsamletpris) {
-				
-			$r=db_fetch_array(db_select("select varenr from ordrelinjer where ordre_id = $ordre_id[$o] and vare_id='$rabatvare_id'",__FILE__ . " linje " . __LINE__));
+			$qtxt="select varenr from ordrelinjer where ordre_id = $ordre_id[$o] and vare_id='$rabatvare_id'";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			if ($r['varenr']){
 				$rabatvarenr=$r['varenr'];
 				$rvnr=1;
@@ -1126,11 +1128,17 @@ for ($o=0; $o<$ordre_antal; $o++) {
 #		if ($rvnr) $qtxt="select * from ordrelinjer where ordre_id = '$ordre_id[$o]' order by saet,posnr";
 #		else 
 		#20150302 
-		if ($brugsamletpris && $formular==3) $qtxt="select * from ordrelinjer where ordre_id = '$ordre_id[$o]' and samlevare != 'on' and varenr != '$rabatvarenr' order by posnr";
-		else $qtxt="select * from ordrelinjer where ordre_id = '$ordre_id[$o]' order by posnr";
+		$qtxt="update ordrelinjer set samlevare='' where samlevare is NULL"; #20180302
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		if ($brugsamletpris && $formular==3) {
+			$qtxt="select * from ordrelinjer where ordre_id = '$ordre_id[$o]' and samlevare != 'on' ";
+			if ($rabatvarenr) $qtxt.="and varenr != '$rabatvarenr' ";
+			$qtxt.="order by posnr";
+		} else $qtxt="select * from ordrelinjer where ordre_id = '$ordre_id[$o]' order by posnr";
 		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+			$x=0;
 			while($row = db_fetch_array($q)){
-			if ($row['posnr']>0 && (!$row['samlevare'] || !is_numeric($row['samlevare'])) && (!in_array($row['posnr'],$posnr) || ($formular!=3))){
+			if ($row['posnr']>0 && (!$row['samlevare'] || !is_numeric($row['samlevare'])) && !in_array($row['posnr'],$posnr)){
 #					if ($x>=1 && $row['saet'] && !$saet[$x]) {
 #						$x++;
 #						$beskrivelse[$x]=" ";
@@ -1157,7 +1165,6 @@ for ($o=0; $o<$ordre_antal; $o++) {
 						$samlevare[$x]=$row['samlevare'];
 						$lager[$x]=$row['lager']*1;
 						if (!$lager[$x] && $afd_lager) $lager[$x] = $afd_lager;
-#cho "$posnr[$x] $saet[$x] $samlevare[$x]<br>";
 						$varemomssats[$x]=$row['momssats']*1;
 						if (!$momsfri[$x] && !$varemomssats[$x]) $varemomssats[$x]=$momssats;
 						if ($varemomssats[$x] > $momssats) $varemomssats[$x]=$momssats;
@@ -1169,28 +1176,6 @@ for ($o=0; $o<$ordre_antal; $o++) {
 							$antal[$x]=$antal[$x]*-1;
 							$dkantal[$x]=str_replace("-","",$dkantal[$x]);
 						}
-/*
-							if (in_array('lokation',$variabel)) {
-							$r = db_fetch_array(db_select("select xa from formularer where formular = '$formular' and art = '$art' and beskrivelse = 'beskrivelse' and lower(sprog)='$formularsprog'",__FILE__ . " linje " . __LINE__);
-							$tmp=$r['xa'];
-							
-#cho "select lok1 from lagerstatus where vare_id = '$vare_id[$x]' and lager = '$lager[$x]'<br>";
-							$r2=db_fetch_array(db_select("select lok1 from lagerstatus where vare_id = '$vare_id[$x]' and lager = '$lager[$x]'",__FILE__ . " linje " . __LINE__));
-								$lokation[$x]=$r2['lok1'];
-#cho $lokation[$x];
-#xit;
-							} 
-								$r2=db_fetch_array(db_select("select location from varer where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
-								if ($r2['location']) {
-									if ($afd && strstr($r2['location'],"|")) { # 20150417 Ændret strpos til strstr
-										$lokation=array();
-										$lokation=explode("|",$r2['location']);
-										
-										$beskrivelse[$x].=chr(9).$lokation[$afd-1];
-									} else $beskrivelse[$x].=chr(9).$r2['location'];
-								}
-							}
-*/
 							if ($formular==3 || $formular==9){
 							for ($z=0;$z<count($variabel);$z++) {
 								if ($variabel[$z]=='lokation') {
@@ -1199,7 +1184,6 @@ for ($o=0; $o<$ordre_antal; $o++) {
 									$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 									if ($r2['location']) {
 											$beskrivelse[$x].=chr(9)."Lok: ".$r2['location'];
-#cho "location<br>";
 									}
 								}
 								if ($variabel[$z]=='vare_note') {
@@ -1394,7 +1378,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 #			}
 			$transportsum=$transportsum+$l_sum[$x-1];
 			$skriv=0;
-			if ($kommentarprint=='on'||$formular!=3||$varenr[$x]) $skriv=1; #Fordi tekst uden varenr ikke skal med paa foelgesedlen med mindre det er angivet i "formularprint"; 
+				if ($kommentarprint||$formular!=3||$varenr[$x]) $skriv=1; #Fordi tekst uden varenr ikke skal med paa foelgesedlen med mindre det er angivet i "formularprint"; 
 #			if ($saet[$x] && $samlevare[$x]) $skriv=0; #Fordi tekst uden varenr ikke skal med paa foelgesedlen med mindre det er angivet i "formularprint"; 
 			if ($skriv) {
 				for ($z=1; $z<=$var_antal; $z++) {
