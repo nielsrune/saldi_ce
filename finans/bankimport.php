@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| | | |
 //                        |___/_/ \_|___|__/|_|
 //
-// ----------finans/bankimport.php------------patch 3.7.0------2017.08.16---
+// ----------finans/bankimport.php------------patch 3.7.1------2018.03.14---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -14,7 +14,7 @@
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 DANOSOFT ApS
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.11.10 Indsat mulighed for valutavalg ved import - søg: valuta
@@ -47,6 +47,7 @@
 // 2017.06.30 Flyttet $bilag++ fra over db_modify da der var huller og dubletter i bilagsnr.rækken. 20170630
 // 2017.08.16 Tilføjet genkendelse af UTF-8 i filindhold og fjerner ukendt tegn i starte og slut af linje . Søg $tegnsaet;  
 // 2017.09.14 mb_detect_encoding fejlfortolker så jeg har skrevet min egen. 21070914
+// 2018.03.14 den udlignede de nyeste istedet for de ældste 20180318
 
 ini_set("auto_detect_line_endings", true);
 
@@ -543,7 +544,7 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 						if ($ordrenr) $qtxt="select fakturanr,kontonr from ordrer where ordrenr = '$ordrenr' and sum = '$amount'";
 					}	
 					if ($qtxt) {
-#cho "$qtxt<br>";					
+						 $qtxt.=" and (betalt = '' or betalt is NULL) order by fakturadate limit 1"; #20180314
 						if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 							$faktura=$r['fakturanr'];
 							$fakturasum=$r['sum']+$r['moms'];
