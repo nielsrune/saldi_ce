@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------/api/rest_api.php---------lap 3.7.1---2018-03-07	-----
+// ----------/api/rest_api.php---------lap 3.7.1---2018-03-16 -----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -26,7 +26,7 @@
 // Copyright (c) 2016-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20180307 Tilføjet 'pos_betaling' i 'fakturer_ordre' 
-// 20180312 Fakturadate fjernet fra insert_shop_order og sættes i fakturer_ordre samt div småændringer i insert_shop_order
+// 20180316 Tilføjet 'lagerstatus' i '$allowed_tables' i funktion 'fetch_from_table'
 
 
 include("../includes/connect.php");
@@ -44,7 +44,7 @@ function fetch_from_table($select,$from,$where,$order_by,$limit) {
 	global $webservice;
 	
 	$log=fopen("../temp/$db/rest_api.log","a");
-	$allowed_tables=array('adresser','batch_kob','batch_salg','kassekladde','openpost','ordrer','ordrelinjer','transaktioner','varer','shop_ordrer','shop_varer');
+	$allowed_tables=array('adresser','batch_kob','batch_salg','kassekladde','lagerstatus','openpost','ordrer','ordrelinjer','transaktioner','varer','shop_ordrer','shop_varer');
 	fwrite($log,__line__." Query: select ".$select." from ".$from." where ".$where." order by ".$order_by." limit ".$limit."\n");
 	if (strpos($select,';') || strpos($from,';') || strpos($where,';') || strpos($order_by,';') || strpos($limit,';')) {
 		fwrite($log,__line__." sql_injection attempt\n");
@@ -277,12 +277,12 @@ function insert_shop_order($brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_konto
 			}
 			}
 			fwrite($log,__line__." kontonr $kontonr\n");
-			$qtxt="insert into adresser(kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,cvrnr,email,tlf,gruppe,art,betalingsbet,betalingsdage,kontakt) ";
+			$qtxt="insert into adresser(kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,cvrnr,ean,email,tlf,gruppe,art,betalingsbet,betalingsdage,kontakt) ";
 			$qtxt.="values ";
 			$qtxt.="('$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($addr1)."','".db_escape_string($addr2)."',";
 			$qtxt.="'".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($land)."','".db_escape_string($cvrnr)."',";
-			$qtxt.="'".db_escape_string($email)."','".db_escape_string($tlf)."','$gruppe','D','$betalingsbet','$betalingsdage',";
-			$qtxt.="'".db_escape_string($kontakt)."')";
+			$qtxt.="'".db_escape_string($ean)."','".db_escape_string($email)."','".db_escape_string($tlf)."','$gruppe','D','$betalingsbet',";
+			$qtxt.="'$betalingsdage','".db_escape_string($kontakt)."')";
 				fwrite($log,__line__." $qtxt\n");
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$r=db_fetch_array(db_select("select id from adresser where kontonr='$kontonr' and art = 'D'",__FILE__ . " linje " . __LINE__));
@@ -326,12 +326,12 @@ function insert_shop_order($brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_konto
 	fwrite($log,__line__." afd $afd\n");
 	$qtxt="insert into ordrer ";
 	$qtxt.="(ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,kontakt,email,art,projekt,momssats,betalingsbet,betalingsdage,betalings_id,status,";
-	$qtxt.="ordredate,valuta,valutakurs,afd,ref,hvem,felt_1,felt_2,felt_3,felt_4,felt_5,kundeordnr,sum,moms)"; 
+	$qtxt.="ordredate,fakturadate,valuta,valutakurs,afd,ref,hvem,felt_1,felt_2,felt_3,felt_4,felt_5,kundeordnr,cvrnr,ean,sum,moms)"; 
 	$qtxt.=" values "; 
 	$qtxt.="('$ordrenr','$saldi_addr_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($addr1)."','".db_escape_string($addr2)."',";
 	$qtxt.="'".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($kontakt)."','".db_escape_string($email)."',";
-	$qtxt.="'$art','$projektnr','$momssats','$betalingsbet','$betalingsdage','$betalings_id','0','$ordredate','$valuta','$valutakurs',";
-	$qtxt.="'$afd','$ref','','$ekstra1','$ekstra2','$ekstra3','$ekstra4','$ekstra5','$shop_ordre_id','$nettosum','$momssum')";
+	$qtxt.="'$art','$projektnr','$momssats','$betalingsbet','$betalingsdage','$betalings_id','0','$ordredate','$ordredate','$valuta','$valutakurs',";
+	$qtxt.="'$afd','$ref','','$ekstra1','$ekstra2','$ekstra3','$ekstra4','$ekstra5','$shop_ordre_id','$cvrnr','$ean','$nettosum','$momssum')";
 	fwrite($log,__line__." $qtxt\n");
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt="select id from ordrer where ordrenr='$ordrenr' and kontonr='$kontonr'";
@@ -524,14 +524,19 @@ function fakturer_ordre($saldi_id,$udskriv_til,$pos_betaling) {
 #	$r=db_fetch_array(db_select("select * from ordrer where id = '$saldi_id'",__FILE__ . " linje " . __LINE__));
 #	$betalt=$r['sum']+$r['moms'];
 #	$korttype=$r['felt_1'];
-	$qtxt="update ordrer set levdate=ordredate,fakturadate=ordredate where id='$saldi_id'";
+	$qtxt="update ordrer set fakturadate=ordredate where id='$saldi_id'";
 	fwrite($log,__line__." $qtxt\n");
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
 	$qtxt="update ordrelinjer set leveres = antal where ordre_id='$saldi_id'";
 	fwrite($log,__line__." $qtxt\n");
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
 	$svar=levering($saldi_id,'on',NULL,'on');
-	if ($pos_betaling && abs($ordresum+$ordremoms!=$betalingsum)) $svar='Error in amount ('.$ordresum+$ordremoms.') vs. paid amount ('.$betalingsum.')'; 
+	if ($pos_betaling && abs($ordresum+$ordremoms!=$betalingsum)) {
+		fwrite($log,__line__." Ordresum : $ordresum\n");
+		fwrite($log,__line__." Ordremoms : $ordremoms\n");
+		fwrite($log,__line__." Betalingssum : $betalingssum\n");
+		$svar='Error in amount ('.$ordresum.'+'.$ordremoms.') vs. paid amount ('.$betalingsum.')';
+	}	
 	if ($svar=='OK') {
 		$svar=bogfor($saldi_id,'on');
 		if ($pos_betaling) {
@@ -539,7 +544,10 @@ function fakturer_ordre($saldi_id,$udskriv_til,$pos_betaling) {
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	fwrite($log,__line__." Ordre ID $saldi_id faktureret ($svar)\n");
 		}
-	} else return($svar);
+	} else {
+		fwrite($log,__line__." Svar : $svar\n");
+		return($svar);
+	}
 	fclose ($log);
 	return($saldi_id); 
 }

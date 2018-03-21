@@ -110,7 +110,8 @@
 // 2017.10.26 PHR - $db ændret til $dkb(dækningsbidrag) da $db bruges til databaseinfo. 
 // 2018.01.16 PHR - Mulighed for at medsende standardbilag. Søg std_bilag & mail_bilag
 // 2018.03.02 PHR - Betalings_id vises nu hvis feltet er udfyldt - Søg betalings_id
-// 2018.03.05 htmlentities foran beskrivelse og varenr. 20180305
+// 2018.03.05 PHR - htmlentities foran beskrivelse og varenr. 20180305
+// 2018.03.16 PHR - Kasse kan nu være andet end afd -- 20180316'.
 
 @session_start();
 $s_id=session_id();
@@ -1212,7 +1213,8 @@ if ($status<3 && $b_submit) {
 			} elseif ($beskrivelse[0] && is_numeric($posnr_ny[0])) db_modify("insert into ordrelinjer (ordre_id,posnr,beskrivelse,lager) values ('$id','$posnr_ny[0]','$beskrivelse[0]','$lager[0]')",__FILE__ . " linje " . __LINE__);
 		}
 		if ($id) {
-			$r = db_fetch_array(db_select("select tidspkt,hvem from ordrer where status < 3 and id = $id and hvem != '$brugernavn'",__FILE__ . " linje " . __LINE__));
+			$qtxt="select tidspkt,hvem from ordrer where status < 3 and id = $id and hvem != '$brugernavn'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$tidspkt=trim($r['tidspkt']);
 			if ($tidspkt && $row['hvem'])	{
 				if ($tidspkt-($row['tidspkt'])<3600 && $row['hvem']) {
@@ -1227,7 +1229,16 @@ if ($status<3 && $b_submit) {
 				$afd*=1;
 				$opdat="update ordrer set kontonr='$kontonr',kundeordnr='$kundeordnr',firmanavn='$firmanavn',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',land='$land',kontakt='$kontakt',kontakt_tlf='$kontakt_tlf',lev_navn='$lev_navn',lev_addr1='$lev_addr1',lev_addr2='$lev_addr2',lev_postnr='$lev_postnr',lev_bynavn='$lev_bynavn',lev_kontakt='$lev_kontakt',vis_lev_addr='$vis_lev_addr',felt_1='$felt_1',felt_2='$felt_2',felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',betalingsdage='$betalingsdage',betalingsbet='$betalingsbet',cvrnr='$cvrnr',momssats='$momssats',procenttillag='$procenttillag',ean='$ean',institution='$institution',email='$email',mail_fakt='$mail_fakt',udskriv_til='$udskriv_til',notes='$notes',ordredate='$ordredate',status=$status,ref='$ref',fakturanr='$fakturanr',lev_adr='$lev_adr',hvem = '$brugernavn',tidspkt='$tidspkt',projekt='$projekt[0]',sprog='$formularsprog',pbs='$pbs',afd='$afd',restordre='$restordre',mail_subj='$mail_subj',mail_text='$mail_text' $tmp where id=$id";
 				db_modify($opdat,__FILE__ . " linje " . __LINE__);
-				if ($vis_saet) db_modify("update ordrer set felt_5 = '$afd' where id = '$id'",__FILE__ . " linje " . __LINE__);
+				if ($vis_saet && $afd) { #20180316
+					$qtxt="select box1,box3 from grupper where art='POS' and kodenr='1'";
+					$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+					$tmparray=explode(chr(9),$r['box3']);
+					for ($x=0;$x<count($tmparray);$x++) {
+						if ($tmparray[$x]==$afd) $kasse=$x+1;
+					}
+					$qtxt="update ordrer set felt_5 = '$kasse' where id = '$id'";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				}
 			}
 		}
 	}
