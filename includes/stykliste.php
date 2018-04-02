@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------- includes/stykliste.php lap 3.6.7 ------2017-02-15-----------
+// ------- includes/stykliste.php lap 3.7.1 ------2018-03-27-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -26,13 +26,15 @@
 // Copyright (c) 2004-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2017.02.15 PHR Tilføjet ',2' i samtlige 'dkdcimal'
+// 2018.03.27 PHR Tilføjet ',__FILE__ . " linje " . __LINE__' på sql kommandoer
 
 if (!function_exists('stykliste')) {
 function stykliste($id, $udskriv, $udvalg) {
 	GLOBAL $charset;
 
+	$ialt=0;
 	$x=0;
-	$query = db_select("select * from styklister where indgaar_i='$id' order by posnr");
+	$query = db_select("select * from styklister where indgaar_i='$id' order by posnr",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
 		$x++;
 		$vare_id[$x]=$row['vare_id'];
@@ -41,7 +43,7 @@ function stykliste($id, $udskriv, $udvalg) {
 	}
 	$vareantal=$x;
 
-	$query = db_select("select varenr, beskrivelse from varer where id=$id");
+	$query = db_select("select varenr, beskrivelse from varer where id=$id",__FILE__ . " linje " . __LINE__);
 	$row = db_fetch_array($query);
 
 	if ($udskriv) {
@@ -50,15 +52,15 @@ function stykliste($id, $udskriv, $udvalg) {
 		print "<tr><td align=center> Varenr:</td><td align=center> Beskrivelse</td><td align=center> Kostpris</td><td align=center> Antal</td><td align=center> Sum</td></tr>";
 	}
 	for ($x=1; $x<=$vareantal; $x++) {
-		$query = db_select("select * from varer where id=$vare_id[$x]");
+		$query = db_select("select * from varer where id=$vare_id[$x]",__FILE__ . " linje " . __LINE__);
 		$row = db_fetch_array($query);
-#		$query2 = db_select("select kostpris from vare_lev where vare_id=$row[id] order by posnr");
+#		$query2 = db_select("select kostpris from vare_lev where vare_id=$row[id] order by posnr",__FILE__ . " linje " . __LINE__);
 #		if ($row2 = db_fetch_array($query2)) {
 #			$sum=$row2['kostpris']*$antal[$x];
 #			$ialt=$ialt+$sum;
 #			$pris=dkdecimal($row2['kostpris'],2);
 #		} else {
-			$query2 = db_select("select kostpris from varer where id=$row[id]");
+			$query2 = db_select("select kostpris from varer where id=$row[id]",__FILE__ . " linje " . __LINE__);
 			$row2 = db_fetch_array($query2);
 			$sum=$row2['kostpris']*$antal[$x];
 			$ialt=$ialt+$sum;

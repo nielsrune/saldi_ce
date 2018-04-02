@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//----------------- includes/posmenufunc.php -----ver 3.7.1---- 2018.01.25 ----------
+//----------------- includes/posmenufunc.php -----ver 3.7.1---- 2018.03.13 ----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -37,6 +37,8 @@
 // 2017.03.24 Afd kommer nu fra global (pos_ordre).
 // 2017.12.10 Hvis ip ikke er sat disables terminal knap. #20171210
 // 2018.01.25 Tilføjet $varenr_ny så det også fungerer med variant stregkoder # 20180125 
+// 2018.03.13	-	PHR Kontoopslag ændret til debitorposlag og kreditoropslag tilføjet.
+
 
 if (!function_exists('menubuttons')) {
 function menubuttons($id,$menu_id,$vare_id,$plads) {
@@ -309,7 +311,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"kor_bord\"VALUE=\"$a\">";
 					} elseif ($c=='25') {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"kontoopslag\" VALUE=\"$a\">\n";
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"debitoropslag\" VALUE=\"$a\">\n";
 					} elseif ($c=='26') {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						(!$kontonr || $sum || $disabled)?$dis="disabled='disabled'":$dis=NULL;
@@ -346,6 +348,9 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='34') {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<td><a style=\"text-decoration: none\" href=\"udskriftsvalg.php?id=$id&valg=1&formular=3\"><INPUT TYPE=\"button\" $disabled $tmp VALUE=\"$a\"></a>";
+					} elseif ($c=='35') {
+						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"kreditoropslag\" VALUE=\"$a\">\n";
 					} else {
 						$knap=str_replace('$kasse',$kasse,$knap);
 						$knap=str_replace('$brugernavn',$brugernavn,$knap);
@@ -492,12 +497,15 @@ function tastatur($kasse,$status) {
 	print "<td><a href=pos_ordre.php?id=$id&kasse=$kasse&kassebeholdning=on>Kasseopt&aelig;lling</a></td>\n";
 */
 	if ($terminal_ip) {
+echo __line__." $terminal_ip<br>";
 		if ($terminal_ip=='box' && $_COOKIE['salditerm']) $terminal_ip=$_COOKIE['salditerm'];
+echo __line__." $terminal_ip<br>";
 		if ($terminal_ip=='box' || $terminal_ip=='saldibox') {
 #			$filnavn="$url/kasse/".$_SERVER['REMOTE_ADDR'].".ip";
 			$filnavn="http://saldi.dk/kasse/".$_SERVER['REMOTE_ADDR'].".ip";
 			if ($fp=fopen($filnavn,'r')) {
 				$terminal_ip=trim(fgets($fp));
+echo __line__." $terminal_ip<br>";
 				fclose ($fp);
 			}
 		} else {
@@ -624,7 +632,7 @@ function tastatur($kasse,$status) {
 		print "<TD colspan=2><INPUT TYPE=\"submit\" $stil2 NAME=\"OK\"  VALUE=\"Enter\"></TD></tr>\n";
 		#if ($vis_hurtigknap && $fokus=='antal_ny') print "<TR><TD></TD><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant p&aring; bel&oslash;b\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
 		if ($vis_kontoopslag && !$varenr_ny && !$indbetaling) {
-			print "<TR><TD></TD><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"kontoopslag\" VALUE=\"Kontoopslag\"></TD>\n";
+			print "<TR><TD></TD><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"debitoropslag\" VALUE=\"Kontoopslag\"></TD>\n";
 			if ($vis_saet && $fokus=='modtaget') print "<TD COLSPAN=\"2\" onclick=\"return confirm('Gem ordre som tilbud?')\"><INPUT TYPE=\"submit\" $stil2 NAME=\"gem\" VALUE=\"Gem som tilbud\"></TD>\n";
 		}
 		print "</tr>\n";

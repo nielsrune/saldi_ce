@@ -359,7 +359,7 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c==22) print "<OPTION value=\"22\">Kortterminal</OPTION>\n";
 		if ($c==23) print "<OPTION value=\"23\">Send til køkken</OPTION>\n";
 		if ($c==24) print "<OPTION value=\"24\">Kør bord</OPTION>\n";
-		if ($c==25) print "<OPTION value=\"25\">Kontoopslag</OPTION>\n";
+		if ($c==25) print "<OPTION value=\"25\">Debitoropslag</OPTION>\n";
 		if ($c==26) print "<OPTION value=\"26\">Indbetaling</OPTION>\n";
 		if ($c==27) print "<OPTION value=\"27\">Konto</OPTION>\n";
 		if ($c==28) print "<OPTION value=\"28\">Enter+Menu</OPTION>\n";
@@ -369,9 +369,11 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c==32) print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
 		if ($c==33) print "<OPTION value=\"33\">Sæt</OPTION>\n";
 		if ($c==34) print "<OPTION value=\"34\">Følgeseddel</OPTION>\n";
+		if ($c==35) print "<OPTION value=\"35\">Leverandøropslag</OPTION>\n";
 		if ($c!=16) print "<OPTION value=\"16\">Afslut</OPTION>\n";
 		if ($c!=1) print "<OPTION value=\"1\">Bordvalg</OPTION>\n";
 		if ($c!=2) print "<OPTION value=\"2\">Brugervalg</OPTION>\n";
+		if ($c!=25) print "<OPTION value=\"25\">Debitoropslag</OPTION>\n";
 		if ($c!=3) print "<OPTION value=\"3\">Del bord</OPTION>\n";
 		if ($c!=14) print "<OPTION value=\"14\">Ekspedient</OPTION>\n";
 		if ($c!=4) print "<OPTION value=\"4\">Enter</OPTION>\n";
@@ -384,10 +386,10 @@ if (($menu_id) && $ret_col && $ret_row) {
 		if ($c!=7) print "<OPTION value=\"7\">Kasseoptælling</OPTION>\n";
 		if ($c!=8) print "<OPTION value=\"8\">Kassevalg</OPTION>\n";
 		if ($c!=27) print "<OPTION value=\"27\">Konto</OPTION>\n";
-		if ($c!=25) print "<OPTION value=\"25\">Kontoopslag</OPTION>\n";
 		if ($c!=31) print "<OPTION value=\"31\">Kontoudtog</OPTION>\n";
 		if ($c!=21) print "<OPTION value=\"21\">Korrektion</OPTION>\n";
 		if ($c!=22) print "<OPTION value=\"22\">Kortterminal</OPTION>\n";
+		if ($c!=35) print "<OPTION value=\"35\">Kreditoropslag</OPTION>\n";
 		if ($c!=9) print "<OPTION value=\"9\">Køkkenprint</OPTION>\n";
 		if ($c!=24) print "<OPTION value=\"24\">Kør bord</OPTION>\n";
 		if ($c!=10) print "<OPTION value=\"10\">Luk</OPTION>\n";
