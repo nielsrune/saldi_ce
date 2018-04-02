@@ -5,7 +5,7 @@ ob_start(); //Starter output buffering
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------/lager/varekort.php---------lap 3.7.1---2018-01-23	-----
+// ----------/lager/varekort.php---------lap 3.7.1---2018-03-14	-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller

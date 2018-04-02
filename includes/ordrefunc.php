@@ -2825,8 +2825,8 @@ exit;
 	}
 }
 ######################################################################################################################################
-function kontoopslag($art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$kontakt) {
-#cho "$art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$kontakt<br>";
+function kontoopslag($o_art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$kontakt) {
+#cho "$o_art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$kontakt<br>";
 #cho "fokus=$fokus<br>";
 	if ($fokus=='kontonr') $find=$kontonr;
 	if (strstr($fokus,'lev')) $find=$firmanavn;
@@ -2846,10 +2846,10 @@ function kontoopslag($art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$po
 	else $find="%";
 	if (substr($find,-1,1)!='%') $find=$find.'%';
 
-		if($art=='DO'||$art=='DK') {
+		if($o_art=='DO'||$o_art=='DK') {
 		sidehoved($id, "../debitor/ordre.php", "../debitor/debitorkort.php", $fokus, "Kundeordre $id - Kontoopslag");
 		$href="ordre.php";
-	} elseif ($art=='PO') {
+	} elseif ($o_art=='PO'||$o_art=='KO') {
 		sidehoved($id, "../debitor/pos_ordre.php", "../debitor/debitorkort.php", $fokus, "POS ordre $id - Kontoopslag");
 		$href="pos_ordre.php";
 		$find="";
@@ -2858,7 +2858,9 @@ function kontoopslag($art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$po
 #	sidehoved($id, "ordre.php", "../debitor/debitorkort.php", $fokus, "Kundeordre $id - Kontoopslag");
 	print"<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign=\"top\">";
 	print"<tbody><tr>";
-	print"<td><b><a href=$href?sort=kontonr&funktion=kontoOpslag&x=$x&fokus=$fokus&id=$id>Kundenr</b></td>";
+	print"<td><b><a href=$href?sort=kontonr&funktion=kontoOpslag&x=$x&fokus=$fokus&id=$id>";
+	($o_art=='KO')?print "Leverandørnr":print "Kundenr";
+	print "</b></td>";
 	print"<td><b><a href=$href?sort=firmanavn&funktion=kontoOpslag&x=$x&fokus=$fokus&id=$id>Navn</b></td>";
 	print"<td><b><a href=$href?sort=addr1&funktion=kontoOpslag&x=$x&fokus=$fokus&id=$id>Adresse</b></td>";
 	print"<td><b><a href=$href?sort=addr2&funktion=kontoOpslag&x=$x&fokus=$fokus&id=$id>Adresse2</b></td>";
@@ -2868,7 +2870,7 @@ function kontoopslag($art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$po
 	print"<td><b><a href=$href?sort=kontakt&funktion=kontoOpslag&x=$x&fokus=$fokus&id=$id>Kontaktperson</b></td>";
 	print"<td><b><a href=$href?sort=tlf&funktion=kontoOpslag&x=$x&fokus=$fokus&id=$id>Telefon</b></td>";
 	print" </tr>\n";
-	if ($art=='PO')	{
+	if ($o_art=='PO'||$o_art=='KO')	{
 	  print "<form NAME=\"kontoopslag\" action=\"pos_ordre.php?fokus=kontonr&id=$id\" method=\"post\">";
 	  print "<tr><td><input name=\"kontonr\" size = \"4\"></td>";
 	  print "<td><input  STYLE=\"width: 0.01em;height: 0.01em;\" type=submit name=\"Opdat\" value=\"\"></td></tr>";
@@ -2878,8 +2880,9 @@ function kontoopslag($art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$po
 	if (!$sort) {$sort = "firmanavn";}
 	(strstr($fokus,'lev_'))?$soeg='firmanavn':$soeg=$fokus;	
 #cho "select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, kontakt, tlf from adresser where art = 'D' and upper($soeg) like upper('$find') and lukket != 'on' order by $sort<br>";
-	if ($soeg && $find) $query = db_select("select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, kontakt, tlf from adresser where art = 'D' and upper($soeg) like upper('$find') and lukket != 'on' order by $sort",__FILE__ . " linje " . __LINE__);
-	else $query = db_select("select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, kontakt, tlf from adresser where art = 'D' and lukket != 'on' order by $sort",__FILE__ . " linje " . __LINE__);
+	($o_art=='KO')?$art='K':$art='D';
+	if ($soeg && $find) $query = db_select("select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, kontakt, tlf from adresser where art = '$art' and upper($soeg) like upper('$find') and lukket != 'on' order by $sort",__FILE__ . " linje " . __LINE__);
+	else $query = db_select("select id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, kontakt, tlf from adresser where art = '$art' and lukket != 'on' order by $sort",__FILE__ . " linje " . __LINE__);
 	$fokus_id='id=fokus';
 	$x=0;
 	while ($row = db_fetch_array($query)) {
@@ -2907,7 +2910,7 @@ function kontoopslag($art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$po
 		print "<tr><td colspan=9><hr></td></tr>";
 	}
 	print "</tbody></table></td></tr></tbody></table>";
-	if ($art=='PO')	print "<script language=\"javascript\">document.kontoopslag.kontonr.focus();</script>";
+	if ($o_art=='PO')	print "<script language=\"javascript\">document.kontoopslag.kontonr.focus();</script>";
 	else print "<BODY onLoad=\"javascript:document.getElementById('fokus').focus()\">";
 	exit;
 }
@@ -2967,6 +2970,8 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 	global $vis_saet;
 	global $db;
 
+	$log=fopen("../temp/opret_ordrelinje.log","a");
+	fwrite($log,__line__." opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_ny,$procent,$art,$momsfri,$posnr,$linje_id,$incl_moms,$kdo,$rabatart,$kopi,$saet,$fast_db,$lev_varenr,$lager,$linje)\n");
 
 	$saet*=1;
 	$fast_db*=1;
@@ -3039,10 +3044,12 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 		$qtxt.="values ";
 		$qtxt.="('$id','0','','','$beskrivelse','0','0','','100','0','0','0','','0','$posnr','0','0','0','0','0','','','0','0','','$omvbet',";
 		$qtxt.="'$saet','$fast_db','',$lager)";
+		fwrite($log, __linr__." $qtxt\n");
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	} else {
 		return ("Manglende varenr eller beskrivelse");
 	}
+	fwrite($log,__line__." Pris $pris\n");
 	if ($string && $r=db_fetch_array(db_select("$string",__FILE__ . " linje " . __LINE__))) {
 		$vare_id=$r['id'];
 		$varenr=db_escape_string($r['varenr']);
@@ -3094,8 +3101,12 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 				$tmp=substr($tmp,1); #f.eks 3
 				$r2 = db_fetch_array(db_select("select box2 from grupper where art = 'SM' and kodenr = '$tmp'",__FILE__ . " linje " . __LINE__));
 				if ($r2['box2']) $varemomssats=$r2['box2']*1;
+fwrite($log,__line__." Varemomssats $varemomssats\n");
 			}	else $varemomssats=$momssats;
+fwrite($log,__line__." Varemomssats $varemomssats\n");
 		} else $varemomssats=0;
+fwrite($log,__line__." Varemomssats $varemomssats\n");
+		fwrite($log,__line__." Pris $pris\n");
 		if (!$pris) {
 			$ugedag=date('N');
 			$uxtid=date("U");
@@ -3117,12 +3128,18 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 			$kostpris=$r['kostpris']*1;
 		} else {
 			global $momssats;
+			fwrite($log,__line__." Pris $pris\n");
+fwrite($log,__line__." Varemomssats $varemomssats\n");
 			$ms=$varemomssats;
+			fwrite($log,__line__." Pris $pris\n");
+fwrite($log,__line__."Momssats $momssats Varemomssats $varemomssats\n");
 			if ($momssats<$ms) $ms=$momssats;		
+			fwrite($log,__line__." Pris $pris -> $ms -> $incl_moms\n");
 			if ($incl_moms) $pris=$pris-($pris*$ms/(100+$ms));
 			else $pris*=1; #20140124
 			$kostpris=$r['kostpris']*1;
 		}
+		fwrite($log,__line__." Pris $pris\n");
 		if ($pris && $r['salgspris']==0 && $kostpris<1 && $kostpris>0) {
 			$fast_db=$kostpris;
 			$kostpris=$pris*$kostpris;
@@ -3230,7 +3247,7 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 			$qtxt.="('$id','$vare_id','$varenr','$enhed','$beskrivelse','$antal','$rabat','$rabatart','$procent','$m_rabat','$pris',";
 			$qtxt.="'$kostpris','$momsfri','$varemomssats','$posnr','','$folgevare','$rabatgruppe','$bogfkto','$kred_linje_id','$kdo',";
 			$qtxt.="'$serienr','$variant_id','$leveres','$samlevare','$omvbet','$saet','$fast_db','$lev_varenr','','$lager')";
-#cho "$qtxt<br>";
+		fwrite($log, __line__." $qtxt\n");
 			if (abs($antal) < 100000000000) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			else print "<BODY onLoad=\"javascript:alert('Antal (".dkdecimal($antal).") er for stort, reducer antal')\">";
 			if ($samlevare && !$beholdning) {
@@ -3238,6 +3255,7 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 #				samlevare($id,$art,$r['id'],$vare_id,$antal); udkommenteret 20131129
 			}
 		}
+fclose($log);		
 		# finder antal af varen på ordren.
 #cho "select sum(antal) as antal from ordrelinjer where vare_id='$vare_id' and pris=$pris and ordre_id='$id<br>";
 		$r=db_fetch_array(db_select("select sum(antal) as antal from ordrelinjer where vare_id='$vare_id' and pris=$pris and rabat='0' and ordre_id='$id'",__FILE__ . " linje " . __LINE__));
@@ -4548,6 +4566,8 @@ function saet_afrund($id,$sum,$moms,$difkto) {
 */
 function opret_saet($id,$master_id,$saetpris,$momssats,$antal_ny,$incl_moms,$lager) {
 #cho __line__." ($id,$master_id,$saetpris,$momssats,$antal_ny,$incl_moms,$lager)<br>";
+	$log=fopen("../temp/opret_saet.log","a");
+	fwrite($log,"opret_saet($id,$master_id,$saetpris,$momssats,$antal_ny,$incl_moms,$lager)\n");
 	gendan_saet($id);
 #	$antal_ny*=1; remmet 20150312 da værdien skal være 1 hvis der ikke er nogen værdi!
  	if (!$antal_ny && $antal_ny!='0') $antal_ny=1;
@@ -4581,18 +4601,23 @@ function opret_saet($id,$master_id,$saetpris,$momssats,$antal_ny,$incl_moms,$lag
 		$pris[$x]=afrund($r2['salgspris'],2);
 		$beskrivelse[$x]=$r2['beskrivelse'];
 		$momsfri[$x]=$r2['box7'];
+		fwrite($log,__line__." $antal[$x],$pris[$x]$beskrivelse[$x] $momsfri[$x])\n");
 		if ($incl_moms && $momssats && !$momsfri[$x]) {
 			$pris[$x]+=afrund($pris[$x]*$momssats/100,3);
 		}
 		$linjepris[$x]=afrund($antal[$x]*$pris[$x],3);
 		$normalsum+=$linjepris[$x];
+		fwrite($log,__line__." $antal[$x],$pris[$x]$beskrivelse[$x] $momsfri[$x] )\n");
 		$x++;
 	}
 	$rabat=$normalsum-$saetpris;
 	$rabat=afrund($rabat*100/$normalsum,3);
 	$tjeksum=0;
+	fclose($log);
 	for ($x=0;$x<count($vare_id);$x++) {
+#		fwrite($log,__line__." opret_ordrelinje($id,$vare_id[$x],$varenr[$x],$antal[$x],'',$pris[$x],$rabat,100,'PO','','','0',$incl_moms,'','','',$saetnr,'','',$lager,)\n");
 		opret_ordrelinje($id,$vare_id[$x],$varenr[$x],$antal[$x],'',$pris[$x],$rabat,100,'PO','','','0',$incl_moms,'','','',$saetnr,'','',$lager,__LINE__);
+
 		$linjesum=$antal[$x]*$pris[$x];
 		$linjesum-=afrund($linjesum*$rabat/100,3);
 #		if ($momssats && !$momsfri[$x]) $linjesum+=afrund($linjesum*$momssats/100,2);

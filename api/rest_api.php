@@ -487,7 +487,7 @@ function insert_shop_orderline($brugernavn,$ordre_id,$shop_vare_id,$shop_varenr,
 		fwrite ($log,__line__, "Beskrivelse: $beskrivelse\n");
 		fwrite ($log,__line__, "Lager: $lager\n");
 		fwrite($log,__line__." opret_ordrelinje($ordre_id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat,'100','DO',$momsfri,$posnr,'0','','','','0','','','','','',$lager,".__LINE__."\n");
-		$linje_id=opret_ordrelinje($ordre_id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat,'100','DO',$momsfri,$posnr,'0','','','','0','','','','','',$lager,__LINE__);
+		$linje_id=opret_ordrelinje($ordre_id,$vare_id,db_escape_string($varenr),$antal,db_escape_string($beskrivelse),$pris,$rabat,'100','DO',$momsfri,$posnr,'0','','','','0','','','','','',$lager,__LINE__);
 	}
 	$ordresum+=$pris*$antal[$x];
 	fwrite($log,__line__." Linje ID $linje_id oprettet\n");
@@ -531,11 +531,12 @@ function fakturer_ordre($saldi_id,$udskriv_til,$pos_betaling) {
 	fwrite($log,__line__." $qtxt\n");
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
 	$svar=levering($saldi_id,'on',NULL,'on');
-	if ($pos_betaling && abs($ordresum+$ordremoms!=$betalingsum)) {
+	$betalingsdiff=abs($ordresum+$ordremoms-$betalingsum);
+	if ($pos_betaling && $betalingsdiff >= 0.01) {
 		fwrite($log,__line__." Ordresum : $ordresum\n");
 		fwrite($log,__line__." Ordremoms : $ordremoms\n");
-		fwrite($log,__line__." Betalingssum : $betalingssum\n");
-		$svar='Error in amount ('.$ordresum.'+'.$ordremoms.') vs. paid amount ('.$betalingsum.')';
+		fwrite($log,__line__." Betalingssum : $betalingsum\n");
+		$svar='Error in amount ('.$ordresum.'+'.$ordremoms.') vs. paid amount ('.$betalingsum.') : diff '.$betalingsdiff;
 	}	
 	if ($svar=='OK') {
 		$svar=bogfor($saldi_id,'on');

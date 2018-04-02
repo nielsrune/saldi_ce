@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ includes/opdat_kostpriser.php ------- lap 3.6.7 -- 2017-03-29 --
+// ------------ includes/opdat_kostpriser.php ------- lap 3.7.1 -- 2018-03-27 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,9 +23,11 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------------
 // 2017.02.29 PHR Tilføjet gennemsnitspriser. (metode 1)
+// 2018.04.27 PHR Stykliste kostpriser efterreguleres.
+
 
 @session_start();
 $s_id=session_id();
@@ -46,7 +48,7 @@ $vare_id=if_isset($_GET['vare_id'])*1;
 $metode=if_isset($_GET['metode'])*1;
 
 if ($metode=='1') {
-	$qtxt="select id,beholdning from varer where id > '$vare_id' and beholdning > '0' order by id limit 1";
+	$qtxt="select id,beholdning from varer where id > '$vare_id' and beholdning > '0' and samlevare != 'on' order by id limit 1";
 #cho "$qtxt<br>";
 	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 		$beholdning=$r['beholdning'];
@@ -81,30 +83,55 @@ if ($metode=='1') {
 				elseif ($r['transdate'] == $kobsdate && $r['kostpris'] != $pris) $qtxt="update kostpriser set kostpris='$pris' where id = '$r[id]'";
 			} else $qtxt="insert into kostpriser (vare_id,kostpris,transdate) values ('$vare_id','$pris','$kobsdate')";
 			if ($qtxt) db_modify("$qtxt",__FILE__ . " linje " . __LINE__);
-			db_modify("update varer set kostpris='$pris' where id='$vare_id'",__FILE__ . " linje " . __LINE__);
+			$qtxt="update varer set kostpris='$pris' where id='$vare_id' and samlevare !='on' and lukket !='on'";
+			if ($pris > 0) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 #			exit;
 		} 
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/opdat_kostpriser.php?vare_id=$vare_id&metode=$metode\">";
 		exit;
-	} else print "<body onload=\"javascript:window.close();\">";
+	} else { # så er der ikke flere varer.
+		stklst();
+#		print "<body onload=\"javascript:window.close();\">";
+	}
 } elseif ($metode=='2') {
-if ($r=db_fetch_array(db_select("select id,vare_id,pris,kobsdate from batch_kob where vare_id > '$vare_id' and linje_id != '0' and antal > '0' order by vare_id,kobsdate desc limit 1",__FILE__ . " linje " . __LINE__))) {
+	$qtxt="select id,vare_id,pris,kobsdate from batch_kob where vare_id > '$vare_id' and linje_id != '0' and antal > '0' ";
+	$qtxt.="order by vare_id,kobsdate desc limit 1";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 	$id=$r['id'];
-	$vare_id=$r['vare_id'];
+		$vare_id=$r['vare_id']; # Den er go nok- skal være næste varenr
 	$pris=$r['pris'];
 	$kobsdate=$r['kobsdate'];
 	$qtxt=NULL;
-	if ($r=db_fetch_array(db_select("select id,kostpris,transdate from kostpriser where vare_id='$vare_id' order by transdate desc limit 1",__FILE__ . " linje " . __LINE__))) {	
+		$qtxt="select id,kostpris,transdate from kostpriser where vare_id='$vare_id' order by transdate desc limit 1";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {	
 		if ($r['transdate'] < $kobsdate && $r['kostpris'] != $pris) $qtxt="insert into kostpriser (vare_id,kostpris,transdate) values ('$vare_id','$pris','$kobsdate')";
 		elseif ($r['transdate'] == '2015-01-01' && $r['kostpris'] != $pris) $qtxt="update kostpriser set kostpris='$pris', transdate = '$kobsdate' where id = '$id'";
 		elseif ($r['transdate'] == $kobsdate && $r['kostpris'] != $pris) $qtxt="update kostpriser set kostpris='$pris' where id = '$id'";
 	} else $qtxt="insert into kostpriser (vare_id,kostpris,transdate) values ('$vare_id','$pris','$kobsdate')";
 	if ($qtxt) db_modify("$qtxt",__FILE__ . " linje " . __LINE__);
-	db_modify("update varer set kostpris='$pris' where id='$vare_id'",__FILE__ . " linje " . __LINE__);
+		$qtxt="update varer set kostpris='$pris' where id='$vare_id' and samlevare !='on' and lukket !='on'";
+		if ($pris > 0) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/opdat_kostpriser.php?vare_id=$vare_id&metode=$metode\">";
 	exit;
+	} else { # så er der ikke flere varer.
+		stklst();
+	}
 } else print "<body onload=\"javascript:window.close();\">";
-} else print "<body onload=\"javascript:window.close();\">";
+
+function stklst() {
+	include("../includes/stykliste.php");
+	$qtxt="select id from varer where samlevare='on' and lukket != 'on'";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while($r=db_fetch_array($q)) {
+		$vare_id=$r['id'];
+		$pris=stykliste($r['id'],'','');
+		$qtxt="update varer set kostpris='$pris' where id='$vare_id'";
+#cho "$qtxt<br>";
+		if ($pris > 0) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+	print "<body onload=\"javascript:window.close();\">";
+}
+
 
 
 print "</html>";

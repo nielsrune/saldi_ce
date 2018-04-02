@@ -682,6 +682,7 @@ function div_valg() {
 		print "<tr>\n<td title=''>".findtekst(530,$sprog_id)."</td>\n";
 		print "<td><input name='oiokode' class='inputbox' style='width:150px;' type='password' value='$oiokode'></td>\n</tr>\n";
 	}
+	
 	print "<tr><td colspan='2'>&nbsp;</td></tr>";
 	print "<tr><td colspan='1'>&nbsp;</td><td style='text-align:center'>\n";
 	print "     <input name='submit' type=submit accesskey='g' value='Gem/opdat&eacute;r'>\n";
@@ -1727,12 +1728,16 @@ function pos_valg () {
 	if ($r=db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '3'",__FILE__ . " linje " . __LINE__))) {
 		$id3=$r['id'];
 	} else {
-		db_modify("insert into grupper(beskrivelse,kode,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14)values('Pos valg','','3','POS','0','10','','','','','','','','','','','','')",__FILE__ . " linje " . __LINE__);
+		$qtxt="insert into grupper(beskrivelse,kode,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14)";
+		$qtxt.="values";
+		$qtxt.="('Pos valg','','3','POS','0','10','','','','','','','','','','','','')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$r=db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '3'",__FILE__ . " linje " . __LINE__)); 
 		$id3=$r['id'];
 	}
 	($r['box1'])?$brugervalg='checked':$brugervalg=NULL;
 	$pfs=explode(chr(9),$r['box2']);
+	($r['box3'])?$kundedisplay='checked':$kundedisplay=NULL;
 /*
 	$posbuttons=0;
 	$q = db_select("select * from grupper where art = 'POSBUT'",__FILE__ . " linje " . __LINE__);
@@ -1920,6 +1925,7 @@ function pos_valg () {
 	print "<tr><td colspan='2' title='".findtekst(837,$sprog_id)."'>".findtekst(838,$sprog_id)."</td><td title='".findtekst(837,$sprog_id)."'><input class='inputbox' type='checkbox' name='udtag0' $udtag0></td></tr>\n";
 	print "<tr><td colspan='2' title='".findtekst(703,$sprog_id)."'>".findtekst(702,$sprog_id)."</td><td title='".findtekst(703,$sprog_id)."'><input class='inputbox' type='checkbox' name='optalassist' $optalassist></td></tr>\n";
 	print "<tr><td colspan='2' title='".findtekst(839,$sprog_id)."'>".findtekst(840,$sprog_id)."</td><td title='".findtekst(839,$sprog_id)."'><input class='inputbox' type='checkbox' name='brugervalg' $brugervalg></td></tr>\n";
+	print "<tr><td colspan='2' title='".findtekst(848,$sprog_id)."'>".findtekst(847,$sprog_id)."</td><td title='".findtekst(848,$sprog_id)."'><input class='inputbox' type='checkbox' name='kundedisplay' $kundedisplay></td></tr>\n";
 #	print "<tr><td colspan='2' title='".findtekst(765,$sprog_id)."'>".findtekst(765,$sprog_id)."</td><td title='".findtekst(766,$sprog_id)."'><input class='inputbox' type='text' style='text-align:right;width:25px' name='pfs' value='$pfs'></td></tr>\n";
 	print "<tr><td colspan='2'><br></td></tr>\n";
 	print "<tr><td><br></td></tr>\n";

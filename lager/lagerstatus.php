@@ -31,6 +31,7 @@
 // 2016.12.22 $opdater flyttet sammen med $ret_behold;
 // 2017.11.02 CSV fil utf8_dekodes og dseparer med ;  
 // 2018.02.04 Div. tilretninger i forhold til varianter så beholdninger opdateres ikke ved diff'er - skal laves?  20180204
+// 2018.03.27 Større omskrivning omkring købspriser & kostpriser.
 
 @session_start();
 $s_id=session_id();
@@ -179,14 +180,48 @@ if ($csv) {
 for($x=1; $x<=$vareantal; $x++) {
 	$handlet[$x]=0;
 	$batch_k_antal[$x]=0;$batch_t_antal[$x]=0;$batch_pris[$x]=0;$batch_s_antal[$x]=0;
-	if ($lagervalg)	$qtxt="select * from batch_kob where vare_id=$vare_id[$x] and lager='$lagervalg'"; #20140128
-	else $qtxt="select * from batch_kob where vare_id=$vare_id[$x]"; #20140128
+	$qtxt="select sum(antal) as antal from batch_kob where vare_id=$vare_id[$x]";
+	if ($lagervalg) $qtxt.=" and lager='$lagervalg'";
 	if ($date!=$dd) $qtxt.=" and kobsdate <= '$date'";
+#if ($vare_id[$x]==454) #cho "$qtxt<br>";		
+	$r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+#if ($vare_id[$x]==454) 	#cho $r1['antal']."<br>";
+	$batch_k_antal[$x]=$r1['antal'];
+#if ($vare_id[$x]==454) #cho "Bk $batch_k_antal[$x]<br>";		
+	$batch_t_antal[$x]=$r1['antal'];
+	$qtxt="select sum(antal) as antal from batch_salg where vare_id=$vare_id[$x]";
+	if ($lagervalg) $qtxt.=" and lager='$lagervalg'";
+	if ($date!=$dd) $qtxt.=" and salgsdate <= '$date'";
+	$r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$batch_s_antal[$x]=$r1['antal'];
+#if ($vare_id[$x]==454) #cho "Bs $batch_s_antal[$x]<br>";		
+	$batch_t_antal[$x]-=$r1['antal'];
+#if ($vare_id[$x]==454) #cho "Bk $batch_k_antal[$x] Bs $batch_s_antal[$x] Bt $batch_t_antal[$x]<br>";		
+/*
+	if ($vare_id[$x]==454) #cho "Bt $batch_t_antal[$x]<br>";		
+	$qtxt="select * from batch_kob where vare_id=$vare_id[$x]"; #20140128
+	if ($lagervalg)	$qtxt.=" and lager='$lagervalg'"; #20140128
+	if ($date!=$dd) $qtxt.=" and kobsdate <= '$date'";
+	$qtxt.=" order by kobsdate desc";
+if ($vare_id[$x]==454) #cho "BP $qtxt	<br>";		
+	$antal=0;
+	$pris=0;
 	$q1=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r1=db_fetch_array($q1)){
+		if ($antal+=$r1['antal']<=$batch_t_antal[$x]) {
+			$pris+=$r1['antal']*$r1['pris'];
+			$antal+=$r1['antal'];
+		} else {
+			$pris+=($batch_t_antal[$x]-$antal)*$r1['pris'];
+		}
+	}
+	$batch_pris[$x]=$pris;
+*/	
+/*
 		$batch_k_antal[$x]=$batch_k_antal[$x]+$r1['antal'];
 		$batch_t_antal[$x]=$batch_t_antal[$x]+$r1['antal'];
 		$batch_pris[$x]=$batch_pris[$x]+($r1['pris']*$r1['antal']);
+if ($vare_id[$x]==454) #cho "BP $batch_pris[$x]<br>";		
 		$handlet[$x]=1;
 		if (isset($batchvare[$x]) && $batchvare[$x]) {
 			$qtxt="select * from batch_salg where batch_kob_id=$r1[id]"; #20140128
@@ -200,8 +235,11 @@ for($x=1; $x<=$vareantal; $x++) {
 		}	
 #	db_modify("update varer set beholdning = '$batch_t_antal[$x]' where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);  
 	}
+*/
+
 	if (!isset($batchvare[$x])) $batchvare[$x]=NULL;
 	if (!$batchvare[$x]) {
+/*
 		$tmp=$batch_t_antal[$x];
 		$qtxt="select * from batch_salg where vare_id=$vare_id[$x]"; #20140128
 		if ($lagervalg) $qtxt.=" and lager='$lagervalg'";
@@ -215,6 +253,32 @@ for($x=1; $x<=$vareantal; $x++) {
 		}
 		if ($tmp*$batch_t_antal[$x]!=0) $batch_pris[$x]=$batch_pris[$x]/$tmp*$batch_t_antal[$x];
 		else $batch_pris[$x]=0;
+*/	
+	if ($batch_k_antal[$x]) {
+		$pris=0;
+		$antal=0;
+		$qtxt="select antal,pris from batch_kob where vare_id=$vare_id[$x] and antal >= 1"; #20140128
+		if ($lagervalg) $qtxt.=" and lager='$lagervalg'";
+		if ($date!=$dd) $qtxt.=" and kobsdate <= '$date'";
+		$qtxt.=" order by kobsdate desc";
+#if ($vare_id[$x]=='454') #cho __line__." $qtxt<br>";		
+		$q1=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		while($r1=db_fetch_array($q1)) {
+			if ($antal+$r1['antal'] <= $batch_t_antal[$x]) {
+#if ($vare_id[$x]=='454') #cho __line__." $antal+$r1[antal] <= $batch_t_antal[$x]<br>";
+#if ($vare_id[$x]=='454') #cho __line__." Pris=$pris<br>";
+				$antal+=$r1['antal'];
+				$pris+=$r1['antal']*$r1['pris'];
+#if ($vare_id[$x]=='454') #cho __line__." Pris=$pris+=$r1[antal]*$r1[pris]<br>";
+			} elseif ($antal < $batch_t_antal[$x] && $antal+$r1['antal'] > $batch_t_antal[$x]) {
+#if ($vare_id[$x]=='454') #cho __line__." Pris=$pris<br>";
+				$pris+=$r1['pris']*($batch_t_antal[$x]-$antal);
+				$antal=$batch_t_antal[$x];
+#if ($vare_id[$x]=='454') #cho __line__." Pris=$pris<br>";
+			}
+		}
+		($antal)?$batch_pris[$x]=$pris:$batch_pris[$x]=0;
+	}
 	}
 	if (isset($_GET['ajour']) && $_GET['ajour']==1 && $batch_t_antal[$x] != $beholdning[$x]) {
 		$diff=$batch_t_antal[$x];

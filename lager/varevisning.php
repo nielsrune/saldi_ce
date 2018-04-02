@@ -1,23 +1,31 @@
 <?php
-
-// ---------------lager/varevisning.php-----lap 3.0.6-------2010.10.05-----------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ---------------lager/varevisning.php-----lap 3.7.2-------2018.03.20-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// 
+// Programmet må ikke uden forudgående skriftlig aftale anvendes
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2010 DANOSOFT ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
-
+// 20180328 Tilføjet $vis_lev_felt
 	
 @session_start();
 $s_id=session_id();
@@ -34,6 +42,7 @@ else $returside="varer.php	";
 
 if (isset($_POST) && $_POST) {
 	$vis_lukkede=if_isset($_POST['vis_lukkede']);	
+	$vis_lev_felt=if_isset($_POST['vis_lev_felt']);
 	$VG_antal=if_isset($_POST['VG_antal']);
 	$alle_VG=if_isset($_POST['VG_0']);
 	if ($alle_VG=='on') $vis_VG='on';
@@ -54,7 +63,10 @@ if (isset($_POST) && $_POST) {
 		$tmp2=if_isset($_POST[$tmp]);
 		if ($tmp2=='on') $vis_K=$vis_K.','.$_POST[$tmp1];
 	}	
-	db_modify("update grupper set box2='$vis_VG', box3='$vis_K', box4='$vis_lukkede' where art = 'VV' and box1 = '$brugernavn'",__FILE__ . " linje " . __LINE__);
+	$tmp2=trim($tmp2,',');
+
+	$qtxt="update grupper set box2='$vis_VG', box3='$vis_K', box4='$vis_lukkede".chr(9)."$vis_lev_felt' where art = 'VV' and box1 = '$brugernavn'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	if ($popup) print "<BODY onLoad=\"javascript=opener.location.reload();\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 }
@@ -84,7 +96,7 @@ print "<form name=varevisning action=varevisning.php?sort=$sort method=post>";
 if ($r = db_fetch_array(db_select("select * from grupper where art = 'VV' and box1 = '$brugernavn'",__FILE__ . " linje " . __LINE__))) {
 	$vis_VG=explode(",",$r['box2']);
 	$vis_K=explode(",",$r['box3']);
-	$vis_lukkede=$r['box4'];
+	list($vis_lukkede,$vis_lev_felt)=explode(chr(9),$r['box4']);
 } else {
 	db_modify("insert into grupper(beskrivelse, art, box1)values('varevisning', 'VV', '$brugernavn')",__FILE__ . " linje " . __LINE__);
 	$vis_VG[0]='on';
@@ -130,7 +142,9 @@ print "<input type=hidden name=K_antal value=$x>";
 print "</tbody></table></td>";
 print "<td valign=top width=25%><table  border=\"0\" width=\"100%\"><tbody>";
 if ($vis_lukkede) $vis_lukkede="checked";
+if ($vis_lev_felt) $vis_lev_felt="checked";
 print "<tr><td><small>$font<input name= vis_lukkede type=checkbox $vis_lukkede> Vis udg&aring;ede varer</small></td></tr>";
+print "<tr><td><small>$font<input name= vis_lev_felt type=checkbox $vis_lev_felt> Vis søgefelt for kreditorer</small></td></tr>";
 print "<tr><td height=200 valign=bottom><input type=submit accesskey=\"a\" value=\"OK\" name=\"submit\"></td></tr>\n";
 print "</tbody></table></td>";
 print "<td width=25%><br></td>";

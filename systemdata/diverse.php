@@ -132,8 +132,11 @@ if ($_POST) {
 		$box8=$_POST['box8']; #ebconnect
 		$box9=$_POST['box9']; #ledig
 		$box10=$_POST['box10'];
+		$box11=$_POST['box11'];
+		$box12=$_POST['box12'];
 		$pv_box1=$_POST['pv_box1']; #Direkte print til lokal printer
 		$pv_box3=$_POST['pv_box3']; #formulargenerator html/ps
+
 
 		if ($box8) {
 			ftptest($_POST['oiourl'],$_POST['oiobruger'],$_POST['oiokode']);
@@ -141,9 +144,9 @@ if ($_POST) {
 		}
 		if (($id==0) && ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'DIV' and kodenr='2'",__FILE__ . " linje " . __LINE__)))) $id=$r['id'];
 		if ($id==0){
-		db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10) values ('Div_valg','2','DIV','$box1','$box2','$box3','$box4','$box5','$box6','$box7','$box8','$box9','$box10')",__FILE__ . " linje " . __LINE__);
+		db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12) values ('Div_valg','2','DIV','$box1','$box2','$box3','$box4','$box5','$box6','$box7','$box8','$box9','$box10','$box11','$box12')",__FILE__ . " linje " . __LINE__);
 		} elseif ($id > 0) {
-			db_modify("update grupper set  box1='$box1',box2='$box2',box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8',box9='$box9',box10='$box10' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
+			db_modify("update grupper set  box1='$box1',box2='$box2',box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8',box9='$box9',box10='$box10',box11='$box11',box12='$box12' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
 		}
 		if ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'PV' and kodenr='1'",__FILE__ . " linje " . __LINE__))) {
 			$id=$r['id'];
@@ -404,6 +407,7 @@ if ($_POST) {
 		$id3=if_isset($_POST['id3'])*1;
 		$box1_3=if_isset($_POST['brugervalg']);
 		$pfs=if_isset($_POST['pfs']);
+		$box3_3=if_isset($_POST['kundedisplay']);
 #		$pfs=if_isset($_POST['pfs']); #Pos Font Size
 #		$old_pfs=if_isset($_cookie['saldi_pfs']);
 #		if ($pfs) setcookie('saldi_pfs', $pfs, time()+60*60*24*365, '/');
@@ -528,9 +532,16 @@ if ($_POST) {
 			db_modify("update grupper set  box1='$box1',box2='$box2',box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8',box9='$box9',box10='$box10',box11='$box11',box12='$box12',box13='$box13',box14='$box14' WHERE id = '$id1'",__FILE__ . " linje " . __LINE__);
 		}
 #cho __line__." $box13_2<br>";
-		if ($id2) db_modify("update grupper set box1='$kasseprimo',box2='$optalassist',box3='$box3_2',box4='$box4_2',box5='$box5_2',box6='$div_kort_kto',box7='$box7_2',box8='$box8_2',box9='$box9_2',box10='$box10_2',box11='$box11_2',box12='$vis_saet',box13='$box13_2',box14='$box14_2' WHERE id = '$id2'",__FILE__ . " linje " . __LINE__);
-		if ($id3) db_modify("update grupper set box1='$box1_3',box2='$box2_3',box3='',box4='',box5='',box6='',box7='',box8='',box9='',box10='',box11='',box12='',box13='',box14='' WHERE id = '$id3'",__FILE__ . " linje " . __LINE__);
-
+		if ($id2) {
+			$qtxt="update grupper set box1='$kasseprimo',box2='$optalassist',box3='$box3_2',box4='$box4_2',box5='$box5_2',box6='$div_kort_kto',box7='$box7_2',";
+			$qtxt.="box8='$box8_2',box9='$box9_2',box10='$box10_2',box11='$box11_2',box12='$vis_saet',box13='$box13_2',box14='$box14_2' WHERE id = '$id2'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		}
+		if ($id3) { 
+			$qtxt="update grupper set box1='$box1_3',box2='$box2_3',box3='$box3_3',box4='',box5='',box6='',box7='',";
+			$qtxt.="box8='',box9='',box10='',box11='',box12='',box13='',box14='' WHERE id = '$id3'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		}
 		#######################################################################################
 	} elseif ($sektion=='docubizz') {
 		$id=$_POST['id'];

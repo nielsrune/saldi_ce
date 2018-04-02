@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------lager/varer.php-------------lap 3.7.1-----2018-01-12--------
+// ---------lager/varer.php-------------lap 3.7.2-----2018-03-20--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -35,12 +35,26 @@
 // 2016.12.06 PHR Optimeret søgefunktion. Der kan søges på exakt streng og på streng hvor ord indgår afskilt af +
 // 2016.12.17	PHR Fjernet funktion find_beholdning (Flyttet til includes/std_func.php)
 // 2017.05.02	PHR Hvis der er flere lagre og lagernavn <= 2 tegn vises lagernavn i stedet for bogstav
-// 2017.09.20	Hele varelinjen er nu klikbar. Søg 20170920
-// 2018.01.12 Tilføjet søgning på variant stregkode 20180112
-// 2018.02.12 Liste kan nu gemmen som csv. Sæg scv eller csvfil
+// 2017.09.20	PHR Hele varelinjen er nu klikbar. Søg 20170920
+// 2018.01.12 PHR Tilføjet søgning på variant stregkode 20180112
+// 2018.02.12 PHR Liste kan nu gemmes som csv. Sæg scv eller csvfil
+// 2018.03.20 PHR Tilføjet leverandørsøgefelt. Søg $lev_kto_navn
 
 @session_start();
 $s_id=session_id();
+
+if (isset($_GET['sort'])) {
+	$sort=$_GET['sort'];
+	setcookie("saldi_vare_sort", $sort, time()+3600*24*12);
+} elseif(isset($_COOKIE['saldi_vare_sort'])) $sort=$_COOKIE['saldi_vare_sort'];
+else $sort = "varenr";
+
+
+if (isset($_GET['lev_kto_navn']) && $_GET['lev_kto_navn']) {
+	$lev_kto_navn=$_GET['lev_kto_navn'];
+#	setcookie("saldi_lkn", $lev_kto_navn, time()+3600*24*12);
+} #elseif(isset($_COOKIE['saldi_lkn'])) $lev_kto_navn=$_COOKIE['saldi_lkn'];
+else $lev_kto_navn = "";
 
 $title="Varer";
 $modulnr=9;
@@ -56,21 +70,48 @@ if ($popup) $returside="../includes/luk.php";
 else $returside=(if_isset($_GET['returside']));
 if (!$returside) $returside="../index/menu.php";
 
-?>
-<script language="javascript" type="text/javascript">
-<!--
-var vare_id=0;
-var lager=0;
-var space=":";
+$r = db_fetch_array(db_select("select * from grupper where art='VV' and box1='$brugernavn'",__FILE__ . " linje " . __LINE__));
+$vis_VG=explode(",",$r['box2']);
+if ($r['box3']) $vis_K=explode(",",$r['box3']);
+else $vis_VG[0]=1;
+list($vis_lukkede,$vis_lev_felt)=explode(chr(9),$r['box4']);
 
+if ($vis_lev_felt) {
+	$x=0;
+	$qtxt="select distinct(lev_id) from vare_lev";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		$lev_id[$x]=$r['lev_id'];
+		$x++;
+	}
+	$lev='';
+	$qtxt="select id,kontonr,firmanavn from adresser where art='K' order by firmanavn";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		if (in_array($r['id'],$lev_id)) {
+			$lev.='"'.$r['kontonr']." : ".$r['firmanavn'].'",';
+		}
+	}
+	$lev=trim($lev,',');
+	print "<link rel=\"stylesheet\" href=\"//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\">
+		<script src=\"//code.jquery.com/jquery-1.10.2.js\"></script>
+		<script src=\"//code.jquery.com/ui/1.11.4/jquery-ui.js\"></script>
+		<link rel=\"stylesheet\" href=\"/resources/demos/style.css\">
+	<script>
+		$(function() {
+			var availableTags = [ $lev ];
+			$( \"#tags\" ).autocomplete({
+				source: availableTags
+			});
+		});
+	</script>";
+}
+print "<script>
 function lagerflyt(vare_id, lager){
-	window.open("lagerflyt.php?input="+ lager +space + vare_id,"","left=10,top=10,width=400,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no")
+	window.open(\"lagerflyt.php?input=\"+ lager +space + vare_id,\"\",\"left=10,top=10,width=400,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no\")
 }
 //-->
-</script>
-<?php
-
-
+</script>";
 	
 if (isset($_GET)) {
 	$csv=if_isset($_GET['csv']);
@@ -88,7 +129,6 @@ if (isset($_GET)) {
 		$i_forslag=array();
 		$bestilt=array();
 	}
-	$sort = if_isset($_GET['sort']);
 	if (isset($_GET['start'])) $start = $_GET['start'];
 	else $start=1;
 	if (isset($_GET['linjeantal'])) $linjeantal = $_GET['linjeantal'];
@@ -100,6 +140,8 @@ if (isset($_GET)) {
 }
 	
 if (isset($_POST)) {
+	if (isset($_POST['lev_kto_navn'])) $lev_kto_navn=$_POST['lev_kto_navn'];
+	list($lev_kto,$lev_navn)=explode(" : ",$lev_kto_navn);
 	if (isset($_POST['genbestil_ant'])) {
 		transaktion('begin');
 		for ($x=1; $x<=$_POST['genbestil_ant']; $x++) {
@@ -149,7 +191,7 @@ if ($slut <= $start) $slut=$start+$linjeantal;
 if (!isset($linjeantal)) $linjeantal=100;
 if ($slut <= $start) $slut=$start+$linjeantal;
 	
-if (!$sort) $sort = "varenr";
+#if (!$sort) $sort = "varenr";
 
 if ($beskrivelse) { #20161206
 	$find=strtolower(db_escape_string($beskrivelse));
@@ -229,7 +271,7 @@ if ($menu=='T') {
 }
 print "<tr><td valign=\"top\">\n";
 if (!$forslag) {
-	print "<form name=\"vareliste\" action=\"varer.php?sort=$sort&amp;beholdning=$beholdning&amp;forslag=$forslag\" method=\"post\">";
+	print "<form name=\"vareliste\" action=\"varer.php?sort=$sort&amp;beholdning=$beholdning&amp;forslag=$forslag&lev_kto_navn=$lev_kto_navn\" method=\"post\">";
 	print "<input type=\"hidden\" name=\"valg\">";
 	print "<input type=\"hidden\" name=\"start\" value=\"$start\">";
 } else 	print "<form name=\"vareliste\" action=\"varer.php?sort=$sort\" method=\"post\">";
@@ -251,18 +293,25 @@ if (!$forslag) {
 		if (file_exists("../temp/$db/vareliste.csv")) unlink("../temp/$db/vareliste.csv"); 
 		$csvfil=fopen("../temp/$db/vareliste.csv","w");
 	}
-	print "<tr>";
+	print "<tr><td colspan='2' width='20%'>";
 	if ($start>=$linjeantal) {
 		$tmp=$start-$linjeantal;
-		print "<tr><td><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$beholdning'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+		print "<a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$beholdning'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a>&nbsp;";
 	}
-	else print  "<td></td>";
-	print "<td></td>";
-	print "<td align=center>";
+	if ($vis_lev_felt) {
+#		print "<div class=\"ui-widget\">";
+		($lev_kto_navn)?$width=strlen($lev_kto_navn)*7:$width=125;
+		$width.='px';
+		print "<input class=\"inputbox\" style=\"width:$width\" id=\"tags\" placeholder=\"Leverandør\" name=\"lev_kto_navn\" value='$lev_kto_navn'>";
+#		print "</div>";
+		#		print "<input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:125px\" name=\"lev\" placeholder=\"Leverandør\" title=\"Vælg leverandør\" value=\"$lev\">";
+	}
+	print "</td>";
+	print "<td align=center colspan='2'>";
 	print "<input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px\" name=\"start\" title= \"1 linje\" value=\"$start\"> - ";
 	print "<input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px\" name=\"linjeantal\" title= \"Antal linjer pr side\" value=\"$linjeantal\"></td>";
 	$tmp=$start+$linjeantal;
-	$colspan=$lagerantal+1;
+	$colspan=$lagerantal;
 	print "<td colspan='$colspan'></td>";
 	if ($next>=$slut) {
 		print "<td align=right><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;beholdning=$beholdning'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
@@ -391,30 +440,16 @@ print "</form>";
 
 	
 function udskriv($start, $slut, $sort, $udskriv, $udvalg) {
-global $csv,$csvfil;
-global $lagerantal;
-global $varenummer;
-global $v_startstjerne;
-global $v_slutstjerne;
-global $v_strlen;
-global $beskrivelse;
-global $b_startstjerne;
-global $b_slutstjerne;
-global $b_strlen;
-global $forslag;
-global $beholdning;
-global $i_tilbud;
-global $i_ordre;
-global $i_forslag;
-global $jsvars;
-global $bestilt;
-global $brugernavn;
-global $bgcolor;
-global $bgcolor5;
+
 global $alle_varer;
-global $charset;
+global $b_startstjerne,$b_slutstjerne,$b_strlen,$beholdning,$beskrivelse,$bestilt,$bgcolor,$bgcolor5,$brugernavn;
+global $charset,$csv,$csvfil;
+global $lagerantal,$lev_kto;
+global $forslag;
+global $i_forslag,$i_ordre,$i_tilbud;
+global $jsvars;
 global $popup;
-global $vis_lev;
+global $v_startstjerne,$v_slutstjerne,$v_strlen,$varenummer,$vis_lev;
 global $incl_moms;
 
 $tidspkt=time("u");
@@ -429,7 +464,7 @@ if ($r = db_fetch_array(db_select("select * from grupper where art='VV' and box1
 	$vis_VG=explode(",",$r['box2']);
 	if ($r['box3']) $vis_K=explode(",",$r['box3']);
 	else $vis_VG[0]=1;
-	$vis_lukkede=$r['box4'];
+	list($vis_lukkede,$vis_lev_felt)=explode(chr(9),$r['box4']);
 } else db_modify("insert into grupper (beskrivelse, art, box1, box2, box3, box4) values ('varevisning', 'VV', '$brugernavn', 'on', 'on', 'on')",__FILE__ . " linje " . __LINE__); 
 
 if ($vis_lukkede!='on') {
@@ -446,6 +481,17 @@ if (!$vis_VG[0]) {
 		$udvalg=$udvalg. ")";
 	} else $udvalg=$udvalg. " and gruppe = ''";
 }
+if ($lev_kto) {
+	$x=1;
+	$vis_K=array();
+	$qtxt="select id from adresser where art='K' and kontonr = '$lev_kto'";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while($r=db_fetch_array($q)) {
+		$vis_K[$x]=$r['id'];
+		$x++;
+	}
+	if ($vis_K[1]) $vis_K[0]=NULL;
+}
 if (!$vis_K[0]) {	
 	$lev_vare_liste=array();	
 	$x=1; 
@@ -458,7 +504,8 @@ if (!$vis_K[0]) {
 		}	
 	}  
 	$y=0;
-	$q = db_select("select distinct vare_id from vare_lev $tmp",__FILE__ . " linje " . __LINE__);
+	$qtxt="select distinct vare_id from vare_lev $tmp";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		$y++;
 		$lev_vare_liste[$y]=$r['vare_id'];
@@ -522,9 +569,7 @@ if ($udskriv && $forslag && !$alle_varer) {
 					$diff=$row['beholdning']-$r2['lagersum'];
 					for ($x=1;$x<=$lagerantal; $x++) {
 						$qtxt="select id, lager, beholdning from lagerstatus where vare_id = $row[id] and lager = $x";
-#						echo "$qtxt<br>";
 						$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-#						echo $r2['beholdning']."<br>";
 						$y=$r2['beholdning'];
 /*
 						if ($x==1) {
@@ -537,7 +582,6 @@ if ($udskriv && $forslag && !$alle_varer) {
 */						
 #						if ($y >= 1) print "<td align=center onClick=\"lagerflyt($row[id], $x)\" onMouseOver=\"this.style.cursor = 'pointer'\"><span title= 'Flyt til andet lager'><u>".dkdecimal($y)."</u></td>";
 						print "<td align=center>";
-#echo "$row[gruppe],$lagergrupper<br>";						
 						if (in_array($row['gruppe'],$lagergrupper)) {
 							if ($y >= 1) print "<span title= 'Flyt til andet lager'><a href='lagerflyt.php?lager=$x&vare_id=$row[id]'>".dkdecimal($y,2)."</a>";
 							else print dkdecimal($y,2);
@@ -589,7 +633,8 @@ if ($udskriv && $forslag && !$alle_varer) {
 				if ($csv) fwrite($csvfil,"\"$salgspris\"\n");
 			}
 			if ($vis_lev=='on') {
-				$query2 = db_select("select kostpris, lev_id, lev_varenr from vare_lev where vare_id = $row[id] order by posnr",__FILE__ . " linje " . __LINE__);
+				$qtxt="select kostpris, lev_id, lev_varenr from vare_lev where vare_id = $row[id] order by posnr";
+				$query2 = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				$row2 = db_fetch_array($query2);
 				if ($row2['lev_id']) {
 					$lev_varenr=$row2['lev_varenr'];
