@@ -1003,7 +1003,8 @@ if (!$varenr) {
 	}
 	print "</tbody></table></td>";
 	#print "<tr><td>Varianter</td><td>";
-	if (!count($vare_varianter)){ 	
+	echo "<table><tr><td>Booooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooox8 $box8</td></tr></table>;"
+	if (!count($vare_varianter) || !$box8){ 	
 	($stregkode)?$tmp=$stregkode:$tmp=$varenr;
 		$png=barcode($tmp);
 		if ($png) {
