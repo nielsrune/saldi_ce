@@ -4,7 +4,7 @@
 //                     \__ \/ _ \| |_| |) | | _ | |) |  <
 //                     |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------ systemdata/importer_varer.php ------------ lap 3.7.0 -- 2017-05-09 --
+// ------ systemdata/importer_varer.php ------------ lap 3.7.2 -- 2018-04-04 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------------
 // tilføjet vejl.pris til import.
 // 2014.02.01 Gjort søgning på eksisterende varenumre case uafhængig 20140201
@@ -35,6 +35,7 @@
 // 20161015 PHR Eksisterende varenumre som er numeriske og starter med 0 findes nu selvom et 0'et er fjernet af f.eks et regneark. 20161015
 // 20170509 Tilføjet varemærke (trademark);
 // 20171024 PHR Erstatter '<br>' med '\n' i notes 20171024	
+// 20180404 PHR Lokationer skrives nu også i lagerstatus. 20180404
 
 @session_start();
 $s_id=session_id();
@@ -359,6 +360,7 @@ if ($fp) {
 	$upd_antal=0;
 	$kostpris=0;
 	$salgspris=0;
+	$lokation=0;
 	$varenr="";	
 	while (!feof($fp)) {
 		$skriv_linje=0;
@@ -382,7 +384,9 @@ if ($fp) {
 				if ($feltnavn[$y]=='vejl.pris') $feltnavn[$y]='retail_price';
 				if ($feltnavn[$y]=='vejl.pris') $feltnavn[$y]='retail_price';
 				if ($feltnavn[$y]=='varemærke') $feltnavn[$y]='trademark';
-				if ($feltnavn[$y]=='lokation') $feltnavn[$y]='location';
+				if ($feltnavn[$y]=='lokation') {
+					$feltnavn[$y]='location';
+				}
 				if ($feltnavn[$y]=='kostpris')	{
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
@@ -428,7 +432,10 @@ if ($fp) {
 				if ($feltnavn[$y]=='notes') { #20171024
 					$felt[$y]=str_replace("<br>","\n",$felt[$y]); 
 				}
-
+				if ($feltnavn[$y]=='location') { #20180404
+					$lokation=1;
+					$location=$felt[$y]; 
+				}
 			}
  		}
 		if ($skriv_linje==1) {
@@ -475,6 +482,16 @@ if ($fp) {
 				$r=db_fetch_array(db_select("select id from varer where varenr='$varenr'",__FILE__ . " linje " . __LINE__));
 				$vare_id=$r['id'];
 			}
+			if ($vare_id) {
+				if ($lokation) { #20180404
+					$qtxt="select id from lagerstatus where vare_id='$vare_id' and lager <= '1'";
+					if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+						$qtxt="update lagerstatus set lok1 = '$location' where id = '$r[id]'";
+					} elseif ($lokation) {
+						$qtxt="insert into lagerstatus(vare_id,beholdning,lok1,lager) values ('$vare_id','0','$location','1')";
+					} else $qtxt=NULL;
+					if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				}
 			$dd=date("Y-m-d");
 			$qtxt="select id,kostpris,transdate from kostpriser where vare_id='$vare_id' order by transdate desc limit 1"; #20150224
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -482,7 +499,7 @@ if ($fp) {
 			elseif ($r['transdate'] == $dd && $r['kostpris'] != $kostpris) $qtxt="update kostpriser set kostpris=$kostpris where id = '$r[id]'";
 			else $qtxt=NULL;
 			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
-			if ($leverandor && $vare_id) {
+				if ($leverandor) {
 				if ($r=db_fetch_array(db_select("select id from vare_lev where vare_id='$vare_id' and lev_id='$leverandor'",__FILE__ . " linje " . __LINE__))) {
 					db_modify("update vare_lev set kostpris='$kostpris' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
 				} else {
@@ -491,6 +508,7 @@ if ($fp) {
 			}
 		}
 	}
+}
 }
 fclose($fp);
 #xit;
@@ -543,7 +561,6 @@ function opdel ($splitter,$linje){
 			$z++;
 			$anftegn=0;
 		} elseif (!$anftegn && substr($linje,$z,1)==$splitter) {
-#			echo "$y B $var[$y]<br>";
 			$y++;
 		} elseif ($tegn!=chr(34)) {
 			$var[$y]=$var[$y].substr($linje,$z,1);
