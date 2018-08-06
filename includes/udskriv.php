@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------includes/udskriv.php----lap 3.7.0----2017.08.16-------------------
+// -------includes/udskriv.php----lap 3.7.2----2018.04.18-------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2013.03.20 Tilføjet mulighed for fravalg af logo på udskrift. Søg "PDF-tekst"
 // 2013.12.02	Efter udskrivning af kreditorordre, åbnes ordre som debitorordre. Tilføjer $art. Søg $art.
@@ -31,6 +31,8 @@
 // 2014.06.13 Har sat gammel og ny kode sammen, så det virker til både saldi og stillads. Søg efter 'stillads' for indsat kode
 // 2016.11.25 PHR Indført html som formulargenerator som alternativ til postscript. Søg htmfp, .htm & weasyprint
 // 2017.03.24	PHR Blev smidt af efer udskriv som PDF grundet at de ikke mere kører i popup. Søg art='R'
+// 2018.04.18	PHR Tilføjet udskriv til='fil'
+
 
 @session_start();
 $s_id=session_id();
@@ -87,9 +89,9 @@ if ($valg=="tilbage" && !$bgr) {
   	exit;
 	}
 }
-
 if (!$valg) {
-	$r = db_fetch_array(db_select("select id,box1 from grupper where art='PV'",__FILE__ . " linje " . __LINE__));
+	$qtxt="select id,box1 from grupper where art='PV'";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	if ($r['box1']=='on') {
 		$ip=$_SERVER['REMOTE_ADDR'];
 		print "<!--!";
@@ -99,9 +101,7 @@ if (!$valg) {
 			$ip=NULL;
 			$valg="pdf";
 		} else $valg='ip';
-	} elseif (!$r['box1']) {
-		$valg="pdf";
-	}
+	} else $valg="pdf";
 }
 if ($valg) {
   $r = db_fetch_array(db_select("select box1,box2,box3 from grupper where art='PV'",__FILE__ . " linje " . __LINE__));
@@ -111,23 +111,31 @@ if ($valg) {
 			system ("$r[box2] ../temp/$ps_fil ../temp/$ps_fil.pdf");
 		} elseif ($r['box3'] && $udskrift!='kontokort') {
 			$i=1;
+			if (file_exists("../temp/".$ps_fil.".htm")) {
+				$indfil="../temp/".$ps_fil.".htm";
+				$udfil="../temp/".$ps_fil.".pdf";
+				system ("weasyprint -e UTF-8 $indfil $udfil");
+			} else {
 			while(file_exists("../temp/".$ps_fil."_".$i.".htm")) {
 				$indfil="../temp/".$ps_fil."_".$i.".htm";
 				$udfil="../temp/".$ps_fil."_".$i.".pdf";
 				system ("weasyprint -e UTF-8 $indfil $udfil");
 				$i++;	
 }
+			}
 			system ("pdftk ".$ps_fil."_*.pdf output ".$ps_fil.".pdf");
-		} else system ("$exec_path/ps2pdf ../temp/$ps_fil ../temp/$ps_fil.pdf");
+		} else {
+			system ("$exec_path/ps2pdf ../temp/$ps_fil ../temp/$ps_fil.pdf");
+		}
 		system ("$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil");
-		print "<!--";
+		print "-->";
 		if (file_exists("../temp/$ps_fil.pdf")) {
 			if (strpos($ps_fil,'tilbud') && file_exists("../logolib/$db_id/tilbud_bg.pdf")) $bg_fil="../logolib/$db_id/tilbud_bg.pdf";
 			elseif (strpos($ps_fil,'ordre') && file_exists("../logolib/$db_id/ordrer_bg.pdf")) $bg_fil="../logolib/$db_id/ordrer_bg.pdf";
 			elseif (strpos($ps_fil,'fakt') && file_exists("../logolib/$db_id/faktura_bg.pdf")) $bg_fil="../logolib/$db_id/faktura_bg.pdf";
 			elseif (file_exists("../logolib/$db_id/bg.pdf")) $bg_fil="../logolib/$db_id/bg.pdf";
 			print "<!-- kommentar for at skjule uddata til siden \n";
-			if (system("which pdftk") && file_exists($bg_fil) && $udskriv_til != 'PDF-tekst') {
+			if (system("which pdftk") && file_exists($bg_fil) && $udskriv_til != 'PDF-tekst' && $udskriv_til != 'fil') {
 				$out="../temp/".$ps_fil."x.pdf";
 				system ("$exec_path/pdftk ../temp/$ps_fil.pdf background $bg_fil output $out");
 				unlink ("../temp/$ps_fil.pdf");
@@ -141,6 +149,11 @@ if ($valg) {
 				if ($art=='PO') print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/pos_ordre.php?id=$id\">";
 				else print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/ordre.php?id=$id\">";
   exit;
+			} elseif ($udskriv_til=='fil') {
+				$r=db_fetch_array(db_select("select * from ordrer where id='$id'",__FILE__ . " linje " . __LINE__));
+				print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/ordreliste.php?gem_id=$id&gem=../temp/$ps_fil.pdf&download=$r[kundeordnr]_$r[firmanavn].pdf\">";
+#				print "<span>Højreklik og vælg 'Gem som'<a href='../temp/$ps_fil.pdf' download='$r[kundeordnr]_$r[firmanavn].pdf'>$r[kundeordnr]_$r[firmanavn].pdf</a></span>";
+				exit;
 			}
 			print "<table width=100% height=100%><tbody>";
   		print "<td width=\"10%\" height=\"1%\" $top_bund><a href=\"udskriv.php?valg=tilbage&id=$id&art=$art\" accesskey=\"L\">Luk</a></td>";
@@ -201,6 +214,7 @@ global $exec_path;
 	}
 	$dd=date("Y-m-d");
 	$r=db_fetch_array(db_select("select * from ordrer where id='$id'",__FILE__ . " linje " . __LINE__));
+	$kundeordnr=$r['kundeordnr'];
 	$konto_id=$r['konto_id'];
 	$kontakt=$r['kontakt'];
 	$ref=$r['ref'];

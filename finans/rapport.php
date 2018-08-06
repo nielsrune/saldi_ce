@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ finans/rapport.php --------------- lap 3.7.0 --- 2017-05-16 ---
+// ------------ finans/rapport.php --------------- lap 3.7.2 --- 2018-02-26 ---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 20120927 Hvis budgettal indsat og konto lukket blev konto alligevel vist under budget
@@ -41,6 +41,8 @@
 // 20160116	Diverse i forbindelse med indførelse af valutakonti	Søg 'valuta'
 // 20160515 Oprydning dk- og uscecimal, indsat ',2'
 // 20170516 PHR Fakturadate ændret til kobsdate i søgning efter lagerbevægelser for bedre overensstemmelse med svar fra 'find_lagervaerdi' Søg 20170516
+// 20180226 PHR - Bortkommenteret if (!$dim) så primo vises på afdelinger.
+// 20180424 PHR - Tilføjet "regnskab" (Resultat + bufget i et).
 
 $title="Finansrapport";
 @session_start();
@@ -217,7 +219,6 @@ elseif ($rapportart){
 			}
 			else $konto_fra=$r['kontonr']+1;
 		} else print "<BODY onLoad=\"javascript:alert('Sideskiftkonto ikke defineret i kontoplan - Balance & Resultat kan ikke adskilles')\">";
-
 		$submit="regnskab";
 	} else $submit=str2low($rapportart);
 }
@@ -290,7 +291,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	$antal_konti=$x;
 	if (!$maaned_fra){$maaned_fra=$md[$start_md[$aktiv]];}
 	if (!$maaned_til){$maaned_til=$md[$slut_md[$aktiv]];}
-	if ($rapportart=='balance'||!$konto_fra){$konto_fra=$kontonr[1]." : ".$konto_beskrivelse[1];}
+	if ($rapportart=='balance'||$rapportart=='regnskab'||!$konto_fra){$konto_fra=$kontonr[1]." : ".$konto_beskrivelse[1];}
 	if (($rapportart=='resultat'||$rapportart=='budget')||!$konto_til){$konto_til=$kontonr[$antal_konti]." : ".$konto_beskrivelse[$antal_konti];}
 
 	$query = db_select("select * from grupper where art='AFD' order by kodenr",__FILE__ . " linje " . __LINE__);
@@ -368,6 +369,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	elseif ($rapportart=="kontokort_moms") print "<option title=\"".findtekst(510,$sprog_id)."\" value=\"kontokort_moms\">".findtekst(516,$sprog_id)."</option>\n";
 	elseif ($rapportart=="balance") print "<option title=\"".findtekst(511,$sprog_id)."\" value=\"balance\">".findtekst(517,$sprog_id)."</option>\n";
 	elseif ($rapportart=="resultat") print "<option title=\"".findtekst(512,$sprog_id)."\" value=\"resultat\">".findtekst(518,$sprog_id)."</option>\n";
+	if ($rapportart=="regnskab") print "<option title=\"".findtekst(850,$sprog_id)."\" value=\"regnskab\">".findtekst(849,$sprog_id)."</option>\n";
 	elseif ($rapportart=="budget") print "<option title=\"".findtekst(513,$sprog_id)."\" value=\"budget\">".findtekst(519,$sprog_id)."</option>\n";
 	elseif ($rapportart=="momsangivelse") print "<option title=\"".findtekst(514,$sprog_id)."\" value=\"momsangivelse\">".findtekst(520,$sprog_id)."</option>\n";
 	listeangivelser($regnaar, $rapportart, "matcher");
@@ -375,6 +377,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	if ($rapportart!="kontokort_moms") print "><option title=\"".findtekst(510,$sprog_id)."\" value=\"kontokort_moms\">".findtekst(516,$sprog_id)."</option>\n";
 	if ($rapportart!="balance") print "<option title=\"".findtekst(511,$sprog_id)."\" value=\"balance\">".findtekst(517,$sprog_id)."</option>\n";
 	if ($rapportart!="resultat") print "<option title=\"".findtekst(512,$sprog_id)."\" value=\"resultat\">".findtekst(518,$sprog_id)."</option>\n";
+	if ($rapportart!="regnskab") print "<option title=\"".findtekst(850,$sprog_id)."\" value=\"regnskab\">".findtekst(849,$sprog_id)."</option>\n";
 	if ($rapportart!="budget") print "<option title=\"".findtekst(513,$sprog_id)."\" value=\"budget\">".findtekst(519,$sprog_id)."</option>\n";
 	if ($rapportart!="momsangivelse") print "<option title=\"".findtekst(514,$sprog_id)."\" value=\"momsangivelse\">".findtekst(520,$sprog_id)."</option>\n";
 	listeangivelser($regnaar, $rapportart, "alle andre");
@@ -598,6 +601,24 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 				$x++;
 			}
 		}
+		$q=db_select("select box1,box2,box11 from grupper where art = 'VG' and box8 = 'on' and box11 != ''",__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array($q)) {
+			if ($r['box1'] && $r['box2'] && !in_array($r['box11'],$varekob)) {
+				$varelager_i[$x]=$r['box1'];
+				$varelager_u[$x]=$r['box2'];
+				$varekob[$x]=$r['box11'];
+				$x++;
+			}
+		}
+		$q=db_select("select box1,box2,box13 from grupper where art = 'VG' and box8 = 'on' and box13 != ''",__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array($q)) {
+			if ($r['box1'] && $r['box2'] && !in_array($r['box13'],$varekob)) {
+				$varelager_i[$x]=$r['box1'];
+				$varelager_u[$x]=$r['box2'];
+				$varekob[$x]=$r['box13'];
+				$x++;
+			}
+		}
 	}
 
 	
@@ -626,7 +647,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	$regnslut = $slutaar . "-" . $slutmaaned . "-" . $slutdato;
 
 #	print "  <a accesskey=L href=\"rapport.php?rapportart=Kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&dato_til=$slutdato&maaned_til=$mt&konto_fra=$konto_fra&konto_til=$konto_til&afd=$afd\">Luk</a><br><br>";
-
+	if ($csv) $csvfil=fopen("../temp/$db/$rapportart.csv","w");
 	print "<table width = 100% cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
 	if ($menu=='T') {
 		$leftbutton="<a title=\"Klik her for at komme til forsiden af rapporter\" href=\"rapport.php?rapportart=kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&aar_fra=$aar_fra&dato_til=$slutdato&maaned_til=$mt&aar_til=$aar_til&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&ansat_til=$ansat_til&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev\" accesskey=\"L\">LUK</a>";
@@ -644,14 +665,17 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 		print "</td></tr>";
 		($simulering)?$tmp="Simuleret kontokort":$tmp="Kontokort";
 		print "<tr><td colspan=\"4\"><big><big><big>  $tmp</span></big></big></big></td>";
+	if ($csv) fwrite($csvfil,"$tmp;");
 	}
 	print "<td colspan=2 align=right><table style=\"text-align: left; width: 100%;\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\"><tbody><tr>";
 	print "<td>Regnskabs&aring;r</span></td>";
 	print "<td>$regnaar.</span></td></tr>";
+	if ($csv) fwrite($csvfil,"Regnskabsår $regnaar\n");
 	print "<tr><td>Periode</span></td>";
 	## Finder start og slut paa regnskabsaar
 	if ($startdato < 10) $startdato="0".$startdato;	
 	print "<td>Fra ".$startdato.". $mf<br />Til ".$slutdato.". $mt</span></td></tr>";
+	if ($csv) fwrite($csvfil,"Fra ".$startdato.". $mf\nTil ".$slutdato.". $mt\n");
 	if ($ansat_fra) {
 		if (!$ansat_til || $ansat_fra==$ansat_til) print "<tr><td>Medarbejder</span></td><td>$ansatte</span></td></tr>";
 		else print "<tr><td>Medarbejdere</span></td><td>$ansatte</span></td></tr>";
@@ -790,12 +814,14 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 			}
 			if ($primokurs[$x]) $tmp=$kontosum*100/$primokurs[$x];
 			else $tmp=$kontosum;
-			if (!$dim) print "<tr bgcolor=\"$linjebg\"><td></td><td></td><td>  Primosaldo </td><td></td><td></td><td align=right>".dkdecimal($tmp,2)."</td></tr>";
+			#if (!$dim) #20180226 
+			print "<tr bgcolor=\"$linjebg\"><td></td><td></td><td>  Primosaldo </td><td></td><td></td><td align=right>".dkdecimal($tmp,2)."</td></tr>";
 			$print=1;
 			$tr=0;
 			$transdate=array();
-
-			$query = db_select("select * from transaktioner where kontonr=$kontonr[$x] and transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id",__FILE__ . " linje " . __LINE__);
+			$qtxt="select * from transaktioner where kontonr=$kontonr[$x] and transdate>='$regnstart' and transdate<='$regnslut' $dim ";
+			$qtxt.="order by transdate,bilag,id";
+			$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while ($row = db_fetch_array($query)){
 				$transdate[$tr]=$row['transdate'];
 				$bilag[$tr]=$row['bilag'];
@@ -820,7 +846,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 				$z=0;
 				$lager=array();
 				$gruppe=array();
-				$q=db_select("select kodenr,box1,box2 from grupper where art = 'VG' and box8 = 'on' and (box1 = '$kontonr[$x]' or box2 = '$kontonr[$x]' or box3 = '$kontonr[$x]')",__FILE__ . " linje " . __LINE__);
+				$q=db_select("select kodenr,box1,box2 from grupper where art = 'VG' and box8 = 'on' and (box1 = '$kontonr[$x]' or box2 = '$kontonr[$x]' or box3 = '$kontonr[$x]' or box11 = '$kontonr[$x]' or box13 = '$kontonr[$x]')",__FILE__ . " linje " . __LINE__);
 				while ($r=db_fetch_array($q)) {
 					if ($r['box1']) {
 #						$lager_i[$z]=$r['box1'];
@@ -839,13 +865,13 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 						$y++;
 					}
 				}
-				$z=0;
+				$z=-1;
 				$kobsdate=array();
 				$kobsdebet=array();
 				$kobskredit=array();
 				$q=db_select("select vare_id,ordre_id,antal,kobsdate from batch_kob where kobsdate >= '$regnstart' and kobsdate <= '$regnslut' order by kobsdate,vare_id",__FILE__ . " linje " . __LINE__); #20170516
 				while ($r=db_fetch_array($q)) {
-					if ($z && isset($kobsdate[$z]) && $r['kobsdate']==$kobsdate[$z]) {
+					if ($z>=0 && isset($kobsdate[$z]) && $r['kobsdate']==$kobsdate[$z] && $r['ordre_id'] && $r['ordre_id'] == $soid[$z]) {
 						for ($y=0;$y<count($vare_id);$y++) {
 							if($r['vare_id']==$vare_id[$y]) {
 								if($kontotype[$x]=='D')	{ 
@@ -861,6 +887,13 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 						for ($y=0;$y<count($vare_id);$y++) {
 							if($r['vare_id']==$vare_id[$y]) {
 								if($kontotype[$x]=='D')	{ 
+									$z++;
+									$koid[$z]=$r['ordre_id'];
+									if (isset($koid[$z-1]) && $koid[$z]==$koid[$z-1]) $kobsfakt[$z]=$kobsfakt[$z-1];
+									else {
+										$r2=db_fetch_array(db_select("select fakturanr from ordrer where id='$koid[$z]'",__FILE__ . " linje " . __LINE__));
+										$kobsfakt[$z]=$r2['fakturanr'];
+									}
 									$kobsdate[$z]=$r['kobsdate'];
 									if ($r['antal']>0) {
 										$kobskredit[$z]=$r['antal']*$kostpris[$y];
@@ -869,8 +902,15 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 										$kobsdebet[$z]=$r['antal']*$kostpris[$y]*-1;
 										$kobskredit[$z]=0;
 									}
-									$z++;
+#									$z++;
 								} elseif(in_array($kontonr[$x],$varelager_i)) {
+									$z++;		
+									$koid[$z]=$r['ordre_id'];
+									if (isset($koid[$z-1]) && $koid[$z]==$koid[$z-1]) $kobsfakt[$z]=$kobsfakt[$z-1];
+									else {
+										$r2=db_fetch_array(db_select("select fakturanr from ordrer where id='$koid[$z]'",__FILE__ . " linje " . __LINE__));
+										$kobsfakt[$z]=$r2['fakturanr'];
+									}
 									$kobsdate[$z]=$r['kobsdate'];
 									if ($r['antal']>0) {
 										$kobsdebet[$z]=$r['antal']*$kostpris[$y];
@@ -879,19 +919,19 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 										$kobskredit[$z]=$r['antal']*$kostpris[$y]*-1;
 										$kobsdebet[$z]=0;
 									}
-									$z++;
+#									$z++;
 								}
 							}
 						}
 					}
 				}
-				$z=0;
+				$z=-1;
 				$salgsdate=array();
 				$salgsdebet=array();
 				$salgkredit=array();
 				$q=db_select("select ordre_id,vare_id,antal,salgsdate from batch_salg where salgsdate >= '$regnstart' and salgsdate <= '$regnslut' order by salgsdate,vare_id",__FILE__ . " linje " . __LINE__);
 				while ($r=db_fetch_array($q)) {
-					if ($z && isset($salgsdate[$z]) && $r['salgsdate']==$salgsdate[$z]) {
+					if ($z>=0 && isset($salgsdate[$z]) && $r['salgsdate']==$salgsdate[$z] && $r['ordre_id'] && $r['ordre_id'] == $soid[$z]) {
 						for ($y=0;$y<count($vare_id);$y++) {
 							if($r['vare_id']==$vare_id[$y]) {
 								if($kontotype[$x]=='D')	{ 
@@ -904,9 +944,17 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 							}
 						}
 					} else {
+
 						for ($y=0;$y<count($vare_id);$y++) {
 							if($r['vare_id']==$vare_id[$y]) {
 								if($kontotype[$x]=='D')	{ 
+									$z++;
+									$soid[$z]=$r['ordre_id'];
+									if ($soid[$z]==$soid[$z-1]) $salgsfakt[$z]=$salgsfakt[$z-1];
+									else {
+										$r2=db_fetch_array(db_select("select fakturanr from ordrer where id='$soid[$z]'",__FILE__ . " linje " . __LINE__));
+										$salgsfakt[$z]=$r2['fakturanr'];
+									}
 									$salgsdate[$z]=$r['salgsdate'];
 									if ($r['antal']>0) {
 										$salgsdebet[$z]=$r['antal']*$kostpris[$y];
@@ -915,8 +963,15 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 										$salgskredit[$z]=$r['antal']*$kostpris[$y]*-1;
 										$salgsdebet[$z]=0;
 									}
-									$z++;
+#									$z++;
 								} elseif(in_array($kontonr[$x],$varelager_u)) { 
+									$z++;
+									$soid[$z]=$r['ordre_id'];
+									if (isset($soid[$z-1]) && $soid[$z]==$soid[$z-1]) $salgsfakt[$z]=$salgsfakt[$z-1];
+									else {
+										$r2=db_fetch_array(db_select("select fakturanr from ordrer where id='$soid[$z]'",__FILE__ . " linje " . __LINE__));
+										$salgsfakt[$z]=$r2['fakturanr'];
+									}
 									$salgsdate[$z]=$r['salgsdate'];
 									if ($r['antal']>0) {
 										$salgskredit[$z]=$r['antal']*$kostpris[$y];
@@ -925,7 +980,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 										$salgsdebet[$z]=$r['antal']*$kostpris[$y]*-1;
 										$salgskredit[$z]=0;
 									}
-									$z++;
+#									$z++;
 								}
 							}
 						}
@@ -950,7 +1005,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 					while (isset($kobsdate[$kd]) && $kobsdate[$kd]==$dato) {
 						$trd[$y]=$dato;
 						$bil[$y]=0;
-						$besk[$y]="lagertransaktion - Køb";
+						$besk[$y]="lagertransaktion - Køb  F: $kobsfakt[$kd]";
 						$deb[$y]=$kobsdebet[$kd];
 						$kre[$y]=$kobskredit[$kd];
 						$kd++;
@@ -959,7 +1014,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 					while (isset($salgsdate[$sd]) && $salgsdate[$sd]==$dato) {
 						$trd[$y]=$dato;
 						$bil[$y]=0;
-						$besk[$y]="lagertransaktion - Salg";
+						$besk[$y]="lagertransaktion - Salg  F: $salgsfakt[$sd]";
 						$deb[$y]=$salgsdebet[$sd];
 						$kre[$y]=$salgskredit[$sd];
 						$sd++;
@@ -1086,7 +1141,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	}
 	print "<tr><td colspan=6><hr></td></tr>";
 	print "</tbody></table>";
-}
+} # endfunc kontokort
 #################################################################################################
 function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev) {
 
@@ -1561,9 +1616,25 @@ function regnskab($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_
 			if ($r['box1'] && $r['box2'] && !in_array($r['box3'],$varekob)) {
 				$varelager_i[$x]=$r['box1'];
 				$varelager_u[$x]=$r['box2'];
-#cho "VL $varelager_u[$x]<br>";
 				$varekob[$x]=$r['box3'];
-#cho "VK $varekob[$x]<br>";
+				$x++;
+			}
+		}
+		$q=db_select("select box1,box2,box11 from grupper where art = 'VG' and box8 = 'on' and box11 != ''",__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array($q)) {
+			if ($r['box1'] && $r['box2'] && !in_array($r['box11'],$varekob)) {
+				$varelager_i[$x]=$r['box1'];
+				$varelager_u[$x]=$r['box2'];
+				$varekob[$x]=$r['box11'];
+				$x++;
+			}
+		}
+		$q=db_select("select box1,box2,box13 from grupper where art = 'VG' and box8 = 'on' and box13 != ''",__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array($q)) {
+			if ($r['box1'] && $r['box2'] && !in_array($r['box13'],$varekob)) {
+				$varelager_i[$x]=$r['box1'];
+				$varelager_u[$x]=$r['box2'];
+				$varekob[$x]=$r['box13'];
 				$x++;
 			}
 		}
@@ -1601,8 +1672,10 @@ function regnskab($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_
 		($simulering)?$tmp="Simuleret resultat":$tmp="Resultat";
 	} elseif ($rapportart=='budget') {
 		($simulering)?$tmp="Simuleret resultat/budget":$tmp="Resultat/budget";
-	} else {
+	} elseif ($rapportart=='balance') {
 		($simulering)?$tmp="Simuleret Balance":$tmp="Balance";
+	} else {
+		($simulering)?$tmp="Simuleret Regnskab":$tmp="Regnskab";
 	}
 	print "<tr><td colspan=\"$cols4\"><big><big>$tmp</span></big></big></td>";
 
@@ -1708,7 +1781,7 @@ function regnskab($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_
 		$kto_aar[$x]=0;
 		$kto_periode[$x]=0;  # Herunder tilfoejes primovaerdi.
 		$qtxt="select primo from kontoplan where regnskabsaar='$regnaar' and kontonr=$ktonr[$x] and kontotype='S'";
-		if (($rapportart=='balance'&&!$afd && !$projekt_fra && !$ansat_fra) && ($r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))) {
+		if ((($rapportart=='balance' || $rapportart=='regnskab')&&!$afd && !$projekt_fra && !$ansat_fra) && ($r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))) {
 			$kto_aar[$x]=afrund($r2['primo'],2);
 		}
 		$query = db_select("select * from transaktioner where transdate>='$regnaarstart' and transdate<='$regnslut' and kontonr='$ktonr[$x]' $dim",__FILE__ . " linje " . __LINE__);
@@ -2101,7 +2174,7 @@ function regnskab0($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 			$ktonr[$x]=$row['kontonr']*1;
 			$kto_aar[$x]=0;
 			$kto_periode[$x]=0;  # Herunder tilfoejes primovaerdi.
-			if (($rapportart=='balance'&&!$afd && !$projekt_fra && !$ansat_fra) && ($r2 = db_fetch_array(db_select("select primo from kontoplan where regnskabsaar='$regnaar' and kontonr=$ktonr[$x] and kontotype='S'",__FILE__ . " linje " . __LINE__)))) {
+			if ((($rapportart=='balance' || $rapportart=='regnskab')&&!$afd && !$projekt_fra && !$ansat_fra) && ($r2 = db_fetch_array(db_select("select primo from kontoplan where regnskabsaar='$regnaar' and kontonr=$ktonr[$x] and kontotype='S'",__FILE__ . " linje " . __LINE__)))) {
 				$kto_aar[$x]=afrund($r2['primo'],2);
 			}
 		}

@@ -396,10 +396,12 @@ function vis_optalling($lager,$vnr,$gentael) {
 					if ($variant_stregkode[$x]) {
 						print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\"><br></td><td align=\"right\"><br></td><td align=\"right\"><br></td><td colspan=\"4\"><br></td><tr>\n";
 						print "<tr bgcolor=\"$baggrund\"><td>".$variant_stregkode[$x]."</td><td><br></td><td>".$lager."</td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\">".dkdecimal($beholdning[$x],2)."</td><td align=\"right\">".dkdecimal($optalt[$x])."</td><tr>\n";
+					} else {
+						print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\">".dkdecimal($beholdning[$x],2)."</td><td align=\"right\">".dkdecimal($optalt[$x],2)."</td><td colspan=\"4\" align=\"right\" title=\"Klik her for at slette denne vare fra opt&aelig;llingen.\"><a style=\"text-decoration:none\" href=\"optalling.php?vare_id=$vare_id[$x]&varenr=$varenr[$x]&slet=y&gentael=$gentael\" onclick=\"return confirm('Vil du slette denne vare fra liste og opt&aelig;lle den igen?')\"><font color=\"#ff0000\"><b>X</b></font></a></td><tr>\n";
+					}
 						$kpris=$kostpris[$x];
 						$behold=$beholdning[$x];
 						$opt=$optalt[$x];
-					} else print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\">".dkdecimal($beholdning[$x],2)."</td><td align=\"right\">".dkdecimal($optalt[$x],2)."</td><td colspan=\"4\" align=\"right\" title=\"Klik her for at slette denne vare fra opt&aelig;llingen.\"><a style=\"text-decoration:none\" href=\"optalling.php?vare_id=$vare_id[$x]&varenr=$varenr[$x]&slet=y&gentael=$gentael\" onclick=\"return confirm('Vil du slette denne vare fra liste og opt&aelig;lle den igen?')\"><font color=\"#ff0000\"><b>X</b></font></a></td><tr>\n";
 				} else {
 					print "<tr bgcolor=\"$baggrund\"><td>".$variant_stregkode[$x]."</td><td><br></td><td>".$lager."<td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\">".dkdecimal($beholdning[$x],2)."</td><td align=\"right\">".dkdecimal($optalt[$x])."</td><tr>\n";
 						$kpris+=$kostpris[$x];
@@ -604,18 +606,19 @@ function bogfor($lager,$nulstil_ej_optalt,$dato,$bogfor,$godkend_regdif) {
 		$variant_id=array();
 $tjek=0;
 		$v=0;
+/*		
 		$qtxt="select varer.id as vare_id,varer.varenr,varer.kostpris,varer.beskrivelse,varer.beholdning,";
 		$qtxt.="variant_varer.id as variant_id,variant_varer.variant_stregkode as stregkode";
 		$qtxt.=" from varer,variant_varer ";
 		$qtxt.="where varer.gruppe='$gruppe[$x]' and varer.lukket != 'on' ";
 		$qtxt.="and ((varer.varianter!='' and variant_varer.vare_id = varer.id) or varer.varianter!='') ";
 		$qtxt.="order by varer.varenr,variant_varer.variant_stregkode";
+*/		
 		$qtxt="select * from varer where gruppe='$gruppe[$x]' and lukket != 'on' order by varenr";
 		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while($r=db_fetch_array($q)) {
 			$z=0;
 			$qtxt="select * from variant_varer where vare_id='$r[id]' order by variant_stregkode";
-if (!$r['id']) exit;
 			$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while($r2=db_fetch_array($q2)) {
 				$variant_id[$v]=$r2['id'];
@@ -1067,7 +1070,7 @@ function importer($lager,$dato){
 				print "<BODY onLoad=\"javascript:alert('Fejl i importfil - kan ikke opdeles i kolonner')\">\n";
 				print "<meta http-equiv=\"refresh\" content=\"1;URL=optalling.php?import=1\">";
 			}
-
+			db_modify("update varer set lukket='' where lukket is NULL",__FILE__ . " linje " . __LINE__);
 			if (!$lager) {
 				db_modify("update batch_kob set lager='0' where lager is NULL",__FILE__ . " linje " . __LINE__);
 				db_modify("update batch_salg set lager='0' where lager is NULL",__FILE__ . " linje " . __LINE__);
@@ -1165,7 +1168,7 @@ function importer($lager,$dato){
 #cho __line__." $qtxt<br>"; 
 							db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 							$qtxt="update lagerstatus set beholdning = '$beholdning' where vare_id='$vare_id' and lager='$lager' and variant_id='$variant_id'";
-echo __line__." $qtxt<br>"; 
+#cho __line__." $qtxt<br>"; 
 							db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 							$indsat++;
 						} elseif ($r=db_fetch_array(db_select("select id,vare_id from variant_varer where lower(variant_stregkode)='$varenr'",__FILE__ . " linje " . __LINE__))) {

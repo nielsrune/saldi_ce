@@ -73,7 +73,7 @@ elseif ($nysort) $sort=$nysort;
 $r=db_fetch_array(db_select("select box7 from grupper where art = 'DIV' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 $jobkort=$r['box7'];
 
-if (!$r=db_fetch_array(db_select("select id from grupper where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__))) {
+if (!$r=db_fetch_array(db_select("select id from grupper where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__))) {
 #	db_modify("update grupper set box2='$returside' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
 #} else { 
 	if ($valg=="kreditor") {
@@ -87,9 +87,9 @@ if (!$r=db_fetch_array(db_select("select id from grupper where art = 'DLV' and k
 		$box4="5".chr(9)."35".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10";
 		$box6="Kontonr".chr(9)."Firmanavn".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."Postnr".chr(9)."By".chr(9)."Kontakt".chr(9)."Telefon".chr(9)."S&aelig;lger";
 	}
-	db_modify("insert into grupper(beskrivelse,kode,kodenr,art,box3,box4,box5,box6,box7)values('kreditorlistevisning','$valg','$bruger_id','DLV','$box3','$box4','$box5','$box6','100')",__FILE__ . " linje " . __LINE__);
+	db_modify("insert into grupper(beskrivelse,kode,kodenr,art,box3,box4,box5,box6,box7)values('kreditorlistevisning','$valg','$bruger_id','KLV','$box3','$box4','$box5','$box6','100')",__FILE__ . " linje " . __LINE__);
 } else {
-	$r=db_fetch_array(db_select("select box1,box2,box7,box9,box10,box11 from grupper where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__)); 
+	$r=db_fetch_array(db_select("select box1,box2,box7,box9,box10,box11 from grupper where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__)); 
 	$dg_liste=explode(chr(9),$r['box1']);
 	$cat_liste=explode(chr(9),$r['box2']);
 	$skjul_lukkede=$r['box11'];
@@ -101,7 +101,7 @@ if (!$r=db_fetch_array(db_select("select id from grupper where art = 'DLV' and k
 if ($popup) $returside="../includes/luk.php";
 else $returside="../index/menu.php";
 
-db_modify("update grupper set box9='$sort' where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+db_modify("update grupper set box9='$sort' where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 		
 $tidspkt=date("U");
  
@@ -140,7 +140,7 @@ print "<td width=5% $top_bund><a accesskey=V href=kreditorvisning.php?valg=$valg
 print "</tbody></table>";
 print " </td></tr>\n<tr><td align=\"center\" valign=\"top\" width=\"100%\">";
 
-$r = db_fetch_array(db_select("select box3,box4,box5,box6,box8,box11 from grupper where art = 'DLV' and kodenr = '$bruger_id' and kode='$valg'",__FILE__ . " linje " . __LINE__));
+$r = db_fetch_array(db_select("select box3,box4,box5,box6,box8,box11 from grupper where art = 'KLV' and kodenr = '$bruger_id' and kode='$valg'",__FILE__ . " linje " . __LINE__));
 $vis_felt=explode(chr(9),$r['box3']);
 $feltbredde=explode(chr(9),$r['box4']);
 $justering=explode(chr(9),$r['box5']);
@@ -162,7 +162,7 @@ $udvaelg=NULL;
 $tmp=trim($find[0]);
 for ($x=1;$x<$vis_feltantal;$x++) $tmp=$tmp."\n".trim($find[$x]);
 $tmp=addslashes($tmp);
-db_modify("update grupper set box10='$tmp' where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+db_modify("update grupper set box10='$tmp' where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 
 if ($skjul_lukkede) $udvaelg = " and lukket != 'on'";
 for ($x=0;$x<$vis_feltantal;$x++) {
@@ -389,7 +389,7 @@ for($i=0;$i<$dgcount;$i++) {
 			print "<input type=hidden name=adresse_id[$adresseantal] value=$row[id]>";
 #			$colspan=$vis_feltantal+2;
 
-#		if ($r=db_fetch_array(db_select("select id from grupper where art = 'DLV' and kode = '$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__))) {
+#		if ($r=db_fetch_array(db_select("select id from grupper where art = 'KLV' and kode = '$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__))) {
 #			db_modify("update grupper set box1='$kreditorliste' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
 #		} 
 	}

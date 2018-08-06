@@ -69,6 +69,12 @@ function kontoindstillinger($regnskab,$skiftnavn) {
 	if (!$skiftnavn) {
 		print "<tr><td colspan='6'>Dit regnskab hedder <span style='font-weight:bold'>$regnskab</span>. ";
 		print "Klik <a href='diverse.php?sektion=kontoindstillinger&amp;skiftnavn=ja'>her</a> for at &aelig;ndre navnet.</td></tr>\n";
+		print "<tr><td colspan='6'><hr></td></tr>\n";
+		$tmp=date('U')-60*60*24*365;
+		$tmp=date("Y-m-d",$tmp);
+		$r=db_fetch_array(db_select("select count(id) as transantal from transaktioner where transdate>='$tmp'",__FILE__ . " linje " . __LINE__));
+		$transantal=$r['transantal']*1;
+		print "<tr><td>Der er foretaget $transantal posteringer de sidste 12 mdr.</td></tr>";
 		$r=db_fetch_array(db_select("select felt_1,felt_2,felt_3,felt_4 from adresser where art = 'S'",__FILE__ . " linje " . __LINE__));
 		print "<tr><td colspan='6'><hr></td></tr>\n";
 		print "<form name=diverse action='diverse.php?sektion=smtp' method='post'>\n";
@@ -94,7 +100,7 @@ function kontoindstillinger($regnskab,$skiftnavn) {
 		if ($r['felt_4']!='tls') print "<option value='tls'>tls</option>";
 		print "</select></td></tr>";
 		$tekst1=findtekst(436,$sprog_id);
-		print "<td><input type='submit' value='$tekst1' name='submit'><!--tekst 436--></td></tr>\n";
+		print "<td><input style='width:75px' type='submit' value='$tekst1' name='submit'><!--tekst 436--></td></tr>\n";
 		print "</form>\n";
 		print "<tr><td colspan='6'><hr></td></tr>\n";
 		print "<tr><td colspan='6'><br></td></tr>\n";
@@ -109,12 +115,21 @@ function kontoindstillinger($regnskab,$skiftnavn) {
 		$tekst2=findtekst(761,$sprog_id);
 		print "<tr><tr><td title='$tekst2'>$tekst1</td><td title='$tekst2'><input type='checkbox' name='behold_varer'></td></tr>";
 		$tekst1=findtekst(762,$sprog_id);
-		print "<tr><td colspan='2'><input type='submit' name='nulstil' value='Nulstil' onclick=\"return confirm('$tekst1')\"></td></tr>";
+		print "<tr><td colspan='2'><input style='width:75px' type='submit' name='nulstil' value='Nulstil' onclick=\"return confirm('$tekst1')\"></td></tr>";
+		print "</form>\n"; # <- 20170731
+		print "<tr><td colspan='6'><hr></td></tr>\n";
+		print "<tr><td colspan='6'><br></td></tr>\n";
+		print "<form name='slet_regnskab' action='diverse.php?sektion=kontoindstillinger' method='post'>\n"; #20170731 ->
+		$tekst1=findtekst(852,$sprog_id);
+		$tekst2=findtekst(853,$sprog_id);
+		print "<tr><td title='$tekst2'><b>$tekst1: $regnskab</b></td><td title='$tekst2'><input type='checkbox' name='slet_regnskab'></td></tr>";
+		$tekst1=findtekst(851,$sprog_id);
+		print "<tr><td colspan='2'><input  title='$tekst2' style='width:75px' type='submit' name='slet' value='Slet' onclick=\"return confirm('$tekst1')\"></td></tr>";
 		print "</form>\n"; # <- 20170731
 	} else  {
 		print "<form name='diverse' action='diverse.php?sektion=kontoindstillinger' method='post'>\n";
 		print "<tr><td colspan='6'>Skriv nyt navn p&aring; regnskab <input class='inputbox' type='text' style='width:400px' name='nyt_navn' value='$regnskab'> ";
-		print "og klik <input type='submit' value='Skift&nbsp;navn' name='submit'></td></tr>\n";
+		print "og klik <input style='width:75px' type='submit' value='Skift&nbsp;navn' name='submit'></td></tr>\n";
 		print "</form>\n";
 	}
 
@@ -987,7 +1002,7 @@ function api_valg() {
 		db_modify("delete from tekster where tekst_id >= '819' or tekst_id <= '825'",__FILE__ . " linje " . __LINE__);
 	}
 	list($tmp,$folder,$tmp)=explode('/',$_SERVER['REQUEST_URI'],3);
-	$url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/$folder";
+	$url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/$folder/api";
 	if (count($bruger_id)) {
 		if ($api_bruger) {
 			print "<tr><td title='".findtekst(832,$sprog_id)."'><!--tekst 832-->".findtekst(831,$sprog_id)."<!--tekst 831--></td><td colspan='3' title='".findtekst(832,$sprog_id)."'><!--tekst 832-->$db</td></tr>";

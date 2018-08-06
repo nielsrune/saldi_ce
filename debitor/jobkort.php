@@ -69,53 +69,53 @@ if (!$id && $konto_id) {
 		$initdate=date("Y-m-d");
 		$ordre_id*=1;
 		$r=db_fetch_array(db_select("select * from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__));
-		db_modify("insert into jobkort (konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,tlf,hvem,oprettet_af,initdate,tidspkt,ordre_id) values ('$konto_id', '$r[kontonr]', '".addslashes($r['firmanavn'])."', '".addslashes($r['addr1'])."', '".addslashes($r['addr2'])."','".addslashes($r['postnr'])."', '".addslashes($r['bynavn'])."', '$r[tlf]', '$hvem', '$hvem', '$initdate', '$tidspkt',$ordre_id)",__FILE__ . " linje " . __LINE__);
+		db_modify("insert into jobkort (konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,tlf,hvem,oprettet_af,initdate,tidspkt,ordre_id) values ('$konto_id', '$r[kontonr]', '".db_escape_string($r['firmanavn'])."', '".db_escape_string($r['addr1'])."', '".db_escape_string($r['addr2'])."','".db_escape_string($r['postnr'])."', '".db_escape_string($r['bynavn'])."', '$r[tlf]', '$hvem', '$hvem', '$initdate', '$tidspkt',$ordre_id)",__FILE__ . " linje " . __LINE__);
 	  $r=db_fetch_array(db_select("select id from jobkort where konto_id='$konto_id'and hvem='$hvem' and tidspkt = '$tidspkt'",__FILE__ . " linje " . __LINE__));
 		$id=$r['id'];
 		$r=db_fetch_array(db_select("select * from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__));
 		if ($r['felt_1'] && findtekst(7,$sprog_id)==findtekst(255,$sprog_id)) {
-			db_modify("update jobkort set felt_2='".addslashes($r['felt_1'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+			db_modify("update jobkort set felt_2='".db_escape_string($r['felt_1'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 		}
 		if ($r['felt_2'] && findtekst(13,$sprog_id)==findtekst(256,$sprog_id)) {
-			db_modify("update jobkort set felt_8='".addslashes($r['felt_2'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+			db_modify("update jobkort set felt_8='".db_escape_string($r['felt_2'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 		}
 		if ($r['felt_3'] && findtekst(9,$sprog_id)==findtekst(257,$sprog_id)) {
-			db_modify("update jobkort set felt_4='".addslashes($r['felt_3'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+			db_modify("update jobkort set felt_4='".db_escape_string($r['felt_3'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 		}
 		if ($r['felt_4'] && findtekst(11,$sprog_id)==findtekst(258,$sprog_id)) {
-			db_modify("update jobkort set felt_6='".addslashes($r['felt_4'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+			db_modify("update jobkort set felt_6='".db_escape_string($r['felt_4'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 		}
 		if ($r['felt_5'] && findtekst(16,$sprog_id)==findtekst(259,$sprog_id)) {
-			db_modify("update jobkort set felt_11='".addslashes($r['felt_5'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+			db_modify("update jobkort set felt_11='".db_escape_string($r['felt_5'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 		}
 		if ($id && $ordre_id) {
 			$r=db_fetch_array(db_select("select * from ordrer where id = '$ordre_id'",__FILE__ . " linje " . __LINE__));
-			if ($r['lev_navn']) db_modify("update jobkort set firmanavn='".addslashes($r['lev_navn'])."'where id='$id'",__FILE__ . " linje " . __LINE__); 
-			if ($r['lev_addr1']) db_modify("update jobkort set addr1='".addslashes($r['lev_addr1'])."',addr2='".addslashes($r['lev_addr2'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
-			if ($r['lev_postnr']) db_modify("update jobkort set postnr='".addslashes($r['lev_postnr'])."',bynavn = '".addslashes($r['lev_bynavn'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+			if ($r['lev_navn']) db_modify("update jobkort set firmanavn='".db_escape_string($r['lev_navn'])."'where id='$id'",__FILE__ . " linje " . __LINE__); 
+			if ($r['lev_addr1']) db_modify("update jobkort set addr1='".db_escape_string($r['lev_addr1'])."',addr2='".db_escape_string($r['lev_addr2'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+			if ($r['lev_postnr']) db_modify("update jobkort set postnr='".db_escape_string($r['lev_postnr'])."',bynavn = '".db_escape_string($r['lev_bynavn'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 			if ($r['felt_1'] && findtekst(7,$sprog_id)==findtekst(244,$sprog_id)) {
-				db_modify("update jobkort set felt_2='".addslashes($r['felt_1'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+				db_modify("update jobkort set felt_2='".db_escape_string($r['felt_1'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 			}
 			if ($r['felt_2'] && findtekst(13,$sprog_id)==findtekst(245,$sprog_id)) {
-				db_modify("update jobkort set felt_8='".addslashes($r['felt_2'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+				db_modify("update jobkort set felt_8='".db_escape_string($r['felt_2'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 			}
 			if ($r['felt_3'] && findtekst(9,$sprog_id)==findtekst(246,$sprog_id)) {
-				db_modify("update jobkort set felt_4='".addslashes($r['felt_3'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+				db_modify("update jobkort set felt_4='".db_escape_string($r['felt_3'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 			}
 			if ($r['felt_4'] && findtekst(11,$sprog_id)==findtekst(247,$sprog_id)) {
-				db_modify("update jobkort set felt_6='".addslashes($r['felt_4'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+				db_modify("update jobkort set felt_6='".db_escape_string($r['felt_4'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 			}
 			if ($r['felt_5'] && findtekst(16,$sprog_id)==findtekst(248,$sprog_id)) {
-				db_modify("update jobkort set felt_11='".addslashes($r['felt_5'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+				db_modify("update jobkort set felt_11='".db_escape_string($r['felt_5'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 			}
 		}
-#		db_modify("update jobkort set felt_11='".addslashes($r['felt_5'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
+#		db_modify("update jobkort set felt_11='".db_escape_string($r['felt_5'])."' where id='$id'",__FILE__ . " linje " . __LINE__); 
 	}
 	if ($id && $ordre_id && $opdat17) {
 		$ordrelinjer='';
 		$q=db_select("select beskrivelse from ordrelinjer where ordre_id = '$ordre_id' order by posnr",__FILE__ . " linje " . __LINE__);
 		while($r=db_fetch_array($q)) {
-			$ordrelinjer.=addslashes($r['beskrivelse'])."\n";
+			$ordrelinjer.=db_escape_string($r['beskrivelse'])."\n";
 		}
 	}
 
@@ -128,21 +128,22 @@ if ($_POST){
 	$feltantal=if_isset($_POST['feltantal']);
 	$felt_id=if_isset($_POST['felt_id']);
 	$felt_indhold=if_isset($_POST['felt_indhold']);	
-	$felt_1=addslashes(if_isset($_POST['felt_1']));	
-	$felt_2=addslashes(if_isset($_POST['felt_2']));	
-	$felt_3=addslashes(if_isset($_POST['felt_3']));	
-	$felt_4=addslashes(if_isset($_POST['felt_4']));	
-	$felt_5=addslashes(if_isset($_POST['felt_5']));	
-	$felt_6=addslashes(if_isset($_POST['felt_6']));	
-	$felt_7=addslashes(if_isset($_POST['felt_7']));	
-	$felt_8=addslashes(if_isset($_POST['felt_8']));	
-	$felt_9=addslashes(if_isset($_POST['felt_9']));	
-	$felt_10=addslashes(if_isset($_POST['felt_10']));	
-	$felt_11=addslashes(if_isset($_POST['felt_11']));	
+	$felt_1=db_escape_string(if_isset($_POST['felt_1']));	
+	$felt_2=db_escape_string(if_isset($_POST['felt_2']));	
+	$felt_3=db_escape_string(if_isset($_POST['felt_3']));	
+	$felt_4=db_escape_string(if_isset($_POST['felt_4']));	
+	$felt_5=db_escape_string(if_isset($_POST['felt_5']));	
+	$felt_6=db_escape_string(if_isset($_POST['felt_6']));	
+	$felt_7=db_escape_string(if_isset($_POST['felt_7']));	
+	$felt_8=db_escape_string(if_isset($_POST['felt_8']));	
+	$felt_9=db_escape_string(if_isset($_POST['felt_9']));	
+	$felt_10=db_escape_string(if_isset($_POST['felt_10']));	
+	$felt_11=db_escape_string(if_isset($_POST['felt_11']));	
 	$x=1;
 	$y=1;
 	
 	$id=$id*1;
+	if ($felt_1 && strlen($felt_1)<2) $felt_1='0'.$felt_1;
 
 	if ($slet) {
 		db_modify("delete from jobkort_felter where job_id = '$id'",__FILE__ . " linje " . __LINE__);
@@ -153,7 +154,7 @@ if ($_POST){
 	db_modify("update jobkort set felt_1='$felt_1',felt_2='$felt_2',felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',felt_6='$felt_6',felt_7='$felt_7',felt_8='$felt_8',felt_9='$felt_9',felt_10='$felt_10',felt_11='$felt_11' where id = '$id'",__FILE__ . " linje " . __LINE__);
 	while ($x<=24) {
 		$tmp1=if_isset($felt_id[$x][$y]);
-		$tmp2=addslashes(if_isset($felt_indhold[$x][$y]));
+		$tmp2=db_escape_string(if_isset($felt_indhold[$x][$y]));
 		if ($x==2) $tmp2=usdate($tmp2);
 		if ($x>=5 && $x<=7) $tmp2=usdecimal($tmp2);
 		if ($felt_id[$x][$y]) db_modify("update jobkort_felter set indhold='$tmp2' where id = '$tmp1'",__FILE__ . " linje " . __LINE__);
@@ -192,6 +193,15 @@ $fax=trim($r['fax']);
 $email=trim($r['email']);
 */
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+if ($menu=='T') {
+	$leftbutton="<a href=jobkort.php?luk=luk accesskey=L>".findtekst(30,$sprog_id)."</a>";
+	$rightbutton="";
+	$vejledning=NULL;
+	include("../includes/topmenu.php");
+	print "<div id=\"topmenu\" style=\"position:absolute;top:6px;right:0px\">";
+} elseif ($menu=='S') {
+	include("../includes/sidemenu.php");
+} else {
 print "<tr><td colspan=3 align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 print "<td onClick=\"JavaScript:opener.location.reload();\" width=\"10%\"$top_bund><a href=jobkort.php?luk=luk accesskey=L>".findtekst(30,$sprog_id)."</a><br></td>";
@@ -199,6 +209,7 @@ print "<td width=\"80%\"$top_bund>".findtekst(29,$sprog_id)."<br></td>";
 print "<td width=\"10%\"$top_bund><a href=jobkort.php accesskey=N>".findtekst(39,$sprog_id)."</a><br></td>";
 print "</tbody></table>";
 print "</td></tr>";
+}
 print "<td width=10% align=center></td><td width=80% align=center>";
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\" widht=\"800\"><tbody>";
 

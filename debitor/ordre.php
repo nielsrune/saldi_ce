@@ -2960,7 +2960,6 @@ function ordreside($id,$regnskab) {
 				print "<tr><td><select style=\"width:110px\" name=\"felt_1\" $disabled>";
 #				if ($betalingsbet=='Kreditkort') {
 					if ($felt_1) print "<option value=\"$felt_1\">$felt_1</option>";
-					if ($felt_1 != 'Kontant') print "<option value='Kontant'>Kontant</options>";
 #					if (!in_array($felt_1,$korttyper) && $felt_1 != 'Betalingskort' && $terminal_ip[$felt_5-1]) $felt_1=NULL;
 #					elseif (!in_array($felt_1,$korttyper) && !$terminal_ip[$felt_5-1]) $felt_1=NULL;
 					if ($terminal_ip[$felt_5-1]) {
@@ -2975,6 +2974,7 @@ function ordreside($id,$regnskab) {
 							if ($felt_1!=$korttyper[$x]) print "<option value='$korttyper[$x]'>$korttyper[$x]</options>";
 						}
 					}
+					if ($felt_1 != 'Kontant') print "<option value='Kontant'>Kontant</options>";
 					if ($felt_1 != 'Konto') print "<option value='Konto'>Konto</options>";
 #				} else {
 #					($betalingsbet=='Kontant')?$felt_1='Kontant':$felt_1='Konto';
@@ -3900,9 +3900,9 @@ function ordrelinjer($x,$sum,$dbsum,$blandet_moms,$moms,$antal_ialt,$leveres_ial
 		print "</tr><tr>\n";
 		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right\" size=\"3\" value=$x></td>\n";
 		print "<td><input class=\"inputbox\" readonly=\"readonly\" size=\"12\" value=\"\"></td>\n";
-		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right;width:40px\" value=$dkantal></td>\n";
+		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right;width:40px\" value=\"$dkantal\"></td>\n";
 		print "<td><input class=\"inputbox\" readonly=\"readonly\" size=\"3\" value=\"$enhed\"></td>\n";
-		print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right;width:35px\" value=\"$lager\"></td>\n";
+		#print "<td><input class=\"inputbox\" readonly=\"readonly\" style=\"text-align:right;width:35px\" value=\"$lager\"></td>\n";
 		$rabatpct=afrund($m_rabat*100/$pris,2);
 		($rabatart=='amount')?$rabattxt=findtekst(466,$sprog_id):$rabattxt=findtekst(467,$sprog_id);
 		$rabattxt=str_replace('$rabatpct',$rabatpct,$rabattxt);

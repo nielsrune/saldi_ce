@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------/api/rest_api.php---------lap 3.7.1---2018-03-16 -----
+// ----------/api/rest_api.php---------lap 3.7.1---2018-04-26 -----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -27,6 +27,8 @@
 // ----------------------------------------------------------------------
 // 20180307 Tilføjet 'pos_betaling' i 'fakturer_ordre' 
 // 20180316 Tilføjet 'lagerstatus' i '$allowed_tables' i funktion 'fetch_from_table'
+// 20180406 tidspkt indsættes nu ved oprettelse af ordrer og genbruges ved fakturering. 
+// 20180426 Tilføjet shop_fakturanr
 
 
 include("../includes/connect.php");
@@ -166,7 +168,7 @@ function insert_into_table($insert,$fields,$values) {
 	return $result;
 }
 
-function insert_shop_order($brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$land,$cvrnr,$ean,$institution,$tlf,$email,$ref,$kontakt,$lev_firmanavn,$lev_addr1,$lev_addr2,$lev_postnr,$lev_bynavn,$lev_land,$lev_tlf,$lev_email,$lev_kontakt,$betalingsbet,$betalingsdage,$betalings_id,$ordredate,$lev_date,$momssats,$valuta,$valutakurs,$gruppe,$afd,$projekt,$ekstra1,$ekstra2,$ekstra3,$ekstra4,$ekstra5,$nettosum,$momssum,$lager) {
+function insert_shop_order($brugernavn,$shop_ordre_id,$shop_fakturanr,$shop_addr_id,$saldi_kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$land,$cvrnr,$ean,$institution,$tlf,$email,$ref,$kontakt,$lev_firmanavn,$lev_addr1,$lev_addr2,$lev_postnr,$lev_bynavn,$lev_land,$lev_tlf,$lev_email,$lev_kontakt,$betalingsbet,$betalingsdage,$betalings_id,$ordredate,$lev_date,$momssats,$valuta,$valutakurs,$gruppe,$afd,$projekt,$ekstra1,$ekstra2,$ekstra3,$ekstra4,$ekstra5,$nettosum,$momssum,$lager) {
 
 	global $db,$db_skriv_id;
 	global $brugernavn;
@@ -175,7 +177,13 @@ function insert_shop_order($brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_konto
 	list($master,$db_skriv_id)=explode('_',$db);
 	
 	$log=fopen("../temp/$db/rest_api.log","a");
-	fwrite($log,__line__." $brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$land,$cvrnr,$ean,$institution,$tlf,$email,$ref,$kontakt,$lev_firmanavn,$lev_addr1,$lev_addr2,$lev_postnr,$lev_bynavn,$lev_land,$lev_tlf,$lev_email,$lev_kontakt,$betalingsbet,$betalingsdage,$betalings_id,$ordredate,$lev_date,$momssats,$valuta,$valutakurs,$gruppe,$afd,$projekt,$ekstra1,$ekstra2,$ekstra3,$ekstra4,$ekstra5,$nettosum,$momssum,$lager\n");
+	fwrite($log,__line__." Ordredate: $ordredate\n");
+	list($ordredate,$tidspkt)=explode(' ',$ordredate);
+	$tidspkt=substr($tidspkt,0,5);
+	fwrite($log,__line__." Ordredate: $ordredate\n");
+	fwrite($log,__line__." Tidspkt: $tidspkt\n");
+	
+	fwrite($log,__line__." $brugernavn,$shop_ordre_id,$shop_fakturanr,$shop_addr_id,$saldi_kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$land,$cvrnr,$ean,$institution,$tlf,$email,$ref,$kontakt,$lev_firmanavn,$lev_addr1,$lev_addr2,$lev_postnr,$lev_bynavn,$lev_land,$lev_tlf,$lev_email,$lev_kontakt,$betalingsbet,$betalingsdage,$betalings_id,$ordredate,$lev_date,$momssats,$valuta,$valutakurs,$gruppe,$afd,$projekt,$ekstra1,$ekstra2,$ekstra3,$ekstra4,$ekstra5,$nettosum,$momssum,$lager\n");
 	fwrite($log,__line__." Brugernavn: $brugernavn\n");
 	fwrite($log,__line__." Shop Ordre id: $shop_ordre_id afd $afd\n");
 	fwrite($log,__line__." Shop Kunde id: $shop_addr_id\n");
@@ -277,12 +285,18 @@ function insert_shop_order($brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_konto
 			}
 			}
 			fwrite($log,__line__." kontonr $kontonr\n");
-			$qtxt="insert into adresser(kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,cvrnr,ean,email,tlf,gruppe,art,betalingsbet,betalingsdage,kontakt) ";
+			$qtxt="insert into adresser";
+			$qtxt.="(kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,cvrnr,ean,email,tlf,gruppe,art,betalingsbet,betalingsdage,kontakt,";
+			$qtxt.="lev_firmanavn,lev_fornavn,lev_efternavn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,lev_land,lev_kontakt,lev_tlf,lev_email)";
 			$qtxt.="values ";
 			$qtxt.="('$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($addr1)."','".db_escape_string($addr2)."',";
 			$qtxt.="'".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($land)."','".db_escape_string($cvrnr)."',";
 			$qtxt.="'".db_escape_string($ean)."','".db_escape_string($email)."','".db_escape_string($tlf)."','$gruppe','D','$betalingsbet',";
-			$qtxt.="'$betalingsdage','".db_escape_string($kontakt)."')";
+			$qtxt.="'$betalingsdage','".db_escape_string($kontakt)."',";
+			$qtxt.="'".db_escape_string($lev_firmanavn)."','".db_escape_string($lev_fornavn)."','".db_escape_string($lev_efternavn)."',";
+			$qtxt.="'".db_escape_string($lev_addr1)."','".db_escape_string($lev_addr2)."','".db_escape_string($lev_postnr)."',";
+			$qtxt.="'".db_escape_string($lev_bynavn)."','".db_escape_string($lev_land)."','".db_escape_string($lev_kontakt)."',";
+			$qtxt.="'".db_escape_string($lev_tlf)."','".db_escape_string($lev_email)."')";
 				fwrite($log,__line__." $qtxt\n");
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$r=db_fetch_array(db_select("select id from adresser where kontonr='$kontonr' and art = 'D'",__FILE__ . " linje " . __LINE__));
@@ -326,12 +340,15 @@ function insert_shop_order($brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_konto
 	fwrite($log,__line__." afd $afd\n");
 	$qtxt="insert into ordrer ";
 	$qtxt.="(ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,kontakt,email,art,projekt,momssats,betalingsbet,betalingsdage,betalings_id,status,";
-	$qtxt.="ordredate,fakturadate,valuta,valutakurs,afd,ref,hvem,felt_1,felt_2,felt_3,felt_4,felt_5,kundeordnr,cvrnr,ean,sum,moms)"; 
+	$qtxt.="ordredate,fakturadate,valuta,valutakurs,afd,ref,hvem,felt_1,felt_2,felt_3,felt_4,felt_5,kundeordnr,cvrnr,ean,sum,moms,"; 
+	$qtxt.="lev_navn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,lev_kontakt,tidspkt)";
 	$qtxt.=" values "; 
 	$qtxt.="('$ordrenr','$saldi_addr_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($addr1)."','".db_escape_string($addr2)."',";
 	$qtxt.="'".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($kontakt)."','".db_escape_string($email)."',";
 	$qtxt.="'$art','$projektnr','$momssats','$betalingsbet','$betalingsdage','$betalings_id','0','$ordredate','$ordredate','$valuta','$valutakurs',";
-	$qtxt.="'$afd','$ref','','$ekstra1','$ekstra2','$ekstra3','$ekstra4','$ekstra5','$shop_ordre_id','$cvrnr','$ean','$nettosum','$momssum')";
+	$qtxt.="'$afd','$ref','','$ekstra1','$ekstra2','$ekstra3','$ekstra4','$ekstra5','$shop_fakturanr','$cvrnr','$ean','$nettosum','$momssum',";
+	$qtxt.="'".db_escape_string($lev_firmanavn)."','".db_escape_string($lev_addr1)."','".db_escape_string($lev_addr2)."',";
+	$qtxt.="'".db_escape_string($lev_postnr)."','".db_escape_string($lev_bynavn)."','".db_escape_string($lev_kontakt)."','".db_escape_string($tidspkt)."')";
 	fwrite($log,__line__." $qtxt\n");
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt="select id from ordrer where ordrenr='$ordrenr' and kontonr='$kontonr'";
@@ -514,13 +531,14 @@ function fakturer_ordre($saldi_id,$udskriv_til,$pos_betaling) {
 		$linjesum+=$r['antal']*$r['pris']-($r['antal']*$r['pris']*$r['rabat']/100);
 		fwrite($log,__line__." $linjesum+=$r[antal]*$r[pris]-($r[antal]*$r[pris]*$r[rabat]/100)\n");
 	}
-	$qtxt="select sum,moms,felt_1,felt_2 from ordrer where id='$saldi_id'";
+	$qtxt="select tidspkt,sum,moms,felt_1,felt_2 from ordrer where id='$saldi_id'";
 	fwrite($log,__line__." $qtxt\n");
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$ordresum=$r['sum'];
 	$ordremoms=$r['moms'];
 	$betalingstype=$r['felt_1'];
 	$betalingsum=$r['felt_2'];
+	$tidspkt=$r['tidspkt'];
 #	$r=db_fetch_array(db_select("select * from ordrer where id = '$saldi_id'",__FILE__ . " linje " . __LINE__));
 #	$betalt=$r['sum']+$r['moms'];
 #	$korttype=$r['felt_1'];
@@ -540,6 +558,11 @@ function fakturer_ordre($saldi_id,$udskriv_til,$pos_betaling) {
 	}	
 	if ($svar=='OK') {
 		$svar=bogfor($saldi_id,'on');
+		if ($tidspkt) {	
+			$qtxt="update ordrer set tidspkt='$tidspkt' where id='$saldi_id'";
+			fwrite($log,__line__." $qtxt\n");
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
+		}
 		if ($pos_betaling) {
 			$qtxt="insert into pos_betalinger(ordre_id,betalingstype,amount,valuta,valutakurs)values('$saldi_id','$betalingstype','$betalingsum','DKK','100')";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -644,6 +667,8 @@ if (isset($_GET['action'])){# && in_array($_GET['action'], $possible_url)){
 			$land=if_isset($_GET['land']);
 			$shop_addr_id=if_isset($_GET['shop_addr_id']);
 			$shop_ordre_id=if_isset($_GET['shop_ordre_id']);
+			$shop_fakturanr=if_isset($_GET['shop_fakturanr']);
+			if (!$shop_fakturanr) $shop_fakturanr=$shop_ordre_id;
 			$postnr=if_isset($_GET['postnr']);
 			$ean=if_isset($_GET['ean']);
 			$institution=if_isset($_GET['institution']);
@@ -686,7 +711,7 @@ if (isset($_GET['action'])){# && in_array($_GET['action'], $possible_url)){
 			$params.="$ekstra1,$ekstra2,$ekstra3,$ekstra4,$ekstra5,$nettosum,$momssum,$lager,$pos_betaling";
 			fwrite($log,__line__." insert_shop_order($params)\n");
 			fclose ($log);
-			$value = insert_shop_order($brugernavn,$shop_ordre_id,$shop_addr_id,$saldi_kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$land,$cvr,$ean,$institution,$tlf,$email,$ref,$kontakt,$lev_firmanavn,$lev_addr1,$lev_addr2,$lev_postnr,$lev_bynavn,$lev_land,$lev_tlf,$lev_email,$lev_kontakt,$betalingsbet,$betalingsdage,$betalings_id,$ordredate,$lev_date,$momssats,$valuta,$valutakurs,$gruppe,$afd,$projekt,$ekstra1,$ekstra2,$ekstra3,$ekstra4,$ekstra5,$nettosum,$momssum,$lager);
+			$value = insert_shop_order($brugernavn,$shop_ordre_id,$shop_fakturanr,$shop_addr_id,$saldi_kontonr,$firmanavn,$addr1,$addr2,$postnr,$bynavn,$land,$cvr,$ean,$institution,$tlf,$email,$ref,$kontakt,$lev_firmanavn,$lev_addr1,$lev_addr2,$lev_postnr,$lev_bynavn,$lev_land,$lev_tlf,$lev_email,$lev_kontakt,$betalingsbet,$betalingsdage,$betalings_id,$ordredate,$lev_date,$momssats,$valuta,$valutakurs,$gruppe,$afd,$projekt,$ekstra1,$ekstra2,$ekstra3,$ekstra4,$ekstra5,$nettosum,$momssum,$lager);
 ##############################################
 		} elseif ($action=='insert_shop_orderline') {
 			$log=fopen("../temp/$db/rest_api.log","a");
