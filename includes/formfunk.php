@@ -1014,6 +1014,8 @@ for ($o=0; $o<$ordre_antal; $o++) {
 		else {
 			$x++;
 			$variabel[$x]=$row['beskrivelse'];
+#cho $variabel[$x]."<br>";
+			
 			$justering[$x]=$row['justering'];
 			$xa[$x]=$row['xa'];
 			$str[$x]=$row['str'];
@@ -1177,10 +1179,12 @@ for ($o=0; $o<$ordre_antal; $o++) {
 							$dkantal[$x]=str_replace("-","",$dkantal[$x]);
 						}
 							if ($formular==3 || $formular==9){
-							for ($z=0;$z<count($variabel);$z++) {
+							for ($z=0;$z<=count($variabel);$z++) {
+echo $variabel[$z]."<br>";
 								if ($variabel[$z]=='lokation') {
 #cho "location<br>";
 								$qtxt="select lok1 as location from lagerstatus where vare_id = '$vare_id[$x]' and lager = '$lager[$x]'";
+echo "$qtxt<br>";								
 									$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 									if ($r2['location']) {
 											$beskrivelse[$x].=chr(9)."Lok: ".$r2['location'];
@@ -1195,6 +1199,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 #									$variabel[$z]=str_replace('vare_note','',$variabel[$z]);
 									}
 								}
+#xit;								
 		
 							$lev_nr*=1;
 							$lev_antal[$x]=0;

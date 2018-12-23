@@ -81,20 +81,22 @@ if ($submit=if_isset($_POST['submit'])){
 if ($nysort=='kolonne01') $nysort='id';
 if ($nysort=='kolonne02') $nysort='firmanavn';
 if ($nysort=='kolonne03') $nysort='postnr';
-if ($nysort=='kolonne04') $nysort='felt_1';
+if ($nysort=='kolonne04') $nysort='tlf';
 if ($nysort=='kolonne05') $nysort='felt_2';
 if ($nysort=='kolonne06') $nysort='felt_4';
-if ($nysort=='kolonne07') $nysort='felt_4';
-if ($nysort=='kolonne08') $nysort='felt_4';
+if ($nysort=='kolonne07') $nysort='felt_8';
+if ($nysort=='kolonne08') $nysort='felt_1';
+if ($felt08 && strlen($felt08)<2) $felt08='0'.$felt08;
 
+echo $felt08."<br>";
 ob_end_flush();	//Sender det "bufferede" output afsted...
 	
-if (!$sort) $sort = "firmanavn";
+if (!$nysort) $sort = "firmanavn";
 elseif ($nysort==$sort) $sort=$sort." desc";
 elseif ($nysort) $sort=$nysort;
 
 #$parameter="sort=$sort&ordre_id=$ordre_id&returside=$returside&valg=$valg$hreftext";
-$parameter=NULL;
+$parameter="sort=$sort";
 
 $hreftext=NULL;
 #$hreftext="&jobnumre=$jobnumre&kontonumre=$kontonumre&fakturanumre=$fakturanumre&jobdatoer=$jobdatoer&lev_datoer=$lev_datoer&fakturadatoer=$fakturadatoer&genfaktdatoer=$genfaktdatoer&summer=$summer&ref=$ref[0]&kontoid=$kontoid";
@@ -186,7 +188,9 @@ if ($felt08) {
 
 $ialt=0;
 if ($konto_id) $udvaelg.="and konto_id=$konto_id ";
-$q = db_select("select * from jobkort where id > 0 $udvaelg order by $sort",__FILE__ . " linje " . __LINE__);
+$qtxt="select * from jobkort where id > 0 $udvaelg order by $sort";
+echo "$qtxt<br>";
+$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r =db_fetch_array($q)) {
 	$ialt++;
 	$job="job".$r['id'];

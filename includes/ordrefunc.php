@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//----------------- includes/ordrefunc.php -----ver 3.7.0---- 2017.08.26 ----------
+//----------------- includes/ordrefunc.php -----ver 3.7.1---- 2018.05.03 ----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.07.30 søg 20120730
@@ -145,6 +145,8 @@
 // 2017.10.09 PHR - Tilføjet funktion gls_label.
 // 2017.10.31 PHR	- Indsat faktura og leveringskontrol i funktion slet_ordre. Søg 20171031
 // 2017.11.01 PHR - Hvis nextfaktdate blev sat til 0.11.17 gik rutinen i selvsving #20171101
+// 2018.05.02	PHR	- Hack for at scanner skipper det 1. 0 hvis 13 EAN stregkode starter med 00. Søg efter '0$varenr'
+// 2018.05.09	PHR	- Omskrivning af shop update rutine i så den fungerer med 'rigtige' stregkoder. Søg 20180509
 
 function levering($id,$hurtigfakt,$genfakt,$webservice) {
 echo "<!--function levering start-->";
@@ -395,13 +397,12 @@ function linjeopdat($id ,$gruppe, $linje_id, $beholdning, $vare_id, $antal, $pri
 
 #cho "Linjeopdat: $id - $linje_id - $kred_linje_id<br>";
 
-	global $fp;
-	global $levdate;
-	global $fakturadate;
-	global $sn_id;
 	global $art;
+	global $db;
+	global $fakturadate,$fp;
+	global $lev_nr,$levdate;
 	global $ref;
-	global $lev_nr;
+	global $sn_id;
 
 	$antal*=1;
 	
@@ -573,21 +574,38 @@ function linjeopdat($id ,$gruppe, $linje_id, $beholdning, $vare_id, $antal, $pri
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$api_fil=trim($r['box4']);
 		if ($api_fil) { #20170210
+		$log=fopen("../temp/$db/rest_api.log","a");
 			$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
 			if ($variant_id) {
-				$qtxt="select variant_varer.variant_stregkode,variant_varer.variant_beholdning as beholdning,lagerstatus.beholdning as lagerbeh ";
-				$qtxt.="from variant_varer,lagerstatus  where variant_varer.id='$variant_id' and lagerstatus.variant_id=variant_varer.id";
+				$qtxt="select shop_variant from shop_varer where saldi_variant='$variant_id'";
 				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-				$shop_id=str_replace("EAN","",$r['variant_stregkode']);
+				$shop_id=$r['shop_variant'];
+				$qtxt="select beholdning from lagerstatus where variant_id='$variant_id'";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$variant_beholdning=$r['beholdning'];#-$antal;
+				if (!$shop_id) {
+					$qtxt="select variant_stregkode from variant_varer where id='$variant_id'";
+					$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+					$shop_id=str_replace("EAN","",$r['variant_stregkode']);
+				}
+				$qtxt="select shop_id from shop_varer where saldi_variant='$variant_id'";
+				$txt="/usr/bin/wget --spider --no-check-certificate --header='$header' '$api_fil?update_stock=$shop_id&stock=$variant_beholdning&stockno=$lager&stockvalue=$r[lagerbeh]'";
+#				$qtxt="select variant_varer.variant_stregkode,variant_varer.variant_beholdning as beholdning,lagerstatus.beholdning as lagerbeh ";
+#				$qtxt.="from variant_varer,lagerstatus  where variant_varer.id='$variant_id' and lagerstatus.variant_id=variant_varer.id";
+#				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+#				$shop_id=str_replace("EAN","",$r['variant_stregkode']);
+#				$variant_beholdning=$r['beholdning'];#-$antal;
 				$txt="/usr/bin/wget --spider --no-check-certificate --header='$header' '$api_fil?update_stock=$shop_id&stock=$variant_beholdning'&stockno=$lager&stockvalue=$r[lagerbeh]'";
+				fwrite($log,__file__." ".__line__." $txt\n");
 				exec ("nohup $txt > /dev/null 2>&1 &\n");
 			} else {
 				$qtxt="select varer.beholdning,lagerstatus.beholdning as lagerbeh,shop_varer.shop_id from lagerstatus,shop_varer,varer where lagerstatus.vare_id='$vare_id' and lagerstatus.lager='$lager' and shop_varer.saldi_id='$vare_id' and varer.id='$vare_id'";
 				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$txt="/usr/bin/wget --spider --no-check-certificate --header='$header' '$api_fil?update_stock=$r[shop_id]&stock=$r[beholdning]&stockno=$lager&stockvalue=$r[lagerbeh]'";
+				fwrite($log,__file__." ".__line__." $txt\n");
 				exec ("/usr/bin/nohup $txt > /dev/null 2>&1 &\n");
 			}	
+			fclose($log);
 		} else { # skal udfases
 	$r=db_fetch_array(db_select("select box2 from grupper where art = 'DIV' and kodenr = '5' ",__FILE__ . " linje " . __LINE__));
 	$shopurl=trim($r['box2']);
@@ -3025,6 +3043,7 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 	$varenr_up=strtoupper($varenr);
 
 	$qtxt="SELECT id,vare_id,variant_type FROM variant_varer WHERE upper(variant_stregkode) = '$varenr_up'";
+	if (strlen($varenr)==12 && is_numeric($varenr)) $qtxt.=" or variant_stregkode='0$varenr'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	if ($r['id'] && $r['vare_id'] && $r['variant_type']) {
 		$vare_id=$r['vare_id'];
@@ -3036,8 +3055,10 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 	}
 	$string=NULL;
 	if (isset($vare_id) && $vare_id) $string="select * from varer where id='$vare_id'";
-	elseif ($varenr) $string="select * from varer where lower(varenr) = '$varenr_low' or upper(varenr) = '$varenr_up' or varenr LIKE '$varenr' or lower(stregkode) = '$varenr_low' or upper(stregkode) = '$varenr_up' or stregkode LIKE '$varenr'";
-	elseif ($id && $beskrivelse && $posnr) {
+	elseif ($varenr) {
+		$string="select * from varer where lower(varenr) = '$varenr_low' or upper(varenr) = '$varenr_up' or varenr LIKE '$varenr' or lower(stregkode) = '$varenr_low' or upper(stregkode) = '$varenr_up' or stregkode LIKE '$varenr'";
+		if (strlen($varenr)==12 && is_numeric($varenr)) $string.=" or stregkode='0$varenr'";
+	} elseif ($id && $beskrivelse && $posnr) {
 		$qtxt="insert into ordrelinjer ";
 		$qtxt.="(ordre_id,vare_id,varenr,enhed,beskrivelse,antal,rabat,rabatart,procent,m_rabat,pris,kostpris,momsfri,momssats,posnr,projekt,";
 		$qtxt.="folgevare,rabatgruppe,bogf_konto,kred_linje_id,kdo,serienr,variant_id,leveres,samlevare,omvbet,saet,fast_db,tilfravalg,lager) ";
@@ -3135,7 +3156,7 @@ fwrite($log,__line__." Varemomssats $varemomssats\n");
 fwrite($log,__line__."Momssats $momssats Varemomssats $varemomssats\n");
 			if ($momssats<$ms) $ms=$momssats;		
 			fwrite($log,__line__." Pris $pris -> $ms -> $incl_moms\n");
-			if ($incl_moms) $pris=$pris-($pris*$ms/(100+$ms));
+			if ($art=='PO' && $incl_moms) $pris=$pris-($pris*$ms/(100+$ms));
 			else $pris*=1; #20140124
 			$kostpris=$r['kostpris']*1;
 		}
@@ -4862,6 +4883,4 @@ if (!function_exists('gls_label')) {
 		echo base64_decode($res->PDF);
 	}
 }
-
-
 ?>

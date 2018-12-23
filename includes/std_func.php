@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------includes/std_func.php----------------- lap 3.7.1 -- 2018-01-19 --
+// -----------includes/std_func.php----------------- lap 3.7.2 -- 2018-05-18 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -48,6 +48,7 @@
 // 2017.04.04 PHR Funktion 'find_lagervaerdi' udelader nu ikke bogførte ordrer da disse kan give skæve tal.
 // 2018.01.19 PHR	Tilføjet funktion hent_shop_ordrer som opdaterer ordrer fra shop.
 // 2018.01.23 PHR	En del rettelser i funktion lagerreguler i forhold til varianter og flere lagre.
+// 2018.05.18 PHR	Tilføjet funktion alert.
 
 if (!function_exists('nr_cast')) {
 	function nr_cast($tekst)
@@ -1072,7 +1073,8 @@ function find_beholdning($vare_id, $udskriv) {
 }} #endfunc find_beholdning()
 
 if (!function_exists('hent_shop_ordrer')) {
-function hent_shop_ordrer() {
+function hent_shop_ordrer($shop_ordre_id,$from_date) {
+	global $db;
 	$r=db_fetch_array(db_select("select box4 from grupper where art='API'",__FILE__ . " linje " . __LINE__));
 	$api_fil=trim($r['box4']);
 	if ($api_fil) {
@@ -1086,12 +1088,18 @@ function hent_shop_ordrer() {
 			fwrite($fp,date("U"));
 			fclose ($fp);
 			$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
-			$txt="nohup /usr/bin/wget --spider --no-check-certificate --header='$header' $api_fil?put_new_orders=1 > /dev/null 2>&1 &\n";
-			exec ($txt);
+#cho 	"/usr/bin/wget --spider --no-check-certificate --header='$header' $api_fil?put_new_orders=1 \n<br>";
+			$api_txt="$api_fil?put_new_orders=1";
+			if ($shop_ordre_id) $api_txt.="&ordre_id=$shop_ordre_id";
+			if ($from_date) $api_txt.="&from_date=$from_date";
+			exec ("nohup /usr/bin/wget  -O - -q  --no-check-certificate --header='$header' '$api_txt' > /dev/null 2>&1 &\n");
 		}	
 	}
+}} #endfunc hent_shop_ordrer()
+if (!function_exists('alert')) {
+function alert($msg) {
+    echo "<script type='text/javascript'>alert('$msg');</script>";
 }}
-##############################################
 
 ######################################################################################################################################
 ?>

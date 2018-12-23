@@ -36,6 +36,7 @@
 // 2017.02.09	PHR Tilføjet mulighed for at slette ordrer direkte fra liste.
 // 2017.05.20	PHR fjernet valutaberegning på kostpriser da det gav forlert DB/DG
 // 2017.06.01 PHR	Delvis tilbageført ændringer fra 20141106 da alle fakturaer ikke kommer med ved opslag fra debitorkort 20170601
+// 2018.04.18	PHR	Mulighed for at gemme ordre ved klik på kundeordrenr. Søg $gem_id
 
 
 #ob_start();
@@ -100,6 +101,9 @@ $kontoid= if_isset($_GET['kontoid']);
 $genberegn = if_isset($_GET['genberegn']);
 $start = if_isset($_GET['start']);
 $vis_lagerstatus = if_isset($_GET['vis_lagerstatus']);
+$gem=if_isset($_GET['gem']);
+$gem_id=if_isset($_GET['gem_id']);
+$download=if_isset($_GET['download']);
 
 if (!$returside && $konto_id && !$popup) $returside="debitorkort.php?id=$konto_id";
 
@@ -703,6 +707,11 @@ while ($row=db_fetch_array($query)) {
 #					print "<td align=right><input class=\"inputbox\" type=\"checkbox\" name=\"checked[$ordreantal]\" $checked[$id]></td>";
 #					print "<input type=hidden name=ordre_id[$ordreantal] value=$id>";
 				} 
+			} elseif ($vis_felt[$x]=='kundeordnr' && $valg=='faktura') {
+				$tmp=$vis_felt[$x];
+				if ($gem_id==$row['id']) print "<a href='$gem' download='$download' title='Højreklik og vælg \"gem som\"'><font color='green'>$row[$tmp]</font></a>";
+				else print "<a href='formularprint.php?id=$row[id]&ordre_antal=1&formular=4&udskriv_til=fil'>$row[$tmp]</a>";
+#				print "<span onclick=window.open('formularprint.php?id=$row[id]&ordre_antal=1&formular=4&udskriv_til=fil')>$row[$tmp]</span>";
 			} elseif (strpos($vis_felt[$x],"date") || $vis_felt[$x]=="nextfakt") {
 	 			print dkdato($row[$vis_felt[$x]]);
 			} else {
@@ -855,13 +864,14 @@ if ($api_fil) {
 		$tidspkt=fgets($fp);
 	} else $tidspkt = 0;
 	fclose ($fp);
-	if ($tidspkt < date("U")-30 || $shop_ordre_id) {
+	if ($tidspkt < date("U")-1200 || $shop_ordre_id) {
 		$fp=fopen("../temp/$db/shoptidspkt.txt","w");
 		fwrite($fp,date("U"));
 		fclose ($fp);
 	$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
 #cho 	"/usr/bin/wget --spider --no-check-certificate --header='$header' $api_fil?put_new_orders=1 \n<br>";
-	exec ("nohup /usr/bin/wget  -O - -q  --no-check-certificate --header='$header' $api_fil?put_new_orders=1 > /dev/null 2>&1 &\n");
+		$api_txt="$api_fil?put_new_orders=1";
+		exec ("nohup /usr/bin/wget  -O - -q  --no-check-certificate --header='$header' '$api_txt' > /dev/null 2>&1 &\n");
 }	
 }
 $r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));

@@ -740,7 +740,19 @@ if ($_POST) {
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 			print tekstboks('regnskab nulstillet');
+		} elseif (isset($_POST['slet'])) {
+			if ($_POST['slet_regnskab']=='on') { #20185024
+				include("../includes/connect.php");
+				db_modify("update regnskab set lukket='on',logintekst='slettet af $brugernavn den ".date("Ymd H.i")."' where id = '$db_id'",__FILE__ . " linje " . __LINE__);
+				db_modify("delete from online where db='$db'",__FILE__ . " linje " . __LINE__);
+				include("../includes/online.php");
+				print "Sletter";
+			} else {
+				$tekst1=findtekst(852,$sprog_id);
+				alert("For at slette dit regnskab skal du afmærke feltet ved $tekst1: $regnskab");
 		}
+		}
+	
 	} elseif ($sektion=='smtp') {
 		$smtp=trim(db_escape_string($_POST['smtp']));
 		$smtpuser=trim(db_escape_string($_POST['smtpuser']));

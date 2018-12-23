@@ -781,3 +781,8 @@
 846	Varetekster forbliver uændrede
 847	Kundedisplay
 848	Afmærk hvis der er tilsluttet kundedisplay til kasse.
+849	Regnskab
+850	Saldo for drift- og statuskonti samt summering af disse for valgte konti i valgt periode.
+851	Er du sikker på at du vil slette dit regnskab? Denne handling kan ikke fortrydes! - Tag en sikkerhedskopi først!
+852	Slet regnskab
+853	Hvis du sætter flueben i felten og klikker på `Slet` slettes regnskabet og din konto lukkes. Vi beholder en sikkerhedskopi i 5 år jf. bogføringsloven. 

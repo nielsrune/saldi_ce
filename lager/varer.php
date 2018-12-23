@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------lager/varer.php-------------lap 3.7.2-----2018-03-20--------
+// ---------lager/varer.php-------------lap 3.7.2-----2018-04-11--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -39,6 +39,7 @@
 // 2018.01.12 PHR Tilføjet søgning på variant stregkode 20180112
 // 2018.02.12 PHR Liste kan nu gemmes som csv. Sæg scv eller csvfil
 // 2018.03.20 PHR Tilføjet leverandørsøgefelt. Søg $lev_kto_navn
+// 2018.04.11 PHR Sætter backslash foran " ved leverandørsøgning.
 
 @session_start();
 $s_id=session_id();
@@ -89,7 +90,7 @@ if ($vis_lev_felt) {
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		if (in_array($r['id'],$lev_id)) {
-			$lev.='"'.$r['kontonr']." : ".$r['firmanavn'].'",';
+			$lev.='"'.$r['kontonr']." : ".str_replace('"','\"',$r['firmanavn']).'",';
 		}
 	}
 	$lev=trim($lev,',');

@@ -3,6 +3,7 @@
 
 # temp-filer
 *~
+*.orig
 
 # .svn mapper
 .svn/
