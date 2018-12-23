@@ -1,30 +1,35 @@
 <?php
-
-// --------debitor/ordrevisning.php-----lap 2.5.5-------2011.12.01-----------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// --------debitor/ordrevisning.php-----lap 3.7.2-------2018.11.28-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2010 DANOSOFT ApS
+// Copyright (c) 2004-2018 DANOSOFT ApS
 // ----------------------------------------------------------------------
-
+// 2018.11.28	PHR Tilføjet kundegruppe som søgefelt
 	
 @session_start();
 $s_id=session_id();
+$box4=NULL;
 
 if (isset($_GET['valg'])) $valg=($_GET['valg']);
 else $valg="ordrer";
@@ -41,13 +46,7 @@ include("../includes/online.php");
 include("../includes/db_query.php");
 include("../includes/std_func.php");
 
-#$side=if_isset($_GET['side']);
 $sort=trim(if_isset($_GET['sort']));
-#$valg=trim(if_isset($_GET['valg']));
-
-if ($popup) $returside="../includes/luk.php"; 
-else $returside="$side.php";
-	
 
 if (isset($_POST) && $_POST) {
 	$vis_feltantal=if_isset($_POST['vis_feltantal']);
@@ -117,6 +116,8 @@ while ($i < db_num_fields($q)) {
 	$i++; 
 }
 $felter[$i] = 'sum_m_moms';
+$i++;
+$felter[$i] = 'kundegruppe';
 sort($felter);
 #$feltantal=count($felter);
 print "<tr><td colspan=\"6\">V&aelig;lg hvilke felter der skal v&aelig;re synlige p&aring; oversigten</td></tr>";
@@ -196,10 +197,10 @@ function sorter($pos,$var,$vis_feltantal) {
 	$swapped = true;
   while ($swapped){
 		$swapped = false;
-		for ($i=0;$i<=$vis_feltantal;$i++){
+		for ($i=0;$i<$vis_feltantal;$i++){
+		if (!isset($pos[$i]))	$pos[$i]=0;
 		$pos[$i]=str_replace(",",".",$pos[$i]);
-# echo "$pos[$i] $var[$i]  ==> ";
-			if ($pos[$i-1] > $pos[$i]) {
+			if ($i && ($pos[$i-1] > $pos[$i])) {
 				$tmp=$pos[$i-1];
 				$pos[$i-1]=$pos[$i];
 				$pos[$i]=$tmp;

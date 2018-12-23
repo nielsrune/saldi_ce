@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------------lager/varevisning.php-----lap 3.7.2-------2018.03.20-----------
+// ------ lager/varevisning.php --- lap 3.7.2 --- 2018.11.26 -----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -24,8 +24,11 @@
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
 // Copyright (c) 2003-2018 saldi.dk ApS
-// ----------------------------------------------------------------------
+// --------------------------------------------------------------------
 // 20180328 Tilføjet $vis_lev_felt
+// 2018.11.23 PHR $vis_kostpriser tilføjet
+// 2018.11.26 PHR href på varenr tilføjet
+
 	
 @session_start();
 $s_id=session_id();
@@ -40,9 +43,14 @@ include("../includes/std_func.php");
 if ($popup) $returside="../includes/luk.php";
 else $returside="varer.php	";
 
+
+
 if (isset($_POST) && $_POST) {
 	$vis_lukkede=if_isset($_POST['vis_lukkede']);	
 	$vis_lev_felt=if_isset($_POST['vis_lev_felt']);
+	$vis_kostpriser=if_isset($_POST['vis_kostpriser']);
+	$href_vnr=if_isset($_POST['href_vnr']);
+	
 	$VG_antal=if_isset($_POST['VG_antal']);
 	$alle_VG=if_isset($_POST['VG_0']);
 	if ($alle_VG=='on') $vis_VG='on';
@@ -65,10 +73,11 @@ if (isset($_POST) && $_POST) {
 	}	
 	$tmp2=trim($tmp2,',');
 
-	$qtxt="update grupper set box2='$vis_VG', box3='$vis_K', box4='$vis_lukkede".chr(9)."$vis_lev_felt' where art = 'VV' and box1 = '$brugernavn'";
+	$qtxt="update grupper set box2='$vis_VG', box3='$vis_K',"; $qtxt.="box4='$vis_lukkede".chr(9)."$vis_lev_felt".chr(9)."$vis_kostpriser".chr(9)."$href_vnr'";
+	$qtxt.=" where art = 'VV' and box1 = '$brugernavn'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-	if ($popup) print "<BODY onload=\"javascript=opener.location.reload();\">";
-	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
+#	if ($popup) print "<BODY onload=\"javascript=opener.location.reload();\">";
+#	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 }
 
 print "
@@ -92,11 +101,11 @@ print "<table border=\"0\" width=\"100%\" valign = \"top\"><tbody>";
 
 $vis_VG=array();
 $vis_K=array();
-print "<form name=varevisning action=varevisning.php?sort=$sort method=post>";
+print "<form name='varevisning' action='varevisning.php' method='post'>";
 if ($r = db_fetch_array(db_select("select * from grupper where art = 'VV' and box1 = '$brugernavn'",__FILE__ . " linje " . __LINE__))) {
 	$vis_VG=explode(",",$r['box2']);
 	$vis_K=explode(",",$r['box3']);
-	list($vis_lukkede,$vis_lev_felt)=explode(chr(9),$r['box4']);
+	list($vis_lukkede,$vis_lev_felt,$vis_kostpriser,$href_vnr)=explode(chr(9),$r['box4'],4);
 } else {
 	db_modify("insert into grupper(beskrivelse, art, box1)values('varevisning', 'VV', '$brugernavn')",__FILE__ . " linje " . __LINE__);
 	$vis_VG[0]='on';
@@ -111,7 +120,7 @@ $q = db_select("select * from grupper where art = 'VG' order by beskrivelse",__F
 while ($r = db_fetch_array($q)) {
 	$x++;
 	print "<input type=hidden name=VG_id$x value=$r[kodenr]>";
-	if (in_array($r[kodenr],$vis_VG)) $tmp='checked';
+	if (in_array($r['kodenr'],$vis_VG)) $tmp='checked';
 	else $tmp='';
 	$beskrivelse=stripslashes($r['beskrivelse']);
 	print "<tr><td><small>$font<input name=VG_$x type=checkbox $tmp> $beskrivelse</small></td></tr>";
@@ -119,8 +128,8 @@ while ($r = db_fetch_array($q)) {
 #	else $tmp='';
 #	print "<tr><td><small>$font<input name= VG_$x type=checkbox $tmp> $r[beskrivelse]</small></td></tr>";
 }
-print "<input type=hidden name=VG_antal value=$x>";
-print "<form name=varevisning action=varevisning.php?sort=$sort method=post>";
+print "<input type=hidden name='VG_antal' value='$x'>";
+print "<form name='varevisning' action='varevisning.php' method='post'>";
 print "</tbody></table></td>";
 print "<td width=25%><table  border=\"0\" width=\"100%\"><tbody>";
 print "<tr><td>$font Kreditorer</td></tr>";
@@ -133,7 +142,7 @@ $q = db_select("select distinct vare_lev.lev_id as lev_id, adresser.firmanavn as
 while ($r = db_fetch_array($q)) {
 	$x++;
 	print "<input type=hidden name=K_id$x value=$r[lev_id]>";
-	if (in_array($r[lev_id],$vis_K)) $tmp='checked';
+	if (in_array($r['lev_id'],$vis_K)) $tmp='checked';
 	else $tmp='';
 	$firmanavn=stripslashes($r['firmanavn']);
 	print "<tr><td><small>$font<input name=K_$x type=checkbox $tmp> $firmanavn</small></td></tr>";
@@ -143,9 +152,15 @@ print "</tbody></table></td>";
 print "<td valign=top width=25%><table  border=\"0\" width=\"100%\"><tbody>";
 if ($vis_lukkede) $vis_lukkede="checked";
 if ($vis_lev_felt) $vis_lev_felt="checked";
-print "<tr><td><small>$font<input name= vis_lukkede type=checkbox $vis_lukkede> Vis udg&aring;ede varer</small></td></tr>";
-print "<tr><td><small>$font<input name= vis_lev_felt type=checkbox $vis_lev_felt> Vis søgefelt for kreditorer</small></td></tr>";
+if ($vis_kostpriser) $vis_kostpriser="checked";
+if ($href_vnr) $href_vnr="checked";
+print "<tr><td><small>$font<input name='vis_lukkede' type='checkbox' $vis_lukkede> Vis udg&aring;ede varer</small></td></tr>";
+print "<tr><td><small>$font<input name='vis_lev_felt' type='checkbox' $vis_lev_felt> Vis søgefelt for kreditorer</small></td></tr>";
+print "<tr><td><small>$font<input name='vis_kostpriser' type='checkbox' $vis_kostpriser> Vis kostpriser</small></td></tr>";
+$title="Ved afmærkning åbnes kun kortet ved klik på varenr";
+print "<tr><td title='$title'><small>$font<input name='href_vnr' title='$title' type='checkbox' $href_vnr> Href på varenr</small></td></tr>";
 print "<tr><td height=200 valign=bottom><input type=submit accesskey=\"a\" value=\"OK\" name=\"submit\"></td></tr>\n";
+
 print "</tbody></table></td>";
 print "<td width=25%><br></td>";
 ?>

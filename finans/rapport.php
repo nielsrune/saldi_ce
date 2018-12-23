@@ -43,6 +43,7 @@
 // 20170516 PHR Fakturadate ændret til kobsdate i søgning efter lagerbevægelser for bedre overensstemmelse med svar fra 'find_lagervaerdi' Søg 20170516
 // 20180226 PHR - Bortkommenteret if (!$dim) så primo vises på afdelinger.
 // 20180424 PHR - Tilføjet "regnskab" (Resultat + bufget i et).
+// 20181031 PHR - Tilføjet  "&& $kontotype[$x]=='D'" så den kun søger i driftskonti da der kan ligge budgettal i andre konti hvis kontoplan ændret. 20181031
 
 $title="Finansrapport";
 @session_start();
@@ -74,8 +75,8 @@ if ($_POST){
 	$rapportart=if_isset($_POST['rapportart']);
 	$aar_fra=if_isset($_POST['aar_fra']);
 	$aar_til=if_isset($_POST['aar_til']);
-	$maaned_fra=if_isset($_POST['maaned_fra']);
-	$maaned_til=if_isset($_POST['maaned_til']);
+	$maaned_fra=trim(if_isset($_POST['maaned_fra']));
+	$maaned_til=trim(if_isset($_POST['maaned_til']));
 	$dato_fra=if_isset($_POST['dato_fra']);
 	$dato_til=if_isset($_POST['dato_til']);
 	$md=if_isset($_POST['md']);
@@ -455,7 +456,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	print "<input type = hidden name = antal_ansatte value = $antal_ansatte>";
 	print "<tr><td>  Periode</td><td colspan=2>Fra <select name=maaned_fra>\n";
 	if (!$aar_fra) $aar_fra=$start_aar[$aktiv];
-	print "<option>$aar_fra $maaned_fra</option>\n";
+	print "<option value='$aar_fra $maaned_fra'>$aar_fra $maaned_fra</option>\n";
 	$x=$start_md[$aktiv]-1;
 	$z=$start_aar[$aktiv];
 	for ($y=1; $y <= $antal_mdr; $y++) {
@@ -463,7 +464,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 			$z++;
 			$x=1;
 		} else $x++;
-		print "<option>$z $md[$x]</option>\n";
+		print "<option value='$z $md[$x]'>$z $md[$x]</option>\n";
 	}
 #	if (($start_md[$aktiv]>1)&&($slut_md[$aktiv]<12)) {
 #		for ($x=1; $x<=$slut_md[$aktiv]; $x++) print "<option>$slut_aar[$aktiv] $md[$x]</option>\n";
@@ -477,7 +478,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	print "&nbsp;til&nbsp;";
 	print "<select name=maaned_til>\n";
 	if (!$aar_til) $aar_til=$slut_aar[$aktiv];
-	print "<option>$aar_til $maaned_til</option>\n";
+	print "<option value='$aar_til $maaned_til'>$aar_til $maaned_til</option>\n";
 	$x=$start_md[$aktiv]-1;
 	$z=$start_aar[$aktiv];
 	for ($y=1; $y <= $antal_mdr; $y++) {
@@ -485,7 +486,8 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 			$z++;
 			$x=1;
 		} else $x++;
-		print "<option>$z $md[$x]</option>\n";
+		$md[$x]=trim($md[$x]);
+		print "<option $z $md[$x]>$z $md[$x]</option>\n";
 	}
 #	for ($x=$start_md[$aktiv]; $x <= 12; $x++) print "<option>$start_aar[$aktiv] $md[$x]</option>\n";
 #	if (($start_md[$aktiv]>1)&&($slut_md[$aktiv]<12)) {
@@ -533,18 +535,12 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 #################################################################################################
 function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev) {
 
-	global $connection;
+	global $afd_navn,$ansatte,$ansatte_id;
+	global $bgcolor,$bgcolor4,$bgcolor5;
+	global $connection,$csv;
+	global $md,$menu;
+	global $prj_navn_fra,$prj_navn_til;
 	global $top_bund;
-	global $md;
-	global $ansatte;
-	global $ansatte_id;
-	global $afd_navn;
-	global $prj_navn_fra;
-	global $prj_navn_til;
-	global $bgcolor;
-	global $bgcolor4;
-	global $bgcolor5;
-	global $menu;
 	
 #cho "493 $prj_navn_fra :: $prj_navn_til<br>";
 #cho "494 $projekt_fra :: $projekt_til<br>";
@@ -719,7 +715,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	$x=0;
 	$valdate=array();
 	$valkode=array();
-	$q=db_select("select * from valuta order by gruppe,valdate desc");
+	$q=db_select("select * from valuta order by gruppe,valdate desc",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$y=$x-1;	
 		if ((!$x) || $r['gruppe']!=$valkode[$x] || $valdate[$x]>=$regnstart) {
@@ -825,6 +821,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 			while ($row = db_fetch_array($query)){
 				$transdate[$tr]=$row['transdate'];
 				$bilag[$tr]=$row['bilag'];
+				$kladde_id[$tr]=$row['kladde_id'];
 				$beskrivelse[$tr]=$row['beskrivelse'];
 				$debet[$tr]=$row['debet'];
 				$kredit[$tr]=$row['kredit'];
@@ -1090,7 +1087,9 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 			for ($tr=0;$tr<count($transdate)+count($sim_transdate);$tr++) {
 				if ($transdate[$tr] && ($debet[$tr] || $kredit[$tr])) {
 					($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-					print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." </td><td>$bilag[$tr] </td><td>$kontonr[$x] : $beskrivelse[$tr] </td>";
+					print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." </td>";
+					($kladde_id[$tr])?$js="onclick=\"window.open('kassekladde.php?kladde_id=$kladde_id[$tr]&visipop=on')\"":$js=NULL;
+					print "<td title='Kladde: $kladde_id[$tr]' $js>$bilag[$tr]</td><td>$kontonr[$x] : $beskrivelse[$tr] </td>";
 					if ($kontovaluta[$x]) {
 						if ($transvaluta[$tr]=='-1') $tmp=0;
 						else $tmp=$debet[$tr]*100/$transkurs[$tr];
@@ -1826,8 +1825,10 @@ function regnskab($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_
 	}
 	if ($rapportart=='budget') {
 		for ($x=1; $x<=$kontoantal; $x++) {
-			if ($vis_kto[$x]) { #20120927
-				$r2=db_fetch_array(db_select("select sum(amount) as amount from budget where regnaar='$regnaar' and kontonr='$ktonr[$x]' and md >= '$startmd' and md <= '$slutmd'",__FILE__ . " linje " . __LINE__));
+			if ($vis_kto[$x] && $kontotype[$x]=='D') { #20120927 + 20181031
+				$qtxt="select sum(amount) as amount from budget where ";
+				$qtxt.="regnaar='$regnaar' and kontonr='$ktonr[$x]' and md >= '$startmd' and md <= '$slutmd'";
+				$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$kto_aar[$x]=afrund($r2['amount'],2);
 			}
 		}
@@ -1921,6 +1922,7 @@ function regnskab($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_
 					$tmp=$periodesum[$x];
 					$title=NULL;
 				}
+#cho $aarsum[$x]."<br>";
 				print "<td align=\"right\" title=\"$title\"><b>".dkdecimal($tmp,2)."</b></td>";
 				if ($kontovaluta[$x]) {
 					$tmp=$aarsum[$x]*100/$kontokurs[$x];

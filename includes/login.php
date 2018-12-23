@@ -26,7 +26,7 @@ ob_start(); //Starter output buffering
 // 2014.09.20	Tilføjet db_escape_string foran brugernavn og regnskab så det også fungerer med apostrof i disse.
 // 2015.01.04 Initerer variablen $nextver så den bypasser versionskontrol i online.php
 // 2015.01.14 PK - Tilføjet session_unset,session_destroy, som tømmer alle sessions variabler
-// 2015.01.27 PHR	- Tilføjet rettigheder da man ellers bliver smidt af fed forsøg på login med tmp kode.  
+// 2015.01.27 PHR	- Tilføjet rettigheder da man ellers bliver smidt af ved forsøg på login med tmp kode.  
 
 @session_start();
 $s_id=session_id();

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------debitor/betalinger.php---------------------Patch 3.6.5-----2016.04.07---
+// ---------finans/loppeafregning.php---------------------Patch 3.7.1-----2018.06.21---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,8 +23,9 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2016 saldi.dk aps
+// Copyright (c) 2016-2018 saldi.dk aps
 // -----------------------------------------------------------------------------------
+// 20180621 PHR Summer tillægges moms hvis ordrelinjer er momsbelagt. Søg momsfri & momssats
 
 @session_start();
 $s_id=session_id();
@@ -60,8 +61,9 @@ while ($r=db_fetch_array($q)) {
 
 #echo "$kladde_id && $modkonto && $fra && $til && $vareprefix && $provision<br>";
 if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
-	$qtxt="select varer.varenr,varer.gruppe,batch_salg.pris,batch_salg.antal from batch_salg,varer ";
-	$qtxt.="where varer.varenr like '".$vareprefix."%' ";
+	$qtxt="select varer.varenr,varer.gruppe,batch_salg.pris,batch_salg.antal,ordrelinjer.momssats,ordrelinjer.momsfri ";
+	$qtxt.="from batch_salg,varer,ordrelinjer ";
+	$qtxt.="where varer.varenr like '".$vareprefix."%' and ordrelinjer.id=batch_salg.linje_id ";
 	if ($varegruppe) $qtxt.="and varer.gruppe='$varegruppe' "; 
 	$qtxt.="and batch_salg.vare_id=varer.id and batch_salg.fakturadate >='".usdate($fra)."' "; 
 	$qtxt.="and batch_salg.fakturadate <='".usdate($til)."' order by varer.gruppe,varer.varenr";
@@ -75,13 +77,20 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 		if (in_array($r['varenr'],$varenr)) {
 			$sum[$x]+=$r['antal']*$r['pris'];
 			$gruppesum[$y]+=$r['antal']*$r['pris'];
+			if (!$r['momsfri']) {
+				$sum[$x]+=$r['antal']*$r['pris']*$r['momssats']/100;
+				$gruppesum[$y]+=$r['antal']*$r['pris']*$r['momssats']/100;
+			}
 		} else {
 			$x++;
 			$varenr[$x]=$r['varenr'];
+			$konto[$x]=str_replace($vareprefix,'',$varenr[$x])*1;
 			$sum[$x]=$r['antal']*$r['pris'];
+			if (!$r['momsfri']) $sum[$x]+=$r['antal']*$r['pris']*$r['momssats']/100;
 			$gruppe[$x]=$r['gruppe'];
 			if ($x>1 && $gruppe[$x]!=$gruppe[$x-1]) $y++;
 			$gruppesum[$y]+=$r['antal']*$r['pris'];
+			if (!$r['momsfri']) $gruppesum[$y]+=$r['antal']*$r['pris']*$r['momssats']/100;
 		}
 	}
 #	if ($x) $gruppesum[$y]+=$sum[$x];
@@ -89,10 +98,10 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 	for ($x=1;$x<=count($varenr);$x++) {
 		$udbetales[$x]=afrund($sum[$x]/100*$kundedel,2);
 		$totalsum+=$udbetales[$x];
-		$konto=str_replace($vareprefix,'',$varenr[$x]);
+#		$konto=str_replace($vareprefix,'',$varenr[$x]);
 		$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
 		$qtxt.="  values ";
-		$qtxt.="('$bilag','$dd','Afr: $konto $fra - $til','','0','D','$konto','','$udbetales[$x]','$kladde_id','0')";
+		$qtxt.="('$bilag','$dd','Afr: $konto[$x] $fra - $til','','0','D','$konto[$x]','','$udbetales[$x]','$kladde_id','0')";
 #cho "$qtxt<br>";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 #		if ($x>1 && $gruppe[$x]!=$gruppe[$x-1]) {
@@ -115,8 +124,6 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
-
-	
 /*	
 	if ($totalsum) {
 		$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
@@ -128,9 +135,6 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 */	
 	print count($varenr)." afregninger indsat i kasseklasse!<br><br>";
 	print "<a href='kassekladde.php?kladde_id=$kladde_id'>Tilbage til kassekladde</a>";
-	
-	
-	
 } else {
 	print "<form name='loppeafregning' action='loppeafregning.php?kladde_id=$kladde_id' method='post'>";
 	print "<table><tbody>";
@@ -147,7 +151,5 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 	print "<tr><td colspan='2' style='text-align:center;'><input type='submit' name='loppeafregning' value='Dan liste'>";
 	print "</form>";
 }
-
-
 
 ?> 

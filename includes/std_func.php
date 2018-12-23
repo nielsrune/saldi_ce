@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------includes/std_func.php----------------- lap 3.7.2 -- 2018-05-18 --
+// -----------includes/std_func.php----------------- lap 3.7.2 -- 2018-11-26 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -49,6 +49,7 @@
 // 2018.01.19 PHR	Tilføjet funktion hent_shop_ordrer som opdaterer ordrer fra shop.
 // 2018.01.23 PHR	En del rettelser i funktion lagerreguler i forhold til varianter og flere lagre.
 // 2018.05.18 PHR	Tilføjet funktion alert.
+// 2018.11.26	PHR Variabeldefiniton i div. funktioner. 
 
 if (!function_exists('nr_cast')) {
 	function nr_cast($tekst)
@@ -72,8 +73,7 @@ if (!function_exists('dkdecimal')) {
 }
 
 if (!function_exists('dkdato')) {
-	function dkdato($dato)
-	{
+	function dkdato($dato) {
 		if ($dato) {
 			list ($year, $month, $day) = explode('-', $dato);
 			$month=$month*1;
@@ -210,10 +210,9 @@ if (!function_exists('findtekst')) {
 		global $db_encode;
 		global $webservice;
 		$id=0;
-		$ny_tekst=NULL;
-		$tekst_id=$tekst_id*1;
-		$sprog_id=$sprog_id*1;
+		$linje=$ny_tekst=$tekst=$tmp=NULL;
 		if (!$sprog_id) $sprog_id=1;
+		$tekst_id*=1;		
 		$qtxt="select id,tekst from tekster where tekst_id='$tekst_id' and sprog_id = '$sprog_id'";
 		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
 			$tekst=$r['tekst'];
@@ -240,11 +239,11 @@ if (!function_exists('findtekst')) {
 			if ($fp) {
 				while (!feof($fp)) {
 					if ($linje=trim(fgets($fp))) {
-						list($tekst_nr,$tmp)=explode(chr(9),$linje);
+						if (strpos($linje,chr(9))) list($tekst_nr,$tmp)=explode(chr(9),$linje);
 						if ($tekst_id==$tekst_nr) {
 						$ny_tekst=substr(stristr($linje,chr(9)),1);# Linjen efter 1. tab. 
 							for ($i=1;$i<=$sprog_id;$i++) $linje = substr(stristr($linje,chr(9)),1); # Start paa tekst med aktuel sprog id findes.
-							list($ny_tekst,$tmp)=explode(chr(9),$linje); # Tekststrengen isoleres	
+						if (strpos($linje,chr(9))) list($ny_tekst,$tmp)=explode(chr(9),$linje); # Tekststrengen isoleres	
 						}
 					}
 				}		
@@ -1096,6 +1095,50 @@ function hent_shop_ordrer($shop_ordre_id,$from_date) {
 		}	
 	}
 }} #endfunc hent_shop_ordrer()
+if (!function_exists('alert')) {
+function alert($msg) {
+    echo "<script type='text/javascript'>alert('$msg');</script>";
+}}
+if (!function_exists('sync_shop_vare')) {
+function sync_shop_vare($vare_id,$variant_id,$lager) {
+	global $db;
+	$qtxt="select box4 from grupper where art='API'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$api_fil=trim($r['box4']);
+#cho __line__." $api_fil<br>";		
+	if (!$api_fil) return('no api');
+	$log=fopen("../temp/$db/rest_api.log","a");
+	$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
+	if ($variant_id) {
+#	cho __line__." $variant_id<br>";
+		$qtxt="select shop_variant from shop_varer where saldi_variant='$variant_id'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$shop_id=$r['shop_variant'];
+		$qtxt="select beholdning from lagerstatus where variant_id='$variant_id'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$variant_beholdning=$r['beholdning'];#-$antal;
+		if (!$shop_id) {
+			$qtxt="select variant_stregkode from variant_varer where id='$variant_id'";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$shop_id=str_replace("EAN","",$r['variant_stregkode']);
+		}
+		$qtxt="select shop_id from shop_varer where saldi_variant='$variant_id'";
+		$txt="/usr/bin/wget --spider --no-check-certificate --header='$header' '$api_fil?update_stock=$shop_id";
+		$txt.="&stock=$variant_beholdning&stockno=$lager&stockvalue=$r[lagerbeh]'";
+		fwrite($log,__file__." ".__line__." $txt\n");
+		exec ("nohup $txt > /dev/null 2>&1 &\n");
+	} else {
+		$qtxt="select varer.beholdning,lagerstatus.beholdning as lagerbeh,shop_varer.shop_id from lagerstatus,shop_varer,varer "; 
+		$qtxt.="where lagerstatus.vare_id='$vare_id' and lagerstatus.lager='$lager' and shop_varer.saldi_id='$vare_id' and varer.id='$vare_id'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$txt="/usr/bin/wget --spider --no-check-certificate --header='$header' '$api_fil?update_stock=$r[shop_id]";
+		$txt.="&stock=$r[lagerbeh]&stockno=$lager'"; # resten bruges vist ikke: &stockvalue=$r[lagerbeh]'";
+		fwrite($log,__file__." ".__line__." $txt\n");
+		exec ("/usr/bin/nohup $txt > /dev/null 2>&1 &\n");
+	}	
+	fclose($log);
+	return ('OK');
+}} #endfunc sync_shop_vare()
 if (!function_exists('alert')) {
 function alert($msg) {
     echo "<script type='text/javascript'>alert('$msg');</script>";

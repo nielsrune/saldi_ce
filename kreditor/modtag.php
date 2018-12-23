@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------kreditor/modtag.php------- patch 3.7.1 ------- 2018.01.23 -----
+// -------kreditor/modtag.php------- patch 3.7.2 ------- 2018.10.03 -----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2013.08.30 Fejl v. "interne shops" (Rotary) de der blev forsøgt kald til ikke eksisterende url.Søn 20130830
@@ -34,7 +34,7 @@
 // 20150118 sætter kobsdate hvis ikke sat. Søg kobsdate.
 // 20161022 PHR - tilretning iht flere afd pr lager. 20161022
 // 20170123 PHR - Diverse i forhold til varianter
-
+// 20181003 PHR - Lille udefinerbar rettelse
 
 @session_start();
 $s_id=session_id();
@@ -249,8 +249,9 @@ if ($fejl==0) {
 				$rest=$r['rest'];	
 #cho  __LINE__." Rest $rest<br>"; 
 				if ($rest) {
-					$qtxt="select * from batch_kob where ordre_id='$id' and vare_id='$vare_id[$x]' and rest>'0' and linje_id!='$linje_id[$x]'";
+					$qtxt="select * from batch_kob where ordre_id != '$id' and vare_id = '$vare_id[$x]' and rest > '0' and linje_id != '$linje_id[$x]'";
 					($lager > 1)?$qtxt.=" and lager = '$lager[$x]'":$qtxt.=" and lager <= '1";
+					$qtxt.=" order by id";
 #cho __LINE__." $qtxt<br>";
 					$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 					while ($r2=db_fetch_array($q2)) {

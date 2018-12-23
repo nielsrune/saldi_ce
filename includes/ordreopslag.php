@@ -1,29 +1,33 @@
 <?php
-
-// ---------------------includes/ordreopslag.php ------patch 3.2.9----2013-02-10--------------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----includes/ordreopslag.php ------patch 3.7.9----2018-11-26-------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2013 DANOSOFT ApS
-// ----------------------------------------------------------------------
+// Copyright (c) 2003-2018 saldi.dk aps
+// ------------------------------------------------------------------------
 //
-// 2013.02.10 break ændret til break 1
-
+// 20130210 break ændret til break 1
+// 20181126
 
 $query = db_select("select * from adresser where art = 'S'",__FILE__ . " linje " . __LINE__);
 $row = db_fetch_array($query);
@@ -58,11 +62,6 @@ if ($id) {
   $fakturadate=trim($row['fakturadate']);
   $betalingsbet=trim($row['betalingsbet']);
   $betalingsdage=$row['betalingsdage'];
-  $bank_navn=trim($row['bank_navn']);
-  $bank_reg=trim($row['bank_reg']);
-  $bank_konto=trim ($row['bank_konto']);
-  $tlf=trim($row['tlf']);
-  $fax=trim($row['fax']);
   $art=trim($row['art']);
   $lev_navn=trim($row['lev_navn']);
   $lev_addr1=trim($row['lev_addr1']);

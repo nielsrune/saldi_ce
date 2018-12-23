@@ -1,34 +1,35 @@
 <?php
-ob_start(); //Starter output buffering
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------------index/install.php-------3.6.6----2016-11-16------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
+//
 // 20140701 Tilføjet bilag til create regnskab
 // 20161106 Tilrettet til ny adgangskodehåndtering. Søg saldikrypt.
 
+
+ob_start(); //Starter output buffering
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
@@ -109,6 +110,17 @@ if (isset($_POST['opret'])){
 	$tmp.="<tr><td>SALDI-administratorens brugernavn </td><td><b>$adm_navn</b></td></tr>\n";
 	$tmp.="<tr><td>SALDI-administratorens adgangskode </td><td><b>$adm_pw</b></td></tr>\n";
 	$tmp.="<tr><td>Verificeret adgangskode </td><td><b>$verify_adm_pw</b></td></tr>\n";
+/*
+	$tmp.="<tr><td>Program til postscript -> pdf (ps2pdf)</td><td><b>$path_ps2pdf</b></td></tr>\n";
+	$tmp.="<tr><td>Program til html -> pdf (weasyprint)</td><td><b>$path_weasyprint</b></td></tr>\n";
+	$tmp.="<tr><td>Program til sammenlægning af PDF (pdftk)</td><td><b>$path_pdftk</b></td></tr>\n";
+	$tmp.="<tr><td>Program til ftp (ncftp) </td><td><b>$path_ncftp</b></td></tr>\n";
+	$tmp.="<tr><td>Program til databasedump (pg_dump) </td><td><b>$path_dbdump</b></td></tr>\n";
+	$tmp.="<tr><td>Program til datakompression (gzip) </td><td><b>$path_gzip</b></td></tr>\n";
+	$tmp.="<tr><td>Program til datakompression (gunzip) </td><td><b>$path_gunzip</b></td></tr>\n";
+	$tmp.="<tr><td>Program til datapakning (tar) </td><td><b>$path_tar</b></td></tr>\n";
+*/
+	
 	$tmp.="<tr><td colspan=\"2\"><hr \></td></tr>\n\n";
 	if ( $felt_mangler ) $tmp.="<tr><td colspan=\"2\"><b><i>Et eller flere felter mangler at blive udfyldt ovenfor.</i></b></td></tr>\n";
 	if ( $pw_diff )  $tmp.="<tr><td colspan=\"2\"><b><i>Adgangskode og verifikationskoden for SALDI-administrator er forskellig.</i></b></td></tr>\n";
@@ -247,12 +259,12 @@ if (isset($_POST['opret'])){
 function skriv_connect($fp,$host,$db_bruger,$db_password,$db_navn,$db_encode,$db_type) {
 	fwrite($fp," \n");
 	fwrite($fp,"<?php\n");
-	fwrite($fp,"//                         ___   _   _   __  _\n");
-	fwrite($fp,"//                        / __| / \ | | |  \| |\n");
-	fwrite($fp,"//                        \__ \/ _ \| |_| | | |\n");
-	fwrite($fp,"//                        |___/_/ \_|___|__/|_|\n");
+	fwrite($fp,"//                         ___   _   _   __  _     ___  _ _  \n");
+	fwrite($fp,"//                        / __| / \ | | |  \| |   |   \| / / \n");
+	fwrite($fp,"//                        \__ \/ _ \| |_| | | | _ | |) |  <  \n");
+	fwrite($fp,"//                        |___/_/ \_|___|__/|_||_||___/|_\_\ \n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// ----/includes/connect.php---------------lap 3.6.6-----2016.11.04-----\n");
+	fwrite($fp,"// ----/includes/connect.php---------------lap 3.7.2-----2018.10.31-----\n");
 	fwrite($fp,"// LICENS\n");
 	fwrite($fp,"//\n");
 	fwrite($fp,"// Dette program er fri software. Du kan gendistribuere det og / eller\n");
@@ -262,7 +274,7 @@ function skriv_connect($fp,$host,$db_bruger,$db_password,$db_navn,$db_encode,$db
 	fwrite($fp,"// Fra og med version 3.2.2 dog under iagttagelse af følgende:\n");
 	fwrite($fp,"// \n");
 	fwrite($fp,"// Programmet må ikke uden forudgående skriftlig aftale anvendes\n");
-	fwrite($fp,"// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.\n");
+	fwrite($fp,"// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.\n");
 	fwrite($fp,"//\n");
 	fwrite($fp,"// Programmet er udgivet med haab om at det vil vaere til gavn,\n");
 	fwrite($fp,"// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se\n");
@@ -271,7 +283,7 @@ function skriv_connect($fp,$host,$db_bruger,$db_password,$db_navn,$db_encode,$db
 	fwrite($fp,"// En dansk oversaettelse af licensen kan laeses her:\n");
 	fwrite($fp,"// http://www.saldi.dk/dok/GNU_GPL_v2.html\n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// Copyright (c) 2004-2016 DANOSOFT ApS\n");
+	fwrite($fp,"// Copyright (c) 2004-2018 saldi.dk aps\n");
 	fwrite($fp,"// ----------------------------------------------------------------------\n");
 	fwrite($fp,"\n");
 	fwrite($fp,"if (!isset(\$bg)) \$bg='';\n");

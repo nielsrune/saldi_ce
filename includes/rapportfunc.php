@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------includes/rapportfunc.php ----- lap 3.7.1 ---- 2018.02.07 ---------------------------
+// --------includes/rapportfunc.php ----- lap 3.7.1 ---- 2018.11.26 ---------------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -45,7 +45,7 @@
 // 2017.03.16 Tilføjet 'flueben' ved PBS kunder. Søg $pbs.
 // 2017.04.03 Debitorrapportvisning oprettes i grupper hvis den ikke findes. 20170403
 // 2018.02.07 - PHR Tilføjet mulig for udligning af alle med saldo 0,00. Søg udlign.
-
+// 2018.11.26 - PHR Definition af div. variabler.
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 #cho "A $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart<br>";
@@ -1022,6 +1022,8 @@ function kontokort($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoa
 	global $regnaar;
 	global $menu;
 
+	$forfaldsum=$fromdate=$kto_fra=$kto_til=$returside=$todate=NULL;
+
 	$uudlign=if_isset($_GET['uudlign']);
 	if ($uudlign) db_modify("update openpost set udlignet='0',udlign_id='0' where udlign_id='$uudlign'",__FILE__ . " linje " . __LINE__);
 	$r=db_fetch_array(db_select("select box1, box2, box3, box4 from grupper where art='RA' and kodenr='$regnaar'",__FILE__ . " linje " . __LINE__));
@@ -1221,6 +1223,7 @@ $luk= "<a accesskey=L href=\"$returside\">";
 			#cho "$dkkamount[$y]=afrund($amount[$y]*$valutakurs[$y]/100,2)<br>";
 #cho "$amount[$y] $oppvaluta[$y] DKK $dkkamount[$y]<br>";
 			$forfaldsdag[$y]=$r2['forfaldsdate'];
+			$kladde_id[$y]=$r2['kladde_id'];
 			($r2['projekt'])?$projekt[$y]=$r2['projekt']:$projekt[$y]='';
 			($r2['kladde_id'])?$refnr[$y]=$r2['refnr']:$refnr[$y]='';
 			if (!strlen($valutakurs[$y])) $valutakurs[$y]=100;
@@ -1312,7 +1315,14 @@ $luk= "<a accesskey=L href=\"$returside\">";
 					print "<tr><td><br></td><td><br></td><td><br></td><td>Primosaldo $tmp2<br></td><td><br></td><td><br></td><td><br></td><td><br></td><td align=right title=\"DKK ".dkdecimal($dkksum,2)."\">$tmp<br></td></tr>\n";
 					$primoprint[$x]=1;
 				}
-				print "<tr bgcolor=\"$baggrund\"><td valign=\"top\">".dkdato($transdate[$y])."<br></td><td valign=\"top\">$refnr[$y]<br></td><td valign=\"top\">$faktnr[$y]<br></td><td valign=\"top\">".stripslashes($beskrivelse[$y])."<br></td><td valign=\"top\">$projekt[$y]</td>";
+				if ($kladde_id[$y]) {
+					$js="onclick=\"window.open('../finans/kassekladde.php?kladde_id=$kladde_id[$y]&visipop=on')\"";
+					$rt="title='Kladde ID: $kladde_id[$y]'";
+				} else {
+					$js=NULL;
+					$rt=NULL;
+				}
+				print "<tr bgcolor=\"$baggrund\"><td valign=\"top\">".dkdato($transdate[$y])."<br></td><td valign=\"top\" $rt $js>$refnr[$y]<br></td><td valign=\"top\">$faktnr[$y]<br></td><td valign=\"top\">".stripslashes($beskrivelse[$y])."<br></td><td valign=\"top\">$projekt[$y]</td>";
 				if ($amount[$y] < 0) $tmp=0-$amount[$y];
 				else $tmp=$amount[$y];
 				$tmp=dkdecimal($tmp,2);

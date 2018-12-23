@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------index/menu.php---------lap 3.6.7-------2017-03-03--------
+// -----------index/menu.php---------lap 3.7.1-------2018-08-07--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,8 +23,10 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20180807 Rettet søgestreng for konstatering af om 'kasse' er aktiv 20180807
+
 @session_start();	# Skal angives oeverst i filen??!!
 $s_id=session_id();
 $title="Menu";
@@ -33,7 +35,7 @@ $css="../css/standard.css";
 
 
 $produktion=0; # Menukolonnen PRODUKTION udeladt indtil test er gennemfoert
-$popup=NULL;
+$ansat_id=$popup=NULL;
 if (isset($_GET['online'])) $online=$_GET['online'];
 else $online=0;
 
@@ -41,11 +43,15 @@ $modulnr=0;
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
-
 #if (!$regnaar) {
 #	print "<BODY onload=\"JavaScript:alert('Der er ikke oprettet nogen regnskabs&aring;r')";
 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/regnskabskort.php\">";
 #}
+$qtxt="SELECT column_name FROM information_schema.columns WHERE table_name='lagerstatus' and column_name='variant_id'";
+if (!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+	db_modify("ALTER TABLE lagerstatus add column variant_id int",__FILE__ . " linje " . __LINE__);
+	db_modify("UPDATE lagerstatus set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
+}
 
 $provision=0;
 if (trim($ansat_id)) {
@@ -82,23 +88,20 @@ print	"</div><!-- end of wrapper --></body></html>\n";
 
 function oldmenu() {
 	global $ansat_id;
-	global $bgcolor;
-	global $bgcolor2;
-	global $provision;
-	global $vejledning;
-	global $rettigheder;
-	global $sprog_id;
+	global $copyright;
+	global $bgcolor,$bgcolor2;
+	global $jsvars;
+	global $popup,$produktion,$provision;
+	global $regnskab,$rettigheder;
+	global $stor_knap_bg,$sprog_id;
 	global $textcolor;
-	global $regnskab;
-	global $popup;
-	global $stor_knap_bg;
-	global $version;
+	global $vejledning,$version;
 
 print "<table style=\"width:100%;height:100%;\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n";
 print "<tr><td align=\"center\" valign=\"top\">\n";
 print "<table style=\"width:100%;height:20px;\" align=\"center\" border=\"0\" cellspacing=\"4\" cellpadding=\"0\"><tbody>\n";
 # print "<td  $top_bund width=\"10%\"> Ver $version</td>\n";
-print "<tr><td width=\"45%\"><div class=\"top_bund\">&nbsp;</div></td>\n";
+print "<tr><td width=\"45%\"><div class=\"top_bund\">".date_default_timezone_get()." ".date("H:i")."&nbsp;</div></td>\n";
 print "<td width=\"10%\" align = \"center\"><div class=\"top_bund\"><a href=\"$vejledning\" target=\"_blank\" ";
 print " title=\"En kort kom-i-gang-vejledning med henvisning til yderligere dokumentation og videoer.\">".findtekst(92,$sprog_id)."</a></div></td>\n";
 print "<td><div class=\"top_bund\">&nbsp;</div></td>\n";
@@ -116,7 +119,8 @@ print "</td></tr></tbody></table>";
 print "</td></tr>\n";
 print "<tr style=\"height:35px;\"><td colspan=\"5\" align=\"center\"><big><big><b>";
 
-if (db_fetch_array(db_select("select id from grupper where art = 'POS' and box2 >= '1'",__FILE__ . " linje " . __LINE__))) {
+$qtxt="select id from grupper where art = 'POS' and kodenr = '1' and box1 >= '1'"; #20180807
+if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 	if ($popup)	print "<a href=\"../debitor/pos_ordre.php\" target=\"_blank\">$regnskab</a></b></big></big></td></tr>\n";
 	else	print "<a href=\"../debitor/pos_ordre.php\">$regnskab</a></b></big></big></td></tr>\n";
 } elseif (file_exists('../sager/sager.php')){ // Hvis 'sager.php' eksistere, skal der linkes tilbage til sagstyring
@@ -349,7 +353,7 @@ print "</tr>\n";
 print	"</tbody></table>\n";
 print	"</td></tr>\n";
 print	"<tr><td align=\"center\" valign=\"bottom\">\n";
-print "<div class=top_bund><small>SALDI&nbsp;version&nbsp;$version&nbsp;-&nbsp;Copyright&nbsp;&copy;&nbsp;$copyright&nbsp;DANOSOFT&nbsp;aps</small></div></td></tr>\n";
+print "<div class=top_bund><small>SALDI&nbsp;version&nbsp;$version&nbsp;-&nbsp;Copyright&nbsp;&copy;&nbsp;$copyright</small></div></td></tr>\n";
 print	"</tbody></table>\n";
 print	"</center></body></html>\n";
 $query = db_select("select * from grupper where art = 'RA'",__FILE__ . " linje " . __LINE__);

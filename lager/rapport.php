@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------lager/rapport.php------------patch 3.6.7-------2017.05.02----
+// -----------lager/rapport.php------------patch 3.7.2-------2018.09.28----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2013.03.18 $modulnr ændret fra 12  til 15
@@ -40,13 +40,15 @@
 // 2016.04.18 Tilføjet selection på afdeling. Søg $afd
 // 2016.04.18 Negatativ regulering blev vist uden fortegn. #20160418
 // 2016.08.04 Datofejl v visning af detaljeret regulering da $fakturadate blev nullet ved inden søgning efter både køb & salg
-// 2016.08.24	$x erstattes af $f da $x blev brugt i 'for løkken' 20160824
-// 2016.08.26 tilføjet $r[antal]*0 i "if" linje for at udelukke rabatter.
-// 2017.01.14 Order by .... id rettet til Order by .... batch_salg.id da .id er 'ambiguous'
-// 2017.04.19 Flyttet sammentælling af reguleringssum "en tuborg" ned da negativ regulering ikke kom med. 
-// 2017.05.02 Sammentælling af reguleringssum viste hele beholdningen.
-// 2017.05.02 Tilføjet selection på sælger. Søg $ref
-// 2017.08.01 Tilføjet selection på leverandør. Søg $lev
+// 2016.08.24	PHR $x erstattes af $f da $x blev brugt i 'for løkken' 20160824
+// 2016.08.26 PHR tilføjet $r[antal]*0 i "if" linje for at udelukke rabatter.
+// 2017.01.14 PHR Order by .... id rettet til Order by .... batch_salg.id da .id er 'ambiguous'
+// 2017.04.19 PHR Flyttet sammentælling af reguleringssum "en tuborg" ned da negativ regulering ikke kom med. 
+// 2017.05.02 PHR Sammentælling af reguleringssum viste hele beholdningen.
+// 2017.05.02 PHR Tilføjet selection på sælger. Søg $ref
+// 2017.08.01 PHR Tilføjet selection på leverandør. Søg $lev
+// 2018.09.28 PHR Inddeling efter grupper når detajler er fravalgt.
+// 2018.10.03 PHR Fjernet "batch_kob.fakturadate>='$date_from' and " da beholdninger viste fejl. 20181003
 
 	@session_start();
 	$s_id=session_id();
@@ -70,17 +72,18 @@ else $returside="../index/menu.php";
 if (isset($_POST['submit']) && $_POST['submit']) {
 	$submit=strtolower(trim($_POST['submit']));
 	$varegruppe=trim($_POST['varegruppe']);
-	$afd=$_POST['afd'];
-	$ref=$_POST['ref'];
-	$lev=$_POST['lev'];
+	$afd=if_isset($_POST['afd']);
+	$ref=if_isset($_POST['ref']);
+	$lev=if_isset($_POST['lev']);
 	$date_from=usdate($_POST['dato_fra']);
 	$date_to=usdate($_POST['dato_til']);
 #	$md=$_POST['md'];
-	$varenr = $_POST['varenr'];
-	$varenavn = $_POST['varenavn'];
-	$detaljer = $_POST['detaljer'];
-	$kun_salg = $_POST['kun_salg'];
-	$vk_kost = $_POST['vk_kost'];
+	$varenr = if_isset($_POST['varenr']);
+	$varenavn = if_isset($_POST['varenavn']);
+	$detaljer = if_isset($_POST['detaljer']);
+	$kun_salg = if_isset($_POST['kun_salg']);
+	$lagertal = if_isset($_POST['lagertal']);	
+	$vk_kost = if_isset($_POST['vk_kost']);
 	
 	$varenr = trim($varenr);
 	$varenavn = trim($varenavn);
@@ -95,20 +98,21 @@ if (isset($_POST['submit']) && $_POST['submit']) {
 	$varenavn=if_isset($_GET['varenavn']);
 	$detaljer = $_GET['detaljer'];
 	$kun_salg = $_GET['kun_salg'];
+	$lagertal = $_GET['lagertal'];
 	$submit=if_isset($_GET['submit']);
 }
 #$md[1]="januar"; $md[2]="februar"; $md[3]="marts"; $md[4]="april"; $md[5]="maj"; $md[6]="juni"; $md[7]="juli"; $md[8]="august"; $md[9]="september"; $md[10]="oktober"; $md[11]="november"; $md[12]="december";
 
 #if (strstr($varegruppe, "ben post")) {$varegruppe="openpost";}
 #cho "$date_from, $date_to, $varenr, $varenavn, $varegruppe,$detaljer<br>";
-if ($submit == 'ok') varegruppe ($date_from, $date_to, $varenr, $varenavn, $varegruppe,$detaljer,$kun_salg,$vk_kost,$afd,$lev,$ref); 
+if ($submit == 'ok') varegruppe ($date_from, $date_to, $varenr, $varenavn, $varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref); 
 elseif ($submit == 'lagerstatus') print print "<meta http-equiv=\"refresh\" content=\"0;URL=lagerstatus.php?varegruppe=$varegruppe\">";
 elseif (strpos($submit,'ageropt')) print print "<meta http-equiv=\"refresh\" content=\"0;URL=optalling.php?varegruppe=$varegruppe\">";
-else 	forside ($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$vk_kost,$afd,$lev,$ref);
+else 	forside ($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref);
 #cho "$submit($regnaar, $date_from, $date_to, $varenr, $varenavn, $varegruppe)";
 
 #############################################################################################################
-function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$vk_kost,$afd,$lev,$ref) {
+function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref) {
 
 	#global $connection;
 	global $brugernavn;
@@ -125,7 +129,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	if (!$varenavn) $varenavn="*";
 	if ($detaljer) $detaljer='checked';
 	if ($kun_salg) $kun_salg='checked';
-	
+	if ($lagertal) $lagertal='checked';	
 	
 #	if (!$regnaar) {
 #		$query = db_select("select regnskabsaar from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__);
@@ -174,6 +178,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	while ($r = db_fetch_array($q)){
 		$vg_nr[$x]=$r['kodenr'];
 		$vg_navn[$x]=$r['beskrivelse'];
+		$vg_lagerfort=$r['box8'];
 		$x++;
 	}
 	$afd_nr[0]='0';
@@ -275,6 +280,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	print "<tr><td>Varenavn</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenavn\" value=\"$varenavn\"></td></tr>";
 	print "<tr><td>Detaljeret</td><td colspan=\"2\"><input type=\"checkbox\" name=\"detaljer\" $detaljer></td></tr>";
 	print "<tr><td>Kun salg / DB</td><td colspan=\"2\"><input type=\"checkbox\" name=\"kun_salg\" $kun_salg></td></tr>";
+	print "<tr><td>Beregn lagerbeh./værdi</td><td colspan=\"2\"><input type=\"checkbox\" name=\"lagertal\" $lagertal></td></tr>";
 	print "<tr><td colspan='3' align=center><input type=submit value=\"  OK  \" name=\"submit\"></td></tr>";
 	print "</tbody></table>";
 	print "<tr><td ALIGN=\"center\" Valign=\"top\" height=39%><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>\n";
@@ -293,7 +299,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 }
 
 ##################################################################################################
-function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$vk_kost,$afd,$lev,$ref) {
+function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref) {
 
 #	global $connection;
 	global $top_bund;
@@ -305,13 +311,22 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	
 	if ($detaljer) $cols=9;
 	elseif ($kun_salg) $cols=7;
-	else $cols=11;
+	else $cols=13;
 
-	list($gruppenr, $tmp)=explode(":",$varegruppe); 
+	$gruppenr=0;
+	if (is_numeric($varegruppe)) $gruppenr=$varegruppe;
+	elseif (strpos(":",$varegruppe)) list($gruppenr, $tmp)=explode(":",$varegruppe); 
+
+/*
+	if ($aarsrapport) {
+#		list($fy,)
+		$qtxt="select kodenr from grupper where are='RA' and box1 <= '".date('d')."' and box2 <='$daa' and box4 >=";
+	}
+*/	
 
 #	if ($returside) $luk= "<a accesskey=L href=\"$returside\">";
 #	else 
-	$luk= "<a accesskey=L href=\"rapport.php?varegruppe=$varegruppe&afd=$afd&lev=$lev&ref=$ref&date_from=$date_from&date_to=$date_to&varenr=$varenr&varenavn=$varenavn&detaljer=$detaljer&kun_salg=$kun_salg\">";
+	$luk= "<a accesskey=L href=\"rapport.php?varegruppe=$varegruppe&afd=$afd&lev=$lev&ref=$ref&date_from=$date_from&date_to=$date_to&varenr=$varenr&varenavn=$varenavn&detaljer=$detaljer&kun_salg=$kun_salg&lagertal=$lagertal\">";
 
 	print "<table width = 100% cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
 	print "<tr><td colspan=\"$cols\" height=\"9\">";
@@ -396,13 +411,14 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	}
 	$vare_id=array();
 	$x=0;
-	$qtxt="select id,gruppe,samlevare from varer $tmp order by beskrivelse";
-	$query = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
-	while ($row = db_fetch_array($query)) {
-		if (!$lev || in_array($row['id'],$lev_vare_id)) { 
-		if (!$row['samlevare'] || in_array($row['gruppe'],$lagergruppe)) { #20151105
+	if ($lagertal) $qtxt="select id,gruppe,samlevare from varer $tmp order by gruppe,beskrivelse";
+	else $qtxt="select id,gruppe,samlevare from varer $tmp order by beskrivelse";
+	$q = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		if (!$lev || in_array($r['id'],$lev_vare_id)) { 
+			if (!$r['samlevare'] || in_array($r['gruppe'],$lagergruppe)) { #20151105
 			$x++;
-			$vare_id[$x]=$row['id'];
+				$vare_id[$x]=$r['id'];
 		}
 		}
 #cho "A $vare_id[$x]<br>";
@@ -410,29 +426,43 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	$v_id=array();
 	$x=0;
 	# finder alle konti med bevaegelser i den anfoerte periode eller aabne poster fra foer perioden
-	$qtxt="select  batch_salg.vare_id,batch_salg.pris from batch_salg,varer";
+	$qtxt="select batch_salg.vare_id,batch_salg.pris,varer.gruppe,varer.beskrivelse from batch_salg,varer";
 	if ($afd || $ref) $qtxt.=",ordrer";
-	$qtxt.=" where batch_salg.fakturadate>='$date_from' and batch_salg.fakturadate<='$date_to' and batch_salg.vare_id = varer.id";
+	$qtxt.=" where batch_salg.fakturadate<='$date_to' and batch_salg.vare_id = varer.id";  # 20181003
 	if ($afd) $qtxt.=" and batch_salg.ordre_id = ordrer.id and ordrer.afd='$afd'";
 	if ($ref) $qtxt.=" and batch_salg.ordre_id = ordrer.id and (ordrer.ref='$ref_navn' or ordrer.ref='$ref_brugernavn')";
-	$qtxt.=" order by varer.beskrivelse";
+	if ($lagertal) $qtxt.=" order by varer.gruppe,varer.beskrivelse";
+	else $qtxt.=" and batch_salg.fakturadate>='$date_from' order by varer.beskrivelse";
+#cho "$qtxt<br>";
 	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
 		if ((in_array(trim($row['vare_id']), $vare_id))&&(!in_array(trim($row['vare_id']), $v_id))) {
 			$x++;
 			$v_id[$x]=trim($row['vare_id']);
-#cho "B $v_id[$x]<br>";
+			$v_gr[$x]=trim($row['gruppe']);
+			$v_navn[$x]=trim(strip_tags($row['beskrivelse']));
 		}
 	}
  #cho "select vare_id, pris from batch_kob where fakturadate>='$date_from' and fakturadate<='$date_to' order by vare_id<br>";	
-	$query = db_select("select batch_kob.vare_id,batch_kob.pris from batch_kob,varer where batch_kob.fakturadate>='$date_from' and batch_kob.fakturadate<='$date_to' and batch_kob.vare_id = varer.id order by varer.beskrivelse",__FILE__ . " linje " . __LINE__);
+	$qtxt="select batch_kob.fakturadate,batch_kob.vare_id,batch_kob.pris,varer.gruppe,varer.beskrivelse ";
+	$qtxt.="from batch_kob,varer where batch_kob.fakturadate<='$date_to' and batch_kob.vare_id = varer.id "; #20181003
+	if ($lagertal) $qtxt.="order by gruppe,varer.beskrivelse";
+	else $qtxt.=" and batch_kob.fakturadate>='$date_from' order by varer.beskrivelse";
+#cho "$qtxt<br>";
+	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__); 
 	while ($row = db_fetch_array($query)) {
 		if ((in_array(trim($row['vare_id']), $vare_id))&&(!in_array(trim($row['vare_id']), $v_id))) {
 			$x++;
 			$v_id[$x]=trim($row['vare_id']);
+			$v_gr[$x]=trim($row['gruppe']);
+			$v_navn[$x]=trim(strip_tags($row['beskrivelse']));
 		}
 	}
-	$vareantal=$x;
+	if ($lagertal) {
+		array_multisort($v_gr,$v_navn,$v_id);
+	} else {
+		array_multisort($v_navn,$v_id,$v_gr);
+	}
 	
 #	 print "<tr><td colspan=8><hr></td></tr>";
 #	print "<tr><td width=10%> Dato</td><td width=10%> Bilag</td><td width=50%> Tekst</td><td width=10% align=right> Debet</td><td width=10% align=right> Kredit</td><td width=10% align=right> Saldo</td></tr>";
@@ -457,7 +487,12 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 				<td align=\"right\"><b>Reguleret</b></td>
 				<td align=\"right\"><b>DB</b></td>
 				<td align=\"right\"><b>DG</b></td>
-				<td align=\"right\"><b>Til- / afgang</b></td></tr>";
+			<td align=\"right\"><b>Til- / afgang</b></td>";
+			if (count($lagergruppe) && $lagertal) {
+				print "<td align=\"right\"><b>Beholdning</b></td>
+				<td align=\"right\"><b>Værdi</b></td>";
+			}	
+			print "</tr>";
 	}
 	}
 	$tt_kobt=0;
@@ -467,18 +502,29 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	$tt_s_pris=0;
 	$tt_kost=0;
 	$tt_db=0;
+	$tt_stockvalue=0;
 	$varenr=array();
 	$enhed=array();
 	$beskrivelse=array();
-	for ($x=1; $x<=$vareantal; $x++) {
-		$r = db_fetch_array(db_select("select * from varer where id=$v_id[$x]",__FILE__ . " linje " . __LINE__));
+	for ($x=0;$x<count($v_id);$x++) {
+		$beholdning[$x]=0;
+		$qtxt="select * from varer where id='$v_id[$x]'";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$varenr[$x]=$r['varenr'];
 		$enhed[$x]=$r['enhed'];
 		$beskrivelse[$x]=$r['beskrivelse'];
 		$v_kostpris[$x]=$r['kostpris'];
 		$samlevare[$x]=$r['samlevare'];
+		if ($lagertal && in_array($v_gr[$x],$lagergruppe) && !$samlevare[$x]) {
+			$qtxt="select sum(antal) as beholdning from batch_kob where vare_id='$v_id[$x]' and fakturadate <= '$date_to'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$beholdning[$x]+=$r['beholdning'];
+			$qtxt="select sum(antal) as beholdning from batch_salg where vare_id='$v_id[$x]' and fakturadate <= '$date_to'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$beholdning[$x]-=$r['beholdning'];
 	}
-	for ($x=1; $x<=$vareantal; $x++) {
+	}
+	for ($x=0;$x<count($v_id);$x++) {
 		$y=0;
 		$fakturadate=array();
 		$bk_id=array();
@@ -571,12 +617,7 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 		$s_ordre_id=array();
 		$s_antal=array();
 #		$pris=array(); 
-		$t_solgt=0;
-#		$t_regul=0;
-		$t_s_pris=0;
-		$t_kost=0;
-		$t_moms=0;
-		$t_db=0;
+		$t_db=$t_kost=$t_moms=$t_s_pris=$t_solgt=$t_stockvalue=0;
 #		$y=0; #remmet 20160804
 		$qtxt="select * from batch_salg";
 		if ($afd || $ref) $qtxt.=",ordrer";
@@ -624,7 +665,16 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 				} else $ok=0;
 				if ($ok) {
 #<- 20151210
+						$vg=$v_gr[$x];
+						if (!isset($g_sum[$vg])) $g_sum[$vg]=0;
+						if (!isset($g_solgt[$vg])) $g_solgt[$vg]=0;
+						if (!isset($g_stockvalue[$vg])) $g_stockvalue[$vg]=0;
 					if ($s_ordre_id[$y]) {
+						if ($fakturadate[$y] >= $date_from && $fakturadate[$y] <= $date_to) {
+							$g_sum[$vg]+=afrund($pris[$y]*$s_antal[$y],3);
+							$g_solgt[$vg]+=$s_antal[$y];
+						} else {
+						}
 						$t_solgt+=$s_antal[$y];
 						$t_s_pris+=$pris[$y]*$s_antal[$y];
 						$tt_solgt+=$s_antal[$y];
@@ -708,6 +758,11 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 			}
 			}
 		} else {
+			if (!$x && $lagertal) {
+				$qtxt="select beskrivelse from grupper where art='VG' and kodenr='".$v_gr[$x]."'";
+				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				print "<tr><td colspan='2'><b><big>$r[beskrivelse]</big></b></tr>";
+			}
 			print "<tr><td>$varenr[$x]</td>";
 			print "<td>$enhed[$x]</td>";
 			print "<td>$beskrivelse[$x]</td>";
@@ -724,7 +779,33 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 			print "<td align=right>".dkdecimal($t_regul,2)."</td>";
 			print "<td align=right>".dkdecimal($t_db,2)."</td>";
 			print "<td align=right>".dkdecimal($t_dg,2)."%</td>";
-			print "<td align=right>".dkdecimal($t_kobt+$t_regul-$t_solgt,2)."</td><tr>";#20151105
+				print "<td align=right>".dkdecimal($t_kobt+$t_regul-$t_solgt,2)."</td>";#20151105
+				if ($lagertal && in_array($v_gr[$x],$lagergruppe)) {
+					print "<td align=right>".dkdecimal($beholdning[$x],2)."</td>";#20180925
+					print "<td align=right>".dkdecimal($beholdning[$x]*$v_kostpris[$x],2)."</td><tr>";#20180925
+					$g_stockvalue[$vg]+=$beholdning[$x]*$v_kostpris[$x];
+					$t_stockvalue+=$beholdning[$x]*$v_kostpris[$x];
+					$tt_stockvalue+=$beholdning[$x]*$v_kostpris[$x];
+				}
+			}
+			if ($lagertal && (!isset($v_gr[$x+1]) || $v_gr[$x]!=$v_gr[$x+1])) {
+				$vg=$v_gr[$x];
+				$qtxt="select beskrivelse from grupper where art='VG' and kodenr='$vg'";
+				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				print "<tr><td><b>$r[beskrivelse]</b></td>";
+				if (!$kun_salg) print "<td colspan='2'>";
+				print "<td colspan='2'></td><td align='right'><b>".dkdecimal($g_solgt[$vg],2)."</b></td>";
+				print "<td align='right'><b>".dkdecimal($g_sum[$vg],2)."</b></td>";
+				print "<td colspan='5'></td><td align='right'><b>".dkdecimal($g_stockvalue[$vg],2)."</b></td>";
+				print "</tr>";
+				$g_solgt[$vg]=$g_sum[$vg]=0;
+				if (isset($v_gr[$x+1])) {
+					print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+					$qtxt="select beskrivelse from grupper where art='VG' and kodenr='".$v_gr[$x+1]."'";
+					if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+						print "<tr><td colspan='2'><b><big>$r[beskrivelse]</big></b></tr>";
+					}
+				}
 		}
 		}
 		if ($detaljer && !$kun_salg) print "<tr><td colspan=\"$cols\"><hr></td></tr>";
@@ -748,8 +829,11 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 				<td align=\"right\">Reguleret</td>
 				<td align=\"right\">DB</td>
 				<td align=\"right\">DG</td>
-				<td align=\"right\">Samlet til-/afgang i perioden</td></tr>";
+			<td align=\"right\">Samlet til-/afgang i perioden</td>
+			<td align=\"right\"></td>
+			<td align=\"right\">Samlet lagerværdi</td></tr>";
 		}
+		if (!isset($varenr[$x])) $varenr[$x]=$enhed[$x]=$beskrivelse[$x]=NULL;
 		print "<tr><td>$varenr[$x]</td>";
 		print "<td>$enhed[$x]</td>";
 		print "<td>$beskrivelse[$x]</td>";
@@ -763,6 +847,8 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 		print "<td align=right> <b>".dkdecimal($tt_db,2)."</b></td>";
 		print "<td align=right> <b>".dkdecimal($tt_dg,2)."%</b></td>";
 		if (!$kun_salg) print "<td align=right><b>".dkdecimal($tt_kobt+$tt_regul-$tt_solgt,2)."</b></td>";
+		print "<td align=right> <b></b></td>";
+		print "<td align=right> <b>".dkdecimal($tt_stockvalue,2)."</b></td>";
 		print "</tr>";
 	}
 /*

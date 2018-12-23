@@ -36,12 +36,13 @@ include("../includes/db_query.php");
 include("../includes/std_func.php");
 
 $db=NULL;
+$db_skriv_id=1;
 $brugernavn=NULL;
 $db_skriv_id=NULL;
 $webservice='on';
 
 function fetch_from_table($select,$from,$where,$order_by,$limit) {
-	global $db;
+	global $db,$db_skriv_id;
 	global $brugernavn;
 	global $webservice;
 	
@@ -89,7 +90,7 @@ fwrite($log,__line__." result ".$result[$x][$y]."\n");
 } #endfunc fetch_from_table
 
 function update_table($update,$set,$where) {
-	global $db;
+	global $db,$db_skriv_id;
 	global $brugernavn;
 	global $webservice;
 	
@@ -130,7 +131,7 @@ function update_table($update,$set,$where) {
 }
 
 function insert_into_table($insert,$fields,$values) {
-	global $db;
+	global $db,$db_skriv_id;
 	global $brugernavn;
 	global $webservice;
 	
@@ -241,7 +242,7 @@ function insert_shop_order($brugernavn,$shop_ordre_id,$shop_fakturanr,$shop_addr
 			$qtxt="select id from adresser where kontonr='$saldi_kontonr'";
 			fwrite($log,__line__." saldi_addr_id='$saldi_addr_id'\n");
 			if ($r=db_fetch_array (db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-				$saldi_addr_id=$r['saldi_id'];
+				$saldi_addr_id=$r['id'];
 				$kontonr=$r['kontonr'];
 				fwrite($log,__line__." saldi_addr_id $saldi_addr_id\n");
 				fwrite($log,__line__." kontonr $kontonr\n");
@@ -411,6 +412,9 @@ function insert_shop_orderline($brugernavn,$ordre_id,$shop_vare_id,$shop_varenr,
 		fwrite($log,__line__." $qtxt\n");
 		$r=db_fetch_array (db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$vare_id=$r['id'];
+	} elseif ($beskrivelse) {
+		$vare_id='0';
+		$varenr='';
 	} else {
 		fwrite($log,__line__." missing Item ID and Item number\n");
 		fclose($log);
@@ -491,20 +495,42 @@ function insert_shop_orderline($brugernavn,$ordre_id,$shop_vare_id,$shop_varenr,
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);  
 		}
 	}
+	if (($vare_id)) {
 	$qtxt="update varer set publiceret='on' where id = '$vare_id'";
 	fwrite($log,__line__." $qtxt\n");
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+	$posnr=0;
+	$qtxt="select max(posnr) as posnr from ordrelinjer where ordre_id='$ordre_id'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+		$posnr=$r['posnr'];
+	}
+	$posnr+=100;
 	fwrite($log,__line__." Samlevare = $samlevare\n");
 	if ($samlevare && $samlevare == 'on') {
 		fwrite($log,__line__." Samlevare = $samlevare\n");
 		fwrite($log,__line__." opret_saet($ordre_id,$vare_id,$pris*1.25,25,$antal,on,$lager)\n");
 		opret_saet($ordre_id,$vare_id,$pris*1.25,25,$antal,on,$lager);
-	} else {
+	} elseif($vare_id) {
 		fwrite ($log,__line__, "Antal: $antal\n");
 		fwrite ($log,__line__, "Beskrivelse: $beskrivelse\n");
 		fwrite ($log,__line__, "Lager: $lager\n");
 		fwrite($log,__line__." opret_ordrelinje($ordre_id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat,'100','DO',$momsfri,$posnr,'0','','','','0','','','','','',$lager,".__LINE__."\n");
 		$linje_id=opret_ordrelinje($ordre_id,$vare_id,db_escape_string($varenr),$antal,db_escape_string($beskrivelse),$pris,$rabat,'100','DO',$momsfri,$posnr,'0','','','','0','','','','','',$lager,__LINE__);
+	} else {
+		$qtxt="insert into ordrelinjer(ordre_id,beskrivelse,posnr,vare_id,antal,pris,rabat,lager,momsfri)";
+		$qtxt.=" values ";
+		$qtxt.="('$ordre_id','','$posnr','0','0','0','0','0','')";
+		fwrite($log,__line__." $qtxt\n");
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$posnr+=100;
+		$beskrivelse=(db_escape_string(html_entity_decode($beskrivelse)));
+		$qtxt="insert into ordrelinjer(ordre_id,beskrivelse,posnr,vare_id,antal,pris,rabat,lager,momsfri)";
+		$qtxt.=" values ";
+		$qtxt.="('$ordre_id','".db_escape_string(html_entity_decode($beskrivelse))."','$posnr','0','0','0','0','0','')";
+		fwrite($log,__line__." $qtxt\n");
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		
 	}
 	$ordresum+=$pris*$antal[$x];
 	fwrite($log,__line__." Linje ID $linje_id oprettet\n");
@@ -513,7 +539,7 @@ function insert_shop_orderline($brugernavn,$ordre_id,$shop_vare_id,$shop_varenr,
 } # endfunc - insert_shop_orderline
 
 function fakturer_ordre($saldi_id,$udskriv_til,$pos_betaling) {
-	global $db;
+	global $db,$db_skriv_id;
 	global $brugernavn;
 	global $webservice;
 	#return "$nettosum,$momssum";
@@ -580,7 +606,7 @@ function access_check(){
 	global $sqhost;
 	global $squser;
 	global $sqpass;
-	global $db;
+	global $db,$db_skriv_id;
 	global $brugernavn;
 	global $webservice;
 

@@ -63,13 +63,16 @@ if (isset($_POST['dato']) && $_POST['dato']) {
 	$varegruppe=trim($_POST['varegruppe']);
 	$lagervalg=trim($_POST['lagervalg']);
 	setcookie("saldi_lagerstatus", $varegruppe);
-}
-elseif(!$varegruppe)  {
+} elseif (isset($_GET['dato']) && $_GET['dato']) {
+	$dato=$_GET['dato'];
+	$varegruppe=trim($_GET['varegruppe']);
+	$lagervalg=trim($_GET['lagervalg']);
+	# setcookie("saldi_lagerstatus", $varegruppe);
+} elseif (!$varegruppe)  {
 	$dato=date("d-m-Y");
 	$varegruppe=($_COOKIE['saldi_lagerstatus']);
 	if (!$varegruppe) $varegruppe="0:Alle";
 }	
-
 $csv=if_isset($_GET['csv']);
 
 $dd=date("Y-m-d");

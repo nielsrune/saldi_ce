@@ -35,6 +35,27 @@
 // 2017.02.13 Initialiserer $meta_returside. 
 // 2017.10.09 Table / body styles flyttet fra css/pos.css så font size kan sættes som variabel. søg 21071009
 
+if (isset($_COOKIE['timezone'])) {
+	$timezone=$_COOKIE['timezone'];
+	date_default_timezone_set($timezone);
+} else {
+	date_default_timezone_set('Europe/Copenhagen');
+	if ($r['version'] >= '3.7.2') {
+		$r=db_fetch_array(db_select("select id, var_value from settings where var_name='timezone'",__FILE__ . " linje " . __LINE__));
+		if ($r['var_value']) {
+		$timezone=$r['var_value'];
+		} else {	
+			$timezone='Europe/Copenhagen';
+			if ($r['id']) $qtxt="update settings set var_value='$timezone' where id='$r[id]'";
+			else {
+				$qtxt="insert into settings (var_name,var_value,var_description)";
+				$qtxt.=" values ";
+				$qtxt.="('timezone','$timezone','Generel tidszone. Anvendes hvis der ikke er sat tidszone i det enkelte regnskab')";
+			}
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		}
+	}
+}
 ini_set('display_errors',0);
 if (!isset($meta_returside)) $meta_returside=NULL;
 $db_skriv_id=NULL; #bruges til at forhindre at skrivninger til masterbasen logges i de enkelte regnskaber.
@@ -45,13 +66,13 @@ $ip=$_SERVER['REMOTE_ADDR'];
 $ip=substr($ip,0,10);
 $sag_rettigheder=NULL;
 #if ($title!="kreditorexport"){
+$unixtime=date("U");
 	$query = db_select("select * from online where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
 		$dbuser = trim($row['dbuser']);
 		$db	= trim($row['db']);
 		$regnaar = trim($row['regnskabsaar']);
 		$brugernavn = db_escape_string($row['brugernavn']);
-		$unixtime=date("U");
 		$rettigheder=$row['rettigheder'];
 		$revisor=$row['revisor'];
 		if ($row['logtime']) db_modify("update online set logtime = '$unixtime' where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
@@ -70,6 +91,7 @@ $sag_rettigheder=NULL;
 	}
 #}
 
+
 $labelprint=0;
 if($sqdb=='udvikling') $labelprint=1;
 elseif($sqdb=='severinus') $labelprint=1;
@@ -80,6 +102,10 @@ if($db=='severinus_22') $kundedisplay=1;
 elseif($db=='grillbar_59') $kundedisplay=1;
 #elseif($db=='udvikling_5') $kundedisplay=1;
 else $kundedisplay=0;
+
+#if ($db == 'udvikling_5') $timezone='America/Godthab';
+#if (!isset($timezone)) $timezone='Europe/Copenhagen';
+#date_default_timezone_set($timezone);
 
 if ($modulnr && $modulnr<100 && $db==$sqdb) { #Lukker vinduet hvis revisorbruger er logget af
 	include("../includes/std_func.php");
