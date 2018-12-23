@@ -6,7 +6,7 @@ $s_id=session_id();
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------debitor/mail_mostagere.php---------------------Patch 3.6.5-----2016.04.07---
+// ---------debitor/mail_modtagere.php---------------------Patch 3.7.2-----2018.09.27---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -25,8 +25,11 @@ $s_id=session_id();
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2016 saldi.dk aps
+// Copyright (c) 2016-2018 saldi.dk aps
 // -----------------------------------------------------------------------------------
+// 20170613 PHR Tilføjet flere variabler til mailteksten og rettet datoudtræk fra beskrivelse. 
+// 20180417 PHR	rettet ',$mailtekst)' til ',$mtxt)' i '$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt)'
+// 20100907	PHR tilføjet and art='D' så den ikke fanger en kreditor...
 
 $modulnr=12;
 $css="../css/standard.css";
@@ -48,15 +51,23 @@ $qtxt="select betalinger.modt_navn,betalinger.betalingsdato,betalinger.belob,kas
 $qtxt.="where betalinger.liste_id='$liste_id' and kassekladde.id = betalinger.bilag_id ";
 $q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r= db_fetch_array($q)){
-	$beskrivelse=trim(str_replace('Afregning','',$r['beskrivelse']));
-	list($start[$x],$slut[$x])=explode("-",$beskrivelse);
-	$start[$x]=usdate($start[$x]);
-	$slut[$x]=usdate($slut[$x]);
+#	$beskrivelse=trim(str_replace('Afregning','',$r['beskrivelse']));
+list($tmp,$slut[$x])=explode(" - ",$r['beskrivelse']);
+#if ($x==3) echo "tmp $tmp -> slut $slut[$x]<br>";
+	list($tmp,$tmp,$start[$x])=explode(" ",$tmp);
+#if ($x==3) echo "$tmp, start $start[$x]<br>";
+	$start[$x]=usdate(trim($start[$x]));
+	$slut[$x]=usdate(trim($slut[$x]));
+#if ($x==3) echo "$beskrivelse start $start[$x] -> slut $slut[$x]<br>";
 	$kontonr[$x]=$r['kredit'];
 	$belob[$x]=$r['belob'];
-	$r2=db_fetch_array(db_select("select sum(antal) as antal from ordrelinjer,ordrer where ordrer.art='PO' and ordrer.fakturadate >= '$start[$x]' and ordrer.fakturadate <= '$slut[$x]' and ordrelinjer.ordre_id = ordrer.id and ordrelinjer.varenr like '%$kontonr[$x]'",__FILE__ . " linje " . __LINE__));
+	$qtxt="select sum(antal) as antal from ordrelinjer,ordrer where ";
+	$qtxt.="(ordrer.art='PO') and ordrer.fakturadate >= '$start[$x]' and ordrer.fakturadate <= '$slut[$x]' and ";
+	$qtxt.="ordrelinjer.ordre_id = ordrer.id and ordrelinjer.varenr like '%$kontonr[$x]'";
+	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$antal[$x]=$r2['antal']*1;
-	$r2=db_fetch_array(db_select("select firmanavn,email from adresser where kontonr='$kontonr[$x]'",__FILE__ . " linje " . __LINE__));
+	$qtxt="select id,firmanavn,email from adresser where kontonr='$kontonr[$x]' and art='D'	";
+	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$modt_navn[$x]=$r2['firmanavn'];
 	$email[$x]=$r2['email'];
 	$x++;
@@ -67,8 +78,11 @@ if ($_POST['testmail']) {
 	echo "sender til $r[email]<br>";
 	$x=0;
 	$mtxt=str_replace('$navn',$modt_navn[$x],$mailtekst);
+	$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt);
 	$mtxt=str_replace('$sum',$belob[$x],$mtxt);
 	$mtxt=str_replace('$antal',$antal[$x],$mtxt);
+	$mtxt=str_replace('$start',dkdato($start[$x]),$mtxt);
+	$mtxt=str_replace('$slut',dkdato($slut[$x]),$mtxt);
 	$mtxt=str_replace("\n","<br>",$mtxt);
 	send_mail($emne,$mtxt,$r['email'],$r['email'],$r['firmanavn']);
 }
@@ -77,8 +91,11 @@ if ($_POST['send_mails']) {
 	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 	for ($x=0;$x<count($modt_navn);$x++) {
 		$mtxt=str_replace('$navn',$modt_navn[$x],$mailtekst);
+		$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt);
 		$mtxt=str_replace('$sum',$belob[$x],$mtxt);
 		$mtxt=str_replace('$antal',$antal[$x],$mtxt);
+		$mtxt=str_replace('$start',$start[$x],$mtxt);
+		$mtxt=str_replace('$slut',$slut[$x],$mtxt);
 		$mtxt=str_replace("\n","<br>",$mtxt);
 		send_mail($emne,$mtxt,$email[$x],$r['email'],$r['firmanavn']);
 	}
@@ -88,7 +105,7 @@ if ($_POST['send_mails']) {
 if (!$emne) $emne="Afregning";
 if (!$mailtekst) {
 	$r=db_fetch_array(db_select("select * from adresser where art='S'"));
-	$mailtekst='Kære $navn'."\n".'Du har i peroden 01.februar 2017 til 20 februar 2017 opnået et tilgodehavende på kr. $sum'."\n";
+	$mailtekst='Kære $navn (Konto: $kontonr)'. "\n".'Du har i peroden $start til $slut opnået et tilgodehavende på kr. $sum'."\n";
 	$mailtekst.='I perioden er der solgt i alt $antal varer fra din stand'."\n\n";
 	$mailtekst.="Beløbet vil blive overført til din konto en af de nærmeste dage\n\n";
 	$mailtekst.="Med venlig hilsen\n";
@@ -103,7 +120,7 @@ print "<table><tbody>";
 print "<tr><td><b>Emne.</b></td></tr>";
 print "<tr><td><input style=\"width:800px\" type=\"text\" name=\"emne\" value=\"$emne\"></td></tr>";
 print "<tr><td></td></tr>";
-print "<tr><td><b>Mailtekst.</b> Du kan bruger $"."navn som navn på modtager, $"."sum som det beløb der overføres   og $"."antal som antal solgte enheder.</td></tr>";
+print "<tr><td><b>Mailtekst.</b> Du kan bruge $"."navn som navn på modtager,$"."kontonr som kontonr $"."sum som det beløb der overføres,<br>$"."antal som antal solgte enheder samt $"."start og $"."slut som hhv start og slutdato</td></tr>";
 print "<tr><td>HTML koder accepteres</td></tr>";
 #print "<tr><td>Fed="."<"."b"."><b>tekst</b><"."/b"."></td></tr>";
 print "<tr><td><textarea rows='16' cols='100' name='mailtekst'>$mailtekst</textarea></td></tr>";
@@ -116,8 +133,11 @@ print "<tr><td><b>Eksempel</b> (Første 4 modtagere af $mailantal)</td></tr>";
 for ($x=0;$x<$mailantal;$x++) {
 	print "<tr><td></td></tr>";
 	$eksempel=str_replace('$navn',$modt_navn[$x],$mailtekst);
+	$eksempel=str_replace('$kontonr',$kontonr[$x],$eksempel);
 	$eksempel=str_replace('$sum',$belob[$x],$eksempel);
 	$eksempel=str_replace('$antal',$antal[$x],$eksempel);
+	$eksempel=str_replace('$start',dkdato($start[$x]),$eksempel);
+	$eksempel=str_replace('$slut',dkdato($slut[$x]),$eksempel);
 	$eksempel=str_replace("\n","<br>",$eksempel);
 	print "<tr><td>$eksempel</td></tr>";
 	print "<tr><td><hr></td></tr>";

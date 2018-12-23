@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------------debitor/kontoprint-----lap 3.6.6---2016.11.24-------
+// ----------------debitor/kontoprint.php-----lap 3.7.3---2018.12.10-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -14,7 +14,7 @@
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -23,16 +23,18 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2016 DANOSOFT ApS
+// Copyright (c) 2004-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 //2013.05.10 Tjekker om formular er oprettet og opretter hvis den ikke er.
 //2013.05.12 Virker nu også når der er mere end 1 konto
 //2015.03.16 
 //2015.04.09 Sidste side blev ikke udskrevet v. flere sider. Ændrer $side til $side-1. 20150409
 // 2016.11.24 Hvis konto_fra=konto_til søges specifikt på kontonr.
+// 2018.12.10 Oprydning af variabler og tilpasning til ny formfunk med htm 
 
 @session_start();
 $s_id=session_id();
+$formular=11;
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -45,95 +47,41 @@ $konto_til=if_isset($_GET['konto_til']);
 $dato_fra=if_isset($_GET['dato_fra']);
 $dato_til=if_isset($_GET['dato_til']);
 $kontoart=if_isset($_GET['kontoart']);
+$email=if_isset($_GET['email']);
 
+#kontoprint($konto_fra,$konto_til,$dato_fra,$dato_til,$kontoart,$email);
+#exit;
+$deb_valuta='DKK';
+$deb_valutakurs=100;
+$dkkforfalden=$nomailantal=$mailantal=0;
 ($dato_fra)?$dato_fra=usdate($dato_fra):$dato_fra="1970-01-01";
 $dato_til=usdate($dato_til);
 
 $formular=11;
+
 $fsize=filesize("../includes/faktinit.ps");
 $fp=fopen("../includes/faktinit.ps","r");
-$initext=fread($fp,$fsize);
+$ps_ini=fread($fp,$fsize);
+fclose($fp);
+$fp=fopen("../includes/faktinit.htm","r");
+$htm_ini=fread($fp,$fsize);
 fclose($fp);
 
-if (!$formularsprog) $formularsprog='dansk';
+if (!isset($formularsprog) || !$formularsprog) $formularsprog='dansk';
 $r=db_fetch_array(db_select("select count(id) as antal from formularer where formular = '$formular' and lower(sprog)='$formularsprog'",__FILE__ . " linje " . __LINE__));
 if ($r['antal']<5) {
 	include("../includes/formularimport.php");
 	formularimport("../importfiler/formular.txt",'11');
 }
-
-print "<!-- kommentar for at skjule uddata til siden \n";
-if (!file_exists("../logolib/$db_id")) mkdir("../logolib/$db_id"); 
-if (file_exists("../logolib/$db_id/bg.pdf")) {
-	if (system("which pdftk")) $logoart='PDF';
-	else {
-		print "<BODY onLoad=\"JavaScript:alert('pdftk ikke fundet, PDF kan ikke anvendes som baggrund');\">";
-	}
-} elseif (file_exists("../logolib/$db_id/$formular.ps")) {
-	$logo="../logolib/$db_id/$formular.ps";
-	$logoart='PS';
-} elseif (file_exists("../logolib/$db_id/bg.ps")) {
-	$logo="../logolib/$db_id/bg.ps";
-	$logoart='PS';
-} else {
-	$formularsprog=strtolower($formularsprog);
-	
-if ($formularsprog!='dansk') $tmp="'dansk' or sprog=''";	
-else $tmp="'".$formularsprog."'";
-
-#cho "select * from formularer where formular = '$formular' and art = '1' and beskrivelse = 'LOGO' and lower(sprog)=$tmp<br>";
-	$query = db_select("select * from formularer where formular = '$formular' and art = '1' and beskrivelse = 'LOGO' and lower(sprog)=$tmp",__FILE__ . " linje " . __LINE__);
-	if ($row = db_fetch_array($query)) {$logo_X=$row['xa']*2.86; 	$logo_Y=$row['ya']*2.86;}
-	else {$logo_X=430; $logo_Y=758;}
-	if (file_exists("../logolib/logo_$db_id.eps")) $logo="../logolib/logo_$db_id.eps";
-	else $logo="../logolib/logo.eps";
-	$logoart='EPS';
-}
-
-print "-->\n";
-#cho "Logo $logo | $logoart<br>";;
-if ($logoart != 'PDF') {
-	$fsize=filesize($logo);
-	$logofil=fopen($logo,"r");
-	$translate=0;
-	$logo="";
-#cho "Logo $logo | $logoart<br>";;
-	while (!feof($logofil)) {
-		$linje=fgets($logofil);
-		if ($logoart=='EPS')	{
-			if (substr($linje,0,2)!="%!") {
-				if (strstr($linje, "translate")&&(!$translate)) {
-					$linje="$logo_X $logo_Y translate \n";
-#cho "<br>Linle $linje<br>";
-#xit;
-					$translate=1;
-				}
-				$logo=$logo.$linje;
-			} 
-		} else {
-			if (strstr($linje,'showpage')) $linje='';
-			if (strstr($linje,'%%PageTrailer')) $linje='';
-			if (strstr($linje,'%%Trailer')) $linje='';
-			if (strstr($linje,'%%Pages:')) $linje='';
-			if (strstr($linje,'%%EOF')) $linje='';
-			$logo=$logo.$linje;
-		}
-	}
-	fclose($logofil);
-}
-
 $mappe="../temp/$db/$bruger_id"."_*";
 system("rm -r $mappe");
 $mappe="../temp/$db/".abs($bruger_id)."_".date("his");
 mkdir("$mappe", 0775);
-#if ($rykkernr[0]) $printfilnavn=abs($bruger_id)."_".date("his")."/"."$rykkernr[0]";
-#else 
 $printfilnavn=abs($bruger_id)."_".date("his")."/"."kontoudtog";
-$fp1=fopen("../temp/$db/$printfilnavn","w");
-fwrite($fp,$initext);
-#$printfilnavn="$db_id"."$bruger_id";
-#$fp1=fopen("../temp/$db/$printfilnavn","w");
-
+$psfp=fopen("../temp/$db/$printfilnavn.ps","w");
+$htmfp=fopen("../temp/$db/$printfilnavn.htm","w");
+fwrite($psfp,$ps_ini);
+fwrite($htmfp,$htm_ini);
 if (!$konto_til && $konto_fra) $konto_til = $konto_fra;
 if (!$konto_til) $konto_til = '9999999999';
 if (!$konto_fra) $konto_fra = '1';
@@ -150,14 +98,12 @@ if (is_numeric($konto_fra)) {
 	} else $qtxt = "select id from adresser where art = '$kontoart' order by firmanavn";
 $q=db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 while($r=db_fetch_array($q)){
-echo "$konto_id[$x]<br>";
 	$konto_id[$x]=$r['id'];
 	$x++;
 }
 
 for ($q=0;$q<count($konto_id);$q++) {
 	$udskrevet=NULL;
-	$fp=$fp1;
 	$x=0;
 	$query = db_select("select * from formularer where formular = '$formular' and art = '3'",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
@@ -172,9 +118,7 @@ for ($q=0;$q<count($konto_id);$q++) {
 				$justering[$x]=$row['justering'];
 				$xa[$x]=$row['xa'];
 				$str[$x]=$row['str'];
-				$laengde[$x]=$row['xb'];		if ($art=='R2') $formular=7;
-		elseif ($art=='R3') $formular=8;
-
+				$laengde[$x]=$row['xb'];
 				$color[$x]=$row['color'];
 				$fed[$x]=$row['fed'];
 				$kursiv[$x]=$row['kursiv'];
@@ -195,23 +139,9 @@ for ($q=0;$q<count($konto_id);$q++) {
 		while ($r=db_fetch_array($q0)) {
 			$betalingsbet=$r['betalingsbet'];
 			$betalingsdage=$r['betalingsdage'];
-		if ($mailfakt) {
-			$mailantal++;		
-			$pfnavn="Kontoudtog".$konto_id[$q];
-			$pfliste[$mailantal]=$pfnavn;
-			$pfnavn=$db."/".$pfnavn;
-			$fp2=fopen("../temp/$pfnavn","w");
-			$fp=$fp2;
-			$email[$mailantal]=$r['email'];
-			$mailsprog[$mailantal]=strtolower($r['sprog']);
-		} else $nomailantal++;
-		fwrite($fp,$initext);
+			$nomailantal++;
 		$debet=0;
 		$kredit=0;
-#		$kontodate=$r['transdate'];	
-#		$valuta=$r['valuta'];
-#		($r['amount']>=0)?$debet=$r['amount']:$kredit=$r['amount']*-1;
-#		if (!$valuta) $valuta='DKK';
 		$form_nr[$mailantal]=$formular;
 		if (!$formularsprog) $formularsprog="dansk";
 		$y=$ya;
@@ -223,13 +153,13 @@ for ($q=0;$q<count($konto_id);$q++) {
 				if ($variabel[$z]=="dato") {
 					$z_dato=$z;
 					$dkdato=dkdato($r1['transdate']);
-					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "Primosaldo", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "Primosaldo", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 				if ($variabel[$z]=="saldo") {
 					$z_saldo=$z;
 					$dksaldo=dkdecimal($saldo);
 					if (!$dksaldo)$dksaldo="0,00"; 
-					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$dksaldo", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$dksaldo", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 			}
 		} else {
@@ -252,53 +182,55 @@ for ($q=0;$q<count($konto_id);$q++) {
 			$dkkamount=$r1['amount']*100/$valutakurs;
 			if ($debet) $forfaldsdato=forfaldsdag($r1['transdate'], $betalingsbet, $betalingsdage);
 			else $forfaldsdato=NULL;
+/*
 			if ($deb_valuta!="DKK" && $deb_valuta!=$valuta) $amount=$dkkamount*100/$deb_valutakurs;
 			elseif ($deb_valuta==$valuta) $amount=$r2['amount'];
 			else $amount=$dkkamount;
+	*/		
 			if ($deb_valuta=='DKK') $amount=$dkkamount;
 #			$saldo+=$amount; 20150316
 			$dkkforfalden+=$dkkamount;
-			$belob=dkdecimal($amount);
+				$belob=dkdecimal($amount,2);
 			for ($z=1; $z<=$var_antal; $z++) {
  				if ($variabel[$z]=="dato") {
  					$z_dato=$z;
- 					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", dkdato($r1['transdate']), "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", dkdato($r1['transdate']), "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
  				if ($variabel[$z]=="forfaldsdato") {
  					$z_forfaldsdato=$z;
- 					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", $forfaldsdato, "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", $forfaldsdato, "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 				if ($variabel[$z]=="faktnr") {
 					$z_faktnr=$z;
-					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$r1[faktnr]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$r1[faktnr]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 				if ($variabel[$z]=="beskrivelse") {
 					$z_beskrivelse=$z;
-					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$r1[beskrivelse]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$r1[beskrivelse]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 				if ($variabel[$z]=="debet") {
 					$z_debet=$z;
-					if ($debet) skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", dkdecimal($debet), "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						if ($debet) skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", dkdecimal($debet,2), "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 				if ($variabel[$z]=="kredit") {
 					$z_kredit=$z;
-					if ($kredit) skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", dkdecimal($kredit), "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						if ($kredit) skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", dkdecimal($kredit,2), "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 				if ($variabel[$z]=="saldo") {
 					$z_saldo=$z;
-					$dksaldo=dkdecimal($saldo);
+						$dksaldo=dkdecimal($saldo,2);
 					if (!$dksaldo)$dksaldo="0,00"; 
-					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$dksaldo", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$dksaldo", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 				if (strstr($variabel[$z],"bel") && $belob) {
 					$z_belob=$z;
-					skriv($str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", $belob, "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
+						skriv('0',$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", $belob, "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular");
 				}
 			}	
 		$y=$y-4;
 		if ($y<=$Opkt) {
 			formulartekst($konto_id[$q],$formular,$formularsprog); 		 
-			$ialt=dkdecimal($forfalden);
+					$ialt=dkdecimal($forfalden,2);
 			find_form_tekst("$konto_id[$q]", "S","$formular","0","$linjeafstand","");
 			bundtekst($konto_id[$q]);
 			$udskrevet=$side-1; #20150410
@@ -307,16 +239,15 @@ for ($q=0;$q<count($konto_id);$q++) {
 		}
 		if ($udskrevet!=$side) {
 			formulartekst($konto_id[$q],$formular,$formularsprog); 		 
-			$ialt=dkdecimal($forfalden);
+				$ialt=dkdecimal($forfalden,2);
 			find_form_tekst("$konto_id[$q]", "S","$formular","0","$linjeafstand","");
 			bundtekst($konto_id[$q]);
 		}
-#echo "formulartekst($konto_id[$q],$formular,$formularsprog)<br>";
-		
 	}
 }
 		}
-fclose($fp);
+fclose($psfp);
+fclose($htmfp);
 #xit;
 #if ($mailantal>0) include("mail_faktura.php");
 #cho "lukker nu<br>";
@@ -343,7 +274,7 @@ if ($mailantal>0) {
 } #else print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/udskriv.php?ps_fil=$db/$printfilnavn\">";
 #xit;
 if ($nomailantal>0) {
- 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/udskriv.php?ps_fil=$db/$printfilnavn&udskriv_til=PDF\">";
+ 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/udskriv.php?ps_fil=$db/$printfilnavn&udskriv_til=PDF&udskrift=kontokort\">";
 	
 }
 #print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";

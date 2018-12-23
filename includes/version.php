@@ -1,4 +1,4 @@
 <?php 
-	$version = "3.7.0";
-	$copyright= "2003-2017";
+	$version = "3.7.2";
+	$copyright= "2003-2018 Saldi.dk ApS";
 ?>

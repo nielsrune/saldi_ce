@@ -548,23 +548,23 @@
 615	Ved at afmærke her får du op til 14 ekstra felter på ansattes stamkort, for egne ansattes.
 616	Tilføj ekstra felter på ansatte
 # ----------Reserveret stillads------------->
-617	
-618	
-619	
-620	
-621	
-622	
-623	
-624	
-625	
-626	
-627	
-628	
-629	
-630	
-631	
-632	
-633	
+617	Kørekort Ja/nej
+618	Kørekort B
+619	Kørekort C
+620	Anhugning og kran D
+621	TRUCK
+622	Den 2 årige stilladsmontøruddannelse
+623	Systemstillads
+624	ERFA 1
+625	ERFA 2
+626	Konduktør
+627	Faldsikring
+628	Førstehjælp
+629	Certificerings uddannelse
+630	Andet
+631	Helbred
+632	Kontaktperson
+633	Fast timetillæg
 634	
 635	
 636	
@@ -785,4 +785,9 @@
 850	Saldo for drift- og statuskonti samt summering af disse for valgte konti i valgt periode.
 851	Er du sikker på at du vil slette dit regnskab? Denne handling kan ikke fortrydes! - Tag en sikkerhedskopi først!
 852	Slet regnskab
-853	Hvis du sætter flueben i felten og klikker på `Slet` slettes regnskabet og din konto lukkes. Vi beholder en sikkerhedskopi i 5 år jf. bogføringsloven. 
+853	Hvis du sætter flueben i feltet og klikker på `Slet` slettes regnskabet og din konto lukkes. Vi beholder en sikkerhedskopi i 5 år jf. bogføringsloven. 
+854	Gavekortnumre
+855	Afmærk hvis hvert gavekort eller tilgodebevis skal have eget nummer.
+856	Gavekorttekst
+857	Angiv den tekst, der skal stå på bonen
+858	Vælg gavekort først før du kan tilføje en gavekorttekst.

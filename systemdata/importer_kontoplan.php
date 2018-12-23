@@ -1,32 +1,45 @@
 <?php
-// ------systemdata/importer_kontoplan.php--lap 3.2.9---2012-06-20-------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ------systemdata/importer_kontoplan.php--lap 3.7.2---2018-11-12-------
+//
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2012 DANOSOFT ApS
+// Copyright (c) 2004-2018 saldi.dk aps
 // ----------------------------------------------------------------------
+// 2018.11.12 Håndtering af tegnsæt og MAC linjeskift.
+// 2018.12.04 Valg gemmes i cookie
 
 @session_start();
 $s_id=session_id();
+
+ini_set("auto_detect_line_endings", true);
+
 $css="../css/standard.css";
 
 $title="Importer_kontoplan";
+	
+$komma=$semikolon=$tabulator=NULL;
+$feltnavn=array();
 	
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -45,42 +58,55 @@ print "<td width=\"10%\" $top_bund><br></td>";
 print "</tbody></table>";
 print "</td></tr>";
 
-if(($_GET)||($_POST)) {
+if (isset($_POST['hent']) || isset($_POST['vis']) || isset($_POST['import'])) {
+#	if (strstr($submit, "Import")) $submit="Importer";
+	$vis=if_isset($_POST['vis']);
+	$import=if_isset($_POST['import']);
+	$filnavn=if_isset($_POST['filnavn']);
+	$file_charset=if_isset($_POST['file_charset']);
+	$splitter=if_isset($_POST['splitter']);
+	$feltantal=if_isset($_POST['feltantal']);
+	$kontonr=if_isset($_POST['kontonr']);
+	$bilag=if_isset($_POST['bilag']);
 
-	if ($_GET) {
-		$kladde_id=$_GET['kladde_id'];
-		$bilag=$_GET['bilagsnr'];
+	if ($feltnavn=if_isset($_POST['feltnavn'])) {		
+		$cookie=$file_charset."|".$splitter."|";
+		if (!$feltnavn) $feltnavn=array();
+/*
+		for ($i=count($feltnavn);$i>0;$i--) {
+			if (!$x && trim($feltnavn[$i])) $x=$i;
+		}
+		$feltnavn=array_slice($feltnavn, 0, $x);
+*/
+		for ($i=0;$i<count($feltnavn);$i++) {
+			if (!isset($feltnavn[$i])) $feltnavn[$i]=NULL;
+			($i)?$cookie.=";".$feltnavn[$i]:$cookie.=$feltnavn[$i];
+		}
+		setcookie('saldi_kto_imp',$cookie);
+	} elseif (isset($_COOKIE['saldi_kto_imp'])) {
+		list($file_charset,$splitter,$fn)=explode("|",$_COOKIE['saldi_kto_imp']);
+		$feltnavn=explode(";",$fn);
 	}
-	else {
-		$submit=$_POST['submit'];
-		if (strstr($submit, "Import")) $submit="Importer";
-		$kladde_id=$_POST['kladde_id'];
-		$filnavn=$_POST['filnavn'];
-		$splitter=$_POST['splitter'];
-		$feltnavn=$_POST['feltnavn'];
-		$feltantal=$_POST['feltantal'];
-		$kontonr=$_POST['kontonr'];
-		$bilag=$_POST['bilag'];
-	}
-
-	if (basename($_FILES['uploadedfile']['name'])) {
+	if (isset ($_FILES['uploadedfile']['name']) && basename($_FILES['uploadedfile']['name'])) {
 		$filnavn="../temp/".$db."_".str_replace(" ","_",$brugernavn).".csv";
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $filnavn)) {
-		vis_data($kladde_id, $filnavn, '', '', 1, $kontonr, $bilag);
-		} else echo "Der er sket en fejl under hentningen, pr&oslash;v venligst igen";
-	} elseif($submit=='Vis'){
-		vis_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $kontonr, $bilag);
-	} elseif($submit=='Importer'){
+		vis_data($file_charset, $filnavn, $splitter, $feltnavn, 1, $kontonr, $bilag);
+		} else echo "Der er sket en fejl under hentningen, prøv venligst igen";
+	} elseif($vis){
+		vis_data($file_charset, $filnavn, $splitter, $feltnavn, $feltantal, $kontonr, $bilag);
+	} elseif($import){
 		if (($filnavn)&&($splitter))	overfoer_data($filnavn, $splitter, $feltnavn, $feltantal);
-		else vis_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $kontonr, $bilag);
+		else vis_data($file_charset, $filnavn, $splitter, $feltnavn, $feltantal, $kontonr, $bilag);
 	}
 } else {
-	if (!$r1=db_fetch_array(db_select("select box1, box2, beskrivelse from grupper where art='RA' order by kodenr desc",__FILE__ . " linje " . __LINE__))) {
+	$qtxt="select box1, box2, beskrivelse from grupper where art='RA' order by box2 desc,box1 desc";
+	if (!$r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 		exit;
 	}else{
-		$startdate=$r1[box2]."_".$r1[box1]."-01";
-		if ($r2=db_fetch_array(db_select("select id from transaktioner where transdate >= '$startdate'",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onLoad=\"javascript:alert('Der er foretaget transaktioner i regnskabs&aring;ret: $r1[beskrivelse] - import afbrudt')\">";
+		$startdate=$r1['box2']."-".$r1['box1']."-01";
+		$qtxt="select id from transaktioner where transdate >= '$startdate'";
+		if ($r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			alert('Der er foretaget transaktioner i regnskabsåret: $r1[beskrivelse] - import afbrudt');
 			if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=div_io\">";
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=div_io\">";
 			exit;
@@ -96,19 +122,20 @@ function upload($kladde_id, $bilag){
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<form enctype=\"multipart/form-data\" action=\"importer_kontoplan.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
-print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
-print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center> V&aelig;lg datafil: <input name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center> Vælg datafil: <input name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td align=center><input type=\"submit\" name=\"hent\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 print "</tbody></table>";
 print "</td></tr>";
 }
 
-function vis_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal){
+function vis_data($file_charset, $filnavn, $splitter, $feltnavn, $feltantal){
 global $charset;
 global $regnaar;
+
+$komma=$kontonr=$semikolon=$tabulator=0;
+$beskrivelse=$fra_kto=$kontonr=$kontotype=NULL;
 
 $fp=fopen("$filnavn","r");
 if ($fp) {
@@ -131,7 +158,17 @@ fclose($fp);
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\"><tbody>";
 print "<form enctype=\"multipart/form-data\" action=\"importer_kontoplan.php\" method=\"POST\">";
 #print "<tr><td colspan=6 width=100% align=center> $filnavn</td></tr>";
-print "<tr><td colspan=$cols align=center><span title='Angiv hvilket skilletegn der anvendes til opdeling af kolonner'>Sepatatortegn&nbsp;<select name=splitter>\n";
+print "<tr><td colspan='$cols' align=center><span title='Angiv hvilket tegnsæt der anvendes'>Tegnsæt<select name='file_charset'>\n";
+if ($file_charset=='UTF-8') print "<option value='UTF-8'>UTF-8</option>\n";
+if ($file_charset=='ISO-8859-15') print "<option value='ISO-8859-15'>ISO-8859-15 (Windows)</option>\n";
+if ($file_charset=='cp865') print "<option value='cp865'>cp865 (DOS)</option>\n";
+if ($file_charset=='macintosh') print "<option value='macintosh'>MAC</option>\n";
+if ($file_charset!='UTF-8') print "<option value='UTF-8'>UTF-8</option>\n";
+if ($file_charset!='ISO-8859-15') print "<option value='ISO-8859-15'>ISO-8859-15 (Windows)</option>\n";
+if ($file_charset!='cp865') print "<option value='cp865'>cp865 (DOS)</option>\n";
+if ($file_charset!='macintosh') print "<option value='macintosh'>MAC</option>\n";
+print "</select></span>&nbsp";
+print "<span title='Angiv hvilket skilletegn der anvendes til opdeling af kolonner'>Sepatatortegn&nbsp;<select name=splitter>\n";
 if ($splitter) {print "<option>$splitter</option>\n";}
 if ($splitter!='Semikolon') print "<option>Semikolon</option>\n";
 if ($splitter!='Komma') print "<option>Komma</option>\n";
@@ -139,46 +176,47 @@ if ($splitter!='Tabulator') print "<option>Tabulator</option>\n";
 print "</select></span>";
 print "<input type=\"hidden\" name=\"filnavn\" value=$filnavn>";
 print "<input type=\"hidden\" name=\"feltantal\" value=$feltantal>";
-print "&nbsp; <input type=\"submit\" name=\"submit\" value=\"Vis\" />";
-
+print "&nbsp; <input type=\"submit\" name=\"vis\" value=\"Vis\" />";
+#exit;
 for ($y=0; $y<=$feltantal; $y++) {
 	if (($feltnavn[$y]=='Kontonr') &&($kontonr==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
+		alert('Der kan kun være 1 kolonne med Kontonr');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontonr') $kontonr=1;
-	if (($feltnavn[$y]=='Beskrivelse')&&($beskrivelse==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
+	if ($feltnavn[$y]=='Beskrivelse' && $beskrivelse==1) {
+		alert('Der kan kun være 1 kolonne med Beskrivelse');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Beskrivelse') $beskrivelse=1;
-	if ((strstr($feltnavn[$y],'Kontotype'))&&($kontotype==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kontotype')\">";
+	if (strstr($feltnavn[$y],'Kontotype') &&$kontotype==1) {
+		alert('Der kan kun være 1 kolonne med Kontotype');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontotype') $kontotype=1; 
-	if ((strstr($feltnavn[$y],'Moms'))&&($moms==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Moms')\">";
+	if (strstr($feltnavn[$y],'Moms' )&& $moms==1) {
+		alert('Der kan kun være 1 kolonne med Moms');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Moms') $moms=1;
-	if ((strstr($feltnavn[$y],'Fra_kto'))&&($fra_kto==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med fra_kto')\">";
+	if (strstr($feltnavn[$y],'Fra_kto') && $fra_kto==1) {
+		alert('Der kan kun være 1 kolonne med fra_kto');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Fra_kto') $fra_kto=1;
-	if ((strstr($feltnavn[$y],'primo'))&&($primo==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med primo')\">";
+	if (strstr($feltnavn[$y],'primo') && $primo==1) {
+		alert('Der kan kun være 1 kolonne med primo');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='primo') $fra_kto=1;
 }
 
-if (($filnavn)&&($splitter)&&($kontonr==1)&&($beskrivelse==1)&&($kontotype==1)) print "&nbsp; <input type=\"submit\" name=\"submit\" value=\"Import&eacute;r\" /></td></tr>";
-
-print "<tr><td colspan=$cols><hr></td></tr>\n";
+if (($filnavn)&&($splitter)&&($kontonr==1)&&($beskrivelse==1)&&($kontotype==1)) {
+	print "&nbsp; <input type=\"submit\" name=\"import\" value=\"Import&eacute;r\" />";
+}
+print "</td></tr><tr><td colspan=$cols><hr></td></tr>\n";
 if ((!$splitter)||($splitter=='Semikolon')) {$splitter=';';}
 elseif ($splitter=='Komma') {$splitter=',';}
 elseif ($splitter=='Tabulator') {$splitter=chr(9);}
 
 # print "<tr><td><span title='Angiv 1. bilagsnummer'><input type=text size=4 name=bilag value=$bilag></span></td>";
 for ($y=0; $y<=$feltantal; $y++) {
-	if ($feltnavn[$y]) print "<td><select name=feltnavn[$y]>\n";
-	else  print "<td align=center><select name=feltnavn[$y]>\n";
+	if ($feltnavn[$y]) print "<td><select name='feltnavn[$y]'>\n";
+	else  print "<td align=center><select name='feltnavn[$y]'>\n";
 	print "<option>$feltnavn[$y]</option>\n";
 	if ($feltnavn[$y]) print "<option></option>\n";
 	if ($feltnavn[$y]!='Kontonr') print "<option>Kontonr</option>\n";
@@ -194,29 +232,33 @@ $fp=fopen("$filnavn","r");
 if ($fp) {
 	$x=0;
 	$kontonumre=array();
+	$alert=null;
 	while (!feof($fp)) {
 		$skriv_linje=0;
 		if ($linje=trim(fgets($fp))) {
 			$x++;
 			$skriv_linje=1;
-			if ($charset=='UTF-8') $linje=utf8_encode($linje);
+#			if ($file_charset!=$charset) $linje=mb_convert_encoding($linje ,$charset,$file_charset);
+			if ($file_charset!=$charset) $linje=iconv($file_charset, $charset, $linje);
 			$felt=array();
 			$kontotyper=array("H","D","S","Z","X","R");
 			$momstyper=array("S","K","E","Y");
 			$felt = explode($splitter, $linje);
-			for ($y=0; $y<=$feltantal; $y++) {
+			for ($y=0; $y<$feltantal; $y++) {
 				$felt[$y]=trim($felt[$y]);
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
-				if (($feltnavn[$y]=='Kontonr')&&(($felt[$y]!=$felt[$y]*1)||(in_array($felt[$y],$kontonumre)))) {
+				if ($feltnavn[$y]=='Kontonr' && ($felt[$y]!=$felt[$y]*1 || in_array($felt[$y],$kontonumre))) {
+					if (!$alert) alert('Røde linjer indeholder fejl i kontonummer og bliver ikke importeret');
+					$alert=1;
 					$skriv_linje=2;
-					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#					print "<BODY onLoad=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
+#					alert('Kontonrnummer skal være numerisk');
 				} elseif ($feltnavn[$y]=='Kontonr') $kontonumre[$x]=$felt[$y];
 				if ($feltnavn[$y]=='Kontotype') {
 					if (!in_array($felt[$y],$kontotyper)) {
+					if (!$alert) alert('Røde linjer indeholder fejl i kontotype og bliver ikke importeret');
+					$alert=1;
 					$skriv_linje=2;
-					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#					print "<BODY onLoad=\"javascript:alert('Kontotype skal v&aelig;re H,D,S eller Z')\">";
+#					alert('Kontotype skal være H,D,S eller Z');
 					} else if ($felt[$y]=='Z') $sumkonto=1;
 					else $sumkonto=0;
 				}	
@@ -224,17 +266,19 @@ if ($fp) {
 					$a=substr($felt[$y],0,1);
 					$b=substr($felt[$y],1);
 					if (($felt[$y])&&((!in_array($a,$momstyper))||($b!=$b*1))) {
+						if (!$alert) alert('Røde linjer indeholder fejl (Moms) og bliver ikke importeret');
+						$alert=1;
 						$skriv_linje=2;
-						print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#						print "<BODY onLoad=\"javascript:alert('Momstype skal begynde med S eller K efterfulgt af en numerisk vaerdi')\">";
+#						alert('Momstype skal begynde med S eller K efterfulgt af en numerisk vaerdi');
 					}				
 				}
-				if (($feltnavn[$y]=='Fra_kto')&&($sumkonto))  {
+				if ($feltnavn[$y]=='Fra_kto' && $sumkonto)  {
 					if (!$felt[$y]) $felt[$y]='0';
 					if ($felt[$y]!=$felt[$y]*1) {
+						if (!$alert) alert('Røde linjer indeholder fejl (Fra kto) og bliver ikke importeret');
+						$alert=1;
 						$skriv_linje=2;
-						print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl og bliver ikke importeret')\">";
-#						print "<BODY onLoad=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
+#						alert('Kontonrnummer skal være numerisk');
 					}		
 				} elseif ($feltnavn[$y]=='Fra_kto') $felt[$y]='';
 #				if ($feltnavn[$y]=='primo')  {
@@ -251,8 +295,8 @@ if ($fp) {
 			if ($skriv_linje==2) $color="#e00000";
 			else $color="#000000";
 			for ($y=0; $y<=$feltantal; $y++) {
-				if ($feltnavn[$y]) {print "<td><span style=\"color: $color;\">$felt[$y]&nbsp;</span></td>";}
-				else {print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";}
+				if ($feltnavn[$y]) print "<td><span style=\"color: $color;\">$felt[$y]&nbsp;</span></td>";
+				else print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 			}
 			print "</tr>";
 		}
@@ -265,10 +309,11 @@ print "</td></tr>";
 
 function overfoer_data($filnavn, $splitter, $feltnavn, $feltantal){
 global $charset;
+global $file_charset;
 global $regnaar;
 
-$r1=db_fetch_array(db_select("select max(kodenr) as kodenr from grupper where art='RA'",__FILE__ . " linje " . __LINE__));
-$regnskabsaar=$r1[kodenr];
+$r1=db_fetch_array(db_select("select kodenr as kodenr from grupper where art='RA' order by box2 desc,box1 desc limit 1",__FILE__ . " linje " . __LINE__));
+$regnskabsaar=$r1['kodenr'];
 
 $fp=fopen("$filnavn","r");
 if ($fp) {
@@ -283,7 +328,7 @@ if ($fp) {
 	if (($komma>$semikolon)&& ($komma>$tabulator)) {$tmp='Komma'; $feltantal=$komma;}
 	elseif (($semikolon>$tabulator)&&($semikolon>$komma)) {$tmp='Semikolon'; $feltantal=$semikolon;}			
 	elseif (($tabulator>$semikolon)&&($tabulator>$komma)) {$tmp='Tabulator'; $feltantal=$tabulator;}			
-	if (!$splitter) {$splitter=$tmp;}
+	if (!$splitter) $splitter=$tmp;
 	$cols=$feltantal+1;
 }
 
@@ -291,27 +336,27 @@ fclose($fp);
 
 for ($y=0; $y<=$feltantal; $y++) {
 	if (($feltnavn[$y]=='Kontonr') &&($kontonr==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
+		alert('Der kan kun være 1 kolonne med Kontonr');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontonr') $kontonr=1;
 	if (($feltnavn[$y]=='Beskrivelse') &&($beskrivelse==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
+		alert('Der kan kun være 1 kolonne med Beskrivelse');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Beskrivelse') $beskrivelse=1;
 	if ((strstr($feltnavn[$y],'Kontotype'))&&($kontotype==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kontotype')\">";
+		alert('Der kan kun være 1 kolonne med Kontotype');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Kontotype') $kontotype=1; 
 	if ((strstr($feltnavn[$y],'Moms'))&&($moms==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Moms')\">";
+		alert('Der kan kun være 1 kolonne med Moms');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Moms') $moms=1;
 	if ((strstr($feltnavn[$y],'Fra_kto'))&&($fra_kto==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med fra_kto')\">";
+		alert('Der kan kun være 1 kolonne med fra_kto');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='Fra_kto') $fra_kto=1;
 	if ((strstr($feltnavn[$y],'primo'))&&($primo==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med primo')\">";
+		alert('Der kan kun være 1 kolonne med primo');
 		$feltnavn[$y]='';
 	} elseif ($feltnavn[$y]=='primo') $primo=1;
 }
@@ -336,7 +381,9 @@ if ($fp) {
 		if ($linje=trim(fgets($fp))) {
 			$x++;
 			$skriv_linje=1;
-			if ($charset=='UTF-8') $linje=utf8_encode($linje);
+#			if ($charset=='UTF-8') $linje=utf8_encode($linje);
+			if ($file_charset!=$charset) $linje=iconv($file_charset, $charset, $linje);
+
 			$felt=array();
 			$kontotyper=array("H","D","S","Z","R");
 			$momstyper=array("S","K","E","Y");
@@ -346,7 +393,6 @@ if ($fp) {
 				$feltnavn[$y]=strtolower($feltnavn[$y]);
 
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
-				
 				if (($feltnavn[$y]=='Kontonr')&&(($felt[$y]!=$felt[$y]*1)||(in_array($felt[$y],$kontonumre)))) {
 					$skriv_linje=2;
 				} elseif ($feltnavn[$y]=='Kontonr') $kontonumre[$x]=$felt[$y];
@@ -408,9 +454,9 @@ $q=db_modify("update kontoplan set til_kto=kontonr where kontotype='Z' and regns
 transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";
-if ($regnaar==1 && $balance) print "<BODY onLoad=\"javascript:alert('&Aring;bningsbalance stemmer ikke - kontroller sum')\">";
-else print "<BODY onLoad=\"javascript:alert('Kontoplan importeret - husk at overf&oslash;re &aring;bningstal')\">";
-print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
+if ($regnaar==1 && $balance) alert('Åbningsbalance stemmer ikke - kontroller sum');
+else alert('Kontoplan importeret - husk at overføre åbningstal');
+exit;
 } # endfunc overfoer_data
 
 function nummertjek ($nummer){

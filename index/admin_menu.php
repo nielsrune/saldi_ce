@@ -1,20 +1,20 @@
 <?php
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --index/admin_menu.php------lap 3.6.6------2016-11-04----------------
+// ------------ admin/admin_menu --------------- lap 3.7.2 --- 2018-10-31 ---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -23,9 +23,10 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
-
+//
+// 20180131 
 
 @session_start();  # Skal angives oeverst i filen??!!
 $s_id=session_id();
@@ -85,6 +86,12 @@ if ($revisorregnskab || $forhandlerregnskab) {
 	else print "<td $td $stor_knap_bg><span style=\"color:#999;\"><big>".findtekst(341,$sprog_id)."</big></td>\n";
 	print"</tr><tr>";
 	print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/admin_brugere.php\"><big>Brugere</big></td>";
+	print"</tr><tr>";
+	print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/admin_settings.php\"><big>Indstillinger</big></td>";
+	if (isset($mastername) && $mastername=="ROTARY") {
+		print"</tr><tr>";
+		print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/bankfordeling.php\"><big>Kortbetalinger</big></td>";
+	}
 }
 print"</tr>";
 print"</tbody></table>";

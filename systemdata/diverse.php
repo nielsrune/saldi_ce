@@ -1,11 +1,10 @@
 <?php
-//                         ___   _   _   ___  _
-//                        / __| / \ | | |   \| |
-//                        \__ \/ _ \| |_| |) | |
-//                        |___/_/ \_|___|___/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------------- systemdata/diverse.php ------ patch 3.6.7 -- 2017-03-14 --
-//
+// -- systemdata/diverse.php ------ patch 3.7.2 -- 2018-11-26 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -15,7 +14,7 @@
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -24,12 +23,12 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 DANOSOFT ApS
+// Copyright (c) 2003-2018 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2012.09.20 Tilføjet integration med ebconnect
 // 2013.01.19 funktioner lagt i selvstændig fil (../includes/sys_div_func.php)
 // 2013.05.23 varelaterede rettet til varerelaterede valg.
-// 2013.12.10	Tilføjet valg om kort er betalingskort som aktiver betalingsterminal. Søg 21031210
+// 2013.12.10	Tilføjet valg om kort er betalingskort som aktiver betalingsterminal. Søg 20131210
 // 2013.12.13	Tilføjet "intern" bilagsopbevaring (box6 under ftp)
 // 2014.01.29	Tilføjet valg til automatisk genkendelse af betalingskort (kun ved integreret betalingsterminal) Søg 20140129
 // 2014.04.29	Ændret teksten så siden er mere overskuelig. Claus Agerskov ca@saldi.dk
@@ -53,10 +52,17 @@
 // 20170404 PHR ordre_valg - Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170404
 // 20170731 PHR Tilføjet 'Nulstil regnskab - 20170731
 // 20171009 PHR Tilføjet pos_font_size under pos_valg.
+// 20181029 CA  Tilføjet gavekort og tilgodehavende tilknyttet id  søg 20181029
+// 20181126 PHR	Variant_valg lagt i egen funktion.
+// 20181126 PHR	Tilvalg - Marker vare som udgået når beholdning går i minus. Søg DisItemIfNeg
+// 20181129 PHR	Tilføjet mulighed for at sætte tidszone i regnskabet. Søg DisItemIfNeg
 
 @session_start();
 $s_id=session_id();
 ob_start();
+
+ini_set('display_errors','1');
+
 $title="Diverse Indstillinger";
 $modulnr=1;
 $css="../css/standard.css";
@@ -222,7 +228,16 @@ if ($_POST) {
 	} elseif ($sektion=='vare_valg') {
 		$id=$_POST['id'];
 		$box1=if_isset($_POST['box1']);#incl_moms
+		$DisItemIfNeg_id=if_isset($_POST['DisItemIfNeg_id']);
+		$DisItemIfNeg=if_isset($_POST['DisItemIfNeg']);
 		
+		if ($DisItemIfNeg_id) $qtxt="update settings set var_value='$DisItemIfNeg' where id='$DisItemIfNeg_id'";
+		else {
+			$qtxt="insert into settings (var_grp,var_name,var_value,var_description,user_id) values ";
+			$qtxt.="('varer','DisItemIfNeg','$DisItemIfNeg',";
+			$qtxt.="'Er denn variabel sat, rettes varen til udgået, hvis beholdningen bliver negativ','0')";
+		}
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		if  (($id==0) && ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__)))) $id=$r['id'];
 		elseif ($id==0){
 			db_modify("insert into grupper (beskrivelse,kodenr,art,box1) values ('Div_valg (Varer)','5','DIV','$box1')",__FILE__ . " linje " . __LINE__);
@@ -230,7 +245,7 @@ if ($_POST) {
 			db_modify("update grupper set  box1='$box1' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
 		}
 	#######################################################################################
-	} elseif ($sektion=='varianter') {
+	} elseif ($sektion=='variant_valg') {
 		$id=if_isset($_POST['id']);
 		$variant_beskrivelse=if_isset($_POST['variant_beskrivelse']);
 		$variant_id=if_isset($_POST['variant_id']);
@@ -395,6 +410,8 @@ if ($_POST) {
 		$terminal_ip=if_isset($_POST['terminal_ip']);
 		$koekkenprinter=if_isset($_POST['koekkenprinter']);
 		$betalingskort=if_isset($_POST['betalingskort']); #20131210
+		$gavekort=if_isset($_POST['gavekort']); #20181029
+		$gavekorttekst=if_isset($_POST['gavekorttekst']); #20181029
 		$div_kort_kto=if_isset($_POST['div_kort_kto']); #20140129
 		$bordantal=if_isset($_POST['bordantal']); #20140508
 		$bord=if_isset($_POST['bord']); #20140508
@@ -404,6 +421,7 @@ if ($_POST) {
 		$vis_saet=if_isset($_POST['vis_saet']);
 		$bordvalg=if_isset($_POST['bordvalg']);
 		$box14_2=if_isset($_POST['udtag0']);
+
 		$id3=if_isset($_POST['id3'])*1;
 		$box1_3=if_isset($_POST['brugervalg']);
 		$pfs=if_isset($_POST['pfs']);
@@ -483,6 +501,11 @@ if ($_POST) {
 		$box5=NULL;
 		$box6=NULL;
 		
+		if ($box3_2) {
+			if ($_COOKIE['saldi_printserver']) setcookie("saldi_printserver","0",time()-60,'/');
+			if ($_COOKIE['salditerm']) setcookie("salditerm","0",time()-60,'/'); #setcookie("salditerm","0",time()-1);
+		}
+		
 		for ($x=0;$x<count($ValutaKode);$x++) {
 			$qtxt="update grupper set box4='$VKbox4[$x]',box5='$VKbox5[$x]',box6='$VKbox6[$x]' WHERE art='VK' and box1='$ValutaKode[$x]'";	
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
@@ -500,10 +523,14 @@ if ($_POST) {
 					$box5.=chr(9).trim($korttyper[$x]);
 					$box6.=chr(9).trim($kortkonti[$x]);
 					$box5_2.=chr(9).trim($betalingskort[$x]);	 #20121210
+					$box4_3.=chr(9).trim($gavekort[$x]);	 #20181029
+					$box5_3.=chr(9).trim($gavekorttekst[$x]);	 #20181029
 				} else {
 					$box5=trim($korttyper[$x]);
 					$box6=trim($kortkonti[$x]);
 					$box5_2=trim($betalingskort[$x]);	#20121210
+					$box4_3=trim($gavekort[$x]);	#20181029
+					$box5_3=trim($gavekorttekst[$x]);	#20181029
 				}
 			}
 		}
@@ -538,7 +565,7 @@ if ($_POST) {
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		if ($id3) { 
-			$qtxt="update grupper set box1='$box1_3',box2='$box2_3',box3='$box3_3',box4='',box5='',box6='',box7='',";
+			$qtxt="update grupper set box1='$box1_3',box2='$box2_3',box3='$box3_3',box4='$box4_3',box5='$box5_3',box6='',box7='',";	#20181029
 			$qtxt.="box8='',box9='',box10='',box11='',box12='',box13='',box14='' WHERE id = '$id3'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
@@ -717,6 +744,19 @@ if ($_POST) {
 
 			}
 			include("../includes/online.php");
+		}	elseif (isset($_POST['opdat_tidszone'])) {
+			$timezone=$_POST['timezone'];
+			if ($timezone) {
+				$r=db_fetch_array(db_select("select id from settings where var_name='timezone'",__FILE__ . " linje " . __LINE__));
+				if ($r['id']) $qtxt="update settings set var_value='$timezone', user_id='0' where id='$r[id]'";
+				else {
+					$qtxt="insert into settings (var_name,var_value,var_description,user_id)";
+					$qtxt.=" values ";
+					$qtxt.="('timezone','$timezone','Tidszone. Anvendes hvis regnskabet anvender anden tidszone end serveren','0')";
+				}
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				setcookie("timezone",$timezone,time()+60*60*24*30,'/');
+			}
 		} elseif (isset($_POST['nulstil']) && $_POST['nulstil']=='Nulstil') { #20170731
 			$qtxt="TRUNCATE batch_kob,batch_salg,betalinger,betalingsliste,budget,jobkort,kassekladde,kladdeliste,kostpriser,lagerstatus,ordrelinjer,ordrer,pos_betalinger,shop_ordrer,transaktioner";
 			$qtxt.=" restart identity";
@@ -808,8 +848,6 @@ if ($_POST) {
 	$sektion=if_isset($_GET['sektion']);
 } 
 
-
-
 if(db_fetch_array(db_select("select id from grupper WHERE art = 'DIV' and kodenr = '2' and box6='on'",__FILE__ . " linje " . __LINE__))) $docubizz='on';
 
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" height=\"100%\"><tbody>";
@@ -823,6 +861,7 @@ if ($menu != 'T') {
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=personlige_valg>Personlige valg</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=ordre_valg>Ordrerelaterede valg</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=vare_valg>Varerelaterede valg</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=variant_valg>Variantrelaterede valg</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=shop_valg>Shoprelaterede valg</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=api_valg>API</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=labels>Labels</a></td></tr>\n";
@@ -846,7 +885,8 @@ if ($sektion=="kontoindstillinger") kontoindstillinger($regnskab,$skiftnavn);
 if ($sektion=="provision") provision();
 if ($sektion=="personlige_valg") personlige_valg();
 if ($sektion=="ordre_valg") ordre_valg();
-if ($sektion=="vare_valg" || $sektion=="varianter" || $sektion=="label") vare_valg();
+if ($sektion=="vare_valg" || $sektion=="label") vare_valg();
+if ($sektion=="variant_valg") variant_valg();
 if ($sektion=="shop_valg") shop_valg();
 if ($sektion=="api_valg") api_valg();
 if ($sektion=="labels") labels($valg);

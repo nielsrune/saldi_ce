@@ -49,6 +49,7 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 
 if (!isset($exec_path)) $exec_path="/usr/bin";
+$udfil=$zx=NULL;
 
 $ps_fil=if_isset($_GET['ps_fil']);
 $valg=if_isset($_GET['valg']);
@@ -58,9 +59,16 @@ $udskriv_til=if_isset($_GET['udskriv_til']);
 $udskrift=if_isset($_GET['udskrift']);
 $bgr=if_isset($_GET['bgr']);# stillads
 $art=if_isset($_GET['art']);
+$ordreliste=if_isset($_GET['ordreliste']);
+$ordre_antal=if_isset($_GET['ordre_antal']);
+$returside=if_isset($_GET['returside']);
+
 if ($udskriv_til=='historik') {
 	historik($id,$ps_fil);
 	$valg="tilbage";
+}
+if ($ordreliste) {
+	$ordre_id = explode(",",$ordreliste);
 }
 if ($id && !$art) {
 	$r=db_fetch_array(db_select("select art from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__));
@@ -104,31 +112,132 @@ if (!$valg) {
 	} else $valg="pdf";
 }
 if ($valg) {
-  $r = db_fetch_array(db_select("select box1,box2,box3 from grupper where art='PV'",__FILE__ . " linje " . __LINE__));
+	$log=fopen("../temp/$db/udskriv.log","a");
+	fwrite($log,__line__." Valg: $valg\n");
+	$qtxt="select box1,box2,box3 from grupper where art='PV'";
+	fwrite($log,__line__." $qtxt\n");
+  $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
   if ($valg=="pdf" || $valg=="ip")  {
-		print "<!--";
+#		print "<!--";
     if ($r['box2']) {
+	fwrite($log,__line__." system (\"$r[box2] ../temp/$ps_fil ../temp/$ps_fil.pdf\"\n");
 			system ("$r[box2] ../temp/$ps_fil ../temp/$ps_fil.pdf");
-		} elseif ($r['box3'] && $udskrift!='kontokort') {
-			$i=1;
+		} elseif ($r['box3'] && $udskrift!='kontokort') { # Brug html
+		fwrite($log,__line__." unlink(\"../temp/".$ps_fil."_*.pdf\"\n");
+		if (file_exists("../temp/".$ps_fil."_*.pdf")) unlink("../temp/".$ps_fil."_*.pdf");
+		list($a,$b,$c)=explode("/",$ps_fil);
+		$htmfil=glob("../temp/$a/$b/*.htm");
+		$indfil='';
+		for ($i=0;$i<count($htmfil);$i++) {
+			if (filesize($htmfil[$i])) {
+				$pdf[$i]=str_replace("htm","pdf",$htmfil[$i]);
+				fwrite($log,__line__." $pdf[$i]=str_replace(\"htm\",\"pdf\",$htmfil[$i])\n");
+				fwrite($log,__line__." system (\"weasyprint -e UTF-8 $htmfil[$i] $pdf[$i]\")\n");
+				system ("weasyprint -e UTF-8 $htmfil[$i] $pdf[$i]");
+				($indfil)?$indfil.=" ".$pdf[$i]:$indfil=$pdf[$i];
+				fwrite($log,__line__." indfil $indfil\n");
+			} 
+			if (count($htmfil)>1) {
+				$udfil="../temp/$a/$b/udskrift.pdf";
+				fwrite($log,__line__." $udfil=\"../temp/$a/$b/udskrift.pdf\"\n");
+				$ps_fil="/$a/$b/udskrift";
+				fwrite($log,__line__." $ps_fil=\"/$a/$b/udskrift\"\n");
+			} else $udfil=NULL;
+		} 
+		if ($udfil) {
+			system ("pdftk $indfil output $udfil");
+			fwrite($log,__line__." system (\"pdftk $indfil output $udfil\")\n");
+			for ($i=0;$i<count($htmfil);$i++) {
+				unlink ($htmfil[$i]);
+				fwrite($log,__line__." unlink ($htmfil[$i])\n");
+				if (isset($pdffil[$i]) && file_exists($pdffil[$i])) {
+					unlink ($pdffil[$i]);
+					fwrite($log,__line__." unlink ($pdffil[$i])\n");
+				}
+			}
+		}
+	} else { # Brug PostScript 
+		if (file_exists("../temp/".$ps_fil."_*.pdf")) {
+			unlink("../temp/".$ps_fil."_*.pdf");
+			fwrite($log,__line__." unlink(\"../temp/".$ps_fil."_*.pdf\"\n");
+		}
+		list($a,$b,$c)=explode("/",$ps_fil);
+		$psfil=glob("../temp/$a/$b/*.ps");
+#		fwrite($log,__line__." $psfil=glob(\"../temp/$a/$b/*.ps\")\n");
+		$indfil='';
+		for ($i=0;$i<count($psfil);$i++) {
+#				fwrite($log,__line__." PSFIL $psfil[$i]\n");
+			if (filesize($psfil[$i])) {
+				$pdf[$i]=str_replace("ps","pdf",$psfil[$i]);
+				fwrite($log,__line__." $pdf[$i]=str_replace(\"ps\",\"pdf\",$psfil[$i])\n");
+				fwrite($log,__line__." system (\"ps2pdf  $psfil[$i] $pdf[$i]\")\n");
+				system ("ps2pdf $psfil[$i] $pdf[$i]");
+				($indfil)?$indfil.=" ".$pdf[$i]:$indfil=$pdf[$i];
+				fwrite($log,__line__." indfil $indfil\n");
+			} 
+			if (count($psfil)>1) {
+				$udfil="../temp/$a/$b/udskrift.pdf";
+				fwrite($log,__line__." $udfil=\"../temp/$a/$b/udskrift.pdf\"\n");
+				$ps_fil="/$a/$b/udskrift";
+				fwrite($log,__line__." $ps_fil=\"/$a/$b/udskrift\"\n");
+			} else $udfil=NULL;
+		}
+		if ($udfil) {
+		system ("pdftk $indfil output $udfil");
+		fwrite($log,__line__." system (\"pdftk $indfil output $udfil\")\n");
+		for ($i=0;$i<count($psfil);$i++) {
+			unlink ($psfil[$i]);
+			fwrite($log,__line__." unlink ($psfil[$i])\n");
+				if (isset($pdffil[$i]) && file_exists($pdffil[$i])) {
+				unlink ($pdffil[$i]);
+				fwrite($log,__line__." unlink ($pdffil[$i])\n");
+			}
+			}
+		}
+	}
+	
+	
+	/*
+		foreach(glob("../temp/*.htm") as $htmfil[$i]) {
+			echo "$htmfil[$i]<br>";
+			$i++;
+		}
+		/*
+/*
 			if (file_exists("../temp/".$ps_fil.".htm")) {
+echo __line__." ../temp/".$ps_fil.".htm<br>";
+#xit;
 				$indfil="../temp/".$ps_fil.".htm";
 				$udfil="../temp/".$ps_fil.".pdf";
 				system ("weasyprint -e UTF-8 $indfil $udfil");
-			} else {
+				unlink ($indfil);
+			} 
+			$i=2;
+echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
+#xit;
 			while(file_exists("../temp/".$ps_fil."_".$i.".htm")) {
+echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
 				$indfil="../temp/".$ps_fil."_".$i.".htm";
 				$udfil="../temp/".$ps_fil."_".$i.".pdf";
 				system ("weasyprint -e UTF-8 $indfil $udfil");
+					unlink ($indfil);
 				$i++;	
 }
-			}
-			system ("pdftk ".$ps_fil."_*.pdf output ".$ps_fil.".pdf");
-		} else {
-			system ("$exec_path/ps2pdf ../temp/$ps_fil ../temp/$ps_fil.pdf");
+*/
+#				echo __line__." pdftk ../temp/".$ps_fil."_*.pdf output ../temp/".$ps_fil.".pdf<br>";
+#			system ("pdftk ../temp/".$ps_fil."_*.pdf output ../temp/".$ps_fil.".pdf");
+#echo __line__."<br>";
+#exit;
+	if ($zx) { # Brug PostScript 
+#		$tmp = system ("ls");
+#		echo $tmp;
+			fwrite($log,__line__." system (\"$exec_path/ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf\")\n");
+			system ("$exec_path/ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf");
 		}
-		system ("$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil");
-		print "-->";
+#echo "$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil.ps<br>";
+#		system ("$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil.ps");
+#		print "-->";
+		fwrite($log,__line__." if (file_exists(\"../temp/$ps_fil.pdf\")\n");
 		if (file_exists("../temp/$ps_fil.pdf")) {
 			if (strpos($ps_fil,'tilbud') && file_exists("../logolib/$db_id/tilbud_bg.pdf")) $bg_fil="../logolib/$db_id/tilbud_bg.pdf";
 			elseif (strpos($ps_fil,'ordre') && file_exists("../logolib/$db_id/ordrer_bg.pdf")) $bg_fil="../logolib/$db_id/ordrer_bg.pdf";
@@ -137,9 +246,13 @@ if ($valg) {
 			print "<!-- kommentar for at skjule uddata til siden \n";
 			if (system("which pdftk") && file_exists($bg_fil) && $udskriv_til != 'PDF-tekst' && $udskriv_til != 'fil') {
 				$out="../temp/".$ps_fil."x.pdf";
+				fwrite($log,__line__." $out=\"../temp/".$ps_fil."x.pdf\"\n");
 				system ("$exec_path/pdftk ../temp/$ps_fil.pdf background $bg_fil output $out");
+				fwrite($log,__line__." system (\"$exec_path/pdftk ../temp/$ps_fil.pdf background $bg_fil output $out\")\n");
 				unlink ("../temp/$ps_fil.pdf");
+				fwrite($log,__line__." unlink (\"../temp/$ps_fil.pdf\")\n");
 				system  ("mv $out ../temp/$ps_fil.pdf");
+				fwrite($log,__line__." system  (\"mv $out ../temp/$ps_fil.pdf\")\n");
 			}
 			print "--> \n";
 			if ($valg=='ip') {
@@ -156,12 +269,15 @@ if ($valg) {
 				exit;
 			}
 			print "<table width=100% height=100%><tbody>";
-  		print "<td width=\"10%\" height=\"1%\" $top_bund><a href=\"udskriv.php?valg=tilbage&id=$id&art=$art\" accesskey=\"L\">Luk</a></td>";
+			if ($returside) $href="\"$returside\" accesskey=\"L\"";
+			else $href="\"udskriv.php?valg=tilbage&id=$id&art=$art\" accesskey=\"L\"";
+			print "<td width=\"10%\" height=\"1%\" $top_bund><a href=$href>$ordre_antal Luk</a></td>";
 			print "<td width=\"80%\" $top_bund align=\"center\" title=\"Klik her for at &aring;bne filen i nyt vindue, h&oslash;jreklik her for at gemme.\">";
 			print "<a href=../temp/$ps_fil.pdf target=blank>Vis PDF udskrift</a>";
 #			print "<a href=../temp/$ps_fil.htm target=blank>Vis HTML udskrift</a>";
 			print "</td>";
-  		print "<td width=\"10%\" $top_bund align = \"right\"title=\"Klik her for at &aring;bne filen i tiff format\"><a href=\"../temp/$ps_fil.tiff\">TIFF-version</a></td>";
+#  		print "<td width=\"10%\" $top_bund align = \"right\"title=\"Klik her for at &aring;bne filen i tiff format\"><a href=\"../temp/$ps_fil.tiff\">TIFF-version</a></td>";
+  		print "<td width=\"10%\" $top_bund align = \"right\"></td>";
 			print "<tr><td width=100% height=99% align=\"center\" valign=\"middle\" colspan=\"3\"><iframe frameborder=\"0\" width=\"100%\" height=\"100%\" scrolling=\"auto\" src=\"../temp/$ps_fil.pdf\"></iframe></td></tr>";
 			print "</tbody></table>";
 			print exit;
@@ -182,7 +298,7 @@ if ($valg) {
 		$ps_fil="formularprint.php?id=$id&formular=3&udskriv_til=printer&ip=$ip";
 }
 
-
+  fclose ($log);
   #xit;
 }
 print "<table width=\"100%\" height=\"75%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";

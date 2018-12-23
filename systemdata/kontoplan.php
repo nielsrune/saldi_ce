@@ -110,7 +110,7 @@ print "</tr>\n";
 		elseif ($row['kontotype']=='R') print "<td><span style=\"color:$color;\">Resultat = $row[fra_kto]<br></span></td>\n";
 		else print "<td><span style=\"color:$color;\">Sideskift<br></span></td>\n";
 		print "<td align=\"center\"><span style=\"color:$color;\">$row[moms]<br></span></td>\n";
-		if (($row['kontotype']!='H')&&($row['kontotype']!='X'))print "<td align=\"right\" title=\"DKK ".dkdecimal($row['saldo']*1)."\"><span style=\"color:$color;\">".dkdecimal($row['saldo']*100/$row['valutakurs'])."<br></span></td>\n";
+		if (($row['kontotype']!='H')&&($row['kontotype']!='X'))print "<td align=\"right\" title=\"DKK ".dkdecimal($row['saldo']*1,2)."\"><span style=\"color:$color;\">".dkdecimal($row['saldo']*100/$row['valutakurs'],2)."<br></span></td>\n";
 		else print "<td><br></td>\n";
 		print "<td align=\"center\"><span style=\"color:$color;\">$valutanavn[$valuta]<br></span></td>\n";		
 		print "<td align=\"center\"><span style=\"color:$color;\">$row[genvej]<br></span></td>\n";		

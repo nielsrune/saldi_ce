@@ -293,7 +293,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 							if ($fp=fopen($filnavn,'r')) {
 								$terminal_ip=trim(fgets($fp));
 								fclose ($fp);
-									setcookie("salditerm",$terminal_ip,time()+3600);
+									setcookie("salditerm",$terminal_ip,time()+3600,'/');
 								} else $dis=" disabled='disabled' ";
 							}
 						} else $dis=" disabled='disabled' ";
@@ -497,19 +497,16 @@ function tastatur($kasse,$status) {
 	print "<td><a href=pos_ordre.php?id=$id&kasse=$kasse&kassebeholdning=on>Kasseopt&aelig;lling</a></td>\n";
 */
 	if ($terminal_ip) {
-echo __line__." $terminal_ip<br>";
 		if ($terminal_ip=='box' && $_COOKIE['salditerm']) $terminal_ip=$_COOKIE['salditerm'];
-echo __line__." $terminal_ip<br>";
 		if ($terminal_ip=='box' || $terminal_ip=='saldibox') {
 #			$filnavn="$url/kasse/".$_SERVER['REMOTE_ADDR'].".ip";
 			$filnavn="http://saldi.dk/kasse/".$_SERVER['REMOTE_ADDR'].".ip";
 			if ($fp=fopen($filnavn,'r')) {
 				$terminal_ip=trim(fgets($fp));
-echo __line__." $terminal_ip<br>";
 				fclose ($fp);
 			}
 		} else {
-			setcookie("salditerm",$terminal_ip,time()+3600);
+			setcookie("salditerm",$terminal_ip,time()+3600,'/');
 		}	
 			$href="http://$terminal_ip/pointd/point.php?url=$url&id=$id&kasse=$kasse";
 			print "<td width=\"$width\"><input $disabled type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"Kort\nterminal\"></td>\n";
