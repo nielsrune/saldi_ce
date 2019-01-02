@@ -1212,7 +1212,7 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 
 	($udskriv)?$div='':$div='</div>';
 	?>
-	<script	src="../javascript/jquery.formnavigation.js/jquery-1.10.2.min.js"></script>
+	<script	src="../javascript/jquery-1.10.2.min.js"></script>
 	<script	src="../javascript/jquery.formnavigation.js"></script>
 	<script>
 	$(document).ready(function () {
@@ -2515,7 +2515,7 @@ if (!$fokus && $x>1) {
 }
 print "</tbody></table>";
 print "<script language=\"javascript\">";
-print "document.kassekladde.$fokus.focus()";;
+print "document.kassekladde$fokus.focus()";;
 print "</script>";
 ?>
 </body></html>

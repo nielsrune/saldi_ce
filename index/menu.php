@@ -626,3 +626,74 @@ if (!$row = db_fetch_array($query)) {
 
 }
 ?>
+
+<!-- HOTKEYS -->
+<script type="text/javascript">
+//Niels Rune Brandt
+
+// MAPPINGS
+var menuItems = {
+7575: {key: "KK", link: "../finans/kladdeliste.php?returside=../index/menu.php", page: "Kassekladde", text: "Kassekladde", order: 0},	// KK
+8283: {key: "RS", link: "../finans/regnskab.php?returside=../index/menu.php", page: "Regnskab", text: "Regnskab", order: 1},		// RS
+7082: {key: "FR", link: "../finans/rapport.php?returside=../index/menu.php", page: "Finansrapporter", text: "Rapporter", order: 2},	// FR
+6879: {key: "DO", link: "../debitor/ordreliste.php?returside=../index/menu.php", page: "Debitorordre", text: "Ordre", order: 3},	// DO
+6866: {key: "DB", link: "../debitor/debitor.php?returside=../index/menu.php", page: "Debitorkonti", text: "Konti", order: 4},	// DB
+6882: {key: "DR", link: "../debitor/rapport.php?returside=../index/menu.php", page: "Debitorrapporter", text: "Rapporter", order: 5},	// DR
+7579: {key: "KO", link: "../kreditor/ordreliste.php?returside=../index/menu.php", page: "Kreditorordre", text: "Ordre", order: 6},	// KO
+7568: {key: "KD", link: "../kreditor/kreditor.php?returside=../index/menu.php", page: "Kreditorkonti", text: "Konti", order: 7},	// KD
+7582: {key: "KR", link: "../kreditor/rapport.php?returside=../index/menu.php", page: "Kreditorrapporter", text: "Rapporter", order: 8},	// KR
+8665: {key: "VA", link: "../lager/varer.php?returside=../index/menu.php", page: "Varer", text: "Varer", order: 9},			// VA
+8677: {key: "VM", link: "../lager/modtageliste.php?returside=../index/menu.php", page: "Varemodtagelse", text: "Varemodtagelse", order: 10},	// VM
+7682: {key: "LR", link: "../lager/rapport.php?returside=../index/menu.php", page: "Lagerrapporter", text: "Rapporter", order: 11},	// LR
+7580: {key: "KP", link: "../systemdata/kontoplan.php?returside=../index/menu.php", page: "Kontoplan", text: "Kontoplan", order: 12},	// KP
+7378: {key: "IN", link: "../systemdata/syssetup.php?returside=../index/menu.php", page: "Indstillinger", text: "Indstillinger", order: 13},	// IN
+8375: {key: "SK", link: "../admin/backup.php?returside=../index/menu.php", page: "Sikkerhedskopi", text: "Sikkerhedskopi", order: 14},		// SK
+"order": [7575,8283,7082,6879,6866,6882,7579,7568,7582,8665,8677,7682,7580,7378,8375]
+};
+
+var firstChars = [68, 70, 73, 75, 76, 82, 83, 86];
+var secondChars = [65, 66, 68, 75, 77, 78, 79, 80, 82, 83];
+
+// VARS
+var buffer = '';
+var timer = null;
+var timeout = 1000;
+
+var toggle = false;
+
+function clear(){
+	buffer = '';
+}
+
+// MAGIC
+$(document).keyup(function(e){
+    if(!e.altKey && buffer.length != 2 && firstChars.indexOf(e.which) != -1){        // TRUE hvis buffer er tom og gyldig tast
+        buffer = '' + e.which;                                                       // Gem tast i buffer
+        clearTimeout(timer);
+        timer = setTimeout(clear, timeout);                                          // Gem buffer i nn millisekunder
+    } else if(buffer.length == 2 && secondChars.indexOf(e.which) != -1) {            // TRUE hvis forrige tast er gemt i buffer
+        buffer = '' + buffer + e.which;                                              // Dan kombination
+        clearTimeout(timer);
+    }
+    if(buffer.length == 4 && menuItems.hasOwnProperty(buffer) && $("a[href*='"+menuItems[buffer]['link']+"']").length > 0 ){ // TRUE hvis kombination er tilgængelig
+        window.location = menuItems[buffer]['link'];                                 // viderestil til valgt side
+    } else if(buffer.length == 4 && (!menuItems.hasOwnProperty(buffer) || $("a[href*='"+menuItems[buffer]['link']+"']").length == 0 ) ) {
+    }
+
+    if(!e.ctrlKey && toggle == true){
+        $.each(menuItems["order"], function(index, val){
+            $("a[href*='"+menuItems[val]['link']+"']").text(menuItems[val]['text']);
+       });
+    }
+});
+
+$(document).keydown(function(e){
+    if(e.ctrlKey){
+        toggle = true;
+        $.each(menuItems["order"], function(index, val){
+            $("a[href*='"+menuItems[val]['link']+"']").text(menuItems[val]['key']);
+       });
+    }
+});
+</script>
+<!-- HOTKEYS //-->

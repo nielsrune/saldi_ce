@@ -90,7 +90,7 @@ $tjek=0;
 		print "<tr bgcolor=\"$linjebg\">";
 		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
 			if ($popup) print "<td onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$kladde=window.open('kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
-			else print "<td><a href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
+			else print "<td><a class=\"kladde\" href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
 		}
 		else {print "<td><span title= 'Kladde er l&aring;st af $row[hvem]'>$row[id]</span></td>";}
 		$kladdedato=dkdato($row['kladdedate']);
@@ -109,7 +109,7 @@ $tjek=0;
 		print "<tr bgcolor=\"$linjebg\">";
 		if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn)) {
 		if ($popup) print "<td  onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$kladde=window.open('kassekladde.php?kladde_id=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
-		else print "<td><a href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
+		else print "<td><a class=\"kladde\" href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
 		}
 		else {print "<td><span title= 'Kladde er l&aring;st af $row[hvem]'>$row[id]</span></td>";}
 #		print "<tr>";
@@ -133,7 +133,7 @@ $tjek=0;
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
 		if ($popup) print "<td  onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$kladde=window.open('kassekladde.php?kladde_id=$row[id]&tjek=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
-		else print "<td><a href=kassekladde.php?kladde_id=$row[id]&tjek=$row[id]&returside=kladdeliste.php>$row[id]</a><br></td>";
+		else print "<td><a class=\"kladde\" href=kassekladde.php?kladde_id=$row[id]&tjek=$row[id]&returside=kladdeliste.php>$row[id]</a><br></td>";
 		$kladdedato=dkdato($row['kladdedate']);
 		print "<td>$kladdedato<br></td>";
 		print "<td>".htmlentities(stripslashes($row['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
@@ -160,7 +160,7 @@ $tjek=0;
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
 		if ($popup) print "<td  onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$kladde=window.open('kassekladde.php?kladde_id=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
-		else print "<td><a href=kassekladde.php?kladde_id=$row[id]&returside=kladdeliste.php>$row[id]</a><br></td>";
+		else print "<td><a class=\"kladde\" href=kassekladde.php?kladde_id=$row[id]&returside=kladdeliste.php>$row[id]</a><br></td>";
 		$kladdedato=dkdato($row['kladdedate']);
 		print "<td>$kladdedato<br></td>";
 		print "<td>".htmlentities(stripslashes($row['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
@@ -187,5 +187,26 @@ $tjek=0;
 </table>
 	</td></tr>
 </tbody></table>
+<!-- HOTKEYS -->
+<script type="text/javascript">
+var chars = [48,49,50,51,52,53,54,55,56,57,96,97,98,99,100,101,102,103,104,105];
 
+var buffer = '';
+var timer = null;
+var timeout = 1000;
+
+$(document).keyup(function(e){
+	if(chars.indexOf(e.which) != -1){
+		buffer = buffer + e.key;
+		clearTimeout(timer);
+		timer = setTimeout(function(){ $("a.kladde[href*='kladde_id\\="+buffer+"\\&']")[0].click(); }, timeout);
+	} else if(e.which == 83){		// S (seneste)
+		console.log( $("a.kladde") );
+		$("a.kladde:first")[0].click();
+	} else if(e.which == 76){		// L (luk)
+		$("a[accesskey='L']")[0].click();
+	}
+});
+</script>
+<!-- HOTKEYS //-->
 </body></html>
