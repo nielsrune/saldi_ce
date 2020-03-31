@@ -83,7 +83,7 @@ if ((isset($_POST['regnskab']))||($_GET['login']=='test')) {
 		}
 		if ($lukket) {
 			if (!$mastername) $mastername='DANOSOFT';
-			print "<BODY onLoad=\"javascript:alert('Regnskab $regnskab er lukket!\\nKontakt $mastername for gen&aring;bning')\">";
+			print "<BODY onload=\"javascript:alert('Regnskab $regnskab er lukket!\\nKontakt $mastername for gen&aring;bning')\">";
 			login ($regnskab,$brugernavn);
 #			print "<meta http-equiv=\"refresh\" content=\"0;URL=index.php?regnskab=".htmlentities($regnskab,ENT_COMPAT,$charset)."&navn=".htmlentities($brugernavn,ENT_COMPAT,$charset)."\">";
 			exit;
@@ -98,7 +98,7 @@ if ((isset($_POST['regnskab']))||($_GET['login']=='test')) {
 		$tmp=date("U");
 		if ($masterversion > "1.1.3") db_modify("update regnskab set sidst='$tmp' where id = '$db_id'",__FILE__ . " linje " . __LINE__);
 	}	else {
-		if ($regnskab) print "<BODY onLoad=\"javascript:alert('Regnskab $regnskab findes ikke')\">";
+		if ($regnskab) print "<BODY onload=\"javascript:alert('Regnskab $regnskab findes ikke')\">";
 		login (htmlentities($regnskab,ENT_COMPAT,$charset),htmlentities($brugernavn,ENT_COMPAT,$charset));
 #		print "<meta http-equiv=\"refresh\" content=\"0;URL=index.php?regnskab=".htmlentities($regnskab,ENT_COMPAT,$charset)."&navn=".htmlentities($brugernavn,ENT_COMPAT,$charset)."\">";		exit;
 	}
@@ -118,7 +118,7 @@ if ((!(($regnskab=='test')&&($brugernavn=='test')&&($password=='test')))&&(!(($r
 #	if ($y > $bruger_max) {
 #		$headers = 'From: saldi@saldi.dk'."\r\n".'Reply-To: saldi@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 #		mail("saldi@saldi.dk", "Brugerantal ($x) overskredet for $regnskab / $db", "$brugernavn logget ind som bruger nr $y.", "$headers");
-#		print "<BODY onLoad=\"javascript:alert('Max antal samtidige brugere ($x) er overskredet.')\">";
+#		print "<BODY onload=\"javascript:alert('Max antal samtidige brugere ($x) er overskredet.')\">";
 #	}
 	$q = db_select("select * from online where brugernavn = '".db_escape_string($brugernavn)."' and db = '$db' and session_id != '$s_id'",__FILE__ . " linje " . __LINE__);
 	if ($r = db_fetch_array($q)){
@@ -128,7 +128,7 @@ if ((!(($regnskab=='test')&&($brugernavn=='test')&&($password=='test')))&&(!(($r
 			exit;
 		} elseif (!$fortsaet) {
 			$tmp=date("d-m-y", $last_time)." kl. ".date("H:i", $last_time);
-			print "<BODY onLoad=\"javascript:alert('Velkommen $brugernavn. Du har ikke logget korrekt af da du sidst var online d. $tmp')\">";
+			print "<BODY onload=\"javascript:alert('Velkommen $brugernavn. Du har ikke logget korrekt af da du sidst var online d. $tmp')\">";
 			db_modify("delete from online where brugernavn = '".db_escape_string($brugernavn)."' and db = '$db' and session_id != '$s_id'",__FILE__ . " linje " . __LINE__);
 		}
 	}
@@ -198,7 +198,7 @@ if (isset ($brug_timestamp)) {
 					$rettigheder=trim($row['rettigheder']); #20150127
 					$regnskabsaar=$row['regnskabsaar'];
 				} 
-			} elseif ($tmp_kode==$password) print "<BODY onLoad=\"javascript:alert('Midlertidig adgangskode udløbet')\">";
+			} elseif ($tmp_kode==$password) print "<BODY onload=\"javascript:alert('Midlertidig adgangskode udløbet')\">";
 		}
 	}
 }
@@ -223,7 +223,7 @@ if ($bruger_id) {
 			$diff=$post_antal-$post_max;
 			if ($sqdb=="gratis" && $post_antal>$post_max) {
 				$txt="Dit maksikale posteringsantal ($post_max) er overskredet.\\nDer er i alt foretaget $post_antal posteringer inden for de sidste 12 m&aring;neder.\\nDu kan bestille et professionelt regnskab p&aring; http://saldi.dk med hotline og automatisk \\nsikkerhedskopiering p&aring; hurtigere systemer, og let flytte hele dit regnskab dertil.\\nEller du kan kontakte DANOSOFT p&aring; tlf 4690 2208 og h&oslash;re om mulighederne for ekstra gratis posteringer.\\n";
-				print "<BODY onLoad=\"javascript:alert('$txt')\">";
+				print "<BODY onload=\"javascript:alert('$txt')\">";
 			}
 #		}
 	}
@@ -255,7 +255,7 @@ if(!isset($afbryd)){
 } else {
 	include("../includes/connect.php");
 	db_modify("delete from online where session_id='$s_id'",__FILE__ . " linje " . __LINE__);
-	print "<BODY onLoad=\"javascript:alert('Fejl i brugernavn eller adgangskode')\">";
+	print "<BODY onload=\"javascript:alert('Fejl i brugernavn eller adgangskode')\">";
 	login (htmlentities($regnskab,ENT_COMPAT,$charset),htmlentities($brugernavn,ENT_COMPAT,$charset));
 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=index.php?regnskab=".htmlentities($regnskab,ENT_COMPAT,$charset)."&navn=".htmlentities($brugernavn,ENT_COMPAT,$charset)."\">";
 	exit;
@@ -329,7 +329,7 @@ function login ($regnskab,$brugernavn) {
 	print "<td style=\"border: 1px solid rgb(180, 180, 255);padding: 0pt 0pt 1px;;background:url(../img/grey1.gif)\" width=\"45%\" align = \"right\">&nbsp;</td></tr>\n";
 	print "</tbody></table></td></tr><tr><td align=\"center\" valign=\"middle\">\n"; # <- tabel 1.1 slut
 	print "<table width=\"350\" align=\"center\" border=\"5\" cellspacing=\"5\" cellpadding=\"5\"><tbody>"; # tabel 1.2 ->
-	print "<tr><td><FORM name=\"login\" METHOD=\"POST\" ACTION=\"login.php\" onSubmit=\"return handleLogin(this);\"><table width=\"100%\" align=center border=\"0\" cellspacing=\"0\" cellpadding=\"1\"><tbody>"; # tabel 1.2.1 ->
+	print "<tr><td><FORM name=\"login\" METHOD=\"POST\" ACTION=\"login.php\" onsubmit=\"return handleLogin(this);\"><table width=\"100%\" align=center border=\"0\" cellspacing=\"0\" cellpadding=\"1\"><tbody>"; # tabel 1.2.1 ->
 	if (isset($mastername)&&$mastername) $tmp="<big><big><big><b>$mastername</b></big></big></big>";   
 	elseif (strpos($_SERVER['PHP_SELF'],"beta")) $tmp="<big><big><big><b>!!! BETA !!!</b></big></big></big>";
 	else $tmp="<big><big><big><b>SALDI</b></big></big></big>";

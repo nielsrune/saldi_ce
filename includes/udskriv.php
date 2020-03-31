@@ -329,7 +329,7 @@ echo __line__." $returside<br>";
 			print "<tr><td width=100% height=99% align=\"center\" valign=\"middle\" colspan=\"3\"><iframe frameborder=\"0\" width=\"100%\" height=\"100%\" scrolling=\"auto\" src=\"../temp/$ps_fil.pdf\"></iframe></td></tr>";
 			print "</tbody></table>";
 			print exit;
-		} else print "<BODY onLoad=\"javascript:alert('PDF-fil ikke fundet - er PS2PDF installeret?')\">";
+		} else print "<BODY onload=\"javascript:alert('PDF-fil ikke fundet - er PS2PDF installeret?')\">";
 	}
   if ($valg=="printer") {
     system ("$r[box1] ../temp/$ps_fil");
@@ -376,7 +376,7 @@ global $exec_path;
 	else $ps2pdf="$exec_path/ps2pdf";
 
 	if (!file_exists("$filnavn")) {
-	print "<BODY onLoad=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
+	print "<BODY onload=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
 		return ('indl&aelig;sning af $filnavn fejlet');
 	}
 	$dd=date("Y-m-d");
@@ -439,10 +439,10 @@ global $exec_path;
 			$filnavn=db_escape_string($filnavn);
 			db_modify("update historik set dokument='$filnavn' where id='$bilag_id'",__FILE__ . " linje " . __LINE__);
 			$alerttekst=findtekst(490,$sprog_id);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 		} else {
 			$alerttekst=findtekst(506,$sprog_id);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 		}
 }
 ?>

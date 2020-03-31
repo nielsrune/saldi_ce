@@ -83,7 +83,7 @@ if (isset($_POST) && $_POST) {
 	$box4="$vis_lukkede".chr(9)."$vis_lev_felt".chr(9)."$vis_kostpriser".chr(9)."$href_vnr".chr(9)."$showProvision".chr(9)."$showTrademark";
 	$qtxt="update grupper set box2='$vis_VG', box3='$vis_K',box4='$box4' where art = 'VV' and box1 = '$brugernavn'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-	if ($popup) print "<BODY onLoad=\"javascript=opener.location.reload();\">";
+	if ($popup) print "<BODY onload=\"javascript=opener.location.reload();\">";
 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 }
 if (isset($_POST['gemLuk'])) print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";

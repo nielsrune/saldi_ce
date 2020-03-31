@@ -93,7 +93,7 @@ if(($_GET)||($_POST)) {
 	} elseif ($filnavn=basename($_FILES['uploadedfile']['name'])) {
 		$filtype=strtolower(substr($filnavn,-4));
 		if ($kilde=='ordrer' && $filtype!='.pdf'){
-			print "<BODY onLoad=\"javascript:alert('Der tillades kun bilag af typen PDF')\">";
+			print "<BODY onload=\"javascript:alert('Der tillades kun bilag af typen PDF')\">";
 			upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus);
 		}
 	#		$filnavn=htmlentities($filnavn,ENT_COMPAT,$charset);
@@ -213,7 +213,7 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 			system ("mv '$fra' '$til'\n");
 			if (file_exists("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn)) $tjek='ok';
 			else {
-				print "<BODY onLoad=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
+				print "<BODY onload=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
 				break 1;
 			}
 			if ($dh = opendir("../".$nfs_mappe."/".$db."/pulje/")) {
@@ -290,12 +290,12 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 				db_modify("update $kilde set dokument='".db_escape_string($filnavn)."' where id='$bilag_id'",__FILE__ . " linje " . __LINE__);
 			}
 			if (file_exists($langt_filnavn)) { #20141105
-				print "<BODY onLoad=\"javascript:alert('$filnavn er indl&aelig;st')\">";
+				print "<BODY onload=\"javascript:alert('$filnavn er indl&aelig;st')\">";
 			} else {
-				print "<BODY onLoad=\"javascript:alert('A indl&aelig;sning af $filnavn fejlet')\">";
+				print "<BODY onload=\"javascript:alert('A indl&aelig;sning af $filnavn fejlet')\">";
 			}
 		}
-	} #print "<BODY onLoad=\"javascript:alert('B indl&aelig;sning af $filnavn fejlet')\">";
+	} #print "<BODY onload=\"javascript:alert('B indl&aelig;sning af $filnavn fejlet')\">";
 	if ($funktion=='gennemse') {
 		$bilag++;
 		$tmp="../includes/bilag.php?bilag=$bilag&kilde=$kilde&kilde_id=$kilde_id&fokus=$fokus&funktion=gennemse";
@@ -444,7 +444,7 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$n
 		system("cd ../temp/$db/pulje\nrm *\ncp $tmp .\n");
 	} else {
 	
-		print "<BODY onLoad=\"javascript:alert('Ingen bilag i pulje')\">";
+		print "<BODY onload=\"javascript:alert('Ingen bilag i pulje')\">";
 		if ($kilde=="kassekladde") $tmp="../finans/kassekladde.php?kladde_id=$kilde_id&fokus=$fokus";
 		elseif ($kilde=="ordrer") $tmp="../debitor/ordre.php?id=$kilde_id&fokus=$fokus";
 		else $tmp="../debitor/historikkort.php?id=$kilde_id";

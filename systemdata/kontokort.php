@@ -142,11 +142,11 @@ echo $kurs;
 	elseif ($kontotype=='Sideskift') $kontotype='X';
 	
 
-	if ($kontonr<1) print "<BODY onLoad=\"javascript:alert('Kontonummer skal v&aelig;re et positivt heltal')\">";
+	if ($kontonr<1) print "<BODY onload=\"javascript:alert('Kontonummer skal v&aelig;re et positivt heltal')\">";
 	elseif ($id==0) {
 		$query = db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar'",__FILE__ . " linje " . __LINE__);
 		if ($row = db_fetch_array($query)){
-			print "<BODY onLoad=\"javascript:alert('Der findes allerede en konto med nr: $kontonr')\">";
+			print "<BODY onload=\"javascript:alert('Der findes allerede en konto med nr: $kontonr')\">";
 			$id=0;
 		}
 		else {
@@ -170,7 +170,7 @@ echo $kurs;
 		if (!$fra_kto){$fra_kto=0;}
 		if (!$til_kto){$til_kto=0;}
 		if ($r=db_fetch_array(db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar' and id!='$id'",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onLoad=\"javascript:alert('Der findes allerede en konto med nr: $kontonr')\">";
+			print "<BODY onload=\"javascript:alert('Der findes allerede en konto med nr: $kontonr')\">";
 		} else db_modify("update kontoplan set kontonr = $kontonr, beskrivelse = '$beskrivelse', kontotype = '$kontotype', moms = '$moms', fra_kto = '$fra_kto', til_kto = '$til_kto', genvej='$genvej', lukket = '$lukket' where id = '$id'",__FILE__ . " linje " . __LINE__);
 	}
 	genberegn($regnaar);

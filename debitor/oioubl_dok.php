@@ -103,11 +103,11 @@ if ($r['box8']) {
 		$langt_filnavn="../temp/$db/".$printfilnavn;
 		if (file_exists($langt_filnavn)) {
 			$printfilnavn=db_escape_string($printfilnavn);
-			print "<BODY onLoad=\"javascript:alert('$printfilnavn er afsendt')\">";
+			print "<BODY onload=\"javascript:alert('$printfilnavn er afsendt')\">";
 		} else {
-			print "<BODY onLoad=\"javascript:alert('Afsendelse af $printfilnavn fejlet')\">";
+			print "<BODY onload=\"javascript:alert('Afsendelse af $printfilnavn fejlet')\">";
 		}
-	} print "<BODY onLoad=\"javascript:alert('Afsendelse af $printfilnavn fejlet tjek brugernavn og adgangskode til ftp hos ebConnect')\">";
+	} print "<BODY onload=\"javascript:alert('Afsendelse af $printfilnavn fejlet tjek brugernavn og adgangskode til ftp hos ebConnect')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 
 } else {

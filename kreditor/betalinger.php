@@ -335,8 +335,8 @@ $q=db_select("select * from betalinger where liste_id=$liste_id order by betalin
 					<td $k6_bg[$x]><span title=\"$k6[$x]\"><input type=\"text\" style=\"text-align:right\" name=\"belob[$x]\" size=\"15px\" value=\"$r[belob]\"></span></td>
 					<td $k7_bg[$x]><span title=\"$k7[$x]\"><input type=\"text\" style=\"text-align:right\" name=\"valuta[$x]\" size=\"5px\" value=\"$r[valuta]\"></span></td>
 					<td $k8_bg[$x]><span title=\"$k8[$x]\"><input type=\"text\" style=\"text-align:right\" name=\"betalingsdato[$x]\" size=\"10px\" value=\"$r[betalingsdato]\"></span></td>";
-				if ($r['ordre_id'])	print "<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:k_ordre=window.open('../debitor/ordre.php?id=$r[ordre_id]','k_ordre','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se modtagelse i nyt vindue\"><u>M:$r2[modtagelse]</u></span></td>";
-				else print "<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:kaskl=window.open('../finans/kassekladde.php?kladde_id=$r2[kladde_id]','kaskl','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se bilag i nyt vindue\"><u>B:$r2[bilag]</u></span></td>";		
+				if ($r['ordre_id'])	print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:k_ordre=window.open('../debitor/ordre.php?id=$r[ordre_id]','k_ordre','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se modtagelse i nyt vindue\"><u>M:$r2[modtagelse]</u></span></td>";
+				else print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:kaskl=window.open('../finans/kassekladde.php?kladde_id=$r2[kladde_id]','kaskl','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se bilag i nyt vindue\"><u>B:$r2[bilag]</u></span></td>";		
 				print	"<td><span title=\"Slet linje fra liste\"><input type=\"checkbox\" name=\"slet[$x]\"></span></td>";
 				print "</tr>";
 				print "<input type=\"hidden\" name=\"id[$x]\" value=\"$r[id]\">";
@@ -346,8 +346,8 @@ $q=db_select("select * from betalinger where liste_id=$liste_id order by betalin
 			else {$linjebg=$bgcolor5; $color='#000000';}
 			print "<tr bgcolor=\"$linjebg\">";
 			print "<td>$erh[$x]</td><td>$r[fra_kto]</td><td>$r[egen_ref]</td><td>$r[til_kto]</td><td>$kort_ref[$x]</td><td>$r[modt_navn]</td><td align=right>$r[belob]</td><td align=center>$r[valuta]</td><td align=right>$r[betalingsdato]</td>";
-				if ($r['ordre_id'])	print "<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:k_ordre=window.open('../debitor/ordre.php?id=$r[ordre_id]','k_ordre','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se modtagelse i nyt vindue\"><u>M:$r2[modtagelse]</u></span></td></tr>";
-				else print "<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:kaskl=window.open('../finans/kassekladde.php?kladde_id=$r2[kladde_id]','kaskl','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se bilag i nyt vindue\"><u>B:$r2[bilag]</u></span></td></tr>";		
+				if ($r['ordre_id'])	print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:k_ordre=window.open('../debitor/ordre.php?id=$r[ordre_id]','k_ordre','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se modtagelse i nyt vindue\"><u>M:$r2[modtagelse]</u></span></td></tr>";
+				else print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:kaskl=window.open('../finans/kassekladde.php?kladde_id=$r2[kladde_id]','kaskl','width=800,height=400,scrollbars=1,resizable=1')\"><span title=\"Se bilag i nyt vindue\"><u>B:$r2[bilag]</u></span></td></tr>";		
 		}
 	}
 	

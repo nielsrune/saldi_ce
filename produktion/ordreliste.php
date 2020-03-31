@@ -96,13 +96,13 @@ print "  </tr>";
     $ordre="ordre".$row[id];
    if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn))
     {
-      $javascript="onClick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\"";
+      $javascript="onclick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\"";
       $understreg='<span style="text-decoration: underline;">';
       $linjetext="";
     }
     else 
     {
-      $javascript="onClick=\"javascript:$ordre.focus();\"";
+      $javascript="onclick=\"javascript:$ordre.focus();\"";
       $understreg='';
       $linjetext="<span title= 'Ordre er l&aring;st af $row[hvem]'>";
     }
@@ -132,7 +132,7 @@ print "  </tr>";
      $ordre="ordre".$row[id];
    if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn))
     {
-      $javascript="onClick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\"";
+      $javascript="onclick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\"";
       $understreg='<span style="text-decoration: underline;">';
       $linjetext="";
     }
@@ -166,7 +166,7 @@ print "  </tr>";
   $query = db_select("select * from ordrer where art = 'PO' and status >= 3 order by $sort");
   while ($row =db_fetch_array($query))
   {
-    $javascript="onClick=\"javascript:$ordre=window.open('ordre.php?&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\"";
+    $javascript="onclick=\"javascript:$ordre=window.open('ordre.php?&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\"";
     print "<tr>";
     if ($row[art]=='DK'){print "<td align=right $javascript><small>$font (KN)&nbsp; $understreg $row[ordrenr]</span><br></small></td>";}
     else {print "<td align=right $javascript><small>$font $understreg $row[ordrenr]</span><br></small></td>";}

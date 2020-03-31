@@ -52,7 +52,7 @@
 // 2019.03.21 PHR - Added 'read-only'. Look for $noEdit
 // 2019.04.04  LN - Added call to varios functions in varekort_includes/percentageField and created percentage field.
 // 2019.04.09 PHR - Added call to function vatPercent in varekort_includes/itemVat.php and moved vat calculation there.
-// 2019.04.21 PHR - Added confirmDiscriptionChange, can be set in 'Indstillinger' > 'VareValg'. 
+// 2019.04.21 PHR - Added confirmDiscriptionchange, can be set in 'Indstillinger' > 'VareValg'. 
 // 2019.03.21 PHR - Edited 'read-only'. Changed from [10] to [9]
 // 2019.10.22 PHR - Added copy option, search 'Kopier'.
 // 2019.11.06 PHR - Added $netWeight & $grossWeight
@@ -111,9 +111,9 @@ if (!isset ($_POST['oldDescription'])) $_POST['oldDescription'] = NULL;
 
 print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>";
 
-$qtxt="select id,var_value from settings where var_name = 'confirmDiscriptionChange' and var_grp = 'items'";
+$qtxt="select id,var_value from settings where var_name = 'confirmDiscriptionchange' and var_grp = 'items'";
 $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-$confirmDiscriptionChange=$r['var_value'];
+$confirmDiscriptionchange=$r['var_value'];
 
 $r=db_fetch_array(db_select("select box2 from grupper where art = 'DIV' and kodenr = '5' ",__FILE__ . " linje " . __LINE__));
 $shopurl=trim($r['box2']);
@@ -270,7 +270,7 @@ if ($submit=trim($submit)) {
 		if (!$rename_category && $r=db_fetch_array($q=db_select("select id from grupper where art='V_CAT' and lower(box1) = '".db_escape_string(strtolower($ny_kategori))."' and box2='$master'",__FILE__ . " linje " . __LINE__))) {
 			$alerttekst=findtekst(344,$sprog_id);
 			$alerttekst=str_replace('$ny_kategori',$ny_kategori,$alerttekst);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">\n";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\">\n";
 		} elseif ($rename_category) { 
 			db_modify("update grupper set box1='".db_escape_string($ny_kategori)."' where id='$rename_category'",__FILE__ . " linje " . __LINE__); 
 			$rename_category=0;
@@ -389,7 +389,7 @@ if ($submit=trim($submit)) {
 		if ($r['id']) $folgevare=$r['id']*1;
 		elseif (substr($folgevarenr,0,4)=='MENU') {
 			$folgevare=substr($folgevarenr,4)*-1;
-		}	else print "<BODY onLoad=\"javascript:alert('Varenummer $folgevarenr eksisterer ikke!')\">";
+		}	else print "<BODY onload=\"javascript:alert('Varenummer $folgevarenr eksisterer ikke!')\">";
 	}
 	if ($rabatgruppe) {
 		$r=db_fetch_array(db_select("select * from grupper where art='VRG' and kodenr = '$rabatgruppe'",__FILE__ . " linje " . __LINE__));
@@ -542,7 +542,7 @@ if ($submit=trim($submit)) {
 				$kostpris[$x]=usdecimal($kostpris[$x],2);
 				$lev_varenr[$x]=db_escape_string(trim($lev_varenr[$x]));
 				db_modify("update vare_lev set posnr = $lev_pos[$x], lev_varenr = '$lev_varenr[$x]', kostpris = '$kostpris[$x]' where id = '$vare_lev_id[$x]'",__FILE__ . " linje " . __LINE__);
-			} elseif (!$lev_pos[$x]) {print "<BODY onLoad=\"javascript:alert('Hint! Du skal s&aelig;tte et - (minus) som pos nr for at slette en leverand&oslash;r!')\">";}
+			} elseif (!$lev_pos[$x]) {print "<BODY onload=\"javascript:alert('Hint! Du skal s&aelig;tte et - (minus) som pos nr for at slette en leverand&oslash;r!')\">";}
 			else {db_modify("delete from vare_lev where id = '$vare_lev_id[$x]'",__FILE__ . " linje " . __LINE__);}
 		}
 		for ($x=1;$x<=$vare_sprogantal;$x++) {
@@ -579,7 +579,7 @@ if ($submit=trim($submit)) {
 			$query = db_select("select id from varer where lower(varenr) = '".strtolower($varenr)."' or  upper(varenr) = '".strtoupper($varenr)."'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
 			if ($row['id']) {
-				print "<BODY onLoad=\"javascript:alert('Der findes allerede en vare med varenr: $varenr!')\">";
+				print "<BODY onload=\"javascript:alert('Der findes allerede en vare med varenr: $varenr!')\">";
 				$varenr='';
 				$id=0;
 			} elseif ($varenr) {
@@ -590,14 +590,14 @@ if ($submit=trim($submit)) {
 				$row = db_fetch_array($query);
 				$id = $row['id'];
 				if ($vare_lev_id) {db_modify("insert into vare_lev (lev_id, vare_id, posnr) values ($vare_lev_id, $id, 1)",__FILE__ . " linje " . __LINE__);}
-			} else print "<BODY onLoad=\"javascript:alert('Skriv et varenummer i feltet og pr&oslash;v igen!')\">";
+			} else print "<BODY onload=\"javascript:alert('Skriv et varenummer i feltet og pr&oslash;v igen!')\">";
 		}
 		elseif ($id > 0) {
 			
 			if (!$leverandor) $leverandor='0';
 			if ($stregkode) {
 				if($r=db_fetch_array(db_select("select varenr,beskrivelse from varer where stregkode='$stregkode' and id !='$id'",__FILE__ . " linje " . __LINE__))) {
-					print "<BODY onLoad=\"javascript:alert('Varenr: $r[varenr] | $r[beskrivelse] har samme stregkode')\">";
+					print "<BODY onload=\"javascript:alert('Varenr: $r[varenr] | $r[beskrivelse] har samme stregkode')\">";
 					$stregkode='';
 				}
 			}
@@ -663,7 +663,7 @@ if ($submit=trim($submit)) {
 			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
 
 			if (($operation)&&($r=db_fetch_array(db_select("select varenr from varer where operation = '$operation' and id !=$id",__FILE__ . " linje " . __LINE__)))) {
-				print "<BODY onLoad=\"javascript:alert('Operationsnr: $operation er i brug af $r[varenr]! Operationsnr ikke &aelig;ndret')\">";
+				print "<BODY onload=\"javascript:alert('Operationsnr: $operation er i brug af $r[varenr]! Operationsnr ikke &aelig;ndret')\">";
 			} elseif ($operation) {
 				$r=db_fetch_array(db_select("select box10 from grupper where art='VG' and kodenr = '$gruppe'",__FILE__ . " linje " . __LINE__));
 				if ($r[box10]!='on') $operation=0;
@@ -785,7 +785,7 @@ elseif (strstr($submit, "Vare")) {
 	vareopslag ($sort, $fokus, $id, $vis_kost, $ref, $find, "varekort.php");
 }
 if ($submit && $beskrivelse[0] != $oldDescription) {
-	if ($confirmDiscriptionChange) include ("varekort_includes/changeDescription.php");
+	if ($confirmDiscriptionchange) include ("varekort_includes/changeDescription.php");
 	else {
 		db_modify("update varer set beskrivelse = '$beskrivelse[0]' where id= '$id'",__FILE__ . " linje " . __LINE__);
 	}
@@ -805,7 +805,7 @@ if ($menu=='T') {
 } else {
 print "<tr><td align=\"center\" valign=\"top\">\n";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>\n";
-$tmp = ($popup) ? "onClick=\"javascript=opener.location.reload();\"" : ""; 
+$tmp = ($popup) ? "onclick=\"javascript=opener.location.reload();\"" : ""; 
 if ($opener!='varer.php') print "<td width=\"10%\" $top_bund><a href=\"javascript:confirmClose('$returside?id=$ordre_id&fokus=$fokus&varenr=$varenr&vare_id=$id','$tekst')\" accesskey=L>Luk</a></td>\n";
 else print "<td width=\"10%\" $tmp $top_bund> <a href=\"javascript:confirmClose('$returside?','$tekst')\" accesskey=L>Luk</a></td>\n";
 print "<td width=\"80%\" $top_bund align=\"center\"> varekort</td>\n";
@@ -1782,7 +1782,7 @@ if ($delvare=='on') {
 		if ($row2['id']==$id) { #20131007
 			db_modify("delete from styklister where id='$row[id]'",__FILE__ . " linje " . __LINE__);
 			$txt="Cirkulær reference konstateret, varenr.: $row2[varenr] fjernet fra stykliste";
-			print "<BODY onLoad=\"javascript:alert('$txt')\">";
+			print "<BODY onload=\"javascript:alert('$txt')\">";
 		} else {
 			$x++;
 			$indg_i_vnr[$x]=$row2['varenr'];
@@ -1923,7 +1923,7 @@ function prisopdat($id, $diff) {
 			} else {
 				$r2 = db_fetch_array(db_select("select varenr from varer where id=$vare_id[$y]",__FILE__ . " linje " . __LINE__));
 				db_modify("delete from styklister where id=$r1[id]",__FILE__ . " linje " . __LINE__);
-				print "<BODY onLoad=\"javascript:alert('Cirkul&aelig;r reference registreret varenr.: $r2[varenr] fjernet fra styklisten')\">";
+				print "<BODY onload=\"javascript:alert('Cirkul&aelig;r reference registreret varenr.: $r2[varenr] fjernet fra styklisten')\">";
 			}
 		}
 	}
@@ -2029,7 +2029,7 @@ function cirkeltjek($vare_id)
 	$query = db_select("select styklister.vare_id as vare_id, varer.samlevare as samlevare from styklister, varer where indgaar_i=$vare_id and varer.id=$vare_id",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)){
 		if ($id==$row[vare_id]) {
-			print "<BODY onLoad=\"javascript:alert('Cirkulær reference registreret')\">";
+			print "<BODY onload=\"javascript:alert('Cirkulær reference registreret')\">";
 			$x=0;
 			$fejl=1;
 			break 1;
@@ -2042,7 +2042,7 @@ function cirkeltjek($vare_id)
 		$query = db_select("select styklister.vare_id as vare_id, varer.samlevare as samlevare from styklister, varer where indgaar_i=$s_vare_id[$a] and varer.id=$s_vare_id[$a]",__FILE__ . " linje " . __LINE__);
 		while ($row = db_fetch_array($query)) {
 			if ($id==$row[vare_id]) {
-				print "<BODY onLoad=\"javascript:alert('Cirkulær reference registreret')\">";
+				print "<BODY onload=\"javascript:alert('Cirkulær reference registreret')\">";
 				$a=$x;
 				$fejl=1;
 				break 1;
@@ -2083,7 +2083,7 @@ function kontoopslag($sort, $fokus, $id)
 	print "<table width='100%'><tbody>";
 	print "			<td width=\"10%\" $top_bund><a href=varekort.php?opener=$opener&returside=$returside&ordre_id=$ordre_id&vare_id=$id&id=$id&fokus=$fokus accesskey=L>Luk</a></td>";
 	print "			<td width=\"80%\" $top_bund align=\"center\">Varekort</td>";
-	print "<td width=\"10%\" $top_bund align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"JavaScript:window.open('../kreditor/kreditorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><u>Ny</u></td>";
+	print "<td width=\"10%\" $top_bund align=\"right\" onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"JavaScript:window.open('../kreditor/kreditorkort.php?returside=../includes/luk.php', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes,resizable=yes');\"><u>Ny</u></td>";
 	print "		</tbody></table></td></tr>";
 	}
 	print "<table width='100%'><tbody>";

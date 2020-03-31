@@ -188,7 +188,7 @@ if ($spec_func) {
 	include("../includes/spec_func.php");
 	$svar=$spec_func('xx',$id,$kode);
 	if (!is_numeric($svar)) {
-		print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
+		print "<BODY onload=\"javascript:alert('$svar')\">\n";
 	}	else $konto_id=$svar;
 }
  #20140508 ->
@@ -351,7 +351,7 @@ if ($vare_id) {
 				$indbetaling=usdecimal($indbetaling);
 				$modtaget=usdecimal($modtaget);
 			if ($indbetaling>$modtaget) {
-				print "<BODY onLoad=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
+				print "<BODY onload=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
 				$indbetaling=$modtaget;
 			}
 		}
@@ -390,7 +390,7 @@ if ($vare_id) {
 		if ($modtaget2 && (!$betaling2 || $betaling2=="ukendt")) $afslut=NULL;
 		if ($afslut=="OK") {
 			 $svar=afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,NULL,NULL);
-			if ($svar) print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
+			if ($svar) print "<BODY onload=\"javascript:alert('$svar')\">\n";
  			else {
 			  print "<meta http-equiv=\"refresh\" content=\"0;URL=$php_self\">\n";
 			}
@@ -416,13 +416,13 @@ if ($vare_id) {
 				$id=opret_posordre(NULL,$kasse);
 			}
 			if ($id && !is_numeric($id)) {
-				print "<BODY onLoad=\"javascript:alert('$id')\">\n";
+				print "<BODY onload=\"javascript:alert('$id')\">\n";
 			} else {
 #cho "264  $id,$varenr_ny,$antal_ny,'',usdecimal($pris_ny),$rabat_ny<br>\n";
 #cho "C $id,'',$varenr_ny,$antal_ny,'',usdecimal($pris_ny),$rabat_ny,100,'PO','','','0','on','','','0'<br>";
 				$linje_id=opret_ordrelinje($id,'',$varenr_ny,$antal_ny,'',usdecimal($pris_ny),$rabat_ny,100,'PO','','','0','on','','','0'); #20140226
 				if ($linje_id && !is_numeric($linje_id)) {
-					print "<BODY onLoad=\"javascript:alert('$linje_id')\">\n";
+					print "<BODY onload=\"javascript:alert('$linje_id')\">\n";
 					$fokus="pris_ny";
 				} else {
 					$varenr_ny=$next_varenr;
@@ -462,7 +462,7 @@ if (substr($betaling,0,9) == "Kontant p") {
 	$betaling='Kontant';
 	$modtaget=$sum;
 	$svar=afslut($id,$betaling,NULL,$modtaget,0,NULL,NULL,NULL);
-	if ($svar) print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
+	if ($svar) print "<BODY onload=\"javascript:alert('$svar')\">\n";
 	else print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
 }
 if ($varenr_ny=='fejl') fejl($id,"$status");
@@ -795,7 +795,7 @@ if ($betaling=='Kontant' && !$betaling2 && $retur) {
 				}
 			}
 		} elseif (!$indbetaling) {
-			print "<BODY onLoad=\"javascript:alert('Fejl i øreafrunding, kontakt Danosoft på telefon 46902208')\">";
+			print "<BODY onload=\"javascript:alert('Fejl i øreafrunding, kontakt Danosoft på telefon 46902208')\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">";
 			exit;
 		}
@@ -829,7 +829,7 @@ if ($betaling=='Kontant' && !$betaling2 && $retur) {
 		$url=str_replace("/debitor/pos_ordre.php","",$url);
 		if ($_SERVER['HTTPS']) $url="s".$url;
 		$url="http".$url;
-		print "<BODY onLoad=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
+		print "<BODY onload=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
 	}
 	print "\n<!-- Function afslut (slut)-->\n";
 	return(NULL);
@@ -912,7 +912,7 @@ function skift_bruger($ny_bruger,$kode) {
 		$brugernavn=$ny_bruger;
 		print "<input type=\"hidden\" name=\"brugernavn\" value=\"$brugernavn\">\n";
 		include("../includes/online.php");
-	} else print "<BODY onLoad=\"javascript:alert('Forkert adgangskode')\">\n";
+	} else print "<BODY onload=\"javascript:alert('Forkert adgangskode')\">\n";
 }
 
 function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny) {
@@ -1067,7 +1067,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny) {
 					print "<td colspan=\"2\" align=\"right\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:40px\" name = \"rabat_ny\" placeholder=\"$rabat_old\"></td>\n";
 				} else {
 					$txt="Manglende varenr til rabat";
-					print "<BODY onLoad=\"javascript:alert('$txt')\">\n";
+					print "<BODY onload=\"javascript:alert('$txt')\">\n";
 					return($txt);
 				}
 			} else {
@@ -1081,7 +1081,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny) {
 	if ($konto_id && $kreditmax && $sum > $kreditmax - $saldo) {
 		$ny_saldo=$saldo+$sum;
 		$txt = "Kreditmax: ".dkdecimal($kreditmax)."\\nGl. saldo :  ".dkdecimal($saldo)."\\nNy saldo :  ".dkdecimal($ny_saldo);
-		print "<BODY onLoad=\"javascript:alert('$txt')\">\n";
+		print "<BODY onload=\"javascript:alert('$txt')\">\n";
 
 	}
 	print "<input type=\"hidden\" name = \"sum\" value = \"$sum\">\n";
@@ -1738,33 +1738,33 @@ function tastatur($status) {
 	print "<TR>\n";
 	if ($status < 3) {
 		$stil="STYLE=\"width: 4.5em;height: 2em;font-size:150%;\"";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"one\"   VALUE=\"1\" OnClick=\"pos_ordre.$fokus.value += '1';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"two\"   VALUE=\"2\" OnCLick=\"pos_ordre.$fokus.value += '2';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"three\" VALUE=\"3\" OnClick=\"pos_ordre.$fokus.value += '3';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"plus\"  VALUE=\"+\" OnClick=\"pos_ordre.$fokus.value += '+';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"one\"   VALUE=\"1\" onclick=\"pos_ordre.$fokus.value += '1';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"two\"   VALUE=\"2\" onclick=\"pos_ordre.$fokus.value += '2';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"three\" VALUE=\"3\" onclick=\"pos_ordre.$fokus.value += '3';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"plus\"  VALUE=\"+\" onclick=\"pos_ordre.$fokus.value += '+';pos_ordre.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"four\"  VALUE=\"4\" OnClick=\"pos_ordre.$fokus.value += '4';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"five\"  VALUE=\"5\" OnCLick=\"pos_ordre.$fokus.value += '5';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"six\"   VALUE=\"6\" OnClick=\"pos_ordre.$fokus.value += '6';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"minus\" VALUE=\"-\" OnClick=\"pos_ordre.$fokus.value += '-';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"four\"  VALUE=\"4\" onclick=\"pos_ordre.$fokus.value += '4';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"five\"  VALUE=\"5\" onclick=\"pos_ordre.$fokus.value += '5';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"six\"   VALUE=\"6\" onclick=\"pos_ordre.$fokus.value += '6';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"minus\" VALUE=\"-\" onclick=\"pos_ordre.$fokus.value += '-';pos_ordre.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"seven\" VALUE=\"7\" OnClick=\"pos_ordre.$fokus.value += '7';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"eight\" VALUE=\"8\" OnCLick=\"pos_ordre.$fokus.value += '8';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"nine\"  VALUE=\"9\" OnClick=\"pos_ordre.$fokus.value += '9';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"times\" VALUE=\"x\" OnClick=\"pos_ordre.$fokus.value += '*'\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"seven\" VALUE=\"7\" onclick=\"pos_ordre.$fokus.value += '7';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"eight\" VALUE=\"8\" onclick=\"pos_ordre.$fokus.value += '8';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"nine\"  VALUE=\"9\" onclick=\"pos_ordre.$fokus.value += '9';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"times\" VALUE=\"x\" onclick=\"pos_ordre.$fokus.value += '*'\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\",\" OnClick=\"pos_ordre.$fokus.value += ',';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\"0\" OnClick=\"pos_ordre.$fokus.value += '0';pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"DoIt\"  VALUE=\"=\" OnClick=\"pos_ordre.$fokus.value = eval(pos_ordre.$fokus.value);pos_ordre.$fokus.focus();\"></TD>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"div\"   VALUE=\"/\" OnClick=\"pos_ordre.$fokus.value += '/';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\",\" onclick=\"pos_ordre.$fokus.value += ',';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"zero\"  VALUE=\"0\" onclick=\"pos_ordre.$fokus.value += '0';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"DoIt\"  VALUE=\"=\" onclick=\"pos_ordre.$fokus.value = eval(pos_ordre.$fokus.value);pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"div\"   VALUE=\"/\" onclick=\"pos_ordre.$fokus.value += '/';pos_ordre.$fokus.focus();\"></TD>\n";
 		print "</TR><TR>\n";
-		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"clear\" VALUE=\"Ryd\" OnClick=\"pos_ordre.$fokus.value = '';pos_ordre.$fokus.focus();\"></TD>\n";
+		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"clear\" VALUE=\"Ryd\" onclick=\"pos_ordre.$fokus.value = '';pos_ordre.$fokus.focus();\"></TD>\n";
 		if ($id) {
-			print "<TD><INPUT TYPE=\"submit\" $stil NAME=\"afslut\"VALUE=\"Afslut\" OnClick=\"pos_ordre.$fokus.value += 'a';pos_ordre.$fokus.focus();\"></TD>\n";
-			print "<TD onclick=\"return confirm('Slet alt og start forfra')\"><INPUT TYPE=\"submit\" $stil NAME=\"forfra\"VALUE=\"Forfra\" OnClick=\"pos_ordre.$fokus.value += 'f';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD><INPUT TYPE=\"submit\" $stil NAME=\"afslut\"VALUE=\"Afslut\" onclick=\"pos_ordre.$fokus.value += 'a';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD onclick=\"return confirm('Slet alt og start forfra')\"><INPUT TYPE=\"submit\" $stil NAME=\"forfra\"VALUE=\"Forfra\" onclick=\"pos_ordre.$fokus.value += 'f';pos_ordre.$fokus.focus();\"></TD>\n";
 		} else print "<TD COLSPAN=\"2\"></TD>\n";
 		if ($fokus=='modtaget') {
-			print "<TD onclick=\"return confirm('Tilbage til varescanning')\"><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\"VALUE=\"Tilbage\" OnClick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD onclick=\"return confirm('Tilbage til varescanning')\"><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\"VALUE=\"Tilbage\" onclick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\"></TD>\n";
 			print "</TR><TR>\n";
 			print "<TD COLSPAN=\"3\"></TD>\n";
 		}
@@ -1772,39 +1772,39 @@ function tastatur($status) {
 		$stil2="STYLE=\"width: 9.5em;height: 2em;font-size:150%;\"";
 		print "<TR>\n";
 #cho "$fokus=='modtaget' && $modtaget>=$sum && !$indbetaling<br>\n";
-		if ($fokus=='varenr_ny') print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"varer\"VALUE=\"Varer\" OnClick=\"pos_ordre.$fokus.value += 'v';pos_ordre.$fokus.focus();\"></TD>\n";
+		if ($fokus=='varenr_ny') print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"varer\"VALUE=\"Varer\" onclick=\"pos_ordre.$fokus.value += 'v';pos_ordre.$fokus.focus();\"></TD>\n";
 		elseif ($fokus=='antal_ny' || $fokus=='pris_ny') { #20130310 Tilføjet: || $fokus=='pris_ny' 
-			if ($fokus=='antal_ny') print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\"VALUE=\"Pris\" OnClick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
+			if ($fokus=='antal_ny') print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\"VALUE=\"Pris\" onclick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
 			else print "<TD COLSPAN=\"1\"></TD>\n";
-			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"Rabat\" OnClick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"Rabat\" onclick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
 		} elseif ($fokus=='modtaget' && $modtaget>=$sum && !$indbetaling && $betalingsbet != 'Kontant') {
-			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" OnClick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" onclick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
 		} elseif ($fokus=='modtaget2' && $modtaget+$modtaget2>=$sum && !$indbetaling) {
-			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling2\" VALUE=\"Konto\" OnClick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling2\" VALUE=\"Konto\" onclick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
 		}	elseif ($indbetaling && $modtaget >= $indbetaling) {
-			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
+			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
 		} else print "<TD colspan=2></TD>\n";
 		print "<TD colspan=2><INPUT TYPE=\"submit\" $stil2 NAME=\"OK\"  VALUE=\"Enter\"></TD></tr>\n";
-		if ($vis_hurtigknap && $fokus=='antal_ny') print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant p&aring; bel&oslash;b\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
+		if ($vis_hurtigknap && $fokus=='antal_ny') print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Kontant p&aring; bel&oslash;b\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
 		if ($vis_kontoopslag && !$varenr_ny && !$indbetaling) print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"kontoopslag\" VALUE=\"Kontoopslag\"></TD></tr>\n";
 		if ((($fokus=='modtaget' || $fokus=='modtaget2') && (!$kontonr || $betalingsbet=='Kontant')) || ($indbetaling && $modtaget>=$indbetaling && $kontonr)) {
 			if ($div_kort_kto) { #20140129
 				($fokus=='modtaget2')?$tmp="betaling2":$tmp="betaling";
-				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Betalingskort\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Betalingskort\" onclick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 			} else {
 				for($x=0;$x<$kortantal;$x++) {
 					($fokus=='modtaget2')?$tmp="betaling2":$tmp="betaling";
-					print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"$korttyper[$x]\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+					print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"$korttyper[$x]\" onclick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 				}
 			}
 			if (!$indbetaling) {
 				if ($fokus=='modtaget2') $tmp="betaling2";
 				else $tmp="betaling";
-				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Kontant\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+				print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"Kontant\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 			}
-#			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" OnClick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+#			print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" onclick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD></tr>\n";
 		} elseif ($id && $kontonr && !$varelinjer && !$indbetaling)
-		if ($vis_indbetaling) print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"indbetaling\" VALUE=\"Indbetaling\" OnClick=\"pos_ordre.$fokus.value += 'i';pos_ordre.$fokus.focus();\"></TD>\n";
+		if ($vis_indbetaling) print "<TR><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"indbetaling\" VALUE=\"Indbetaling\" onclick=\"pos_ordre.$fokus.value += 'i';pos_ordre.$fokus.focus();\"></TD>\n";
 	} else {
 #		print "<input type=\"hidden\" name=\"bon\" value = \"\">\n";
 		$stil2="STYLE=\"width: 9.5em;height: 2em;font-size:150%;\"";
@@ -1896,7 +1896,7 @@ print "</tbody></table>\n"; # <- table 1
 } # function menubuttons
 
 function fejl ($id,$fejltekst) {
-  print "<BODY onLoad=\"javascript:alert('$fejltekst')\">\n";
+  print "<BODY onload=\"javascript:alert('$fejltekst')\">\n";
   print "<meta http-equiv=\"refresh\" content=\"0;URL=$php_self\">\n";
 
 }
@@ -1967,7 +1967,7 @@ function posbogfor ($kasse,$regnstart) {
 					$svar=bogfor_nu("$id","Dagsafslutning");
 					if ($svar && $svar!='OK') {
 #cho "$svar<br>";
-						print "<BODY onLoad=\"javascript:alert('Der er konstateret en uoverenstemmelse i posteringssummen. \\nKontakt Danosoft på telefon 4690 2208 eller 2066 9820')\">\n";
+						print "<BODY onload=\"javascript:alert('Der er konstateret en uoverenstemmelse i posteringssummen. \\nKontakt Danosoft på telefon 4690 2208 eller 2066 9820')\">\n";
 						print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
 					} else transaktion('commit');
 				}
@@ -2179,7 +2179,7 @@ function kassebeholdning ($kasse,$optalt,$godkendt,$cookievalue) {
 	$url=str_replace("/debitor/pos_ordre.php","",$url);
 	if ($_SERVER[HTTPS]) $url="s".$url;
 	$url="http".$url;
-	print "<BODY onLoad=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
+	print "<BODY onload=\"JavaScript:window.open('http://$printserver/saldiprint.php?printfil=$tmp&url=$url&bruger_id=$bruger_id&bonantal=1' , '' , '$jsvars');\">\n";
 
 }
 function flyt_bord($id,$bordnr,$delflyt) { #20140508
@@ -2233,7 +2233,7 @@ if ($fp=fopen($filnavn,'r')) {
 		if (!$printserver)$printserver='localhost';
 	}
 
-	print "<BODY onLoad=\"JavaScript:window.open('http://localhost/kundedisplay.php?&antal=$antal&tekst=".urlencode($beskrivelse)."&pris=".dkdecimal($pris)."&ryd=$ryd','','width=200,height=100,top=1024,left=1280');\">\n";
+	print "<BODY onload=\"JavaScript:window.open('http://localhost/kundedisplay.php?&antal=$antal&tekst=".urlencode($beskrivelse)."&pris=".dkdecimal($pris)."&ryd=$ryd','','width=200,height=100,top=1024,left=1280');\">\n";
 }
 
 function find_kassesalg($kasse,$optalt) {

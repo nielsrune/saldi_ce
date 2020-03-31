@@ -276,13 +276,13 @@ if ($vare_id) {
 		if ($indbetaling && !$modtaget) $afslut=NULL;
 	if ($afslut=="OK") {
 			 $svar=afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,NULL,NULL);
-			if ($svar) print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
+			if ($svar) print "<BODY onload=\"javascript:alert('$svar')\">\n";
  			else {
 			  print "<meta http-equiv=\"refresh\" content=\"0;URL=$php_self\">\n";
 			}
 		} elseif ($delbetaling && $betaling!='ukendt') {
 			 $svar=delbetal($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,NULL,NULL);
-			if ($svar) print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
+			if ($svar) print "<BODY onload=\"javascript:alert('$svar')\">\n";
  			else {
 			  print "<meta http-equiv=\"refresh\" content=\"0;URL=$php_self\">\n";
 			}
@@ -319,7 +319,7 @@ if ($vare_id) {
 				else $svar=opret_ordrelinje($id,'',$varenr_ny,$antal_ny,'',usdecimal($pris_ny,2),usdecimal($rabat_ny,2),100,'PO','','','0','on','','','','','','0',$lager_ny,__LINE__); #20140226 + 20140814
 				if (usdecimal($pris_ny,2) == 0.00) $obstxt="Obs, vare $varenr_ny sælges til kr 0,00";
 				if ($svar && !is_numeric($svar)) {
-					print "<BODY onLoad=\"javascript:alert('$svar')\">\n";
+					print "<BODY onload=\"javascript:alert('$svar')\">\n";
 					$fokus="pris_ny";
 				} else {
 					$r=db_fetch_array(db_select("select max(id) as linje_id from ordrelinjer where ordre_id = '$id' and varenr='$varenr_ny'",__FILE__ . " linje " . __LINE__));

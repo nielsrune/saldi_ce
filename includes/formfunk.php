@@ -791,7 +791,7 @@ print "<!--function modulus_10 start-->";
 	$kontrolciffer=10-substr($kontrolsum,-1,1);
 	if ($kontrolciffer==10) $kontrolciffer=0;
 	$betalingsid=$betalingsid.$kontrolciffer;
-#		print "<BODY onLoad=\"JavaScript:alert('betalingsid = $betalingsid');\">";
+#		print "<BODY onload=\"JavaScript:alert('betalingsid = $betalingsid');\">";
 	return ($betalingsid);
 print "<!--function modulus_10 slut-->";
 }}
@@ -1746,7 +1746,7 @@ print "<!--function send_mails start-->";
 	}
 	if (!$afsendermail || !$afsendernavn) {
 		if (!$webservice) {
-			print "<BODY onLoad=\"javascript:alert('Firmanavn eller e-mail for afsender ikke udfyldt.\\nSe (Indstillinger -> stamdata).\\nMail ikke afsendt!')\">";
+			print "<BODY onload=\"javascript:alert('Firmanavn eller e-mail for afsender ikke udfyldt.\\nSe (Indstillinger -> stamdata).\\nMail ikke afsendt!')\">";
 		}
 		return("Missing sender mail");
 	}

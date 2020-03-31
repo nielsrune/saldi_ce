@@ -51,7 +51,7 @@ $rettigheder=trim($r['rettigheder']);
 
 if ((substr($rettigheder,4,1)!='1') && (!$ansat_id[1])) {
 	$ansat_id[1]='0';
-	print "<body onLoad=\"javascript:alert('Dit brugernavn: $brugernavn er ikke linket til en medarbejder.')\">";
+	print "<body onload=\"javascript:alert('Dit brugernavn: $brugernavn er ikke linket til en medarbejder.')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 	exit;
 } elseif (substr($rettigheder,4,1)=='1') {
@@ -68,7 +68,7 @@ if ((substr($rettigheder,4,1)!='1') && (!$ansat_id[1])) {
 }
 if ($ansat_antal>=1) udskriv ($ansat_antal, $ansat_id, $startdato, $slutdato);
 else {
-	print "<body onLoad=\"javascript:alert('Der er ikke angivet provisionssats for nogen ansatte.')\">";
+	print "<body onload=\"javascript:alert('Der er ikke angivet provisionssats for nogen ansatte.')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">";
 	exit;
 }
@@ -262,7 +262,7 @@ function varelinjer($ordre_id, $faktdate, $udlign_date, $provision, $faktnr, $fi
 	$tmp=$pris[$x] - $kostpris[$x];
 	$tmp2=$tmp/100*$provision/100*$pro_procent;
 	print "<tr><td>".dkdato($faktdate)."</td><td> ".dkdato($udlign_date)."</td>";
-	print "<td align=right onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$ordre_id','d_ordre','scrollbars=yes,resizable=yes,dependent=yes');d_ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"><u><span title=\"$firmanavn\">$faktnr</span></u></td>";
+	print "<td align=right onclick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$ordre_id','d_ordre','scrollbars=yes,resizable=yes,dependent=yes');d_ordre.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"><u><span title=\"$firmanavn\">$faktnr</span></u></td>";
 	print "<td align=right>".dkdecimal($kostpris[$x])."</td><td align=right>".dkdecimal($pris[$x])."</td><td align=right>".dkdecimal($tmp)."</td><td align=right>".dkdecimal($tmp2)."</td></tr>";
 
 	return array($pris[$x],$kostpris[$x],$tmp2);	

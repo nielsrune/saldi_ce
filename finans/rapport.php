@@ -228,7 +228,7 @@ elseif ($rapportart){
 				$konto_til=$r['kontonr']-1;
 			}
 			else $konto_fra=$r['kontonr']+1;
-		} else print "<BODY onLoad=\"javascript:alert('Sideskiftkonto ikke defineret i kontoplan - Balance & Resultat kan ikke adskilles')\">";
+		} else print "<BODY onload=\"javascript:alert('Sideskiftkonto ikke defineret i kontoplan - Balance & Resultat kan ikke adskilles')\">";
 		$submit="regnskab";
 	} else $submit=str2low($rapportart);
 }

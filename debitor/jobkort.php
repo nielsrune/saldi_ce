@@ -204,7 +204,7 @@ if ($menu=='T') {
 } else {
 print "<tr><td colspan=3 align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-print "<td onClick=\"JavaScript:opener.location.reload();\" width=\"10%\"$top_bund><a href=jobkort.php?luk=luk accesskey=L>".findtekst(30,$sprog_id)."</a><br></td>";
+print "<td onclick=\"JavaScript:opener.location.reload();\" width=\"10%\"$top_bund><a href=jobkort.php?luk=luk accesskey=L>".findtekst(30,$sprog_id)."</a><br></td>";
 print "<td width=\"80%\"$top_bund>".findtekst(29,$sprog_id)."<br></td>";
 print "<td width=\"10%\"$top_bund><a href=jobkort.php accesskey=N>".findtekst(39,$sprog_id)."</a><br></td>";
 print "</tbody></table>";

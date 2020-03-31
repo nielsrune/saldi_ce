@@ -42,7 +42,7 @@
 					if (is_numeric($usi)) {
 						$m=usdecimal($modtaget,2)*1;
 						if ($usi>$m && $modtaget!='') {
-							print "<BODY onLoad=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
+							print "<BODY onload=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
 							$indbetaling='Indbetaling konto';
 							$modtaget=0;
 						} elseif (!$modtaget) {
@@ -72,7 +72,7 @@
 					if (is_numeric($usm)) {
 						$i=usdecimal($indbetaling,2)*1;
 						if ($i>$usm && $m!='') {
-							print "<BODY onLoad=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
+							print "<BODY onload=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
 							$indbetaling='Indbetaling konto';
 							$modtaget=0;
 						} elseif (!$m) {
@@ -92,12 +92,12 @@
 				$indbetaling=usdecimal($indbetaling,2)*1;
 				$modtaget=usdecimal($modtaget,2)*1;
 			if ($indbetaling<0 && $modtaget != $indbetaling) { #20160902
-				print "<BODY onLoad=\"javascript:alert('Ved udbetaling skal `Indbetaling` og `Betalt` være samme beløb')\">\n";
+				print "<BODY onload=\"javascript:alert('Ved udbetaling skal `Indbetaling` og `Betalt` være samme beløb')\">\n";
 				$indbetaling='Indbetaling konto'; #20160220-2
 				$modtaget=0; #20160220-2
 			}
 			if ($indbetaling>$modtaget && $modtaget!=0) {
-				print "<BODY onLoad=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
+				print "<BODY onload=\"javascript:alert('Indbetaling kan ikke v&aelig;re større end beløbet der modtages')\">\n";
 #				$indbetaling=$modtaget;
 				$indbetaling='Indbetaling konto'; #20160220-2
 				$modtaget=0; #20160220-2

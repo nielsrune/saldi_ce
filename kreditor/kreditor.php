@@ -127,7 +127,7 @@ print "<tr><td width=10% $top_bund><a href=$returside accesskey=L>Luk</a></td>";
 print "<td width = 80% align=center $top_bund>&nbsp;Kreditorer&nbsp;</td>";
 print "<td width=5% $top_bund><a accesskey=V href=kreditorvisning.php?valg=$valg>Visning</a></td>\n";
 #if ($popup) {
-#		print "<td width=5% $top_bund onClick=\"javascript:kreditor=window.open('kreditorkort.php?returside=kreditor.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=kreditor.php?sort=$sort>Ny</a></td>\n";
+#		print "<td width=5% $top_bund onclick=\"javascript:kreditor=window.open('kreditorkort.php?returside=kreditor.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=kreditor.php?sort=$sort>Ny</a></td>\n";
 #	} else {
 		print "<td width=5%  $top_bund><a href=kreditorkort.php?returside=kreditor.php>Ny</a></td></tr>\n";
 #	}
@@ -354,7 +354,7 @@ for($i=0;$i<$dgcount;$i++) {
 			$adresseantal++;
 			if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
 #				if ($popup) {
-#					$javascript="onClick=\"javascript:".$valg."kort=window.open('".$valg."kort.php?tjek=$row[id]&id=$row[id]&returside=kreditor.php','$kreditorkort','scrollbars=1,resizable=1');$kreditorkort.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
+#					$javascript="onclick=\"javascript:".$valg."kort=window.open('".$valg."kort.php?tjek=$row[id]&id=$row[id]&returside=kreditor.php','$kreditorkort','scrollbars=1,resizable=1');$kreditorkort.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" ";
 #					$understreg='<span style="text-decoration: underline;">';
 #					$hrefslut="";
 #				} else {
@@ -364,7 +364,7 @@ for($i=0;$i<$dgcount;$i++) {
 #				}
 				$linjetext="";
 			}	else {
-				$javascript="onClick=\"javascript:$kreditorkort.focus();\"";
+				$javascript="onclick=\"javascript:$kreditorkort.focus();\"";
 				$understreg='';
 				$linjetext="<span title= 'Kortet er l&aring;st af $row[hvem]'>";
 			}

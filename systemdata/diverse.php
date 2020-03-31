@@ -62,7 +62,7 @@
 // 20190225 MSC - Rettet topmenu design og isset fejl
 // 20190322 LN Added tables to be deleted when pressing the "Nulstil" button
 // 20190411 LN Call funtion in chooseProvision.php to save default provision value
-// 20190421 PHR - Added confirmDiscriptionChange, in 'vare_valg'
+// 20190421 PHR - Added confirmDiscriptionchange, in 'vare_valg'
 // 20190614 LN Added argument to the function saveProvisionForItemGroup -> $defaultProvision
 
 
@@ -130,7 +130,7 @@ if ($_POST) {
 			db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5) values ('Personlige valg','$bruger_id','USET','$jsvars','$popup','$menu','$bgcolor','$nuance')",__FILE__ . " linje " . __LINE__);
 		} elseif ($id>0) db_modify("update grupper set box1='$jsvars',box2='$popup',box3='$menu',box4='$bgcolor',box5='$nuance' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
 		if ($refresh_opener) {
-			print "<BODY onLoad=\"javascript:opener.location.reload();\">";
+			print "<BODY onload=\"javascript:opener.location.reload();\">";
 		}
 	#######################################################################################
 	} elseif ($sektion=='div_valg') {
@@ -212,11 +212,11 @@ if ($_POST) {
 			$box2=$r['id'];
 		} elseif ($box2) {
 				$txt = str_replace('XXXXX',$box2,findtekst(289,$sprog_id));
-				print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		}
 		if ($box14 && !$box2) {
 			$txt="Samlet pris forudsætter at der er et varenr til rabat";
-			print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+			print "<BODY onload=\"JavaScript:alert('$txt')\">";
 			$box14='';
 		}
 		#20150907 ->
@@ -225,13 +225,13 @@ if ($_POST) {
 		}
 		if ($saetvarenr && !$saetvareid) { 
 			$txt="Varenummer for sæt eksisterer ikke";
-			print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+			print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		}
 /*
 				if ($kostmetode) {
 			if ($r=db_fetch_array(db_select("select id from grupper WHERE art = 'VG' and box1 != box2",__FILE__ . " linje " . __LINE__))) {
 				$txt = findtekst(733,$sprog_id);
-				print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/konv_lager.php\">\n"; # 20140424b
 				exit;
 			}
@@ -262,8 +262,8 @@ if ($_POST) {
 		$showProvision = if_isset($_POST['showProvision']);
 		$defaultProvision = if_isset($_POST['defaultProvision']);
 		$provisionId = if_isset($_POST['provisionPercentageId']);
-		$confirmDiscriptionChange_id=if_isset($_POST['confirmDiscriptionChange_id']);
-		$confirmDiscriptionChange=if_isset($_POST['confirmDiscriptionChange']);
+		$confirmDiscriptionchange_id=if_isset($_POST['confirmDiscriptionchange_id']);
+		$confirmDiscriptionchange=if_isset($_POST['confirmDiscriptionchange']);
 		
 		if ($vatOnItemCard_id) $qtxt="update settings set var_value='$vatOnItemCard' where id='$vatOnItemCard_id'";
 		else {
@@ -278,12 +278,12 @@ if ($_POST) {
 			$qtxt.="'If set, item will be set as discontinued when stock turns negative','0')";
 		}
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-		if ($confirmDiscriptionChange_id) {
-			$qtxt="update settings set var_value='$confirmDiscriptionChange' ";
-			$qtxt.="where id='$confirmDiscriptionChange_id'";
+		if ($confirmDiscriptionchange_id) {
+			$qtxt="update settings set var_value='$confirmDiscriptionchange' ";
+			$qtxt.="where id='$confirmDiscriptionchange_id'";
 		} else {
 		$qtxt="insert into settings(var_grp,var_name,var_value,var_description,user_id) values ";
-		$qtxt.="('items','confirmDiscriptionChange','$confirmDiscriptionChange',";
+		$qtxt.="('items','confirmDiscriptionchange','$confirmDiscriptionchange',";
 		$qtxt.="'If set, confirm will be required when description is changed on ItemCard','0')";
 		}
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -360,7 +360,7 @@ if ($_POST) {
 		for ($x=0;$x<count($fy_ord);$x++) {
 			if (strstr($label,$fy_ord[$x])) {
 				$label=str_replace($fy_ord[$x],'',$label);
-				print "<BODY onLoad=\"JavaScript:alert('Illegal værdi i labeltekst')\">";
+				print "<BODY onload=\"JavaScript:alert('Illegal værdi i labeltekst')\">";
 			}
 		}
 		$r = db_fetch_array(db_select("select id from grupper WHERE art = 'LABEL'",__FILE__ . " linje " . __LINE__));
@@ -507,7 +507,7 @@ if ($_POST) {
 			else {
 				if ($kassekonti[$x]) $txt=str_replace("<variable>",$kassekonti[$x],findtekst(277,$sprog_id));
 				else $txt = findtekst(278,$sprog_id);
-				print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 			}
 			$txt='';
 			$qtxt="select id from kontoplan WHERE kontonr = '$mellemkonti[$x]'";
@@ -515,14 +515,14 @@ if ($_POST) {
 			else {
 				if ($mellemkonti[$x]) $txt=str_replace("<variable>",$mellemkonti[$x],findtekst(717,$sprog_id));
 				else $txt = findtekst(718,$sprog_id);
-				if ($txt) print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				if ($txt) print "<BODY onload=\"JavaScript:alert('$txt')\">";
 			}
 			$qtxt="select id from kontoplan WHERE kontonr = '$diffkonti[$x]'";
 			if (($diffkonti[$x] && is_numeric($diffkonti[$x]) && db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))));
 			else {
 				if ($mellemkonti[$x]) $txt=str_replace("<variable>",$diffkonti[$x],findtekst(723,$sprog_id));
 				else $txt = findtekst(718,$sprog_id);
-				if ($txt) print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				if ($txt) print "<BODY onload=\"JavaScript:alert('$txt')\">";
 			}
 			if ($box2) {
 				$box2.=chr(9).$kassekonti[$x];
@@ -582,7 +582,7 @@ if ($_POST) {
 				if (!db_fetch_array(db_select("select id from kontoplan WHERE kontonr = '$kortkonti[$x]'",__FILE__ . " linje " . __LINE__))) {
 					if ($kortkonti[$x]) $txt=str_replace("<variable>",$kortkonti[$x],findtekst(277,$sprog_id));
 					else $txt = findtekst(278,$sprog_id);
-					print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+					print "<BODY onload=\"JavaScript:alert('$txt')\">";
 				}
 				if ($box5) {
 					$box5.=chr(9).trim($korttyper[$x]);
@@ -610,13 +610,13 @@ if ($_POST) {
 			$box11_2=$r['id'];
 		} elseif ($varenr) {
 				$txt = str_replace('XXXXX',$varenr,findtekst(289,$sprog_id));
-				print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		}
 		if ($rabatvarenr && $r=db_fetch_array(db_select("select id from varer WHERE varenr = '$rabatvarenr'",__FILE__ . " linje " . __LINE__))) {
 			$box8=$r['id'];
 		} elseif ($rabatvarenr) {
 				$txt = str_replace('XXXXX',$rabatvarenr,findtekst(289,$sprog_id));
-				print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		}
 		if  (($id1==0) && ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'POS' and kodenr='1'",__FILE__ . " linje " . __LINE__)))) $id1=$r['id'];
 		elseif ($id1==0){
@@ -698,7 +698,7 @@ if ($_POST) {
 		$r = db_fetch_array(db_select("select * from grupper WHERE art = 'DocBiz'",__FILE__ . " linje " . __LINE__));
 		$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$r['box2'].":".$r['box3']."@".$r['box1']."/".$r['box5']." < ftpscript > NULL ";
 		system ($kommando);
-		print "<BODY onLoad=\"JavaScript:alert('Data sendt til DocuBizz')\">";
+		print "<BODY onload=\"JavaScript:alert('Data sendt til DocuBizz')\">";
 #######################################################################################
 	} elseif ($sektion=='bilag') {
 		$id=$_POST['id'];
@@ -774,7 +774,7 @@ if ($_POST) {
 		if ($box1) $box1=usdecimal($box1);
 		if ($box2 && !db_fetch_array(db_select("select id from kontoplan WHERE kontonr = '$box2' and kontotype = 'D' and regnskabsaar='$regnaar'",__FILE__ . " linje " . __LINE__))){
 			$tekst=findtekst(175,$sprog_id);
-			print "<BODY onLoad=\"JavaScript:alert('$tekst')\">";
+			print "<BODY onload=\"JavaScript:alert('$tekst')\">";
 			$diffkto=$box2;
 			$box2='';
 		}
@@ -805,35 +805,35 @@ if ($_POST) {
 	} elseif ($sektion=='kontoplan_io') {
 		if (strstr($_POST['submit'])=="Eksport") {
 			list($tmp)=explode(":",$_POST['regnskabsaar']);
-			print "<BODY onLoad=\"javascript:exporter_kontoplan=window.open('exporter_kontoplan.php?aar=$tmp','lager','scrollbars=yes,resizable=yes,dependent=yes');exporter_kontoplan.focus();\">";
+			print "<BODY onload=\"javascript:exporter_kontoplan=window.open('exporter_kontoplan.php?aar=$tmp','lager','scrollbars=yes,resizable=yes,dependent=yes');exporter_kontoplan.focus();\">";
 		}
 		elseif (strstr($_POST['submit'])=="Import") {
-			print "<BODY onLoad=\"javascript:importer_kontoplan=window.open('importer_kontoplan.php','kontoplan','scrollbars=yes,resizable=yes,dependent=yes');importer_kontoplan.focus();\">";
+			print "<BODY onload=\"javascript:importer_kontoplan=window.open('importer_kontoplan.php','kontoplan','scrollbars=yes,resizable=yes,dependent=yes');importer_kontoplan.focus();\">";
 		}
 	} elseif ($sektion=='adresser_io') {
 		if (strstr($_POST['submit'])=="Eksport") {
-			print "<BODY onLoad=\"javascript:exporter_adresser=window.open('exporter_adresser.php?aar=$tmp','debitor','scrollbars=yes,resizable=yes,dependent=yes');exporter_adresser.focus();\">";
+			print "<BODY onload=\"javascript:exporter_adresser=window.open('exporter_adresser.php?aar=$tmp','debitor','scrollbars=yes,resizable=yes,dependent=yes');exporter_adresser.focus();\">";
 		}
 		elseif (strstr($_POST['submit'])=="Import") {
-			print "<BODY onLoad=\"javascript:importer_debitor=window.open('importer_debitor.php','debitor','scrollbars=yes,resizable=yes,dependent=yes');importer_debitor.focus();\">";
+			print "<BODY onload=\"javascript:importer_debitor=window.open('importer_debitor.php','debitor','scrollbars=yes,resizable=yes,dependent=yes');importer_debitor.focus();\">";
 		}
 	} elseif ($sektion=='varer_io') {
 		if (strstr($_POST['submit'])=="Eksport") {
-			print "<BODY onLoad=\"javascript:exporter_varer=window.open('exporter_varer.php?aar=$tmp','debitor','scrollbars=yes,resizable=yes,dependent=yes');exporter_varer.focus();\">";
+			print "<BODY onload=\"javascript:exporter_varer=window.open('exporter_varer.php?aar=$tmp','debitor','scrollbars=yes,resizable=yes,dependent=yes');exporter_varer.focus();\">";
 		}
 		elseif (strstr($_POST['submit'])=="Import") {
-			print "<BODY onLoad=\"javascript:importer_varer=window.open('importer_varer.php','importer_varer','scrollbars=yes,resizable=yes,dependent=yes');importer_varer.focus();\">";
+			print "<BODY onload=\"javascript:importer_varer=window.open('importer_varer.php','importer_varer','scrollbars=yes,resizable=yes,dependent=yes');importer_varer.focus();\">";
 		}
 	} elseif ($sektion=='solar_io') {
 		if (strstr($_POST['submit'])=="Import") {
-			print "<BODY onLoad=\"javascript:solarvvs=window.open('solarvvs.php','solarvvs','scrollbars=yes,resizable=yes,dependent=yes');solarvvs.focus();\">";
+			print "<BODY onload=\"javascript:solarvvs=window.open('solarvvs.php','solarvvs','scrollbars=yes,resizable=yes,dependent=yes');solarvvs.focus();\">";
 		}
 	} elseif ($sektion=='formular_io') {
 		if (strstr($_POST['submit'])=="Eksport") {
-			print "<BODY onLoad=\"javascript:exporter_formular=window.open('exporter_formular.php','exporter_formular','scrollbars=yes,resizable=yes,dependent=yes');exporter_formular.focus();\">";
+			print "<BODY onload=\"javascript:exporter_formular=window.open('exporter_formular.php','exporter_formular','scrollbars=yes,resizable=yes,dependent=yes');exporter_formular.focus();\">";
 		}
 		elseif (strstr($_POST['submit'])=="Import") {
-			print "<BODY onLoad=\"javascript:importer_formular=window.open('importer_formular.php','importer_formular','scrollbars=yes,resizable=yes,dependent=yes');importer_formular.focus();\">";
+			print "<BODY onload=\"javascript:importer_formular=window.open('importer_formular.php','importer_formular','scrollbars=yes,resizable=yes,dependent=yes');importer_formular.focus();\">";
 		}
 	}elseif ($sektion=='sqlquery_io') {
 		$sqlstreng=if_isset($_POST['sqlstreng']);
@@ -842,7 +842,7 @@ if ($_POST) {
 			$nyt_navn=trim(db_escape_string($_POST['nyt_navn']));
 			include("../includes/connect.php");
 			if (db_fetch_array(db_select("select id from regnskab WHERE regnskab = '$nyt_navn'",__FILE__ . " linje " . __LINE__))) {
-				print "<BODY onLoad=\"JavaScript:alert('Der findes allerede et regnskab med navnet $nyt_navn! Navn ikke &aelig;ndret')\">";
+				print "<BODY onload=\"JavaScript:alert('Der findes allerede et regnskab med navnet $nyt_navn! Navn ikke &aelig;ndret')\">";
 			} else {
 				$r=db_fetch_array(db_select("select id from kundedata WHERE regnskab_id = '$db_id'"));
 				if (!$r['id']){

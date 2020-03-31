@@ -8,7 +8,7 @@
   </head>
   <body>
   <?php 
-		if (isset($_GET['udskriv'])) print "<body onLoad=\"javascript:window.print();javascript:window.close();\">";
+		if (isset($_GET['udskriv'])) print "<body onload=\"javascript:window.print();javascript:window.close();\">";
 	?>
 	<div style="float:right;"><a href="../doc/gratis2proff.php?udskriv=udskriv"><img src="../ikoner/print.png" style="border: 0px solid;"></a></div>
  

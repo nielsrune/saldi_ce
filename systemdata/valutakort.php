@@ -63,7 +63,7 @@ $id=if_isset($_GET['id']);
 
 
 
-if (isset($_GET['ret'])) print "<BODY onLoad=\"javascript:alert('Ved kursændring skal du ikke rette kursen, men tilføje en ny kurs med angivelse af dato for kursændringen.\\nEllers risikerer du at lave rod i dit regnskab ')\">";
+if (isset($_GET['ret'])) print "<BODY onload=\"javascript:alert('Ved kursændring skal du ikke rette kursen, men tilføje en ny kurs med angivelse af dato for kursændringen.\\nEllers risikerer du at lave rod i dit regnskab ')\">";
 
 if (isset($_POST['submit'])) {
 	$dato=addslashes(if_isset($_POST['dato']));
@@ -77,12 +77,12 @@ if (isset($_POST['submit'])) {
 	$r=db_fetch_array(db_select("select max(transdate) as transdate from transaktioner where valuta = '$kodenr'",__FILE__ . " linje " . __LINE__));
 	$transdate=$r['transdate'];
 	if ($ny_valdate <= $transdate) {
-		print "<BODY onLoad=\"javascript:alert('Det er foretaget posteringer i $vauta efter $dato! Kursændring afbrudt')\">";
+		print "<BODY onload=\"javascript:alert('Det er foretaget posteringer i $vauta efter $dato! Kursændring afbrudt')\">";
 		$dato=NULL;
 	}
 	$qtxt="select id from kontoplan where kontonr='$difkto' and kontotype = 'D' and regnskabsaar= '$regnaar'";
 	if (!$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
-		print "<BODY onLoad=\"javascript:alert('Driftkonto $difkto eksisterer ikke')\">";
+		print "<BODY onload=\"javascript:alert('Driftkonto $difkto eksisterer ikke')\">";
 		$difkto='';$kodenr=-1;
 	}	
 #cho "$difkto && is_numeric($kodenr) && $dato && $kurs && $dato!=\"-\" && $kurs!=\"-\"<br>";
@@ -113,7 +113,7 @@ if (isset($_POST['submit'])) {
 			$r=db_fetch_array(db_select("select max(transdate) as transdate from transaktioner where kontonr = '$kontonr[$x]'",__FILE__ . " linje " . __LINE__));
 			$transdate=$r['transdate'];
 			if ($ny_valdate <= $transdate) {
-				print "<BODY onLoad=\"javascript:alert('Det er foretaget posteringer på ".$valuta."konto $kontonr[$x] efter $dato! Kursændring afbrudt')\">";
+				print "<BODY onload=\"javascript:alert('Det er foretaget posteringer på ".$valuta."konto $kontonr[$x] efter $dato! Kursændring afbrudt')\">";
 				$dato=NULL;
 			}
 		}
@@ -189,10 +189,10 @@ if (isset($_POST['submit'])) {
 	} elseif ($difkto && $kodenr == 'ny') {
 		if ($r = db_fetch_array(db_select("select kodenr from grupper where box1 = '$valuta' and art = 'VK'",__FILE__ . " linje " . __LINE__))) {
 			$kodenr=$r['kodenr'];
-			print "<BODY onLoad=\"javascript:alert('$valuta eksisterer allerede.')\">";
+			print "<BODY onload=\"javascript:alert('$valuta eksisterer allerede.')\">";
 		}	elseif ($valuta=='DKK') { # 20150327d
 			$kodenr="-1";
-			print "<BODY onLoad=\"javascript:alert('$valuta er reserveret og kan ikke anvendes som valutakode.')\">";
+			print "<BODY onload=\"javascript:alert('$valuta er reserveret og kan ikke anvendes som valutakode.')\">";
 		}	else {	
 			$r = db_fetch_array(db_select("select kodenr from grupper where art = 'VK' order by kodenr desc",__FILE__ . " linje " . __LINE__));
 			$kodenr=$r['kodenr']+1;

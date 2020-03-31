@@ -48,7 +48,7 @@ function send_mails($filnavn,$email,$mailsprog,$form_nr) {
 	$afsendermail=$row['email'];
 	$afsendernavn=$row['firmanavn'];
 	if (!$afsendermail || !$afsendernavn) {
-		print "<BODY onLoad=\"javascript:alert('Firmanavn eller e-mail for afsender ikke udfyldt.\\nSe (Indstillinger -> stamdata).\\nMail ikke afsendt!')\">";
+		print "<BODY onload=\"javascript:alert('Firmanavn eller e-mail for afsender ikke udfyldt.\\nSe (Indstillinger -> stamdata).\\nMail ikke afsendt!')\">";
 		return;
 	}
 	
@@ -97,7 +97,7 @@ echo "tekst	$mailtext<br>";
  				echo "Mailer Error: " . $mail->ErrorInfo;
 		 		exit;
 	}
-	if ($mailantal==1) print "<BODY onLoad=\"javascript:alert('Mail sendt til $email')\">";
+	if ($mailantal==1) print "<BODY onload=\"javascript:alert('Mail sendt til $email')\">";
 	else echo "Mail sendt til $email<br>";
 }	
 ?>

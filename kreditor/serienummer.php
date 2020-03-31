@@ -77,7 +77,7 @@ if ($_POST['submit']) {
 # echo "$y && $y<$leveres+$leveret<br>";
     if ($y && $y<$leveres+$leveret) {
         $leveres=$leveres*-1;
-        print "<BODY onLoad=\"javascript:alert('Der kan ikke v&aelig;lges flere end $leveres !')\">";
+        print "<BODY onload=\"javascript:alert('Der kan ikke v&aelig;lges flere end $leveres !')\">";
       }
     }
   }
@@ -127,7 +127,7 @@ if ($antal>0) {
     print "<tr><td colspan=2><input type=text size=40 name=serienr[$x] value=\"$serienr[$x]\"></td></tr>\n";
     print "<input type=hidden name=sn_id[$x] value='$sn_id[$x]'>";
   }
-	if (!$leveres && !$leveret) print "<BODY onLoad=\"javascript:alert('Ingen varer er sat til levering')\">";
+	if (!$leveres && !$leveret) print "<BODY onload=\"javascript:alert('Ingen varer er sat til levering')\">";
 
 } else {
 	$sn_antal=0;  # Hvis kobslinje ID er negativ er serienummeret valgt til returnering.

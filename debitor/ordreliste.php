@@ -256,10 +256,10 @@ if ($submit=="Udskriv" || $submit=="Send mails"){
 		}
 	}
 	if ($y>0) {
-		if ($submit=="Udskriv") print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=PDF&returside=../includes/luk.php' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
-		elseif ($submit=="Send mails") print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=email' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+		if ($submit=="Udskriv") print "<BODY onload=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=PDF&returside=../includes/luk.php' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+		elseif ($submit=="Send mails") print "<BODY onload=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=email' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
 	}
-	else print "<BODY onLoad=\"javascript:alert('Ingen fakturaer er markeret til udskrivning!')\">";
+	else print "<BODY onload=\"javascript:alert('Ingen fakturaer er markeret til udskrivning!')\">";
 }
 if (isset($_POST['check'])||isset($_POST['uncheck'])) {
 	if (isset($_POST['check'])) $check_all='on';
@@ -279,7 +279,7 @@ if ($submit=="Genfakturer" || $submit=="Ret"){
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=genfakturer.php?id=-1&ordre_antal=$y&genfakt=$genfakt\">";
 		exit;	
 	}
-	else print "<BODY onLoad=\"javascript:alert('Ingen fakturaer er markeret til genfakturering!')\">";
+	else print "<BODY onload=\"javascript:alert('Ingen fakturaer er markeret til genfakturering!')\">";
 } 
 if ($menu=='T') {
 include_once '../includes/top_header.php';
@@ -325,18 +325,18 @@ print  "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable
 	elseif ($pbs) print "<td width = 20% align=center><a href='ordreliste.php?valg=pbs&konto_id=$konto_id&returside=$returside'>&nbsp;PBS&nbsp;</a></td>";
 	print "</tbody></table></td>\n"; # <- Tabel 1.1.1
 	if ($valg=='pbs') {
-		if ($popup) print "<td width=10% $top_bund onClick=\"javascript:ordre=window.open('pbs_import.php?returside=x','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=ordreliste.php?sort=$sort>Import PBS</a></td>\n";
+		if ($popup) print "<td width=10% $top_bund onclick=\"javascript:ordre=window.open('pbs_import.php?returside=x','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=ordreliste.php?sort=$sort>Import PBS</a></td>\n";
 		else  print "<td width=10% $top_bund><a href=pbs_import.php?returside=ordreliste.php>Import PBS</a></td>\n";
 		include("pbsliste.php");
 		exit;
 	}
 	if ($valg=='pbs') {
-	#	if ($popup) print "<td width=10% $top_bund onClick=\"javascript:ordre=window.open('pbs_import.php?returside=ordreliste.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=ordreliste.php?sort=$sort>Import PBS</a></td>\n";
+	#	if ($popup) print "<td width=10% $top_bund onclick=\"javascript:ordre=window.open('pbs_import.php?returside=ordreliste.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=ordreliste.php?sort=$sort>Import PBS</a></td>\n";
 	#	else  print "<td width=10% $top_bund><a href=pbs_import.php?returside=ordreliste.php>Import PBS</a></td>\n";
 	} else {
 		print "<td width=5% $top_bund><a accesskey=V href=ordrevisning.php?valg=$valg>Visning</a></td>\n";
 		if ($popup) {
-			print "<td width=5% $top_bund onClick=\"javascript:ordre=window.open('ordre.php?returside=ordreliste.php&konto_id=$konto_id','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href='".$_SERVER['PHP_SELF']."'>Ny</a></td>\n";
+			print "<td width=5% $top_bund onclick=\"javascript:ordre=window.open('ordre.php?returside=ordreliste.php&konto_id=$konto_id','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href='".$_SERVER['PHP_SELF']."'>Ny</a></td>\n";
 		} else {
 			print "<td width=5%  $top_bund><a href=ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id>Ny</a></td>\n";
 		}
@@ -613,16 +613,16 @@ while ($row=db_fetch_array($query)) {
 		$href="ordre.php?tjek=$id&id=$id&returside=ordreliste.php";
 		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn || $row['hvem']=='')) {
 			if ($popup) {
-					$javascript="onClick=\"javascript:$ordre=window.open('$href','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
+					$javascript="onclick=\"javascript:$ordre=window.open('$href','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" ";
 				$understreg='<span style="text-decoration: underline;">';
 			} else {
-					$javascript="onClick=\"javascript:$ordre=window.location.replace('$href')\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
+					$javascript="onclick=\"javascript:$ordre=window.location.replace('$href')\" onmouseover=\"this.style.cursor = 'pointer'\" ";
 					$understreg='<span style="text-decoration: underline;">';
 			}
 			$linjetext="";
 		} else {
 				$javascript=$href="window.location.replace('ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id')";
-"onClick=\"javascript:$ordre.focus();\"";
+"onclick=\"javascript:$ordre.focus();\"";
 			$understreg='';
 			$linjetext="<span title= 'Ordre er l&aring;st af $row[hvem]'>";
 		}
@@ -911,7 +911,7 @@ if ($valg=='ordrer') {
 $r=db_fetch_array(db_select("select box1 from grupper where art='MFAKT' and kodenr='1'",__FILE__ . " linje " . __LINE__));
 if ($r['box1'] && $ialt!="0,00") {
 	$tekst="Faktur&eacute;r alt som kan leveres?";
-		print "<tr><td colspan=\"2\"><span title='Klik her for at importere en csv fil'><a href=csv2ordre.php target=\"_blank\">CSV import</a></span></td><td colspan=\"".($colspan-3)."\" align=right><span title='Klik her for at fakturere alle ordrer p&aring; listen'><a href=massefakt.php?valg=$valg onClick=\"return MasseFakt('$tekst')\">Faktur&eacute;r&nbsp;alt</a></span></td></tr>";} else print "<tr><td colspan=\"3\"><span title='Klik her for at importere en csv fil'><a href=csv2ordre.php target=\"_blank\">CSV import</a></span></td></tr>";
+		print "<tr><td colspan=\"2\"><span title='Klik her for at importere en csv fil'><a href=csv2ordre.php target=\"_blank\">CSV import</a></span></td><td colspan=\"".($colspan-3)."\" align=right><span title='Klik her for at fakturere alle ordrer p&aring; listen'><a href=massefakt.php?valg=$valg onclick=\"return MasseFakt('$tekst')\">Faktur&eacute;r&nbsp;alt</a></span></td></tr>";} else print "<tr><td colspan=\"3\"><span title='Klik her for at importere en csv fil'><a href=csv2ordre.php target=\"_blank\">CSV import</a></span></td></tr>";
 }	
 #cho "select box4 from grupper where art='API'<br>";
 $r=db_fetch_array(db_select("select box4 from grupper where art='API'",__FILE__ . " linje " . __LINE__));
@@ -973,7 +973,7 @@ if ($apifil=$r['box2']) {
 				fwrite($fp,date("U"));
 				fclose ($fp);
 				if ($db=='bizsys_52') {
-					print "<BODY onLoad=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
+					print "<BODY onload=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
 				} else exec ("nohup /usr/bin/wget --spider $api_fil  > /dev/null 2>&1 &\n");
 			} else {
 				$tjek=$next_id-50;
@@ -982,7 +982,7 @@ if ($apifil=$r['box2']) {
 				while ($r=db_fetch_array($q)) {
 					while ($r['shop_id']!=$tjek && $tjek<$next_id) {
 						$tmp=$apifil."&shop_ordre_id=$tjek";
-						print "<BODY onLoad=\"JavaScript:window.open('$tmp'	,'hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
+						print "<BODY onload=\"JavaScript:window.open('$tmp'	,'hent:ordrer','width=10,height=10,top=1024,left=1280')\">";
 						$tjek++;
 					} 					
 					$tjek++;

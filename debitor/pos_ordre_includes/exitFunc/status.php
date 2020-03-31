@@ -246,7 +246,7 @@
 				}	
 			}
 		} elseif (!$indbetaling) {
-			print "<BODY onLoad=\"javascript:alert('Fejl i øreafrunding, kontakt Saldi på telefon 46902208')\">\n";
+			print "<BODY onload=\"javascript:alert('Fejl i øreafrunding, kontakt Saldi på telefon 46902208')\">\n";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
 			exit;
 		}

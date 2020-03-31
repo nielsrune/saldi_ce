@@ -34,7 +34,7 @@ $css="../css/standard.css";
 include("../includes/connect.php");
 include("../includes/online.php");
 if ($db != $sqdb) {
-	print "<BODY onLoad=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">";
+	print "<BODY onload=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">";
 	print "<meta http-equiv=\"refresh\" content=\"1;URL=../index/logud.php\">";
 	exit;
 }
@@ -123,8 +123,8 @@ if ($_POST['regnskabsantal']) {
 				}
 			}	
 		}
-		if ($slet_antal==1)	print "<BODY onLoad=\"javascript:alert('$slettet_regnskab slettet')\">";
-		else print "<BODY onLoad=\"javascript:alert('$slet_antal regnskaber slettet')\">";
+		if ($slet_antal==1)	print "<BODY onload=\"javascript:alert('$slettet_regnskab slettet')\">";
+		else print "<BODY onload=\"javascript:alert('$slet_antal regnskaber slettet')\">";
 		}
 }
 $q = db_select("select * from brugere where brugernavn = '$brugernavn'");
@@ -158,7 +158,7 @@ for ($x=1; $x<=$regnskabsantal; $x++) {
 }
 print "<input type=\"hidden\" name=\"regnskabsantal\" value=\"$regnskabsantal\">";
 print "<tr><td colspan=2 align=center><hr></td></tr>\n";
-print "<tr><td colspan=2 align=center><input type=submit accesskey=\"a\" value=\"OK\" name=\"submit\" OnClick=\"return Slet_Regnskab()\"></td></tr>\n";
+print "<tr><td colspan=2 align=center><input type=submit accesskey=\"a\" value=\"OK\" name=\"submit\" onclick=\"return Slet_Regnskab()\"></td></tr>\n";
 print "</form>";
 ?>
 </tbody></table>

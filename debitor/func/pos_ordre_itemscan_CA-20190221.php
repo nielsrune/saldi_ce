@@ -325,7 +325,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 					print "<td colspan=\"2\" align=\"right\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:40px\" name = \"rabat_ny\" placeholder=\"$rabat_old\"></td>\n";
 #				} else {
 #					$txt="Manglende varenr til rabat";
-#					print "<BODY onLoad=\"javascript:alert('$txt')\">\n";
+#					print "<BODY onload=\"javascript:alert('$txt')\">\n";
 #					return($txt);
 #				}
 			} else {
@@ -340,7 +340,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 	if ($konto_id && $kreditmax != 0 && $sum+$moms > $kreditmax - $saldo && $status < '3') {
 		$ny_saldo=$saldo+$sum+$moms;
 		$txt = "Kreditmax: ".dkdecimal($kreditmax,2)."<br>Gl. saldo :  ".dkdecimal($saldo,2)."<br>Ny saldo :  ".dkdecimal($ny_saldo,2);
-		#print "<BODY onLoad=\"javascript:alert('$txt')\">\n";
+		#print "<BODY onload=\"javascript:alert('$txt')\">\n";
 		alert("$txt");
 	}
 	print "<input type=\"hidden\" name = \"sum\" value = \"$sum\" />\n";

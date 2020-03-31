@@ -190,7 +190,7 @@ if (isset($_POST)) {
 			if ($tmp2) genbestil($tmp1,$tmp2); 
 		}
 		transaktion('commit');
-		print "<BODY onLoad=\"javascript:alert('Der er oprettet nye indk&oslash;bsforslag')\">";
+		print "<BODY onload=\"javascript:alert('Der er oprettet nye indk&oslash;bsforslag')\">";
 	}
 	if (isset($_POST['start'])) $start = $_POST['start'];
 	if (isset($_POST['linjeantal'])) $linjeantal = $_POST['linjeantal'];
@@ -334,8 +334,8 @@ if ($menu=='T') {
 		else print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;beholdning=ja'><span title='Viser status for tilbud, salgsordrer og indk&oslash;bsordrer'>Ordrebeholdning</span></a></td>\n";
 	} #else print "<td width=\"80%\" $top_bund> Visning</td>\n";
 	if ($popup) {
-		print "<td width=\"5%\"$top_bund onClick=\"javascript:vare_vis=window.open('varevisning.php','vare_vis','scrollbars=1,resizable=1');vare_vis.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"> <span title='V&aelig;lg hvilke varegrupper og kreditorer som som vises i varelisten'><u>Visning</u></span></td>";
-		print "<td width=\"5%\" $top_bund onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:window.open('varekort.php?opener=varer.php&amp;returside=../includes/luk.php','varekort','scrollbars=1,resizable=1');ordre.focus();\"><span style=\"text-decoration: underline;\" title='Opret en ny vare'>Ny</a></span></td>";
+		print "<td width=\"5%\"$top_bund onclick=\"javascript:vare_vis=window.open('varevisning.php','vare_vis','scrollbars=1,resizable=1');vare_vis.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"> <span title='V&aelig;lg hvilke varegrupper og kreditorer som som vises i varelisten'><u>Visning</u></span></td>";
+		print "<td width=\"5%\" $top_bund onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:window.open('varekort.php?opener=varer.php&amp;returside=../includes/luk.php','varekort','scrollbars=1,resizable=1');ordre.focus();\"><span style=\"text-decoration: underline;\" title='Opret en ny vare'>Ny</a></span></td>";
 	} else {
 		print "<td width=\"5%\" $top_bund><a href=\"varevisning.php\"> <span title='V&aelig;lg hvilke varegrupper og kreditorer som som vises i varelisten'><u>Visning</u></span></a></td>";
 		print "<td width=\"5%\" $top_bund><a href=\"varekort.php?returside=varer.php\"><span title='Opret en ny vare'>Ny</span></a></td>";
@@ -679,9 +679,9 @@ $vis2=1;
 			print "<tr bgcolor=\"$linjebg\">";
 			if ($popup) { #20170920
 				$kort="kort".$id[$v];
-				$js="onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$kort=window.open('varekort.php?opener=varer.php&amp;id=$id[$v]&amp;returside=../includes/luk.php','".$jsvars."');$kort.focus();\"";
+				$js="onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$kort=window.open('varekort.php?opener=varer.php&amp;id=$id[$v]&amp;returside=../includes/luk.php','".$jsvars."');$kort.focus();\"";
 			} elseif ($href_vnr) $js=NULL; 
-			else $js="onMouseOver=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:location.href='varekort.php?id=$id[$v]'\"";
+			else $js="onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:location.href='varekort.php?id=$id[$v]'\"";
 #			if ($popup) print "<td </td>";
 #			else print "<td><a href=\"varekort.php?id=$id[$v]&amp;returside=varer.php\"><FONT style=\"COLOR:$color;\">".htmlentities(stripslashes($varenr),ENT_COMPAT,$charset)."</font></a></td>";	
 			if ($csv) {
@@ -842,7 +842,7 @@ $vis2=1;
 		break;
 	}
 	if (time("u")-$tidspkt>120) { #20190901
-		print "<BODY onLoad=\"javascript:alert('Timeout - reducer linjeantal')\">";
+		print "<BODY onload=\"javascript:alert('Timeout - reducer linjeantal')\">";
 		break;
 	}
 }
@@ -881,7 +881,7 @@ function genbestil($vare_id, $antal) {
 			}	else {
 				$qtxt="select varenr from varer where id = '$vare_id'";
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-				print "<BODY onLoad=\"javascript:alert('Leverand&oslash;rgruppe ikke korrekt opsat for varenr $r[varenr]')\">";
+				print "<BODY onload=\"javascript:alert('Leverand&oslash;rgruppe ikke korrekt opsat for varenr $r[varenr]')\">";
 			}
 			$qtxt="select box2 from grupper where art = 'KM' and kode = '$kode' and kodenr = '$kodenr'";
 			$r1 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));

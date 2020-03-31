@@ -270,7 +270,7 @@ if ($menu=='T') {
 		print "<tr><td colspan=6><hr></td></tr>";
 		print "</tbody></table>";
 	} else {
-		print "<BODY onLoad=\"javascript:alert('Rapportspecifikation ikke defineret (Indstillinger -> Moms)')\">";
+		print "<BODY onload=\"javascript:alert('Rapportspecifikation ikke defineret (Indstillinger -> Moms)')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?rapportart=kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&dato_til=$slutdato&maaned_til=$mt&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev\">";
 	}
 }

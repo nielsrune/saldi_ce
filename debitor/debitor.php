@@ -167,7 +167,7 @@ if ($jobkort)	print "<td width = 20% align=center><a href=jobliste.php title =\"
 print "</tbody></table></td>\n";
 print "<td width=5% $top_bund><a accesskey=V href=debitorvisning.php?valg=$valg>Visning</a></td>\n";
 #if ($popup) {
-#		print "<td width=5% $top_bund onClick=\"javascript:debitor=window.open('debitorkort.php?returside=debitor.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=debitor.php?sort=$sort>Ny</a></td>\n";
+#		print "<td width=5% $top_bund onclick=\"javascript:debitor=window.open('debitorkort.php?returside=debitor.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=debitor.php?sort=$sort>Ny</a></td>\n";
 #	} else {
 		print "<td width=5%  $top_bund><a href=debitorkort.php?returside=debitor.php>Ny</a></td>\n";
 #	}
@@ -409,7 +409,7 @@ for($i=0;$i<$dgcount;$i++) {
 
 #			if ($row['hvem']==$brugernavn) {
 #				if ($popup) {
-#					$javascript="onClick=\"javascript:".$valg."kort=window.open('".$valg."kort.php?tjek=$row[id]&id=$row[id]&returside=debitor.php','$debitorkort','scrollbars=1,resizable=1');$debitorkort.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
+#					$javascript="onclick=\"javascript:".$valg."kort=window.open('".$valg."kort.php?tjek=$row[id]&id=$row[id]&returside=debitor.php','$debitorkort','scrollbars=1,resizable=1');$debitorkort.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" ";
 #					$understreg='<span style="text-decoration: underline;">';
 #					$hrefslut="";
 #				} else {
@@ -419,12 +419,12 @@ for($i=0;$i<$dgcount;$i++) {
 #				}
 				$linjetext="";
 #			}	else {
-#				$javascript="onClick=\"javascript:$debitorkort.focus();\"";
+#				$javascript="onclick=\"javascript:$debitorkort.focus();\"";
 #				$understreg='';
 #				$linjetext="<span title= 'Kortet er l&aring;st af $row[hvem]'>";
 #			}
 
-#			$javascript="onClick=\"javascript:$debitorkort.focus();\"";
+#			$javascript="onclick=\"javascript:$debitorkort.focus();\"";
 #				$understreg='';
 #				$linjetext="<span title= 'Kortet er l&aring;st af $row[hvem]'>";
 			if ($linjebg!=$bgcolor) {$linjebg=$bgcolor; $color='#000000';}

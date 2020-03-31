@@ -348,20 +348,20 @@ if ($_POST){
  		$tmp2=$tmp2*1;
  		if ($tmp2!=$ny_kontonr) {
 			$alerttekst=findtekst(345,$sprog_id);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 345-->";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\"><!--tekst 345-->";
 		}
  		$ny_kontonr=$tmp2;
 /* 	
 		if ($pbs) {
 			if (!is_numeric($bank_reg)||strlen($bank_reg)!=4) {
 				$pbs="";	
-				print "<BODY onLoad=\"javascript:alert('Bank reg skal best&aring; af et tal p&aring; 4 cifre for at PBS kan aktiveres')\">\n";
+				print "<BODY onload=\"javascript:alert('Bank reg skal best&aring; af et tal p&aring; 4 cifre for at PBS kan aktiveres')\">\n";
 			} elseif (!is_numeric($bank_konto)||strlen($bank_konto)!=10) {
 				$pbs="";	
-				print "<BODY onLoad=\"javascript:alert('Bank konto skal best&aring; af et tal p&aring; 10 cifre for at PBS kan aktiveres')\">\n";
+				print "<BODY onload=\"javascript:alert('Bank konto skal best&aring; af et tal p&aring; 10 cifre for at PBS kan aktiveres')\">\n";
 			} elseif (!is_numeric($cvrnr)||strlen($cvrnr)!=8) {
 				$pbs="";	
-				print "<BODY onLoad=\"javascript:alert('CVR nr skal best&aring; af et tal p&aring; 8 cifre for at PBS kan aktiveres')\">\n";
+				print "<BODY onload=\"javascript:alert('CVR nr skal best&aring; af et tal p&aring; 8 cifre for at PBS kan aktiveres')\">\n";
 			}
 		}
 */		
@@ -370,13 +370,13 @@ if ($_POST){
 		if ($ny_kontonr && db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
 			$alerttekst=findtekst(350,$sprog_id);
 			$alerttekst=str_replace('$ny_kontonr',$ny_kontonr,$alerttekst);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\">"; #<!--tekst 350-->\n";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\">"; #<!--tekst 350-->\n";
 			$ny_kontonr='!';
 		}
 	}
 		if (!$firmanavn) {
 			$alerttekst=findtekst(346,$sprog_id);
-		print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";#<!--tekst 346-->\n";
+		print "<BODY onload=\"javascript:alert('$alerttekst')\">";#<!--tekst 346-->\n";
 		$kontonr=$ny_kontonr;
 	}
 	if ($postnr && !$bynavn) $bynavn=bynavn($postnr);
@@ -387,12 +387,12 @@ if ($_POST){
 			}
 		} elseif ($r = db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box2 = 'on'",__FILE__ . " linje " . __LINE__))) {
 			$alerttekst=findtekst(347,$sprog_id);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 347-->\n";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\"><!--tekst 347-->\n";
 		}
 		if (!$kontoansvarlig) $kontoansvarlig='0';
 		if (!$gruppe) {
 			$alerttekst=findtekst(348,$sprog_id);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 348-->\n";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\"><!--tekst 348-->\n";
 			$gruppe='0';
 		}  
  	## Tildeler aut kontonr hvis det ikke er angivet
@@ -410,7 +410,7 @@ if ($_POST){
  			while(in_array($ny_kontonr, $ktoliste)) $ny_kontonr++;
 			$alerttekst=findtekst(349,$sprog_id);
 				$alerttekst=str_replace('$ny_kontonr',$ny_kontonr,$alerttekst);
-			print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 349-->\n";
+			print "<BODY onload=\"javascript:alert('$alerttekst')\"><!--tekst 349-->\n";
 	}
  	
  	
@@ -433,7 +433,7 @@ if ($_POST){
  	 	 	 	}
  	 	 	 	if (in_array($ny_kontonr, $ktoliste)) {
 					$alerttekst=findtekst(351,$sprog_id);
-					print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 351-->\n";
+					print "<BODY onload=\"javascript:alert('$alerttekst')\"><!--tekst 351-->\n";
 	 	 	 	} else {$kontonr=$ny_kontonr;}
  	 	 	}
 			db_modify("update adresser set kontonr = '$kontonr', firmanavn = '$firmanavn', addr1 = '$addr1', addr2 = '$addr2', postnr = '$postnr', bynavn = '$bynavn', land = '$land', kontakt = '$kontakt', tlf = '$tlf', fax = '$fax', email = '$email', mailfakt = '$mailfakt', web = '$web', betalingsdage= '$betalingsdage', kreditmax = '$kreditmax', betalingsbet = '$betalingsbet', cvrnr = '$cvrnr', ean = '$ean', institution = '$institution', notes = '$notes', gruppe = '$gruppe', kontoansvarlig = '$kontoansvarlig',bank_reg='$bank_reg',bank_konto='$bank_konto', pbs_nr = '$pbs_nr', pbs = '$pbs',kontotype='$kontotype',fornavn='$fornavn',efternavn='$efternavn',lev_firmanavn='$lev_firmanavn',lev_fornavn='$lev_fornavn',lev_efternavn='$lev_efternavn',lev_addr1='$lev_addr1',lev_addr2='$lev_addr2',lev_postnr='$lev_postnr',lev_bynavn='$lev_bynavn',lev_land='$lev_land',lev_kontakt='$lev_kontakt',lev_tlf='$lev_tlf',lev_email='$lev_email',felt_1='$felt_1',felt_2='$felt_2',felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',vis_lev_addr='$vis_lev_addr',lukket='$lukket',kategori='$kategori',rabatgruppe='$rabatgruppe',status='$status' where id = '$id'",__FILE__ . " linje " . __LINE__);
@@ -443,7 +443,7 @@ if ($_POST){
  	 	 	 	elseif (($y=="-")&&($ans_id[$x])){db_modify("delete from ansatte 	where id = '$ans_id[$x]'",__FILE__ . " linje " . __LINE__);}
  	 	 	 	else {
 					$alerttekst=findtekst(352,$sprog_id);
-					print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 352-->\n";
+					print "<BODY onload=\"javascript:alert('$alerttekst')\"><!--tekst 352-->\n";
 				}
  	 	 	}
 #			if (!$pbs) db_modify("delete from pbs_kunder where konto_id = $id",__FILE__ . " linje " . __LINE__); # 2012103
@@ -562,7 +562,7 @@ if ($id > 0){
 	if (isset($_GET['tlf'])) $tlf=$_GET['tlf'];
 	$kategori_antal=0;
 	if (!isset($vis_lev_addr)) $vis_lev_addr='checked';
-	print "<BODY onLoad=\"javascript:docChange = true;\">\n";
+	print "<BODY onload=\"javascript:docChange = true;\">\n";
 	
 }
 
@@ -617,7 +617,7 @@ if ($menu=='T') {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n"; # TABEL 1 ->
 print "<tr><td align=\"center\" valign=\"top\">\n";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>"; # TABEL 1.1 ->
-if ($popup) print "<td onClick=\"JavaScript:opener.location.reload();\" width=\"10%\" $top_bund><a href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L>".findtekst(30,$sprog_id)."<!--tekst 30--></a></td>\n";
+if ($popup) print "<td onclick=\"JavaScript:opener.location.reload();\" width=\"10%\" $top_bund><a href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L>".findtekst(30,$sprog_id)."<!--tekst 30--></a></td>\n";
 else print "<td $top_bund><a href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L><!--tekst 154-->".findtekst(30,$sprog_id)."<!--tekst 30--></a></td>\n";
 print "<td width=\"80%\"$top_bund>".findtekst(356,$sprog_id)."<!--tekst 356--></td>\n";
 print "<td width=\"10%\"$top_bund><a href=\"javascript:confirmClose('debitorkort.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=0','$tekst')\" accesskey=N><!--tekst 154-->".findtekst(39,$sprog_id)."<!--tekst 39--></a></td>\n";
@@ -1014,8 +1014,8 @@ if ($menu=='T')
 $tekst=findtekst(130,$sprog_id);
 	if ($popup) {
 		print "<td width='10%' $top_bund ";
-		print "onClick=\"javascript:historik=window.open('historikkort.php?id=$id&returside=../includes/luk.php',";
-		print "'historik','".$jsvars."');historik.focus();' onMouseOver=\"this.style.cursor = 'pointer'\" ";
+		print "onclick=\"javascript:historik=window.open('historikkort.php?id=$id&returside=../includes/luk.php',";
+		print "'historik','".$jsvars."');historik.focus();' onmouseover=\"this.style.cursor = 'pointer'\" ";
 		print "title='$tekst'>".findtekst(131,$sprog_id)."<!--tekst 131--></td>\n";
 	} elseif ($returside!="historikkort.php") {
 		print "<td width='10%' $top_bund title='$tekst'><!--tekst 130-->";
@@ -1025,11 +1025,11 @@ $tekst=findtekst(130,$sprog_id);
 		print "<a href=historikkort.php?id=$id>".findtekst(131,$sprog_id)."<!--tekst 131--></td>\n";
 	}
 $tekst=findtekst(132,$sprog_id);
-if ($popup) print "<td width=\"10%\" $top_bund onClick=\"javascript:kontokort=window.open('rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../includes/luk.php','kontokort','".$jsvars."');kontokort.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(133,$sprog_id)."<!--tekst 133--></td>\n";
+if ($popup) print "<td width=\"10%\" $top_bund onclick=\"javascript:kontokort=window.open('rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../includes/luk.php','kontokort','".$jsvars."');kontokort.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(133,$sprog_id)."<!--tekst 133--></td>\n";
 else print "<td width=\"10%\" $top_bund  title=\"$tekst\"><!--tekst 132--><a href=rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../debitor/debitorkort.php?id=$id>".findtekst(133,$sprog_id)."<!--tekst 133--></td>\n";
 $tekst=findtekst(129,$sprog_id);
 if (substr($rettigheder,5,1)=='1') {
-	if ($popup) print "<td width=\"10%\" $top_bund onClick=\"javascript:d_ordrer=window.open('ordreliste.php?konto_id=$id&valg=faktura&returside=../includes/luk.php','d_ordrer','".$jsvars."');d_ordrer.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(134,$sprog_id)."<!--tekst 134--></td>\n";
+	if ($popup) print "<td width=\"10%\" $top_bund onclick=\"javascript:d_ordrer=window.open('ordreliste.php?konto_id=$id&valg=faktura&returside=../includes/luk.php','d_ordrer','".$jsvars."');d_ordrer.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(134,$sprog_id)."<!--tekst 134--></td>\n";
 	else print "<td width=\"10%\" $top_bund  title=\"$tekst\"><!--tekst 129--><a href=ordreliste.php?konto_id=$id&valg=faktura&returside=../debitor/debitorkort.php?id=$id>".findtekst(134,$sprog_id)."<!--tekst 134--></td>\n";
 } else print "<td width=\"10%\" $top_bund><span style=\"color:#999;\">".findtekst(134,$sprog_id)."<!--tekst 134--></span></td>\n";
 $r=db_fetch_array(db_select("select box7 from grupper where art = 'DIV' and kodenr = '2'",__FILE__ . " linje " . __LINE__));

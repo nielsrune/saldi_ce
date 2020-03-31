@@ -187,7 +187,7 @@ if ($_POST){
 */
 		if (($art[$x]=='VG')&&($box8[$x]!='on')&&($box9[$x]=='on')) {
 			$alerttext="Der kan kun f&oslash;res batchkontrol p&aring; lagerf&oslash;rte varer";
-			print "<BODY onLoad=\"javascript:alert('$alerttext')\">";
+			print "<BODY onload=\"javascript:alert('$alerttext')\">";
 			$box9[$x]='';
 		}
 		if ($art[$x]=='DG' || $art[$x]=='KG'){
@@ -262,7 +262,7 @@ if ($_POST){
 		}
 		if ($art[$x]=='VG' && $box8[$x]=='on' && $box10[$x]=='on') {
 			$alerttext="Operationer kan ikke lagerf&oslash;res";
-			print "<BODY onLoad=\"javascript:alert('$alerttext')\">";
+			print "<BODY onload=\"javascript:alert('$alerttext')\">";
 			$box8[$x]=''; $box9[$x]='';
 		} 
 		if ($art[$x]=='VPG') {
@@ -359,14 +359,14 @@ if ($_POST){
 				} elseif ($art[$x]=='SM'||$art[$x]=='KM'||$art[$x]=='YM'||$art[$x]=='EM') {
 					$r1=db_fetch_array(db_select("SELECT kodenr FROM grupper WHERE id=$id[$x]",__FILE__ . " linje " . __LINE__));
 					$tmp=substr($art[$x],0,1).$r1['kodenr'];
-					if ($r1=db_fetch_array(db_select("SELECT id FROM kontoplan WHERE moms='$tmp'",__FILE__ . " linje " . __LINE__))) print "<BODY onLoad=\"javascript:alert('Der er referencer til $tmp i kontoplanen. $tmp ikke slettet!')\">";
-					elseif ($r1=db_fetch_array(db_select("SELECT id FROM grupper WHERE (art='DG' or art = 'KG') and box1='$tmp'",__FILE__ . " linje " . __LINE__))) print "<BODY onLoad=\"javascript:alert('Der er reference til $tmp i debitor-/kreditorgrupper. $tmp ikke slettet!')\">";
+					if ($r1=db_fetch_array(db_select("SELECT id FROM kontoplan WHERE moms='$tmp'",__FILE__ . " linje " . __LINE__))) print "<BODY onload=\"javascript:alert('Der er referencer til $tmp i kontoplanen. $tmp ikke slettet!')\">";
+					elseif ($r1=db_fetch_array(db_select("SELECT id FROM grupper WHERE (art='DG' or art = 'KG') and box1='$tmp'",__FILE__ . " linje " . __LINE__))) print "<BODY onload=\"javascript:alert('Der er reference til $tmp i debitor-/kreditorgrupper. $tmp ikke slettet!')\">";
 					else db_modify("delete FROM grupper WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__);
 				} elseif ($art[$x]=='VK') db_modify("delete FROM valuta WHERE gruppe = '$kodenr[$x]'",__FILE__ . " linje " . __LINE__);
 				else {
 					$r1=db_fetch_array(db_select("SELECT kodenr FROM grupper WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__));
 					if ($art[$x]=='VG' && db_fetch_array(db_select("SELECT id FROM varer WHERE gruppe = '$r1[kodenr]'",__FILE__ . " linje " . __LINE__))) {
-							print "<BODY onLoad=\"javascript:alert('Der er varer i varegruppe $r1[kodenr] - varegruppe ikke slettet!')\">";
+							print "<BODY onload=\"javascript:alert('Der er varer i varegruppe $r1[kodenr] - varegruppe ikke slettet!')\">";
 					} else db_modify("delete FROM grupper WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__);
 				}
 			}
@@ -665,7 +665,7 @@ if (!$konto_id=$r['id']){
 #		 	print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'popop', 0, 'boks4'); # 20141121
 #			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'advarsel', 0, 'boks5', 'bh'); # 20141121
 			$fejl=1;
-#			print "<BODY onLoad=\"javascript:alert('Kontonr: $konto kan ikke anvendes!!')\">";
+#			print "<BODY onload=\"javascript:alert('Kontonr: $konto kan ikke anvendes!!')\">";
 		} else #cho "ID $r[id]<br>";
 #cho $fejl;
 	return $fejl;

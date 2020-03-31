@@ -388,7 +388,7 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 						}
 					}
 				} elseif ($kontonr[$z] && !in_array($kontonr[$z],$kpnr)) {
-					print "<BODY onLoad=\"javascript:alert('Kontroller konto $kontonr[$z]!')\">";
+					print "<BODY onload=\"javascript:alert('Kontroller konto $kontonr[$z]!')\">";
 				}
 			if (!$csv)	{
 					if ($linjebg!=$bgcolor) {$linjebg=$bgcolor; $color='#000000';}

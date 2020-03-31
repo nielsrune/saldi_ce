@@ -52,7 +52,7 @@ if ($id && $id>0) {
 	
 	if ($svar && $svar!='OK') {
 		echo "Svar $svar<br>";;
-		print "<BODY onLoad=\"javascript:alert('$svar')\">";
+		print "<BODY onload=\"javascript:alert('$svar')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/ordre.php?id=$id\">";
 		exit;
 	} else {
@@ -67,21 +67,21 @@ if ($id && $id>0) {
 	if (!$genfakt) {
 		if ($pbs) {
 			pbsfakt($id);
-			print "<BODY onLoad=\"javascript:alert('Faktura er tilf&oslash;jet liste over PBS betalinger')\">";
+			print "<BODY onload=\"javascript:alert('Faktura er tilf&oslash;jet liste over PBS betalinger')\">";
 		} elseif ($oioubl) {
-			if ($popup) print "<BODY onLoad=\"JavaScript:window.open('oioubl_dok.php?id=$id&doktype=$oioubl' , '' , '$jsvars');\">";
+			if ($popup) print "<BODY onload=\"JavaScript:window.open('oioubl_dok.php?id=$id&doktype=$oioubl' , '' , '$jsvars');\">";
 			else {
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=oioubl_dok.php?id=$id&doktype=$oioubl\">";
 				exit;
 			}
 		} elseif ($oioxml) {
-			if ($popup) print "<BODY onLoad=\"JavaScript:window.open('oioxml_dok.php?id=$id&doktype=$oioxml' , '' , '$jsvars');\">";
+			if ($popup) print "<BODY onload=\"JavaScript:window.open('oioxml_dok.php?id=$id&doktype=$oioxml' , '' , '$jsvars');\">";
 			else {
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=oioxml_dok.php?id=$id&doktype=$oioxml\">";
 				exit;
 			}
 		} else {
-			if ($popup) print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=$id&formular=4' , '' , '$jsvars');\">";
+			if ($popup) print "<BODY onload=\"JavaScript:window.open('formularprint.php?id=$id&formular=4' , '' , '$jsvars');\">";
 			else {
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=formularprint.php?id=$id&formular=4\">";
 				exit;

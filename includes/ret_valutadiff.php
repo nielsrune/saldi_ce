@@ -84,7 +84,7 @@ if ($row = db_fetch_array($query)) {
 } else print "<meta http-equiv=\"refresh\" content=\"0;URL=$retur?rapport=kontokort.php\">";
  $r=db_fetch_array(db_select("select box3 from grupper where art='VK' and box1='$valuta'",__FILE__ . " linje " . __LINE__));
  if (!$diffkto=$r['box3']) {
-	print "<BODY onLoad=\"javascript:alert('Kontonummer for valutadifferencer ikke fundet')\">";
+	print "<BODY onload=\"javascript:alert('Kontonummer for valutadifferencer ikke fundet')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$retur?rapport=kontokort.php\">";
 	exit;
  }
@@ -95,7 +95,7 @@ if ($row = db_fetch_array(db_select("select box1, box2, box3, box4 from grupper 
 		$regnslut=usdate("31-".trim($row['box3'])."-".trim($row['box4']))	; #usdate bruges for at sikre korrekt dato.
 } else {
 	$alerttekst='Regnskabs&aring;r ikke oprettet!';
-	print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+	print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=$retur?rapport=kontokort.php\">";
 }
 if (!$bfdate) {

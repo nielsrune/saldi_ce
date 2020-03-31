@@ -77,9 +77,9 @@ while ($row = db_fetch_array($query)) {
 	} else $r1=NULL;
 	print "<tr><td>".dkdato($row['fakturadate'])."</td>
 		<td align=right>".dkdecimal($row['antal'])."</td>";
-		if ($r1['firmanavn']) print "<td align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r1[firmanavn]</u></td>";
+		if ($r1['firmanavn']) print "<td align=\"right\" onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r1[firmanavn]</u></td>";
 		else print "<td align=\"right\">Lagerreguleret</td>";
-		print "<td align=\"right\" onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r1[ordrenr]</u></td>";
+		print "<td align=\"right\" onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r1[ordrenr]</u></td>";
 	$kobsantal=$kobsantal+$row['antal'];
 	$kobspris=$row['pris']*$row['antal'];	 
 	$kobssum=$kobssum+$kobspris;
@@ -120,8 +120,8 @@ while ($r = db_fetch_array($q)) {
 	if ($antal) {
 	print "<tr><td>".dkdato($r['levdate'])."</td>
 		<td align=right>$antal</td>
-		<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$r[id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r[firmanavn]</u></td>
-		<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$r[id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r[ordrenr]</u></td>";
+		<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$r[id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r[firmanavn]</u></td>
+		<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$r[id]&returside=../includes/luk.php','k_ordre','$jsvars')\"><u>$r[ordrenr]</u></td>";
 	$kobsantal=$kobsantal+$antal;
 	$kobssum=$kobssum+$kobspris;
 	$tmp=dkdecimal($kobspris);
@@ -162,8 +162,8 @@ while ($row = db_fetch_array($query)) {
 	print "<tr><td>".dkdato($row['fakturadate'])."</td>
 		<td align=right>".dkdecimal($row['antal'])."</td>";
 	if ($row['ordre_id'])	{
-		print "<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r1[firmanavn]</u></td>
-		<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r1[fakturanr]</u></td>";
+		print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r1[firmanavn]</u></td>
+		<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$row[ordre_id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r1[fakturanr]</u></td>";
 	} else {
 		print "<td align=\"right\">Lagerregulering</td><td></td>";
 	}
@@ -210,8 +210,8 @@ while ($r = db_fetch_array($q)) {
 	if ($antal) {
 	print "<tr><td>".dkdato($r['levdate'])."</td>
 		<td align=right>$antal</td>
-		<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$r[id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r[firmanavn]</u></td>
-		<td align=right onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$r[id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r[ordrenr]</u></td>";
+		<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$r[id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r[firmanavn]</u></td>
+		<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:d_ordre=window.open('../debitor/ordre.php?id=$r[id]&returside=../includes/luk.php','d_ordre','$jsvars')\"><u>$r[ordrenr]</u></td>";
 	$salgsantal=$salgsantal+$antal;
 	$salgssum=$salgssum+$salgspris;
 	$tmp=dkdecimal($salgspris);

@@ -62,7 +62,7 @@
 // 20190129 PHR	(vare_valg) Changed 'Momskode for salgspriser på varekort' to 'Vis priser med moms på varekort'. Search '$vatOnItemCard'
 // 2019.02.25 MSC - Rettet topmenu design til
 // 2019.04.11 LN Set new field, which sets the default value for provision
-// 20190421 PHR - Added confirmDiscriptionChange, in 'vare_valg'
+// 20190421 PHR - Added confirmDiscriptionchange, in 'vare_valg'
 // 20190614 LN Added argument to chooseProvisionForProductGroup -> $defaultProvision
 // 20200316 PHR Fuinction sqlquery_io. Fixed save & delete sql query
 
@@ -458,7 +458,7 @@ if ($sqlstreng=trim($sqlstreng)) {
 	$fy_ord=array('brugere','grupper');
 	for ($x=0;$x<count($fy_ord);$x++) {
 		if (strpos($del1,$fy_ord[$x])) {
-			print "<BODY onLoad=\"JavaScript:alert('Illegal værdi i søgestreng')\">";
+			print "<BODY onload=\"JavaScript:alert('Illegal værdi i søgestreng')\">";
 			exit;
 		}
 	}
@@ -953,10 +953,10 @@ function vare_valg($defaultProvision) {
 	$DisItemIfNeg_id=$r['id'];
 	($r['var_value'])?$DisItemIfNeg='checked':$DisItemIfNeg=NULL;
 
-	$qtxt="select id,var_value from settings where var_name = 'confirmDiscriptionChange' and var_grp = 'items'";
+	$qtxt="select id,var_value from settings where var_name = 'confirmDiscriptionchange' and var_grp = 'items'";
 	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	$confirmDiscriptionChange_id=$r['id'];
-	($r['var_value'])?$confirmDiscriptionChange='checked':$confirmDiscriptionChange=NULL;
+	$confirmDiscriptionchange_id=$r['id'];
+	($r['var_value'])?$confirmDiscriptionchange='checked':$confirmDiscriptionchange=NULL;
 
 	print "<form name='vare_valg' action='diverse.php?sektion=vare_valg' method='post'>";
 	print "<tr><td colspan='6'><hr></td></tr>";
@@ -965,7 +965,7 @@ function vare_valg($defaultProvision) {
 	print "<tr><td colspan='6'><br></td></tr>";
 	print "<input type=hidden name='id' value='$id'>";
 	print "<input type=hidden name='vatOnItemCard_id' value='$vatOnItemCard_id'>";
-	print "<input type=hidden name='confirmDiscriptionChange_id' value='$confirmDiscriptionChange_id'>";
+	print "<input type=hidden name='confirmDiscriptionchange_id' value='$confirmDiscriptionchange_id'>";
 	print "<input type=hidden name='DisItemIfNeg_id' value='$DisItemIfNeg_id'>";
 
 	/*
@@ -993,7 +993,7 @@ function vare_valg($defaultProvision) {
 	$text="Bekræft ændring af beskrivelse på varekort";
 	$title="Når dette felt er afmærket bliver skal ændring af beskrivelse på varekort bekræftes";
 	print "<tr><td title='$title'>$text</td>";
-	print "<td title='$title'><input type='checkbox' class='inputbox' name='confirmDiscriptionChange' $confirmDiscriptionChange></td></tr>";
+	print "<td title='$title'><input type='checkbox' class='inputbox' name='confirmDiscriptionchange' $confirmDiscriptionchange></td></tr>";
 	print "<td><br></td><td><br></td><td><br></td>";
 
 	$text="Sæt vare til udgået, når beholdning bliver negativ";
@@ -1506,7 +1506,7 @@ function rykker_valg()
 	if ($box3 || $box4) {
 		if ($r=db_fetch_array(db_select("select beskrivelse from varer where varenr = '$box4'",__FILE__ . " linje " . __LINE__))) {
 			$varetekst=htmlentities($r['beskrivelse']);
-		} else print "<BODY onLoad=\"JavaScript:alert('Varenummer ikke gyldigt')\">";
+		} else print "<BODY onload=\"JavaScript:alert('Varenummer ikke gyldigt')\">";
 	}
 */
 	print "<form name='diverse action=diverse.php?sektion=rykker_valg' method='post'>\n";
@@ -2226,8 +2226,8 @@ function testftp($box1,$box2,$box3,$box4,$box5,$box6) {
 	$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$box2.":'".$box3."'@".$box1."/".$box4." < ftpscript3 > ftplog3\n"; #rm ftpscript\nrm ftplog\n";
 	system ($kommando);
 	($box6)?$tmp="Dokumentserver":$tmp="FTP";
-	if (file_exists("../temp/$db/testfil.txt")) print "<BODY onLoad=\"JavaScript:alert('$tmp tilg&aelig;ngelig')\">";
-	else print "<BODY onLoad=\"JavaScript:alert('$tmp ikke tilg&aelig;ngelig')\">";
+	if (file_exists("../temp/$db/testfil.txt")) print "<BODY onload=\"JavaScript:alert('$tmp tilg&aelig;ngelig')\">";
+	else print "<BODY onload=\"JavaScript:alert('$tmp ikke tilg&aelig;ngelig')\">";
 }
 
 ?>

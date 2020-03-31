@@ -67,7 +67,7 @@ function posbogfor ($kasse,$regnstart) {
 					} else {
 						echo "$svar<br>\n";
 						print "Der er konstateret en uoverensstemmelse i posteringssummen, ID $ordre_id ordre $ordrenr, d=$d_kontrol, k=$k_kontrol kontakt saldi.dk p&aring; telefon 4690 2208";
-						print "<BODY onLoad=\"javascript:alert('Der er konstateret en uoverenstemmelse i posteringssummen. \\nKontakt saldi.dk på telefon 4690 2208 eller 2066 9820')\">\n";
+						print "<BODY onload=\"javascript:alert('Der er konstateret en uoverenstemmelse i posteringssummen. \\nKontakt saldi.dk på telefon 4690 2208 eller 2066 9820')\">\n";
 						exit;
 						print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
 						exit;

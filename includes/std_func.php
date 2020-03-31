@@ -142,7 +142,7 @@ if (!function_exists('usdate')) {
 				else $g3=$slutaar;
 			} else {
 				$alerttekst='Regnskabs&aring;r ikke oprettet!';
-				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">";
+				print "<BODY onload=\"javascript:alert('$alerttekst')\">";
 				exit;
 			}	
 			$date=$g1."-".$g2."-".$g3;
@@ -647,7 +647,7 @@ if (!function_exists('tekstboks')) {
 		$boksindhold.=$bokstekst."</p>\n";
 		$boksindhold.="<p style='font-size: 12pt; text-align:center'>\n";
                 $boksindhold.="<button type='button' style='width:100px; height:30px'";
-                $boksindhold.=" onClick=\"document.getElementById('".$boksid."').style.display = 'none';\">Luk</button>\n";
+                $boksindhold.=" onclick=\"document.getElementById('".$boksid."').style.display = 'none';\">Luk</button>\n";
 		if ( $boksflytbar==='span' ) {
 			$boksindhold.="<br />";
 			$boksindhold.=bokshjoerne($boksid, 'tv', 'span');
@@ -667,7 +667,7 @@ if (!function_exists('tekstboks')) {
 	                $boksindhold.="<td>&nbsp;</td></tr>\n";
 	                $boksindhold.="<tr>";
 			$boksindhold.=bokshjoerne($boksid, 'bv', 'td');
-	#                $boksindhold.="<td onClick=\"document.getElementById('".$boksid."').style.top = '68%'; document.getElementById('".$boksid."').style.left = '68%'; \">&#9698;</td>\n";
+	#                $boksindhold.="<td onclick=\"document.getElementById('".$boksid."').style.top = '68%'; document.getElementById('".$boksid."').style.left = '68%'; \">&#9698;</td>\n";
 			$boksindhold.=bokshjoerne($boksid, 'bh', 'td');
 	                $boksindhold.="</tr></table>\n";
 		}
@@ -706,7 +706,7 @@ if (!function_exists('bokshjoerne')) {
 		}
 
 		$bokshjoerne="<".$visning." title='".$popopbesked."'";
-		$bokshjoerne.=" onClick=\"document.getElementById('".$boksid."').style.top = '".$vertikal_kant."';";
+		$bokshjoerne.=" onclick=\"document.getElementById('".$boksid."').style.top = '".$vertikal_kant."';";
 		$bokshjoerne.=" document.getElementById('".$boksid."').style.left = '".$horisontal_kant."'; \">";
                 $bokshjoerne.=$tv_tegn."</".$visning.">\n";
 		return $bokshjoerne;
@@ -765,7 +765,7 @@ if (!function_exists('infoboks')) {
 		if ( ! $visning ) return "";
 
 		$infoboks.="<".$visning." title='Hjælpetekst til siden'";
-		$infoboks.=" onClick=\"document.getElementById('".$boksid."').style.display = 'block'; \">";
+		$infoboks.=" onclick=\"document.getElementById('".$boksid."').style.display = 'block'; \">";
                 $infoboks.=$infosymbol."</".$visning.">\n";
 		return $infoboks;
 	}
@@ -898,7 +898,7 @@ if (!function_exists('ftptest')) {
 		$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$bruger.":".$kode."@".$server." < ftpscript2 > ftp2.log ";
 		system ($kommando);
 		(file_exists("../temp/$db/test.txt"))?$txt="FTP tjek OK":$txt="Fejl i FTP oplysninger";
-		print "<BODY onLoad=\"JavaScript:alert('$txt')\">";
+		print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		unlink ("../temp/$db/test.txt");
 		unlink ("../temp/$db/ftpscript1");
 		unlink ("../temp/$db/ftpscript2");
@@ -917,7 +917,7 @@ function valutaopslag($amount, $valuta, $transdate) {
 		$r = db_fetch_array(db_select("select box1 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 		$tmp=dkdato($transdate);
 		$fejltext="---";
-		print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";	
+		print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs for $r[box1] den $tmp')\">";	
 	}
 	$r = db_fetch_array(db_select("select box3 from grupper where art = 'VK' and kodenr = '$valuta'",__FILE__ . " linje " . __LINE__));
 	$diffkonto=$r['box3'];

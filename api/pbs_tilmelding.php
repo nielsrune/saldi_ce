@@ -137,10 +137,10 @@ if ($tilmeld=(if_isset($_POST['tilmeld']))) {
 		
 		} 
 		$txt="Tak for din tilmelding";
-		print "<BODY onLoad=\"javascript:alert('$txt')\">";
+		print "<BODY onload=\"javascript:alert('$txt')\">";
 
 	} else {
-		print "<BODY onLoad=\"javascript:alert('$alert')\">";
+		print "<BODY onload=\"javascript:alert('$alert')\">";
 		$alert=NULL;
 	}
 }

@@ -334,8 +334,8 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	print "</td></tr><tr>";
 	print "<td colspan=3 ALIGN=center><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>\n"; #E
 	if ($popup) {
-		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:kontrolspor=window.open('kontrolspor.php','kontrolspor','scrollbars=1,resizable=1');kontrolspor.focus();\"><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value=\"Kontrolspor\" name=\"submit\"></span></td></tr>";
-		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:provisionsrapport=window.open('provisionsrapport.php','provisionsrapport','scrollbars=1,resizable=1');provisionsrapport.focus();\"><span title='Rapport over medarbejdernes provisionsindtjening'><input class='button blue medium' type=submit value=\"Provisionsrapport\" name=\"submit\"></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center onclick=\"javascript:kontrolspor=window.open('kontrolspor.php','kontrolspor','scrollbars=1,resizable=1');kontrolspor.focus();\"><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value=\"Kontrolspor\" name=\"submit\"></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center onclick=\"javascript:provisionsrapport=window.open('provisionsrapport.php','provisionsrapport','scrollbars=1,resizable=1');provisionsrapport.focus();\"><span title='Rapport over medarbejdernes provisionsindtjening'><input class='button blue medium' type=submit value=\"Provisionsrapport\" name=\"submit\"></span></td></tr>";
 	} else {
 		print "<tr><td colspan=3 ALIGN=center><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value=\"Kontrolspor\" name=\"submit\"></span></td></tr>";
 		print "<tr><td colspan=3 ALIGN=center><span title='Rapport over medarbejdernes provisionsindtjening'>  <input class='button blue medium' type=submit value=\"Provisionsrapport\" name=\"submit\"></span></td></tr>";

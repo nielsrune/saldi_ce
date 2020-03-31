@@ -58,7 +58,7 @@ if (!isset($_POST['fejltxt']) && isset($_POST['regnskab']) && isset($_POST['brug
 	elseif ($rs == $_POST['regnskab'] && $bn == $_POST['brugernavn']) {
 		setcookie ('saldi_huskmig', $cookievalue, time() - 3600);
 	}
-	print "<form name=\"login\" METHOD=\"POST\" ACTION=\"$action\" onSubmit=\"return handleLogin(this);\">\n";
+	print "<form name=\"login\" METHOD=\"POST\" ACTION=\"$action\" onsubmit=\"return handleLogin(this);\">\n";
 	print "<input type=\"hidden\" name=\"regnskab\" value=\"$_POST[regnskab]\">\n";
 	print "<input type=\"hidden\" name=\"brugernavn\" value=\"$_POST[brugernavn]\">\n";
 	print "<input type=\"hidden\" name=\"password\"  value=\"$_POST[password]\">\n";
@@ -122,7 +122,7 @@ print "	<div id=\"main\">\n";
 print "		<div class=\"loginHolder\">\n";
 print "			<div class=\"loginBox\">\n";
 print "				<div class=\"loginForm\">\n";    
-print "					<form name=\"login1\" METHOD=\"POST\" ACTION=\"index.php\" onSubmit=\"return handleLogin(this);\">\n";
+print "					<form name=\"login1\" METHOD=\"POST\" ACTION=\"index.php\" onsubmit=\"return handleLogin(this);\">\n";
 print "						<input type=\"hidden\" name=\"vent\" value=\"$vent\">\n";
 if ($fejltxt) {
 	print "<label style=\"text-align:center;color:red;\">$fejltxt</label>\n";

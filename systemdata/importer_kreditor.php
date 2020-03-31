@@ -133,7 +133,7 @@ $felt_antal=30;
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x] && $felt_aktiv[$x]==1) {
-			print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
+			print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
 			$feltnavn[$y]='';
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
@@ -174,8 +174,8 @@ if ($fp) {
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if ($feltnavn[$y]=='kontonr'&&!is_numeric($felt[$y])) {
 					$skriv_linje=2;
-					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
-#					print "<BODY onLoad=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
+					print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
+#					print "<BODY onload=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
 				} 
 			}
  		}
@@ -234,7 +234,7 @@ fclose($fp);
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]&& $felt_aktiv[$x]==1) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
+		print "<BODY onload=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
 		$feltnavn[$y]='';
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
@@ -271,8 +271,8 @@ if ($fp) {
 				if ($feltnavn[$y]=='kontonr'&&!is_numeric($felt[$y])) {
 					$kontonr=0;
 					$skriv_linje=2;
-#					print "<BODY onLoad=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
-#					print "<BODY onLoad=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
+#					print "<BODY onload=\"javascript:alert('R&oslash;de linjer indeholder fejl (kontonummer ikke numerisk) og bliver ikke importeret')\">";
+#					print "<BODY onload=\"javascript:alert('Kontonrnummer skal v&aelig;re numerisk')\">";
 				} elseif ($feltnavn[$y]=='kontonr') $kontonr=$felt[$y];
 				if ($feltnavn[$y]=="postnr") list($felt[$y],$bynavn[$y]) = split(" ",$felt[$y],2);
 				if ($feltnavn[$y]=='kontoansvarlig'&&$felt[$y]&&$kontonr){
@@ -333,7 +333,7 @@ if ($fp) {
 transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";
-print "<BODY onLoad=\"javascript:alert('$imp_antal adresser importeret')\">";
+print "<BODY onload=\"javascript:alert('$imp_antal adresser importeret')\">";
 print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 } # endfunc overfoer_data
 

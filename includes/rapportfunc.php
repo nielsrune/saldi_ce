@@ -299,17 +299,17 @@ function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ko
 			print "<input type=hidden name=kontoantal value=$x>";
 			if ($x) {
 				print "<tr><td colspan=10><hr></td></tr>\n";
-				if ($taeller==1) print "<tr><td colspan=10 align=center><input type=submit value=\"  Slet  \" name=\"submit\" onClick=\"return confirmSubmit('Slet valgte ?')\">&nbsp;";
+				if ($taeller==1) print "<tr><td colspan=10 align=center><input type=submit value=\"  Slet  \" name=\"submit\" onclick=\"return confirmSubmit('Slet valgte ?')\">&nbsp;";
 				else print "<tr><td colspan=10 align=center>";
 				if ($taeller==2) {
-					print " &nbsp;<span title='Registrerer afmærkede sager som afsluttet og fjerner dem fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onClick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
+					print " &nbsp;<span title='Registrerer afmærkede sager som afsluttet og fjerner dem fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onclick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
 				}
-				else print "<input type=submit value=\"Udskriv\" name=\"submit\" onClick=\"return confirmSubmit('Udskriv valgte ?')\">";
+				else print "<input type=submit value=\"Udskriv\" name=\"submit\" onclick=\"return confirmSubmit('Udskriv valgte ?')\">";
 				if ($taeller==3) {
-					print " &nbsp;<span title='Registrerer rykker som afsluttet og fjerner den fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onClick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
+					print " &nbsp;<span title='Registrerer rykker som afsluttet og fjerner den fra listen'><input type=submit value=\"Afslut\" name=\"submit\" onclick=\"return confirmSubmit('Afslut valgte ?')\"></span>";
 					print " &nbsp;<input type=submit value=\"Ny rykker\" name=\"submit\">";
 				}
-				if ($taeller==1) print " &nbsp;<input type=submit value=\"Bogf&oslash;r\" name=\"submit\" onClick=\"return confirmSubmit('Bogf&oslash;r valgte ?')\"></td></tr>\n";
+				if ($taeller==1) print " &nbsp;<input type=submit value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"return confirmSubmit('Bogf&oslash;r valgte ?')\"></td></tr>\n";
 				else print "</td></tr>\n";
 				}
 			print "</form>\n";
@@ -484,7 +484,7 @@ $ks=0;
 			$sum=$sum+$y;
 			$kontrolsum+=$kontrol;
 			print "<tr bgcolor=\"$linjebg\">";
-			if ($popup) print "<td onClick=\"window.open('rapport.php?rapportart=kontokort&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok','kreditorrapport','$jsvars')\" onMouseOver=\"this.style.cursor = 'pointer'\"><a>";
+			if ($popup) print "<td onclick=\"window.open('rapport.php?rapportart=kontokort&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok','kreditorrapport','$jsvars')\" onmouseover=\"this.style.cursor = 'pointer'\"><a>";
 			else print "<td><a href=rapport.php?rapportart=kontokort&kilde=openpost&kto_fra=$konto_fra&kilde_kto_til=$konto_til&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$kontonr[$x]&konto_til=$kontonr[$x]&submit=ok>";
 			print "<span title='Klik for detaljer' style=\"text-decoration: underline;\">$kontonr[$x]</span></a></td>";
 			print "<td>$pbs[$x]</td>";
@@ -639,7 +639,7 @@ $ks=0;
 	$year=trim($year);
 	$ym=$year.$month;
 	if (($ym<$aarstart || $ym>$aarslut))	{
-		print "<BODY onLoad=\"javascript:alert('Rykkerdato udenfor regnskabs&aring;r')\">";
+		print "<BODY onload=\"javascript:alert('Rykkerdato udenfor regnskabs&aring;r')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;rapport.php?rapportart=openpost&submit=ok&dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til\">";
 		exit;
 	}
@@ -668,7 +668,7 @@ $ks=0;
 				db_modify("update ordrer set status=3 where id=$id",__FILE__ . " linje " . __LINE__);
 				} else {
 				$fejl=1;
-				print "<BODY onLoad=\"javascript:alert('Der er anvendt en lagerf&oslash;rt vare som gebyr - rykker kan ikke bogf&oslash;res')\">";
+				print "<BODY onload=\"javascript:alert('Der er anvendt en lagerf&oslash;rt vare som gebyr - rykker kan ikke bogf&oslash;res')\">";
 			}
 		}
 	} 
@@ -726,7 +726,7 @@ function bogfor_nu($id) {
 				if ($r2=db_fetch_array(db_select("select kurs from grupper, valuta where grupper.art='VK' and grupper.box1='$valuta' and valuta.gruppe = ".nr_cast("grupper.kodenr")." and valuta.valdate <= '$fakturadate' order by valuta.valdate desc",__FILE__ . " linje " . __LINE__))) {
 				$valutakurs=$r2['kurs'];
 			} else {
-				print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs i $valuta d. $fakturadate')\">";	
+				print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs i $valuta d. $fakturadate')\">";	
 				return("Ups - ingen valutakurs i $valuta d. $fakturadate");
 			}
 		}
@@ -787,7 +787,7 @@ function bogfor_nu($id) {
 	$d_kontrol=afrund($d_kontrol,2);
 	$k_kontrol=afrund($k_kontrol,2);
 	if ($d_kontrol!=$k_kontrol) {
-		print "<BODY onLoad=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, kontakt administrator')\">";
+		print "<BODY onload=\"javascript:alert('Der er konstateret en uoverensstemmelse i posteringssummen, kontakt administrator')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?id=$id\">";
 		exit;
 	} 
@@ -896,12 +896,12 @@ if (!isset ($sprog_id)) $sprog_id = NULL;
 		$tekst3=findtekst(455,$sprog_id);
 		print "<tr><td colspan=\"3\" align=center>";
 		if ($popup) {
-			print "<span onClick=\"javascript:top100=window.open('top100.php','top100','$jsvars');top100.focus();\" title=\"a $tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"submit\"></span>";
+			print "<span onclick=\"javascript:top100=window.open('top100.php','top100','$jsvars');top100.focus();\" title=\"a $tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst2\" name=\"submit\"></span>";
 			if (db_fetch_array(db_select("select id from grupper where art = 'POS' and box2 >= '1'",__FILE__ . " linje " . __LINE__))) {
-				print "<span onClick=\"javascript:kassespor=window.open('kassespor.php','kassespor','$jsvars');kassespor.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst3\" name=\"submit\"></span>";
+				print "<span onclick=\"javascript:kassespor=window.open('kassespor.php','kassespor','$jsvars');kassespor.focus();\" title=\"$tekst1\"><input style=\"width:115px\" type=submit value=\"$tekst3\" name=\"submit\"></span>";
 			}
 		} else {
-			print "<span title=\"$tekst1\" onClick=\"window.location.href='top100.php'\"><input style=\"width:115px\" type=button value=\"$tekst2\" name=\"submit\"></span>";
+			print "<span title=\"$tekst1\" onclick=\"window.location.href='top100.php'\"><input style=\"width:115px\" type=button value=\"$tekst2\" name=\"submit\"></span>";
 			print "<input title=\"Salgsstat\" style=\"width:115px\" type=\"submit\" value=\"Salgsstat\" name=\"salgsstat\">";
 			if (db_fetch_array(db_select("select id from grupper where art = 'POS' and box2 >= '1'",__FILE__ . " linje " . __LINE__))) {
 				print	"<a href=\"kassespor.php\"><input title=\"Oversigt over POS transaktioner\" style=\"width:115px\" type=\"button\" value=\"$tekst3\"></a>";
@@ -912,7 +912,7 @@ if (!isset ($sprog_id)) $sprog_id = NULL;
 		if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
 			$tekst1=findtekst(531,$sprog_id);
 			$tekst2=findtekst(532,$sprog_id);
-			print	"<span onClick=\"javascript:location.href='../debitor/betalingsliste.php'\"><input title=\"$tekst1\" style=\"width:115px\" type=\"button\" value=\"$tekst2\"></span>\n";
+			print	"<span onclick=\"javascript:location.href='../debitor/betalingsliste.php'\"><input title=\"$tekst1\" style=\"width:115px\" type=\"button\" value=\"$tekst2\"></span>\n";
 		} elseif (file_exists("../debitor/multiroute.php")) {
 			print "<span onclick=\"javascript:location.href='../debitor/multiroute.php'\"><input title=\"Multiroute\" style=\"width:115px\" type=\"button\" value=\"Multiroute\"></span>\n";
 		}
@@ -922,7 +922,7 @@ if (!isset ($sprog_id)) $sprog_id = NULL;
 		$tekst2=findtekst(532,$sprog_id);
 		print "<tr><td colspan=\"3\" align=center>\n";
 			if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'",__FILE__ . " linje " . __LINE__))) {
-			print	"<span onClick=\"javascript:location.href='../kreditor/betalingsliste.php'\">\n";
+			print	"<span onclick=\"javascript:location.href='../kreditor/betalingsliste.php'\">\n";
 			print "<input title=\"$tekst1\" style=\"width:115px\" type=\"button\" value=\"$tekst2\">\n";
 			print "</span>\n";
 		}
@@ -1180,16 +1180,16 @@ function kontokort($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,$kontoa
 		else $tekst="Debitorapport - kontokort";
 		print "<td width=\"80%\" $top_bund>$tekst</td>";
 		($kontoantal==1)?$w=5:$w=10;
-		print "<td width=\"w%\" $top_bund onClick=\"javascript:kontoprint=window.open('kontoprint.php?dato_fra=$dato_fra&dato_til=$dato_til";
+		print "<td width=\"w%\" $top_bund onclick=\"javascript:kontoprint=window.open('kontoprint.php?dato_fra=$dato_fra&dato_til=$dato_til";
 		print "&konto_fra=$konto_fra&konto_til=$konto_til&kontoart=$kontoart','kontoprint','left=0,top=0,width=1000%,height=700%,";
-		print "scrollbars=yes,resizable=yes,menubar=no,location=no');\"onMouseOver=\"this.style.cursor = 'pointer'\" ";
+		print "scrollbars=yes,resizable=yes,menubar=no,location=no');\"onmouseover=\"this.style.cursor = 'pointer'\" ";
 		print "title=\"Udskriv kontoudtog som PDF (Åbner i popup)\">Udskriv</td>\n";
 		if ($kontoantal==1) { # 2019-11-07
 			if ($fromdate) $firstdate=$fromdate;
 			if ($todate) $lastdate=$todate;
-			print "<td width=\"$w%\" $top_bund onClick=\"javascript:kontoprint=window.open('mail_kontoudtog.php?dato_fra=".dkdato($firstdate);
+			print "<td width=\"$w%\" $top_bund onclick=\"javascript:kontoprint=window.open('mail_kontoudtog.php?dato_fra=".dkdato($firstdate);
 			print "&dato_til=".dkdato($lastdate)."&kontoantal=1&kontoliste=$kto_id[$x]','kontomail' ,'left=0,top=0,width=1000%,height=700%,";
-			print "scrollbars=yes,resizable=yes,menubar=no,location=no');\" onMouseOver=\"this.style.cursor = 'pointer'\"";
+			print "scrollbars=yes,resizable=yes,menubar=no,location=no');\" onmouseover=\"this.style.cursor = 'pointer'\"";
 			print "title=\"Send som mail (Åbner i popup)\">Email</td>\n";
 		}
 		print "</tbody></table>"; //B slut

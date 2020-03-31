@@ -72,16 +72,16 @@ $art=$row['art'];
 $kred_ord_id=$row['kred_ord_id'];
 $ref=$row['ref'];
 if ($row['status']>2) {
-	print "<BODY onLoad=\"fejltekst('Hmmm - har du brugt browserens opdater eller tilbageknap???')\">";
+	print "<BODY onload=\"fejltekst('Hmmm - har du brugt browserens opdater eller tilbageknap???')\">";
 	 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
 } elseif (!$row['levdate']) {
-	print "<BODY onLoad=\"fejltekst('Leveringsdato ikke udfyldt')\">";
+	print "<BODY onload=\"fejltekst('Leveringsdato ikke udfyldt')\">";
 	 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
 }
 elseif ($row['levdate']<$row['ordredate']) {
-	print "<BODY onLoad=\"fejltekst('Leveringsdato er f&oslash;r ordredato')\">";
+	print "<BODY onload=\"fejltekst('Leveringsdato er f&oslash;r ordredato')\">";
 	 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
 } else $fejl=0;
@@ -91,7 +91,7 @@ list ($year, $month, $day) = explode ('-', $row['levdate']);
 $year=substr($year,-2);
 $ym=$year.$month;
 if (($ym<$aarstart)||($ym>$aarslut)) {
-	print "<BODY onLoad=\"fejltekst('Leveringsdato udenfor regnskabs&aring;r')\">";
+	print "<BODY onload=\"fejltekst('Leveringsdato udenfor regnskabs&aring;r')\">";
 	 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
 }
@@ -128,7 +128,7 @@ if ($fejl==0) {
 				$sn_id[$y]=$row['id'];
 			}
 			if ($leveres[$x]>$sn_antal[$x]/1000){
-				 print "<BODY onLoad=\"fejltekst('Serienumre ikke udfyldt')\">";
+				 print "<BODY onload=\"fejltekst('Serienumre ikke udfyldt')\">";
 				exit;
 			}
 		}
@@ -142,7 +142,7 @@ if ($fejl==0) {
 				$sn_id[$y]=$row['id'];
 			}
 			if ($leveres[$x]!=$sn_antal[$x]/-1000) {
-				 print "<BODY onLoad=\"fejltekst('Serienumre ikke valgt')\">";
+				 print "<BODY onload=\"fejltekst('Serienumre ikke valgt')\">";
 				 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 				 exit;
 			}
@@ -166,7 +166,7 @@ if ($fejl==0) {
 #cho "box8 $box8<br>";
 			if ($box8!='on') { # Dvs varen er IKKE lagerfoert.
 				if (!$box4) {
-					print "<BODY onLoad=\"javascript:alert('Varenr $varenr[$x] (Pos nr: $posnr[$x]) er ikke tilnykttet nogen varegruppe, modtagelse afbrudt')\">";
+					print "<BODY onload=\"javascript:alert('Varenr $varenr[$x] (Pos nr: $posnr[$x]) er ikke tilnykttet nogen varegruppe, modtagelse afbrudt')\">";
 					print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 				}
 				db_modify("update ordrelinjer set bogf_konto='$box4' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
@@ -396,7 +396,7 @@ function reservation($linje_id, $leveres, $vare_id, $serienr,$lager) {
 	$query = db_select("select antal from reservation where linje_id=$linje_id and batch_salg_id<0",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {$res_sum=$res_sum+$row['antal'];} 
 	if ($leveres<$res_sum) {
-		print "<BODY onLoad=\"fejltekst('Der er reserveret flere varer end der modtages - foretag proiritering')\">";
+		print "<BODY onload=\"fejltekst('Der er reserveret flere varer end der modtages - foretag proiritering')\">";
 		exit;
 	} 
 	$res_sum=0;
@@ -439,7 +439,7 @@ function returnering ($id,$linje_id,$leveres,$vare_id, $variant_id,$pris, $serie
 	$y=0;
 
 	if (!$kred_linje_id) {
-		print "<BODY onLoad=\"fejltekst('Batch ikke valgt')\">";
+		print "<BODY onload=\"fejltekst('Batch ikke valgt')\">";
 		exit;
 	}
 	$query = db_select("select * from batch_kob where linje_id=$kred_linje_id",__FILE__ . " linje " . __LINE__);

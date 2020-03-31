@@ -89,7 +89,7 @@ print "				<li>\n";
 print "					<a href=\"#\" class=\"navbarlink\">Bruger</a>\n";
 print "					<ul class=\"subnavbarLast\">\n";
 #print "						<li><a href=\"index.php?page=frontpage\">Forside</a></li>\n";
-print "						<li><a href=\"#\" onClick=\"MyWindow=window.open('http://www.saldi.dk/dok/komigang.html','MyWindow','width=600,height=600'); return false;\">Vejledning</a></li>\n";
+print "						<li><a href=\"#\" onclick=\"MyWindow=window.open('http://www.saldi.dk/dok/komigang.html','MyWindow','width=600,height=600'); return false;\">Vejledning</a></li>\n";
 #print "						<li><a href=\"#\">Indstillinger</a></li>\n";
 print "						<li><a href=\"../index/logud.php\">Log ud</a></li>\n";
 print "					</ul>\n";

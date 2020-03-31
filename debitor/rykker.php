@@ -69,7 +69,7 @@ if ($submit || $inkasso) {
 	$ny_valuta=trim($_POST['ny_valuta']); #21040628
 	if ($mail_fakt && (!strpos($email,"@") || !strpos($email,".") || !strlen($email)>5)) { 
 		$mail_fakt=NULL;
-		print "<BODY onLoad=\"javascript:alert('e-mail ikke gyldig')\">";
+		print "<BODY onload=\"javascript:alert('e-mail ikke gyldig')\">";
 	}
 	if ($ny_valuta != $valuta) { #21040628 ->
 	if ($valuta=='DKK') $valutakurs=100;
@@ -80,7 +80,7 @@ if ($submit || $inkasso) {
 			if ($r2=db_fetch_array(db_select("select kurs from grupper, valuta where grupper.art='VK' and grupper.box1='$valuta' and valuta.gruppe = ".nr_cast("grupper.kodenr")." and valuta.valdate <= '$r[fakturadate]' order by valuta.valdate desc",__FILE__ . " linje " . __LINE__))) {
 				$valutakurs=$r2['kurs'];
 			} else {
-				print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs i $valuta d. $r[fakturadate]')\">";	
+				print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs i $valuta d. $r[fakturadate]')\">";	
 				break 3;
 			}
 		}
@@ -89,7 +89,7 @@ if ($submit || $inkasso) {
 			if ($r2=db_fetch_array(db_select("select kurs from grupper, valuta where grupper.art='VK' and grupper.box1='$ny_valuta' and valuta.gruppe = ".nr_cast("grupper.kodenr")." and valuta.valdate <= '$r[fakturadate]' order by valuta.valdate desc",__FILE__ . " linje " . __LINE__))) {
 				$ny_valutakurs=$r2['kurs'];
 			} else {
-				print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs i $valuta d. $r[fakturadate]')\">";	
+				print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs i $valuta d. $r[fakturadate]')\">";	
 				break 3;
 			}
 		}
@@ -99,7 +99,7 @@ if ($submit || $inkasso) {
 	#20140707
 	db_modify("update ordrer set email ='$email',mail_fakt='$mail_fakt',kontakt='$kontakt' where id='$rykker_id'",__FILE__ . " linje " . __LINE__);
 	if ($submit=="Send" && $mail_fakt) {
-		#	print "<BODY onLoad=\"return confirm('Dokumentet sendes pr. mail til $email')\">";
+		#	print "<BODY onload=\"return confirm('Dokumentet sendes pr. mail til $email')\">";
 	}
 	if ($submit=="Slet valgte") {
 		$rykkerbox=$_POST['rykkerbox'];
@@ -284,7 +284,7 @@ print "</td></tr><tr><td align=center colspan=3><table cellpadding=0 cellspacing
 			if ($valuta!="DKK") {
 				if ($r3=db_fetch_array(db_select("select kurs from grupper, valuta where grupper.art='VK' and grupper.box1='$valuta' and valuta.gruppe = ".nr_cast("grupper.kodenr")." and valuta.valdate <= '$r2[transdate]' order by valuta.valdate desc",__FILE__ . " linje " . __LINE__))) {
 					$valutakurs=$r3['kurs'];
-				} else print "<BODY onLoad=\"javascript:alert('Ups - ingen valutakurs i $valuta for faktura $r2[faktnr]')\">";	
+				} else print "<BODY onload=\"javascript:alert('Ups - ingen valutakurs i $valuta for faktura $r2[faktnr]')\">";	
 			} else $valutakurs=100;
 			$dkkpris[$x]=$r2['amount']*$opp_valkurs[$x]/100;
 			if ($valuta!="DKK" && ($opp_valuta[$x]!=$valuta))  $pris[$x]=$dkkpris[$x]*100/$valutakurs;
