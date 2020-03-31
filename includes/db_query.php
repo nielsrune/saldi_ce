@@ -182,7 +182,7 @@ if (!function_exists('db_modify')) {
 }
 
 if (!function_exists('db_select')) {
-	function db_select($qtext,$spor) {
+	function db_select($qtext,$spor = __FILE__ . " linje " . __LINE__) {
 		global $brugernavn;
 		global $connection,$customAlertText;
 		global $db,$db_type;
