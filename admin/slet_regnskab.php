@@ -1,24 +1,32 @@
 <?php
-@session_start();
-$s_id=session_id();
-
-// -------------/admin/slet_regnskab.php-----patch 3.0.9------2010.12.22--------
-// LICENS
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
+// -------------/admin/slet_regnskab.php-----patch 3.8.9------2020.02.27--------
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// 
+// Programmet må ikke uden forudgående skriftlig aftale anvendes
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2010 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
+// 2020.02.27 PHR Check if db exist before dropping 20200227 
+
+@session_start();
+$s_id=session_id();
 
 $title="Slet regnskaber";
 $css="../css/standard.css";
@@ -100,12 +108,16 @@ if ($_POST['regnskabsantal']) {
 # 						print "Sletter regnskab: $regnskab[$x]<br>";
 						
 					if ($r=db_fetch_array(db_select("select id from kundedata where regnskab_id='$id[$x]'",__FILE__ . " linje " . __LINE__))) {
-							db_modify("update kundedata set slettet='on' where id='$r[id]'",__FILE__ . " linje " . __LINE__); 
+							$qtxt="update kundedata set slettet='on' where id='$r[id]'";
+							db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
 						} else {
-							db_modify("update kundedata set slettet='on',regnskab_id='$id[$x]' where regnskab='".addslashes($regnskab[$x])."'",__FILE__ . " linje " . __LINE__); 
+							$qtxt="update kundedata set slettet='on',regnskab_id='$id[$x]' where regnskab='".db_escape_string($regnskab[$x])."'";
+							db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
 						}
-						db_modify("delete from regnskab where id = $id[$x]",__FILE__ . " linje " . __LINE__);
-						db_modify("DROP DATABASE $db_navn[$x]",__FILE__ . " linje " . __LINE__);
+						$qtxt="delete from regnskab where id = $id[$x]";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+						$qtxt="DROP DATABASE IF EXISTS $db_navn[$x]";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 						$slettet_regnskab=$regnskab[$x];
 					} else "print Backupfejl - $regnskab[$x] ikke slettet";
 				}

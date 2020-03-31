@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----includes/ordreopslag.php ------patch 3.7.9----2018-11-26-------------
+// ----includes/ordreopslag.php ------patch 3.7.9----2019-04-10-------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,11 +23,11 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2018 saldi.dk aps
+// Copyright (c) 2003-2019 saldi.dk aps
 // ------------------------------------------------------------------------
 //
 // 20130210 break ændret til break 1
-// 20181126
+// 20190410 PHR if fakturadate is not set ordredate is used. 
 
 $query = db_select("select * from adresser where art = 'S'",__FILE__ . " linje " . __LINE__);
 $row = db_fetch_array($query);
@@ -54,7 +54,8 @@ if ($id) {
   $kontakt=trim($row['kontakt']);
   $kundeordnr=trim($row['kundeordnr']);
   $momssats=$row['momssats'];
-  $ordredato=dkdato($row['ordredate']);
+  $ordredate=$row['ordredate'];
+  $ordredato=dkdato($ordredate);
   $leveringsdato=dkdato($row['levdate']);
   $fakturanr=trim($row['fakturanr']);
   $kontonr=$row['kontonr'];
@@ -70,21 +71,21 @@ if ($id) {
   $lev_bynavn=trim($row['lev_bynavn']);
   $lev_kontakt=trim($row['lev_kontakt']);
 
-  
-  list($faktaar, $faktmd, $faktdag) = explode("-", $fakturadate);
+  if ($fakturadate) list($faktaar, $faktmd, $faktdag) = explode("-", $fakturadate);
+  else list($faktaar, $faktmd, $faktdag) = explode("-", $ordredate);
   $forfaldsaar=$faktaar;
   $forfaldsmd=$faktmd;
   $forfaldsdag=$faktdag;
   $slutdag=31;
 
-  if (($fakturadate)&&($betalingsbet!="Efterkrav")) 
+	if ( $fakturadate && $betalingsbet!="Efterkrav" ) 
   {
     while (!checkdate($forfaldsmd, $slutdag, $forfaldsaar))
     {
       $slutdag--;
       if ($slutdag<27) break 1;
     }
-    if ($betalingsbet!="Netto"){$forfaldsdag=$slutdag;} # Saa maa det vaere lb. md
+    if ($betalingsbet=="Lb.Md") $forfaldsdag=$slutdag; # Saa maa det vaere lb. md
     $forfaldsdag=$forfaldsdag+$betalingsdage;
     while ($forfaldsdag>$slutdag)
     {

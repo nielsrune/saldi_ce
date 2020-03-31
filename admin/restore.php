@@ -1,21 +1,20 @@
 <?php
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------------------admin/restore.php------------lap 3.5.6-------2016-06-09-----------
+// ---------------admin/restore.php--------lap 3.8.9------2020-03-08-----------
 // LICENS
-//		if ($bordnr) $bordnr=$_COOKIE['saldi_bordnr'];
-
+//
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
+//
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -24,12 +23,14 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk ApS
 // ----------------------------------------------------------------------
-// 20160609 PHR - if ($POST) fungerer ikke mere, hvid ikke det anfiges hvad der postes.  
+// 20160609 PHR if ($POST) fungerer ikke mere, hvis ikke det angives hvad der postes.
+// 20200308 PHR Varius changes related til Centos 8 / mariadb /postgresql 9x
 
 @session_start();
 $s_id=session_id();
+ini_set('display_errors',0);
 
 ?>
 <script LANGUAGE="JavaScript">
@@ -45,14 +46,26 @@ else
 // -->
 </script>
 <?php
-
 $title="SALDI - genindl&aelig;s sikkerhedskopi";
 $modulnr=11;
 $css="../css/standard.css";
-$backupdate=NULL;$backupdb=NULL;$backupver=NULL;$backupnavn=NULL;
+$backupdate=$backupdb=$backupver=$backupnavn=$filnavn=$menu=$regnskab=$timezone=$popup=$uploadedfile=NULL;
 
 include("../includes/connect.php");
-include("../includes/online.php");
+if (isset($_GET['db']) && $_GET['db']) {
+	$db=$_GET['db'];
+	if (!db_exists($db)) {
+		db_create($db);
+	}
+	if (!$regnskab) {
+		$r=db_fetch_array(db_select("select regnskab from regnskab where db='$db'",__FILE__ . " linje " . __LINE__));
+		$regnskab=$r['regnskab'];
+	}
+	db_connect($sqhost, $squser, $sqpass, $db, "");
+	print "<head><title>$title</title><meta http-equiv=\"content-type\" content=\"text/html; charset=$charset;\">\n";
+	print "<meta http-equiv=\"content-language\" content=\"da\">\n";
+	print "<meta name=\"google\" content=\"notranslate\">\n";
+} else include("../includes/online.php");
 include("../includes/std_func.php");
 
 if ($popup) $returside="../includes/luk.php";
@@ -82,23 +95,23 @@ if ($menu=='T') {
 	print "</tbody></table>";
 	print "</td></tr>";
 }
-if($_FILES['uploadedfile']['name'] || $_POST['filnavn']) { # 20160609
+if(isset($_FILES['uploadedfile']['name']) || isset($_POST['filnavn'])) { # 20160609
 	if ($restore=if_isset($_POST['restore'])) {
 		if ($restore=='OK') {
 			$backup_encode=if_isset($_POST['backup_encode']);
+			$backup_dbtype=if_isset($_GET['backup_dbtype']);
 			$filnavn=$_POST['filnavn'];
 			restore($filnavn,$backup_encode,$backup_dbtype);
 		} else {
 			unlink($filnavn);
-		}exit; 
-	} 
+		}
+	}
 	$fejl = $_FILES['uploadedfile']['error'];
 	if ($fejl) {
 		switch ($fejl) {
+			case 1: print "<BODY onload=\"javascript:alert('Filen er for stor - Kontroller upload_max_filesize i php.ini')\">";
 			case 2: print "<BODY onload=\"javascript:alert('Filen er for stor - er det en SALDI-sikkerhedskopi?')\">";
 		}
- 		upload();
-		exit;
 	}
 	if (basename($_FILES['uploadedfile']['name'])) {
 		$filnavn="../temp/".$db."/restore.gz";
@@ -120,47 +133,47 @@ if($_FILES['uploadedfile']['name'] || $_POST['filnavn']) { # 20160609
 			}
 			fclose($fp);
 			unlink($infofil);
-			if ($db_type=='mysql' && $backup_dbtype!='mysql') {
+			if (($db_type=='mysql' or $db_type=='mysqli') && ($backup_dbtype!='mysql' and $backup_dbtype!='mysqli')) { #RG_mysqli
 				print "<BODY onload=\"javascript:alert('En PostgreSQL-sikkerhedskopi kan ikke indl&aelig;ses i et MySQL-baseret system')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=backup.php\">";
 				exit;
-			} elseif ($db_type!='mysql' && $backup_dbtype=='mysql') {
+			} elseif ( ($db_type!='mysql' && $db_type!='mysqli') && ($backup_dbtype=='mysql' or $backup_dbtype=='mysqli') ) { #RG_mysqli
 				print "<BODY onload=\"javascript:alert('En MySQL-sikkerhedskopi kan ikke indl&aelig;ses i et PostgreSQL-baseret system')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=backup.php\">";
 				exit;
-			} 
+			}
 
-			print "<form name=restore action=restore.php method=post>";
+			print "<form name=restore action=restore.php?db=$db&backup_dbtype=$backup_dbtype method=post>";
 			print "<tr><td valign=middle align=center><table><tbody>";
 			$backupnavn=trim($backupnavn);
 			$regnskab=trim($regnskab);
 			if ($backupnavn && $backupnavn!=$regnskab) {
-				print "<tr><td colspan=2>Du er ved at overskrive dit regnskab: $regnskab<br>med en sikkerhedskopi af regnskabet: $backupnavn fra den $backupdato kl. $backuptid.</td></tr>";	
+				print "<tr><td colspan=2>Du er ved at overskrive dit regnskab: $regnskab<br>med en sikkerhedskopi af regnskabet: $backupnavn fra den $backupdato kl. $backuptid.</td></tr>";
 				print "<input type=\"hidden\" name=\"backup_encode\" value=\"$backup_encode\">";
 				print "<input type=\"hidden\" name=\"filnavn\" value=\"$backupfil\">";
 			} elseif ($backupdate) {
-				print "<tr><td colspan=2>Du er ved at overskrive dit regnskab: $regnskab<br>med en sikkerhedskopi fra den $backupdato kl. $backuptid.</td></tr>";	
+				print "<tr><td colspan=2>Du er ved at overskrive dit regnskab: $regnskab<br>med en sikkerhedskopi fra den $backupdato kl. $backuptid.</td></tr>";
 				print "<input type=\"hidden\" name=\"backup_encode\" value=\"$backup_encode\">";
 				print "<input type=\"hidden\" name=\"filnavn\" value=\"$backupfil\">";
 			} else {
-				print "<tr><td colspan=2>Du er ved at overskrive dit regnskab: $regnskab.</td></tr>";	
+				print "<tr><td colspan=2>Du er ved at overskrive dit regnskab: $regnskab.</td></tr>";
 				print "<input type=\"hidden\" name=\"filnavn\" value=\"$filnavn\">";
 			}
-			print "<tr><td colspan=2><hr></td></tr>";	
+			print "<tr><td colspan=2><hr></td></tr>";
 			print "<tr><td align=center><input type=submit value=\"OK\" name=\"restore\"></td><td align=center><input type=submit value=\"Afbryd\" name=\"restore\"></td><tr>";
 			print "</tbody></table></td></tr>";
 			print "</form>";
 		} else {
 			echo "Der er sket en fejl under hentningen - pr&oslash;v venligst igen.";
 		}
-	}	else upload();
-} else upload();
+	}	else upload($db);
+} else upload($db);
 print "</tbody></table></div>";
 ################################################################################################################
-function upload(){
+function upload($db){
 
 	print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
-	print "<form enctype=\"multipart/form-data\" action=\"restore.php\" method=\"POST\">";
+	print "<form enctype=\"multipart/form-data\" action=\"restore.php?db=$db\" method=\"POST\">";
 #	print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"99999999\">";
 	print "<tr><td width=100% align=center><br></td></tr>";
 	print "<tr><td width=100% align=center>Bem&aelig;rk at alle brugere skal v&aelig;re logget ud</td></tr>";
@@ -197,13 +210,13 @@ if (!$backup_dbtype) $backup_dbtype="postgresql";
 
 $filnavn2="../temp/$db/restore.sql";
 $restore="";
-
 $fp=fopen("$filnavn","r");
 $fp2=fopen("$filnavn2","w");
+
 if ($fp) {
 	while (!feof($fp)) {
 		if ($linje=fgets($fp)) {
-				if ($db_type=='mysql') {
+				if ($db_type=='mysql' or $db_type=='mysqli') {
 				if (strpos($linje, "MySQL dump")) $dump = "OK";
 			} elseif (strpos($linje, "PostgreSQL database dump")) $dump = "OK";
 			if (strpos(strtolower($linje), "drop database")) {
@@ -230,16 +243,18 @@ if ($fp) {
 				}
 			} else $ny_linje=$linje;
 		} else $ny_linje='';
-		fwrite($fp2,"$ny_linje"); 
-	}	
+		fwrite($fp2,"$ny_linje");
+	}
 	if (!$restore && $dump) $restore="OK";
-}
+} else echo "$filnavn ikke fundet";
 fclose($fp);
 fclose($fp2);
-
 if ($restore=='OK') {
 	if ($db_type=='mysql') {
 		mysql_select_db("$sqdb");
+	} else if ($db_type=='mysqli') { #RG_mysqli
+		$connection = db_connect ("$sqhost", "$squser", "$sqpass", "$sqdb");
+		mysqli_select_db($connection, $sqdb);
 	} else {
 		db_close($connection);
 		$connection = db_connect ("$sqhost","$squser","$sqpass","$sqdb");
@@ -247,16 +262,10 @@ if ($restore=='OK') {
 	db_modify("delete from online where db='$db'",__FILE__ . " linje " . __LINE__);
 	db_modify("update regnskab set version = '' where db='$db'",__FILE__ . " linje " . __LINE__);
 	db_modify("DROP DATABASE $db",__FILE__ . " linje " . __LINE__);
+	db_create($db);
 	print "<!-- Saldi-kommentar for at skjule uddata til siden \n"; # Indsat da svar fra pg_dump kan resultere i besked genereres
-	if ($db_type=='mysql') {
-		db_modify("CREATE DATABASE $db",__FILE__ . " linje " . __LINE__);
-		if ($db_encode=="UTF8") db_modify("SET character_set_client = 'UTF8'",__FILE__ . " linje " . __LINE__);
-		else db_modify("SET character_set_client = 'LATIN1'",__FILE__ . " linje " . __LINE__);
-		system("mysql -u $squser --password=$sqpass $db < $filnavn2");
-	} else { 
-		db_modify("CREATE DATABASE $db with encoding = '$db_encode'",__FILE__ . " linje " . __LINE__);
-		system("export PGPASSWORD=$sqpass\npsql -h $sqhost -U $squser $db < $filnavn2");
-	}
+	if (substr($db_type,0,5)=='mysql') system("mysql -u $squser --password=$sqpass $db < $filnavn2");
+	else system("export PGPASSWORD=$sqpass\npsql -h $sqhost -U $squser $db < $filnavn2");
 	db_close($connection);
 	print "<BODY onload=\"javascript:alert('Regnskabet er genskabt. Du skal logge ind igen!')\">";
 	unlink($filnavn);
@@ -266,7 +275,7 @@ if ($restore=='OK') {
 		print "<BODY onload=\"JavaScript:opener.location.reload();\"";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 	} else print "<meta http-equiv=\"refresh\" content=\"0;URL=../index/index.php?regnskab=".htmlentities($regnskab,ENT_COMPAT,$charset)."&navn=".htmlentities($brugernavn,ENT_COMPAT,$charset)."\">";
- 
+
 } else {
 	unlink($filnavn);
 	unlink($filnavn_2);
@@ -278,4 +287,3 @@ print "</tbody></table>";
 print "</td></tr>";
 }
 ?>
-

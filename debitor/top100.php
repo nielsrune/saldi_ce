@@ -4,8 +4,8 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------includes/top100.php-------lap 2.0.7------2017-02-01---
-// LICENS
+// ----------includes/top100.php-------lap 2.7.4------2019-02-05---
+/// LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
@@ -14,7 +14,7 @@
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -23,9 +23,10 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 DANOSOFT ApS
+// Copyright (c) 2003-2019 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20170201	PHR Fjernet fejltekst i bunden.
+// 20190205 PHR $sum=dkdecimal(!isset ($r['totalsum'])) ændret til $sum=if_isset ($r['totalsum']); 
 
 @session_start();
 $s_id=session_id();
@@ -57,8 +58,27 @@ $from=usdate($fra);
 $to=usdate($til);
 $fra=dkdato($from);
 $til=dkdato($to);
-
-print "<table width = 100% cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>";
+if ($menu=='T') {
+	print "<center><table width = 75% cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>";
+} else {
+	print "<center><table width = 100% cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>";
+}
+if ($menu=='T') {
+	$leftbutton="<a class='button red small' title=\"Klik her for at komme til startsiden\" href=\"../debitor/rapport.php\" accesskey=\"L\">Luk</a>";
+	$rightbutton=NULL;
+	$vejledning=NULL;
+	include("../includes/top_header.php");
+	include("../includes/top_menu.php");
+	print "<div id=\"header\"> 
+	<div class=\"headerbtnLft\">$leftbutton</div>
+	<span class=\"headerTxt\">Top 100</span>";     
+	print "<div class=\"headerbtnRght\"></div>";       
+	print "</div><!-- end of header -->";
+	print "<div class=\"maincontentLargeHolder\">\n";
+	print "<table class='dataTable2' cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>\n";
+} elseif ($menu=='S') {
+	include("../includes/sidemenu.php");
+} else {
 print "<tr><td colspan=\"4\" height=\"8\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
 $tekst="Klik her for at lukke \"Top100\"";
@@ -68,7 +88,7 @@ $tekst="Klik her for at v&aelig;lge en anden periode";
 print "<td width=\"10%\" $top_bund title='$tekst'><a href=top100.php?periode=$periode&ret=on accesskey=P>Periode<br></a></td>";
 print "</tbody></table>";
 print "</td></tr>\n";
-
+}
 if ($ret) {
 	$tekst="Skriv fra &amp; til dato som mmdd&aring;&aring;:mmdd&aring;&aring;. Hvis der kun skrives én dato, s&aelig;ttes dato til dags dato.";
 	print "<form name=omsaetning action=top100.php method=post>";
@@ -84,12 +104,12 @@ if ($ret) {
 	while ($r = db_fetch_array($q)) {
 		$x++;
 		if ($x<=100) {
-			$sum=dkdecimal($r['totalsum']);
+			$sum=if_isset ($r['totalsum']);
 			$r2=db_fetch_array(db_select("select * from adresser where id='$r[konto_id]'",__FILE__ . " linje " . __LINE__));
 			if ((!isset($linjebg))||($linjebg!=$bgcolor)) {$linjebg=$bgcolor; $color='#000000';}
 			else {$linjebg=$bgcolor5; $color='#000000';}
 			print "<tr bgcolor=\"$linjebg\"><td>$x</td>";
-			print "<td>$r2[kontonr]</td><td>$r2[firmanavn]</td><td align=right>$sum</td></tr>\n";
+			print "<td>$r2[kontonr]</td><td>$r2[firmanavn]</td><td align=right>".dkdecimal($sum,2)."</td></tr>\n";
 		}
 	}
 	  print "</tbody></table>";

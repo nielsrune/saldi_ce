@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------debitor/pbsfile.php------- patch 3.7.1---2018-01-16------
+// ------------debitor/pbsfile.php------- patch 3.7.1---2018-01-17------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -35,7 +35,8 @@
 // 2014.04.22	Kunde slettes fra pbs_kunder ved afmelding #20140422
 // 2017.01.02	Ved betalingsbet Kontant røg man i evig løkke 20170102
 // 2017.04.20 Indsat db_escape_string. Søg db_escape_string
-// 2018.01.16 PHR - Tilføjet '&& $betalingsbet && ($betalingsdage || $betalingsdage=='0')' Søg 20180116
+// 2018.01.17 Tjekker ordrestatus - hvis ikke faktureret slettes filen fra listen. 20180117
+
 
 @session_start();
 $s_id=session_id();
@@ -223,8 +224,13 @@ if (!$afsendt) {
 	$x=0;
 #	if ($lev_pbs=='L') $antal_nye=0;
 	if (!$antal_nye && !$antal_rettes && !$antal_stoppes) {
-		$q=db_select("select pbs_ordrer.ordre_id,ordrer.konto_id from pbs_ordrer,ordrer where pbs_ordrer.liste_id = $id and ordrer.id=pbs_ordrer.ordre_id order by pbs_ordrer.id",__FILE__ . " linje " . __LINE__);
+		$q=db_select("select pbs_ordrer.ordre_id,ordrer.konto_id,ordrer.ordrenr,ordrer.status from pbs_ordrer,ordrer where pbs_ordrer.liste_id = $id and ordrer.id=pbs_ordrer.ordre_id order by pbs_ordrer.id",__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)){
+			if ($r['status']<3) { #20180117
+				Print "<b><big>Ordre nr: $r[ordrenr] ikke faktureret - Fjernet fra liste</big></b><br>";
+				$qtxt="delete from pbs_ordrer where ordre_id='$r[ordre_id]'";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			} else {
 			$x++;
 			$ordre_id[$x]=$r['ordre_id'];
 			$konto_id[$x]=$r['konto_id'];
@@ -233,6 +239,7 @@ if (!$afsendt) {
 			$cvrnr[$x]=$r2['cvrnr'];
 			$bank_reg[$x]=$r2['bank_reg'];
 			$bank_konto[$x]=$r2['bank_konto'];
+		}
 		}
 	} elseif ($afslut) {
 		$tmp=$id+1;
@@ -434,7 +441,7 @@ function l_inset_ordrer($antal_ordrer,$leverance_id,$dkdd,$ordre_id,$cvrnr,$bank
 		$betalingsdage=$r['betalingsdage'];
 		list($dd,$mm,$yy)=explode("-",forfaldsdag($fakturadate, $betalingsbet, $betalingsdage));	
 		$forfaldsdag=substr($yy,-2).$mm.$dd;
-		if ($betalingsbet != 'Kontant' && $betalingsbet && ($betalingsdage || $betalingsdage=='0')) { #20170102 + 20180116
+		if ($betalingsbet != 'Kontant') { #20170102
 		while ($forfaldsdag<=$usdd) {
 			$betalingsdage++;
 			list($dd,$mm,$yy)=explode("-",forfaldsdag($fakturadate, $betalingsbet, $betalingsdage));	

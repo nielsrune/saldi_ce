@@ -30,7 +30,8 @@
 // 2013.11.18 PK Har fjernet upload af jpg og eps logo og tilføjet pdf bilag til mail (Tilbud, Ordrer og Faktura)
 // 2013.11.18 PK Man kan preview og slette den enkelte uploadede fil. Ved preview er der oprettet et nyt document 'view_logoupload.php'
 // 2016.11.23 PK Har ændret upload størrelse fra 1mb til 10mb
-// 2017.02.24 PHR	Tilføjet milughed for upload af generel baggrund.
+// 2017.02.24 PHR	Tilføjet mulighed for upload af generel baggrund.
+// 2019.02.25 MSC - Rettet topmenu design og isset fejl
 
 @session_start();
 $s_id=session_id();
@@ -42,10 +43,27 @@ include("../includes/settings.php");
 include("../includes/online.php");
 include("../includes/db_query.php");
 
+if (!isset ($_POST['bilagfil'])) $_POST['bilagfil'] = null;
+
 global $db_id;
+global $menu;
 
 print "<div align=\"center\">";
-
+if ($menu=='T') {
+	#	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
+		include_once '../includes/top_header.php';
+		include_once '../includes/top_menu.php';
+		print "<div id=\"header\">\n";
+		print "<div class=\"headerbtnLft\"></div>\n";
+	#	print "<span class=\"headerTxt\">Systemsetup</span>\n";     
+	#	print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">Ny debitor</a>--></div>";       
+		print "</div><!-- end of header -->";
+		print "<div id=\"leftmenuholder\">";
+		include_once 'left_menu.php';
+		print "</div><!-- end of leftmenuholder -->\n";
+		print "<div class=\"maincontentLargeHolder\">\n";
+		print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable2\"><tbody>";
+	} else {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
@@ -54,7 +72,7 @@ print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" c
 print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><br></td>";
 print "</tbody></table>";
 print "</td></tr>";
-
+	}
 if (!file_exists("../logolib/$db_id")) {
 	echo "opretter ../logolib/$db_id<br>";
 	mkdir("../logolib/$db_id",0744);
@@ -79,6 +97,8 @@ if(isset($_POST['bgfil'])||($_POST['bilagfil'])) {
 		upload();
 		exit;
 	}
+	if (!isset ($_POST['bilag_valg'])) $_POST['bilag_valg'] = null;
+	if (!isset ($_POST['bg_valg'])) $_POST['bg_valg'] = null;
 	$bilag_valg = $_POST['bilag_valg'];
 	$bg_valg = $_POST['bg_valg'];
 	$fil_stoerrelse = $_FILES['uploadedfile']['size'];
@@ -250,7 +270,7 @@ function upload(){
 	print "<input name=\"uploadedfile\" type=\"file\" /><br /></td><td>$font Alle&nbsp;formularer:&nbsp;</td><td>$font $bg&nbsp;</td><td>$font $slet_bg&nbsp;</td><td>&nbsp;</td></td></tr>";
 	print "<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>$font Tilbud:&nbsp;</td><td>$font $tilbud_bg&nbsp;</td><td>$font $slet_tilbud_bg&nbsp;</td><td>&nbsp;</td></tr>";
 	print "<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>$font Ordrer:&nbsp;</td><td>$font $ordrer_bg&nbsp;</td><td>$font $slet_ordrer_bg&nbsp;</td><td>&nbsp;</td></tr>";
-	print "<tr><td>&nbsp;</td><td>&nbsp;</td><td align=center><input type=\"submit\" name=\"bgfil\" value=\"Indl&aelig;s\"></td><td>$font Fakturaer:&nbsp;</td><td>$font $faktura_bg&nbsp;</td><td>$font $slet_faktura_bg&nbsp;</td><td>&nbsp;</td></tr>";
+	print "<tr><td>&nbsp;</td><td>&nbsp;</td><td align=center><input class='button green medium' type=\"submit\" name=\"bgfil\" value=\"Indl&aelig;s\"></td><td>$font Fakturaer:&nbsp;</td><td>$font $faktura_bg&nbsp;</td><td>$font $slet_faktura_bg&nbsp;</td><td>&nbsp;</td></tr>";
 	//print "<tr><td width=20%>&nbsp;</td><td>&nbsp;</td><td width=20%>&nbsp;</td></tr>";
 	print "<tr><td>&nbsp;</td><td colspan=\"5\" align=\"center\"><br><hr width=\"100%\"><br></td><td>&nbsp;</td></tr>";
 	print "</tbody>";
@@ -269,7 +289,7 @@ function upload(){
 				</select>";
 	print "<input name=\"uploadedfile\" type=\"file\" /><br /></td><td>$font Tilbud:&nbsp;</td><td>$font $tilbud_bilag&nbsp;</td><td>$font $slet_tilbud_bilag&nbsp;</td><td>&nbsp;</td></tr>";
 	print "<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>$font Ordrer:&nbsp;</td><td>$font $ordrer_bilag&nbsp;</td><td>$font $slet_ordrer_bilag&nbsp;</td><td>&nbsp;</td></tr>";
-	print "<tr><td>&nbsp;</td><td>&nbsp;</td><td align=\"center\"><input type=\"submit\" name=\"bilagfil\" value=\"Indl&aelig;s\"></td><td width=5%>$font Fakturaer:&nbsp;</td><td>$font $faktura_bilag&nbsp;</td><td>$font $slet_faktura_bilag&nbsp;</td><td>&nbsp;</td></tr>";
+	print "<tr><td>&nbsp;</td><td>&nbsp;</td><td align=\"center\"><input class='button green medium' type=\"submit\" name=\"bilagfil\" value=\"Indl&aelig;s\"></td><td width=5%>$font Fakturaer:&nbsp;</td><td>$font $faktura_bilag&nbsp;</td><td>$font $slet_faktura_bilag&nbsp;</td><td>&nbsp;</td></tr>";
 	//print "<tr><td width=20%>&nbsp;</td><td>&nbsp;</td><td width=20%>&nbsp;</td></tr>";
 	print "<tr><td>&nbsp;</td><td colspan=\"5\" align=\"center\"><br><hr width=\"100%\"><br></td><td>&nbsp;</td></tr>";
 	print "</tbody>";

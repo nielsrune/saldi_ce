@@ -16,6 +16,7 @@
 //
 // Copyright (c) 2004-2009 DANOSOFT ApS
 // ----------------------------------------------------------------------
+// 2019.02.25 MSC - Rettet topmenu design til og isset fejl
 
 	@session_start();
 	$s_id=session_id();
@@ -27,8 +28,31 @@
 	include("../includes/connect.php");
 	include("../includes/online.php");
 	include("../includes/std_func.php");
-	include("top.php");
 
+	if ($menu=='T') {
+			$border="0";
+			include_once '../includes/top_header.php';
+			include_once '../includes/top_menu.php';
+			print "<div id=\"header\">\n";
+			print "<div class=\"headerbtnLft\"></div>\n";
+			print "</div><!-- end of header -->";
+			print "<div id=\"leftmenuholder\">";
+			include_once 'left_menu.php';
+			print "</div><!-- end of leftmenuholder -->\n";
+			print "<div class=\"maincontentLargeHolder\">\n";
+	} else {
+	include("top.php");
+		$border="1";
+	}
+
+	if (!isset ($_GET['returside'])) $_GET['returside'] = null;
+	if (!isset ($_GET['enh_id'])) $_GET['enh_id'] = null;
+	if (!isset ($_GET['mat_id'])) $_GET['mat_id'] = null;
+	if (!isset ($_POST['enheder'])) $_POST['enheder'] = null;
+	if (!isset ($_POST['materialer'])) $_POST['materialer'] = null;
+	if (!isset ($mat_id)) $mat_id = null;
+	if (!isset ($_POST['mat_id'])) $_POST['mat_id'] = null;
+	if (!isset ($_POST['enh_id'])) $_POST['enh_id'] = null;
 	
 	if($_GET['returside']){
 		$returside= $_GET['returside'];
@@ -37,16 +61,16 @@
 	}
 	else {$returside="kreditor.php";}
 
-	$enh_ret_id = $_GET[enh_id];
-	$mat_ret_id = $_GET[mat_id];
+	$enh_ret_id = $_GET['enh_id'];
+	$mat_ret_id = $_GET['mat_id'];
 
 	if ($_POST['enheder']){
-		$enh_id=$_POST[enh_id];
+		$enh_id=$_POST['enh_id'];
 		$enh_betegnelse=$_POST['enh_betegnelse'];
 		$enh_beskrivelse=$_POST['enh_beskrivelse'];
 
 		$enh_betegnelse[0]=trim($enh_betegnelse[0]);
-		$enh_beskrivelse[$enh_id]=trim($enh_beskrivelse[$enh_id]);
+		$enh_beskrivelse[$enh_id]=trim(if_isset($enh_beskrivelse[$enh_id]));
 		$enh_beskrivelse[0]=trim($enh_beskrivelse[0]);
 		
 		if ($enh_betegnelse[0]){
@@ -68,12 +92,12 @@
 	}
 
 	if ($_POST['materialer']){
-		$mat_id=$_POST[mat_id];
+		$mat_id=$_POST['mat_id'];
 		$mat_beskrivelse=$_POST['mat_beskrivelse'];
 		$mat_densitet=$_POST['mat_densitet'];
 			
 		$mat_beskrivelse[0]=trim($mat_beskrivelse[0]);
-		$mat_beskrivelse[$mat_id]=trim($mat_beskrivelse[$mat_id]);
+		$mat_beskrivelse[$mat_id]=trim(if_isset($mat_beskrivelse[$mat_id]));
  
 #		$mat_densitet[0]=+$mat_densitet[0]; Remmet 150606 - kan ikke lige gennemskue, hvorfor de har vaeret her!! ??
 #		$mat_densitet[$mat_id]=+$mat_densitet[$mat_id];
@@ -103,18 +127,18 @@
 */
 	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" valign=top><tbody>";
 	$x=0;
-	$query = db_select("select * from enheder order by betegnelse");
+	$query = db_select("select * from enheder order by betegnelse",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query))
 	{
 		$x++;
-		$enh_id[$x]=$row[id];
+		$enh_id[$x]=$row['id'];
 		$enh_betegnelse[$x]=$row['betegnelse'];
 		$enh_beskrivelse[$x]=$row['beskrivelse'];
 	}
 	$enh_antal=$x;
 
 	$x=0;
-	$query = db_select("select * from materialer order by beskrivelse");
+	$query = db_select("select * from materialer order by beskrivelse",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query))
 	{
 		$x++;
@@ -127,11 +151,11 @@
 	else {$max_antal=$mat_antal;}
 
 	print "<td width=50% valign=top>";
-	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
+	print "<table class='dataTable' cellpadding=\"1\" cellspacing=\"1\" border=\"$border\"><tbody>";
 	print "<form name=enheder action=enheder.php method=post>";
 
 
-	print "<tr><td align=center valign=top> Enhed</td><td align=center valign=top> Beskrivelse</td></tr>";
+	print "<tr><td align=center valign=top class='tableHeader'> Enhed</td><td align=center valign=top class='tableHeader'> Beskrivelse</td></tr>";
 	for ($x=1; $x<=$max_antal; $x++)
 	{
 		if ($enh_id[$x]) {print "<tr><td><a href=enheder.php?enh_id=$enh_id[$x]> $enh_betegnelse[$x]</a></td><td> $enh_beskrivelse[$x]</td></tr>";}
@@ -149,14 +173,14 @@
 	}
 	else {print "<tr><td><input type=text size=3 name=enh_betegnelse[0]></td><td><input type=text size=25 name=enh_beskrivelse[0]></td></tr>";}
 
-	print "<tr><td align = center colspan=2><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"enheder\"></td></tr>";
+	print "<tr><td align = center colspan=2><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"enheder\"></td></tr>";
 	print "</tbody></table border=1>";
 
-	print "<td width=50% valign=top><table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
+	print "<td width=50% valign=top><table class='dataTable' cellpadding=\"1\" cellspacing=\"1\" border=\"$border\"><tbody>";
 	print "<form name=materialer action=enheder.php method=post>";
 
 
-	print "<tr><td align=center valign=top> Materiale</td><td align=center valign=top> Densitet</td></tr>";
+	print "<tr><td align=center valign=top class='tableHeader'> Materiale</td><td align=center valign=top class='tableHeader'> Densitet</td></tr>";
 	for ($x=1; $x<=$max_antal; $x++)
 	{
 		if ($mat_id[$x]) {print "<tr><td> $mat_beskrivelse[$x]</td><td><a href=enheder.php?mat_id=$mat_id[$x]> $mat_densitet[$x]</a></td></tr>";}
@@ -173,7 +197,7 @@
 	}
 	else {print "<tr><td><input type=text size=25 name=mat_beskrivelse[0]></td><td><input type=text size=3 name=mat_densitet[0]></td><tr>";}
 
-	print "<tr><td align = center colspan=2><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"materialer\"></td></tr>";
+	print "<tr><td align = center colspan=2><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"materialer\"></td></tr>";
 	print "</tbody></table>";
 	print "</tbody></table>";
 

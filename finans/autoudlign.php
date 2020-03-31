@@ -26,6 +26,9 @@
 // Copyright (c) 2003-2017 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20170607 PHR genkender nu også kontonr. Søg 20170707
+// 2018.12.20 MSC - Rettet isset fejl og rettet topmenu design til
+// 2019.03.12 MSC - Rettet db argument fejl og isset fejl
+// 2019.03.13 PHR - Rettet db argument fejl 
 
 @session_start();
 $s_id=session_id();
@@ -42,20 +45,20 @@ include("../includes/std_func.php");
 $kladde_id = if_isset($_GET['kladde_id']);
 $id = if_isset($_GET['id'])*1;
 
-if($_POST[submit]=='Udlign') {
-	if ($_POST['udlign']) {
+if (isset($_POST['submit']) && $_POST['submit']=='Udlign') {
 		list($kontonr,$art,$faktnr)=explode(":-:",$_POST['udlign']);
 		if ($art && $kontonr) {
-			if($_GET['amount']<0) db_modify("update kassekladde set d_type='$art', debet='$kontonr', faktura='$faktnr' where id = $id");
-			else db_modify("update kassekladde set k_type='$art', kredit='$kontonr', faktura='$faktnr' where id = $id");
-		}
+			if($_GET['amount']<0) $qtxt="update kassekladde set d_type='$art', debet='$kontonr', faktura='$faktnr' where id = $id";
+			else $qtxt="update kassekladde set k_type='$art', kredit='$kontonr', faktura='$faktnr' where id = $id";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
 }
 print "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 if ($menu=='T') {
 	$leftbutton="<a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>Luk</a>";
 	$rightbutton="";
-	include("../includes/topmenu.php");
+	include("../includes/top_header.php");
+	include("../includes/top_menu.php");
 } elseif ($menu=='S') {
 	include("../includes/sidemenu.php");
 } else {
@@ -70,7 +73,7 @@ if ($menu=='T') {
 if ($kladde_id)	{
 	$x=0;
 	$brugt=array();
-	$q = db_select("select * from kassekladde where kladde_id=$kladde_id");
+	$q = db_select("select * from kassekladde where kladde_id=$kladde_id",__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		if ($r['faktura']) {
 			$x++;
@@ -78,7 +81,7 @@ if ($kladde_id)	{
 		}
 	} 
 	$x=0;
-	$q = db_select("select * from kassekladde where kladde_id=$kladde_id and id > $id order by id");
+	$q = db_select("select * from kassekladde where kladde_id=$kladde_id and id > $id order by id",__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		$amount=0;
 		if ($r['debet'] && !$r['kredit']) $amount=$r['amount']*1;
@@ -110,7 +113,11 @@ print "<tr><td colspan=\"4\"	><hr></td></tr>";
 # -> 2009.05.04
 $min=$amount-0.005; 
 $max=$amount+0.005;
-$q = db_select("select openpost.id,openpost.konto_nr,openpost.faktnr,openpost.transdate,openpost.amount,adresser.firmanavn,adresser.art from openpost,adresser where adresser.id=openpost.konto_id and openpost.amount >= '$min' and openpost.amount <= '$max' and openpost.udlignet='0' order by adresser.firmanavn");
+$qtxt="select openpost.id,openpost.konto_nr,openpost.faktnr,openpost.transdate,openpost.amount,adresser.firmanavn,adresser.art";
+$qtxt.=" from openpost,adresser ";
+$qtxt.="where adresser.id=openpost.konto_id and openpost.amount >= '$min' and openpost.amount <= '$max' and openpost.udlignet='0' ";
+$qtxt.="order by adresser.firmanavn";
+$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 # <- 2009.05.04
 $x=0;
 while ($r = db_fetch_array($q)){

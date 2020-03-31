@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------lager/rapport.php------------patch 3.7.2-------2018.09.28----
-// LICENS
+// -----------lager/rapport.php------------patch 3.7.2-------2020.03.15----
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2018 saldi.dk ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2013.03.18 $modulnr ændret fra 12  til 15
@@ -49,6 +46,12 @@
 // 2017.08.01 PHR Tilføjet selection på leverandør. Søg $lev
 // 2018.09.28 PHR Inddeling efter grupper når detajler er fravalgt.
 // 2018.10.03 PHR Fjernet "batch_kob.fakturadate>='$date_from' and " da beholdninger viste fejl. 20181003
+// 2019.01.18 MSC - Fjernet isset fejl
+// 2019.02.20 MSC - Rettet topmenu design
+// 2019.06.04 PHR - Added CSV and stock in 'kun salg'
+// 2019.08.30 PHR - Added 'afrund' to $t_s_pris to avoid division by almost zero which makes crazy numbers 20190830
+// 2019.10.31 PHR	- Minor design update look for '$trbg'
+// 2020.03.15 PHR - Added minmaxrepport (execlusive for bizsys_49)
 
 	@session_start();
 	$s_id=session_id();
@@ -66,9 +69,21 @@
 	include("../includes/ordrefunc.php");
 #	include("../includes/db_query.php");
 
+	if (!isset ($_GET['detaljer'])) $_GET['detaljer'] = NULL;
+	if (!isset ($_GET['kun_salg'])) $_GET['kun_salg'] = NULL;
+	if (!isset ($_GET['lagertal'])) $_GET['lagertal'] = NULL;
+
 if ($popup) $returside="../includes/luk.php";
 else $returside="../index/menu.php";
 
+$lokMinMax=if_isset($_POST['lokMinMax']);
+if ($lokMinMax) {
+	$varegruppe = trim($_POST['varegruppe']);
+	$varenr     = if_isset($_POST['varenr']);
+	$varenavn   = if_isset($_POST['varenavn']);
+	$afd        = if_isset($_POST['afd']);
+	print print "<meta http-equiv=\"refresh\" content=\"0;URL=minmaxstock.php?vgrp=$varegruppe&vnr=$varenr&vname=$varenavn&afd=$afd\">";
+}
 if (isset($_POST['submit']) && $_POST['submit']) {
 	$submit=strtolower(trim($_POST['submit']));
 	$varegruppe=trim($_POST['varegruppe']);
@@ -84,7 +99,6 @@ if (isset($_POST['submit']) && $_POST['submit']) {
 	$kun_salg = if_isset($_POST['kun_salg']);
 	$lagertal = if_isset($_POST['lagertal']);	
 	$vk_kost = if_isset($_POST['vk_kost']);
-	
 	$varenr = trim($varenr);
 	$varenavn = trim($varenavn);
 } else {
@@ -115,12 +129,9 @@ else 	forside ($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_
 function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref) {
 
 	#global $connection;
-	global $brugernavn;
-	global $top_bund;
-	global $md;
-	global $returside;
-	global $popup;
-	global $jsvars;
+	global $bgcolor,$bgcolor5,$brugernavn;
+	global $db,$jsvars,$md,$menu;
+	global $popup,$returside,$top_bund;
 
 #	$regnaar=$regnaar*1; #fordi den er i tekstformat og skal vaere numerisk
 	($date_from)?$dato_fra=dkdato($date_from):$dato_fra="01-01-".date("Y");
@@ -130,6 +141,10 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	if ($detaljer) $detaljer='checked';
 	if ($kun_salg) $kun_salg='checked';
 	if ($lagertal) $lagertal='checked';	
+	
+	if (!isset ($l_id)) $l_id = NULL;
+
+	$l_id = array();
 	
 #	if (!$regnaar) {
 #		$query = db_select("select regnskabsaar from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__);
@@ -150,7 +165,16 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 #		if ($regnaar==$row['kodenr']){$aktiv=$x;}
 #	}
 #	$antal_regnaar=$x;
-
+	if ($menu=='T') {
+		include_once '../includes/top_header.php';
+		include_once '../includes/top_menu.php';
+		print "<div id=\"header\"> 
+				<div class=\"headerbtnLft\"></div>
+				<span class=\"headerTxt\"></span>";     
+		print "<div class=\"headerbtnRght\"></div>";       
+		print "</div><!-- end of header -->
+			<div class=\"maincontentLargeHolder\">\n";
+	} else {
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\" align=\"center\"><tbody>"; #A
 	print "<tr><td width=100%>";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
@@ -159,6 +183,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	print "<td width=\"10%\" $top_bund><a href='../utils/batch_salg_rabat.php?bogfor=0&md=8' target='blank'>|</a></td></tr>";
 	print "</tbody></table></td></tr>"; #B slut
 	print "</tr><tr><td height=\"60%\" \"width=100%\" align=\"center\" valign=\"bottom\">";
+	}
 #	print "<form name=regnskabsaar action=rapport.php method=post>";
 #	print "<table cellpadding=\"1\" cellspacing=\"5\" border=\"1\"><tbody>";
 #	print "<tr><td align=center><h3>Rapporter<br></h3></td></tr>";
@@ -227,11 +252,12 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 		}  
 		if (!$ref_navn[$x]) $ref_navn[$x]=$ref_brugernavn[$x];
 	}
-	
+	$trbg=$bgcolor;
 	print "<form name=rapport action=rapport.php method=post>";
-	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
+	print "<table  bgcolor='$bgcolor' class='dataTable2' cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
 	print "<tr><td align=\"center\" colspan=\"3\"><h3>Varerapport<br></h3></td></tr>";
-	print "<tr><td>Varegruppe</td><td colspan=\"2\"><select class=\"inputbox\" name=\"varegruppe\" style=\"width:200px;\">";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'><td>Varegruppe</td><td colspan=\"2\"><select class=\"inputbox\" name=\"varegruppe\" style=\"width:200px;\">";
 	for ($x=0;$x<count($vg_nr);$x++) {
 		if ($varegruppe == $vg_nr[$x]) print "<option value=$vg_nr[$x]>$vg_nr[$x] : $vg_navn[$x]</option>";
  	}
@@ -242,7 +268,8 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	print "<!--Kostpris fra varekort --><input type=\"hidden\" name=\"vk_kost\" value=\"$vk_kost\">";
 	print "</td></tr>";
 	if (count($lev_id)>1) {
-		print "<tr><td> Leverandør </td><td colspan=\"2\"><select class=\"inputbox\" name=\"lev\" style=\"width:200px;\">";
+		($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+		print "<tr bgcolor='$trbg'><td> Leverandør </td><td colspan=\"2\"><select class=\"inputbox\" name=\"lev\" style=\"width:200px;\">";
 		for ($x=0;$x<count($lev_id);$x++) {
 			if ($lev == $lev_id[$x]) print "<option value='$lev_id[$x]'>$lev_navn[$x]</option>";
 		}
@@ -252,7 +279,8 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 		print "</select></td></tr>";
 	}
 	if (count($afd_nr)>1) { 
-		print "<tr><td> Afdeling </td><td colspan=\"2\"><select class=\"inputbox\" name=\"afd\" style=\"width:200px;\">";
+		($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+		print "<tr bgcolor='$trbg'><td> Afdeling </td><td colspan=\"2\"><select class=\"inputbox\" name=\"afd\" style=\"width:200px;\">";
 		for ($x=0;$x<count($afd_nr);$x++) {
 			if ($afd == $afd_nr[$x]) print "<option value=$afd_nr[$x]>$afd_nr[$x] : $afd_navn[$x]</option>";
 		}
@@ -262,7 +290,8 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 		print "</select></td></tr>";
 	}
 	if (count($ref_nr)>1) {
-		print "<tr><td> Sælger </td><td colspan=\"2\"><select class=\"inputbox\" name=\"ref\" style=\"width:200px;\">";
+		($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+		print "<tr bgcolor='$trbg'><td> Sælger </td><td colspan=\"2\"><select class=\"inputbox\" name=\"ref\" style=\"width:200px;\">";
 		for ($x=0;$x<count($ref_nr);$x++) {
 			if ($ref == $ref_nr[$x]) print "<option value=$ref_nr[$x]>$ref_brugernavn[$x]</option>";
 		}
@@ -271,29 +300,42 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 		}
 		print "</select></td></tr>";
 	}
-	print "<tr>";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'>";
 	print "	<td> Periode</td>";
 	print "	<td colspan=\"1\"><input class=\"inputbox\" style=\"width:97px;\" type=\"text\" name=\"dato_fra\" value=\"$dato_fra\"></td>";
 	print "	<td colspan=\"1\"><input class=\"inputbox\" style=\"width:97px;\" type=\"text\" name=\"dato_til\" value=\"$dato_til\"></td>";
 	print "	</tr>";
-	print "<tr><td>Varenr</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenr\" value=\"$varenr\"></td></tr>";
-	print "<tr><td>Varenavn</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenavn\" value=\"$varenavn\"></td></tr>";
-	print "<tr><td>Detaljeret</td><td colspan=\"2\"><input type=\"checkbox\" name=\"detaljer\" $detaljer></td></tr>";
-	print "<tr><td>Kun salg / DB</td><td colspan=\"2\"><input type=\"checkbox\" name=\"kun_salg\" $kun_salg></td></tr>";
-	print "<tr><td>Beregn lagerbeh./værdi</td><td colspan=\"2\"><input type=\"checkbox\" name=\"lagertal\" $lagertal></td></tr>";
-	print "<tr><td colspan='3' align=center><input type=submit value=\"  OK  \" name=\"submit\"></td></tr>";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'><td>Varenr</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenr\" value=\"$varenr\"></td></tr>";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'><td>Varenavn</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenavn\" value=\"$varenavn\"></td></tr>";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'><td>Detaljeret</td><td colspan=\"2\"><input type=\"checkbox\" name=\"detaljer\" $detaljer></td></tr>";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'><td>Kun salg / DB</td><td colspan=\"2\"><input type=\"checkbox\" name=\"kun_salg\"$kun_salg></td></tr>";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'><td>Beregn lagerbeh./værdi</td><td colspan=\"2\"><input type=\"checkbox\" name=\"lagertal\" $lagertal></td></tr>";
+	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
+	print "<tr bgcolor='$trbg'><td colspan='3' align=center><input class='button green medium' type=submit value=\"  OK  \" name=\"submit\"></td></tr>";
 	print "</tbody></table>";
-	print "<tr><td ALIGN=\"center\" Valign=\"top\" height=39%><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>\n";
-#	if ($popup) {
-#		print "<tr><td ALIGN=center onclick=\"javascript:lagerstatus=window.open('lagerstatus.php','lagerstatus','$jsvars');lagerstatus.focus();\"><span title='Se lagerstatus p&aring; vilk&aring;rlig dato'><input type=\"submit\" style=\"width:120px;\" value=\"Lagerstatus\" name=\"submit\"></span></td>";
-#		print "<td ALIGN=center onclick=\"javascript:optalling=window.open('optalling.php','optalling','$jsvars');optalling.focus();\"><span title='Funktion til opt&aelig;lling og regulering af varelager'><input type=\"submit\" style=\"width:120px;\" value=\"Lageropt&aelig;lling\" name=\"submit\"></span></td></tr>";
-#	} else {
-		print "";
-		print "<tr><td ALIGN=center><span title='Se lagerstatus p&aring; vilk&aring;rlig dato'><input style=\"width:120px;\" type=submit value=\"Lagerstatus\" name=\"submit\"></span></td>";
-		print "<td ALIGN=center><span title='Funktion til opt&aelig;lling og regulering af varelager'><input style=\"width:120px;\" type=submit value=\"Lageropt&aelig;lling\" name=\"submit\"></span></td></tr>";
-#	}
+	print "<tr><td ALIGN=\"center\" Valign=\"top\" height=39%><center><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>\n";
+	print "<tr><td><hr></td></tr>";
+	$txt = "<tr><td ALIGN=center><span title='Se lagerstatus p&aring; vilk&aring;rlig dato'>";
+	$txt.= "<input class='button blue medium' style='width:350px;' type='submit' value='Lagerstatus' name='submit'>";
+	$txt.= "</span></td></tr>";
+	print $txt;
+	$txt = "<tr><td ALIGN=center><span title='Beholdningsrapport med lokation samt min og max'>";
+	$txt.= "<input class='button gray medium' style=\"width:350px;\" type=submit value=\"Beholdningsrapport\" name=\"lokMinMax\">";
+	$txt.= "</span></td></tr>";
+	if ($db == 'bizsys_49') print $txt;
+	print "<tr><td><hr></td></tr>";
+	$txt = "<tr><td ALIGN=center><span title='Funktion til opt&aelig;lling og regulering af varelager'>"; 
+	$txt.=  "<input class='button gray medium' style=\"width:350px;\" type=submit value=\"Lageropt&aelig;lling\" name=\"submit\">";
+	$txt.=  "</span></td></tr>";
+	print $txt;
 	print "</form>";
-	print "</tbody></table>\n";
+	print "</tbody></table></center>\n";
 	print "</td></tr>";
 	
 }
@@ -302,18 +344,21 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref) {
 
 #	global $connection;
-	global $top_bund;
-	global $md;
-	global $returside;
+	global $bgcolor,$bgcolor5;
+	global $db;
 	global $jsvars;
-	global $bgcolor;
-	global $bgcolor5;
+	global $md,$menu;
+	global $returside;
+	global $top_bund;
 	
 	if ($detaljer) $cols=9;
-	elseif ($kun_salg) $cols=7;
+	elseif ($kun_salg) $cols=8;
 	else $cols=13;
 
-	$gruppenr=0;
+	$v_gr = array();
+	$v_navn = array();
+
+	$gruppenr=$kobssum=0;
 	if (is_numeric($varegruppe)) $gruppenr=$varegruppe;
 	elseif (strpos(":",$varegruppe)) list($gruppenr, $tmp)=explode(":",$varegruppe); 
 
@@ -326,13 +371,26 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 
 #	if ($returside) $luk= "<a accesskey=L href=\"$returside\">";
 #	else 
-	$luk= "<a accesskey=L href=\"rapport.php?varegruppe=$varegruppe&afd=$afd&lev=$lev&ref=$ref&date_from=$date_from&date_to=$date_to&varenr=$varenr&varenavn=$varenavn&detaljer=$detaljer&kun_salg=$kun_salg&lagertal=$lagertal\">";
 
+$luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$varegruppe&afd=$afd&lev=$lev&ref=$ref&date_from=$date_from&date_to=$date_to&varenr=$varenr&varenavn=$varenavn&detaljer=$detaljer&kun_salg=$kun_salg&lagertal=$lagertal\">";
+	if ($menu=='T') {
+		include_once '../includes/top_menu.php';
+		include_once '../includes/top_header.php';
+		print "<div id=\"header\"> 
+		<div class=\"headerbtnLft\">$luk Luk</a></div>
+		<span class=\"headerTxt\">Rapport | Varesalg | ".dkdato($date_from)." - ".dkdato($date_to); "</span>";     
+		print "<div class=\"headerbtnRght\"></div>";       
+		print "</div><!-- end of header -->
+			<div class=\"maincontentLargeHolder\">\n";
+		print "<table class='dataTable' width = 100% cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
+	} else {
 	print "<table width = 100% cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
+
 	print "<tr><td colspan=\"$cols\" height=\"9\">";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
 	print "<td width=\"10%\" $top_bund>$luk Luk</a></td>";
 	print "<td width=\"80%\" $top_bund>Rapport | varesalg | ".dkdato($date_from)." - ".dkdato($date_to);
+	}
 	if ($afd) {
 		$r=db_fetch_array(db_select("select beskrivelse from grupper where art = 'AFD' and kodenr = '$afd'",__FILE__ . " linje " . __LINE__));
 		print " | $r[beskrivelse]";
@@ -361,9 +419,13 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 		if (!$ref_navn) $ref_navn=$ref_brugernavn;
 		if ($ref_navn) print " | $ref_navn";
 	}
+	if ($menu=='T') {
+
+	} else {
 	print "</td>";
-	print "<td width=\"10%\" $top_bund><br></td>";
+	print "<td width=\"10%\" $top_bund><a href='../temp/$db/salgsrapport.csv' target='_blank'>csv</a></td>";
 	print "</tbody></table>"; #B slut
+	}
 	print "</td></tr>";
 	$lagergruppe=array();
 	if ($gruppenr) {
@@ -388,7 +450,7 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	$kontonr=array();
 	$x=0;
 	$tmp="";
-	if ($gruppenr) $tmp = "where ".nr_cast(gruppe)."=$gruppenr"; 
+	if ($gruppenr) $tmp = "where gruppe = '$gruppenr'"; 
 	if ($varenr && $varenr != '*') {
 		if (strstr($varenr, "*")) {
 			if (substr($varenr,0,1)=='*') $varenr="%".substr($varenr,1);
@@ -463,7 +525,8 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	} else {
 		array_multisort($v_navn,$v_id,$v_gr);
 	}
-	
+	$csvfile=fopen("../temp/$db/salgsrapport.csv","w");
+	fwrite($csvfile, "\"\";\"\";\"Rapport | Varesalg | ".dkdato($date_from)." - ".dkdato($date_to)."\"\r\n");
 #	 print "<tr><td colspan=8><hr></td></tr>";
 #	print "<tr><td width=10%> Dato</td><td width=10%> Bilag</td><td width=50%> Tekst</td><td width=10% align=right> Debet</td><td width=10% align=right> Kredit</td><td width=10% align=right> Saldo</td></tr>";
 
@@ -475,7 +538,9 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 			<td align=\"right\"><b>Solgt</b></td>
 			<td align=\"right\"><b>Salgspris</b></td>
 			<td align=\"right\"><b>DB</b></td>
-			<td align=\"right\"><b>DG</b></td>";
+			<td align=\"right\"><b>DG</b></td>
+			<td align=\"right\"><b>På lager</b></td>";
+			fwrite($csvfile, "Varenr;Enhed;Beskrivelse;Solgt;Salgspris;DB;DG;På lager\r\n");
 		} else { 
 		print "<tr><td><b>Varenr.</b></td>
 				<td><b>Enhed</b></td>
@@ -487,12 +552,15 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 				<td align=\"right\"><b>Reguleret</b></td>
 				<td align=\"right\"><b>DB</b></td>
 				<td align=\"right\"><b>DG</b></td>
-			<td align=\"right\"><b>Til- / afgang</b></td>";
+			<td align=\"right\"><b>K&oslash;bspris</b></td>";
+			fwrite($csvfile, "Varenr;Enhed;Beskrivelse;Købt;Købspris;Solgt;Salgspris;Reguleret;DB;DG;Købspris");
 			if (count($lagergruppe) && $lagertal) {
 				print "<td align=\"right\"><b>Beholdning</b></td>
 				<td align=\"right\"><b>Værdi</b></td>";
+				fwrite($csvfile,";Beholdning;Værdi");
 			}	
 			print "</tr>";
+			fwrite($csvfile,"\r\n");
 	}
 	}
 	$tt_kobt=0;
@@ -501,7 +569,7 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	$tt_k_pris=0;
 	$tt_s_pris=0;
 	$tt_kost=0;
-	$tt_db=0;
+	$tt_dkBi=0;
 	$tt_stockvalue=0;
 	$varenr=array();
 	$enhed=array();
@@ -515,7 +583,7 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 		$beskrivelse[$x]=$r['beskrivelse'];
 		$v_kostpris[$x]=$r['kostpris'];
 		$samlevare[$x]=$r['samlevare'];
-		if ($lagertal && in_array($v_gr[$x],$lagergruppe) && !$samlevare[$x]) {
+		if ($kun_salg || ($lagertal && in_array($v_gr[$x],$lagergruppe) && !$samlevare[$x])) {
 			$qtxt="select sum(antal) as beholdning from batch_kob where vare_id='$v_id[$x]' and fakturadate <= '$date_to'";
 			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$beholdning[$x]+=$r['beholdning'];
@@ -590,35 +658,38 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 			print "<tr><td><br></td></tr>";
 			print "<tr><td><br></td></tr>";
 			print "<tr><td colspan=\"3\"><b>$varenr[$x] $beskrivelse[$x]</b></td></tr>";
+			fwrite($csvfile,";;;\"$varenr[$x] ".utf8_decode($beskrivelse[$x])."\"\r\n");
 #			if ($enhed[$x]) print "<tr><td colspan=\"3\">$enhed[$x]</td></tr>";
 #			print "<tr><td colspan=\"3\"><b>$beskrivelse[$x]</b></td></tr>";
 			print "<tr><td></td></tr>";
 			if (!$kun_salg) {
 			print "<tr><td>Købsdato</td><td align=\"right\">Antal</td><td align=\"right\">Pris</td><td align=\"right\">Moms</td><td align=\"right\">Incl. moms</td><td align=\"right\">Ordre</td></tr>";
+			fwrite($csvfile,"Købsdato;Antal;Pris;Moms\Incl. moms;Ordre\r\n");
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
 			for ($y=0;$y<count($k_antal);$y++) {
 				if ($k_ordre_id[$y]) {
 						($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 						print "<tr bgcolor=\"$linjebg\"><td>".dkdato($fakturadate[$y])."</td><td align=\"right\">".dkdecimal($k_antal[$y],2)."</td>";
+						fwrite($csvfile, dkdato($fakturadate[$y]).";".dkdecimal($k_antal[$y],2));
 					$linjepris=$pris[$y]*$k_antal[$y];
 					$kobssum+=$t_kobt;
-						print "<td align=\"right\" $bac>".dkdecimal($pris[$y],2)."</td><td align=\"right\">".dkdecimal($moms[$y],2)."</td><td align=\"right\">".dkdecimal($pris[$y]+$moms[$y],2)."</td>";
+						print "<td align=\"right\">".dkdecimal($pris[$y],2)."</td><td align=\"right\">".dkdecimal($moms[$y],2)."</td><td align=\"right\">".dkdecimal($pris[$y]+$moms[$y],2)."</td>";
+						fwrite($csvfile, dkdecimal($pris[$y],2).";".dkdecimal($moms[$y],2).";".dkdecimal($pris[$y]+$moms[$y],2)."\r\n");
 					print "<td align=right onclick=\"javascript:k_ordre=window.open('../kreditor/ordre.php?id=$k_ordre_id[$y]&returside=../includes/luk.php','k_ordre','width=800,height=400,$jsvars')\"> <u>Se</u></td></tr>";
 				}
 			}
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+				fwrite($csvfile, "-----------\r\n");
 			print "<tr><td></td><td align=\"right\"><b>".dkdecimal($t_kobt,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_k_pris,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_moms,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_k_pris+$t_moms,2)."</b></td></tr>";
+				fwrite($csvfile, dkdecimal($t_kobt,2).";".dkdecimal($t_k_pris,2).";".dkdecimal($t_moms,2).";".dkdecimal($t_k_pris+$t_moms,2)."\r\n");
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
 		}
 		}
-#		$fakturadate=array(); #remmet 20160804
 		$bs_id=array();
-#		$linje_id=array(); #remmet 20160804
 		$s_ordre_id=array();
 		$s_antal=array();
 #		$pris=array(); 
-		$t_db=$t_kost=$t_moms=$t_s_pris=$t_solgt=$t_stockvalue=0;
-#		$y=0; #remmet 20160804
+		$t_dkBi=$t_kost=$t_moms=$t_s_pris=$t_solgt=$t_stockvalue=0;
 		$qtxt="select * from batch_salg";
 		if ($afd || $ref) $qtxt.=",ordrer";
 		$qtxt.=" where batch_salg.vare_id='$v_id[$x]'";
@@ -682,12 +753,12 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 						$t_moms+=$moms[$y]*$s_antal[$y];
 						$t_kost+=$kostpris[$y]*$s_antal[$y];
 						$tt_kost+=$kostpris[$y]*$s_antal[$y];
-						$db[$y]=$pris[$y]-$kostpris[$y];
-						$t_db+=$db[$y]*$s_antal[$y];
-						$tt_db+=$db[$y]*$s_antal[$y];
-						if ($s_antal[$y]<0)$db[$y]*=-1; # 20160201 # Flyttet under sammentælling
+						$dkBi[$y]=$pris[$y]-$kostpris[$y];
+						$t_dkBi+=$dkBi[$y]*$s_antal[$y];
+						$tt_dkBi+=$dkBi[$y]*$s_antal[$y];
+						if ($s_antal[$y]<0)$dkBi[$y]*=-1; # 20160201 # Flyttet under sammentælling
 						if ($pris[$y]!=0) {
-							$dg[$y]=$db[$y]*100/$pris[$y];
+							$dg[$y]=$dkBi[$y]*100/$pris[$y];
 						} else $dg[$y]=0;
 					}
 				} else { #20170419
@@ -700,11 +771,12 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 #				else $tt_regul+=$r['antal'];
 			}
 		}
-	
-		if ($t_s_pris && $t_db) $t_dg=$t_db*100/$t_s_pris;
+		$t_s_pris=afrund($t_s_pris,2); #20190830
+		if ($t_s_pris && $t_dkBi) $t_dg=$t_dkBi*100/$t_s_pris;
 		else $t_dg=100;
 		if ($detaljer) {
 			print "<tr><td>Salgsdato</td><td align=\"right\">Antal</td><td align=\"right\">Pris</td><td align=\"right\">Moms</td><td align=\"right\">Incl.moms</td><td align=\"right\">Kostpris</td><td align=\"right\">DB</td><td align=\"right\">DG</td><td align=\"right\">Ordre</td></tr>";
+			fwrite($csvfile, "Salgsdato;Antal;Pris;Moms;Incl.moms;Kostpris;DB;DG\r\n");
 			for ($y=count($bk_id);$y<count($linje_id);$y++) {
 				if ($s_ordre_id[$y]) {
 					($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
@@ -713,24 +785,35 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 					print "<td align=right>".dkdecimal($moms[$y],2)."</td>";
 					print "<td align=right>".dkdecimal($pris[$y]+($moms[$y]),2)."</td>";
 					print "<td align=right>".dkdecimal($kostpris[$y],2)."</td>";
-					print "<td align=right>".dkdecimal($db[$y],2)."</td>";
+					print "<td align=right>".dkdecimal($dkBi[$y],2)."</td>";
 					print "<td align=right> ".dkdecimal($dg[$y],2)."%</td>";
 					print "<td align=right title=\"\" onclick=\"javascript:s_ordre=window.open('../debitor/ordre.php?id=$s_ordre_id[$y]&returside=../includes/luk.php','s_ordre','width=800,height=400,$jsvars')\"> <u>Se</u></td></tr>";
+					fwrite($csvfile, dkdato($fakturadate[$y]).";".dkdecimal($s_antal[$y],2).";".dkdecimal($pris[$y],2).";");
+					fwrite($csvfile, dkdecimal($moms[$y],2).";".dkdecimal($pris[$y]+($moms[$y]),2).";".dkdecimal($kostpris[$y],2).";");
+					fwrite($csvfile, dkdecimal($dkBi[$y],2).";".dkdecimal($dg[$y],2)."%\r\n");
 				}
 			}
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
 			($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 			print "<tr bgcolor=\"$linjebg\"><td></td>";
 			print "<td align=right> <b>".dkdecimal($t_solgt,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($t_solgt,2).";");
 			print "<td align=right> <b>".dkdecimal($t_s_pris,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($t_s_pris,2).";");
 			print "<td align=right> <b>".dkdecimal($t_moms,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($t_moms,2).";");
 			print "<td align=right> <b>".dkdecimal($t_s_pris+$t_moms,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($t_s_pris+$t_moms,2).";");
 			print "<td align=right> <b>".dkdecimal($t_kost,2)."</b></td>";
-			print "<td align=right> <b>".dkdecimal($t_db,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($t_kost,2).";");
+			print "<td align=right> <b>".dkdecimal($t_dkBi,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($t_dkBi,2).";");
 			print "<td align=right> <b>".dkdecimal($t_dg,2)."%</b></td></tr>";
+			fwrite($csvfile, dkdecimal($t_dg,2)."\r\n");
 			if (!$kun_salg) print "<tr><td colspan=\"$cols\"><hr></td></tr>";
 			if (!$afd && !$lev && !$ref && !$kun_salg) {
 			print "<tr><td>Lagerreguleret</td><td align=\"right\">Antal</td></tr>";
+			fwrite($csvfile, "Lagerreguleret;Antal\r\n");
 			$fd=array_unique($fakturadate); #20160804
 			sort($fd);
 			for ($f=0;$f<count($fd);$f++) { #20160824
@@ -738,23 +821,29 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 					if ($fd[$f]==$fakturadate[$y] && !$k_ordre_id[$y] && $bk_id[$y]) {
 						($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 						print "<tr bgcolor=\"$linjebg\"><td>".dkdato($fakturadate[$y])."</td><td align=right>".dkdecimal($k_antal[$y],2)."</td></tr>";
+						fwrite($csvfile, dkdato($fakturadate[$y]).";".dkdecimal($k_antal[$y],2)."\r\n");
 					}
 				}
 				for ($y=count($bk_id);$y<count($linje_id);$y++) {
 					if ($fd[$f]==$fakturadate[$y] && !$s_ordre_id[$y] && $bs_id[$y]) {
 						($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 						print "<tr bgcolor=\"$linjebg\"><td>".dkdato($fakturadate[$y])."</td><td align=right>-".dkdecimal($s_antal[$y],2)."</td></tr>"; #20160418
+						fwrite($csvfile, dkdato($fakturadate[$y]).";".dkdecimal($s_antal[$y],2)."\r\n");
 			}
 				}
 			}
 #cho "$t_kobt+$t_regul-$t_solgt<br>";
 			if (!$kun_salg) {	
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+				fwrite($csvfile, "-----------\r\n");
 				($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 				print "<tr bgcolor=\"$linjebg\"><td></td><td align=right> <b>".dkdecimal($t_regul,2)."</b></td><tr>"; #20151105
+				fwrite($csvfile, ";".dkdecimal($t_regul,2)."\r\n");
 				print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+				fwrite($csvfile, "-----------\r\n");
 				($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 				print "<tr bgcolor=\"$linjebg\"><td>Samlet til-/afgang i perioden</td><td align=right> <b>".dkdecimal($t_kobt+$t_regul-$t_solgt,2)."</b></td><tr>"; #20151105
+				fwrite($csvfile, "Samlet til-/afgang i perioden;".dkdecimal($t_kobt+$t_regul-$t_solgt,2)."\r\n");
 			}
 			}
 		} else {
@@ -762,64 +851,98 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 				$qtxt="select beskrivelse from grupper where art='VG' and kodenr='".$v_gr[$x]."'";
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				print "<tr><td colspan='2'><b><big>$r[beskrivelse]</big></b></tr>";
+				fwrite($csvfile, utf8_decode($r['beskrivelse'])."\r\n");
 			}
 			print "<tr><td>$varenr[$x]</td>";
 			print "<td>$enhed[$x]</td>";
 			print "<td>$beskrivelse[$x]</td>";
+			fwrite($csvfile, "\"$varenr[$x]\";\"$enhed[$x]\";\"".utf8_decode($beskrivelse[$x])."\";");
 			if ($kun_salg) {
 				print "<td align=right>".dkdecimal($t_solgt,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_solgt,2).";");
 				print "<td align=right>".dkdecimal($t_s_pris,2)."</td>";
-				print "<td align=right>".dkdecimal($t_db,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_s_pris,2).";");
+				print "<td align=right>".dkdecimal($t_dkBi,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_dkBi,2).";");
 				print "<td align=right>".dkdecimal($t_dg,2)."%</td>";
+				fwrite($csvfile, dkdecimal($t_dg,2).";");
+				print "<td align=right>".dkdecimal($beholdning[$x],2)."</td>";#20180925
+				fwrite($csvfile, dkdecimal($beholdning[$x],2)."\r\n");
 			} else {
 			print "<td align=right>".dkdecimal($t_kobt,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_kobt,2).";");
 			print "<td align=right>".dkdecimal($t_k_pris,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_k_pris,2).";");
 			print "<td align=right>".dkdecimal($t_solgt,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_solgt,2).";");
 			print "<td align=right>".dkdecimal($t_s_pris,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_s_pris,2).";");
 			print "<td align=right>".dkdecimal($t_regul,2)."</td>";
-			print "<td align=right>".dkdecimal($t_db,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_regul,2).";");
+				print "<td align=right>".dkdecimal($t_dkBi,2)."</td>";
+				fwrite($csvfile, dkdecimal($t_dkBi,2).";");
 			print "<td align=right>".dkdecimal($t_dg,2)."%</td>";
+				fwrite($csvfile, dkdecimal($t_dg,2).";");
 				print "<td align=right>".dkdecimal($t_kobt+$t_regul-$t_solgt,2)."</td>";#20151105
+				fwrite($csvfile, dkdecimal($t_kobt+$t_regul-$t_solgt,2).";");
 				if ($lagertal && in_array($v_gr[$x],$lagergruppe)) {
 					print "<td align=right>".dkdecimal($beholdning[$x],2)."</td>";#20180925
-					print "<td align=right>".dkdecimal($beholdning[$x]*$v_kostpris[$x],2)."</td><tr>";#20180925
-					$g_stockvalue[$vg]+=$beholdning[$x]*$v_kostpris[$x];
+					fwrite($csvfile, dkdecimal($beholdning[$x],2).";");
+					print "<td align=right>".dkdecimal($beholdning[$x]*$v_kostpris[$x],2)."</td>";#20180925
+					fwrite($csvfile, dkdecimal($beholdning[$x]*$v_kostpris[$x],2));
+#					$g_stockvalue[$vg]+=$beholdning[$x]*$v_kostpris[$x];
 					$t_stockvalue+=$beholdning[$x]*$v_kostpris[$x];
 					$tt_stockvalue+=$beholdning[$x]*$v_kostpris[$x];
 				}
+				print "</tr>";
+				fwrite($csvfile, "\r\n");
 			}
 			if ($lagertal && (!isset($v_gr[$x+1]) || $v_gr[$x]!=$v_gr[$x+1])) {
 				$vg=$v_gr[$x];
+				if (!isset($g_solgt[$vg])) $g_solgt[$vg]=NULL;
+				if (!isset($g_sum[$vg])) $g_sum[$vg]=NULL;
+				if (!isset($g_stockvalue[$vg])) $g_stockvalue[$vg]=NULL;
 				$qtxt="select beskrivelse from grupper where art='VG' and kodenr='$vg'";
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				print "<tr><td><b>$r[beskrivelse]</b></td>";
+				fwrite($csvfile, utf8_decode($r['beskrivelse']).";");
 				if (!$kun_salg) print "<td colspan='2'>";
 				print "<td colspan='2'></td><td align='right'><b>".dkdecimal($g_solgt[$vg],2)."</b></td>";
+				fwrite($csvfile, ";". dkdecimal($g_solgt[$vg],2) .";");
+
 				print "<td align='right'><b>".dkdecimal($g_sum[$vg],2)."</b></td>";
 				print "<td colspan='5'></td><td align='right'><b>".dkdecimal($g_stockvalue[$vg],2)."</b></td>";
+				fwrite($csvfile, ";;;;;".dkdecimal($g_stockvalue[$vg],2)."\r\n");
 				print "</tr>";
 				$g_solgt[$vg]=$g_sum[$vg]=0;
 				if (isset($v_gr[$x+1])) {
 					print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+					fwrite($csvfile, "-------------\r\n");
 					$qtxt="select beskrivelse from grupper where art='VG' and kodenr='".$v_gr[$x+1]."'";
 					if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 						print "<tr><td colspan='2'><b><big>$r[beskrivelse]</big></b></tr>";
+						fwrite($csvfile, ";$r[beskrivelse]\r\n");
 					}
 				}
 		}
 		}
-		if ($detaljer && !$kun_salg) print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+		if ($detaljer && !$kun_salg) {
+			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+			fwrite($csvfile, "-------------\r\n");
+		}
 	}
 	if (!$detaljer) {
-		if ($tt_s_pris && $tt_db) $tt_dg=$tt_db*100/$tt_s_pris;
+		if ($tt_s_pris && $tt_dkBi) $tt_dg=$tt_dkBi*100/$tt_s_pris;
 		else $tt_dg=100;
 			print "<tr><td colspan=\"$cols\"><hr></td></tr>";
+		fwrite($csvfile, "-------------\r\n");
 		if ($kun_salg) {
 		print "<tr><td Colspan=\"3\"><b>Summeret</b></td>
 			<td align=\"right\">Solgt</td>
 			<td align=\"right\">Salgspris</td>
 			<td align=\"right\">DB</td>
 			<td align=\"right\">DG</td>";
+		fwrite($csvfile, "Solgt;Salgspris;DB;DG\r\n");
 		}	else {
 			print "<tr><td Colspan=\"3\"><b>Summeret</b></td>
 				<td align=\"right\">Købt</td>
@@ -832,41 +955,43 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 			<td align=\"right\">Samlet til-/afgang i perioden</td>
 			<td align=\"right\"></td>
 			<td align=\"right\">Samlet lagerværdi</td></tr>";
+			fwrite($csvfile, "Købt;Købspris\Solgt;Salgspris;Reguleret;DB;DG;Samlet til-/afgang;;Samlet lagerværdi\r\n");
 		}
 		if (!isset($varenr[$x])) $varenr[$x]=$enhed[$x]=$beskrivelse[$x]=NULL;
 		print "<tr><td>$varenr[$x]</td>";
 		print "<td>$enhed[$x]</td>";
 		print "<td>$beskrivelse[$x]</td>";
+		fwrite($csvfile, "\"$varenr[$x]\";\"$enhed[$x]\";\"".utf8_decode($beskrivelse[$x])."\"\r\n");
 		if (!$kun_salg) {
 		print "<td align=right> <b>".dkdecimal($tt_kobt,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($tt_kobt,2).";");
 		print "<td align=right> <b>".dkdecimal($tt_k_pris,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($tt_k_pris,2).";");
 		}
 		print "<td align=right> <b>".dkdecimal($tt_solgt,2)."</b></td>";
+		fwrite($csvfile, dkdecimal($tt_solgt,2).";");
 		print "<td align=right> <b>".dkdecimal($tt_s_pris,2)."</b></td>";
-		if (!$kun_salg) print "<td align=right> <b>".dkdecimal($tt_regul,2)."</b></td>";
-		print "<td align=right> <b>".dkdecimal($tt_db,2)."</b></td>";
+		fwrite($csvfile, dkdecimal($tt_s_pris,2).";");
+		if (!$kun_salg) {
+			print "<td align=right> <b>".dkdecimal($tt_regul,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($tt_regul,2).";");
+		}
+		print "<td align=right> <b>".dkdecimal($tt_dkBi,2)."</b></td>";
+		fwrite($csvfile, dkdecimal($tt_dkBi,2).";");
 		print "<td align=right> <b>".dkdecimal($tt_dg,2)."%</b></td>";
-		if (!$kun_salg) print "<td align=right><b>".dkdecimal($tt_kobt+$tt_regul-$tt_solgt,2)."</b></td>";
+		fwrite($csvfile, dkdecimal($tt_dg,2).";");
+		if (!$kun_salg) {
+			print "<td align=right><b>".dkdecimal($tt_kobt+$tt_regul-$tt_solgt,2)."</b></td>";
+			fwrite($csvfile, dkdecimal($tt_kobt+$tt_regul-$tt_solgt,2).";");
 		print "<td align=right> <b></b></td>";
 		print "<td align=right> <b>".dkdecimal($tt_stockvalue,2)."</b></td>";
+			fwrite($csvfile, ";".dkdecimal($tt_kobt+$tt_regul-$tt_solgt,2).";");
+		}
 		print "</tr>";
+		fwrite($csvfile, "\r\n");
 	}
-/*
-	print "<tr><td colspan=9><hr></td></tr>";
-	print "<tr><td></td><td></td><td></td><td align=\"right\"><b>";
-	print dkdecimal($t_solgt);
-#	print "</b></td><td align=right> <b>".dkdecimal($talkob)."</b></td>";
-	print "<td align=right> <b>".dkdecimal($t_s_pris)."</b></td>";
-	print "<td align=right> <b>".dkdecimal($t_moms)."</b></td>";
-	print "<td align=right> <b>".dkdecimal($t_s_pris+$t_moms)."</b></td>";
-	$db[$y]=$t_s_pris-$t_kost;
-	print "<td align=right> <b>".dkdecimal($t_db)."</b></td>";
-	if ($tsalg!=0) {$dg[$y]=$db[$y]*100/$talsalg;}
-	else {$dg[$y]=100;}
-	print "<td align=right> <b>".dkdecimal($dg[$y])."</b></td></tr>";
-	print "<tr><td colspan=8><hr></td></tr>";
-*/
 	print "</tbody></table>";
+	fclose($csvfile);
 }
 #############################################################################################################
 

@@ -7,28 +7,28 @@
 // som er udgivet af "The Free Software Foundation", enten i version 2
 // af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
+//
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
 // i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
-// 
+//
 // Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
-// 
+//
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
 // Copyright (c) 2004-2015 DANOSOFT ApS
 // -----------------------------------------------------------------------------------
-// 20150722 PHR Vis alle/egne gemmes nu som cookie. 
+// 20150722 PHR Vis alle/egne gemmes nu som cookie.
 
 @session_start();
 $s_id=session_id();
-	
-$css="../css/standard.css";		
-$modulnr=2;	
-$title="kladdeliste";	
-		
+
+$css="../css/standard.css";
+$modulnr=2;
+$title="kladdeliste";
+
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
@@ -54,7 +54,7 @@ if ($popup) print "<a href=../includes/luk.php accesskey=L>Luk</a></td>";
 else print "<a href=../index/menu.php accesskey=L>Luk</a></td>";
 print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">Kladdeliste</td>";
 if ($popup) print "<td width=\"10%\" title=\"Klik her for at oprette en ny kassekladde\" $top_bund onclick=\"javascript:kladde=window.open('kassekladde.php?returside=kladdeliste.php&tjek=-1','kladde','$jsvars');kladde.focus();\"><a href=kladdeliste.php?sort=$sort&rf=$rf&vis=$vis accesskey=N>Ny</a></td>";
-else print "<td width=\"10%\" title=\"Klik her for at oprette en ny kassekladde\" $top_bund><a href=kassekladde.php?returside=kladdeliste.php&tjek=-1 accesskey=N>Ny</a></td>";		
+else print "<td width=\"10%\" title=\"Klik her for at oprette en ny kassekladde\" $top_bund><a href=kassekladde.php?returside=kladdeliste.php&tjek=-1 accesskey=N>Ny</a></td>";
 print "</tbody></table></td></tr><tr><td valign=\"top\"><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign = \"top\">";
 
 if ($vis=='alle') {print "<tr><td colspan=6 align=center><a href=kladdeliste.php?sort=$sort&rf=$rf>vis egne</a></td></tr>";}
@@ -77,8 +77,8 @@ else {print "<td title='Klik her for at sortere p&aring; \"bogf&oslash;rt af\"'>
 print "</tr>\n";
 $tjek=0;
 #$sqhost = "localhost";
-	
-	if ($vis == 'alle') $vis = ''; 
+
+	if ($vis == 'alle') $vis = '';
 	else $vis="and oprettet_af = '".$brugernavn."'";
 	$tidspkt=date("U");
 	$query = db_select("select * from kladdeliste where bogfort = '-' $vis order by $sort $rf",__FILE__ . " linje " . __LINE__);
@@ -90,7 +90,7 @@ $tjek=0;
 		print "<tr bgcolor=\"$linjebg\">";
 		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
 			if ($popup) print "<td onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$kladde=window.open('kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
-			else print "<td><a class=\"kladde\" href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
+			else print "<td><a  class=\"kladde\" href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
 		}
 		else {print "<td><span title= 'Kladde er l&aring;st af $row[hvem]'>$row[id]</span></td>";}
 		$kladdedato=dkdato($row['kladdedate']);
@@ -176,10 +176,10 @@ $tjek=0;
 		print "</tr>";
 	}
 	if (!$tjek) {
-		print "<tr><td colspan=5 height=25> </td></tr>"; 
-		print "<tr><td colspan=3 align=right>TIP 1: </td><td>Du opretter en ny kassekladde ved at klikke p&aring; <u>Ny</u> &oslash;verst til h&oslash;jre.</td></tr>"; 
+		print "<tr><td colspan=5 height=25> </td></tr>";
+		print "<tr><td colspan=3 align=right>TIP 1: </td><td>Du opretter en ny kassekladde ved at klikke p&aring; <u>Ny</u> &oslash;verst til h&oslash;jre.</td></tr>";
 		if (db_fetch_array(db_select("select * from kladdeliste",__FILE__ . " linje " . __LINE__))) {
-			print "<tr><td colspan=3 align=right>TIP 2: </td><td>Du kan se dine kollegers kladder ved at klikke p&aring; <u>Vis alle</u>.</td></tr>"; 
+			print "<tr><td colspan=3 align=right>TIP 2: </td><td>Du kan se dine kollegers kladder ved at klikke p&aring; <u>Vis alle</u>.</td></tr>";
 		}
 	}
 ?>

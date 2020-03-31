@@ -4,6 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
+//------------index/install.php----lap 3.8.9---2020-03-08---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -22,13 +23,14 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2018 saldi.dk ApS
+// Copyright (c) 2003-2020 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 20140701 Tilføjet bilag til create regnskab
 // 20161106 Tilrettet til ny adgangskodehåndtering. Søg saldikrypt.
+// 20200308	Added MySQLi support etc.
 
-
+session_start();
 ob_start(); //Starter output buffering
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -42,6 +44,8 @@ if (file_exists("../includes/connect.php")) {
 	exit;
 }
 $noskriv=NULL;
+ini_set('display_errors',0);
+$timezone='Europe/Copenhagen';
 
 include("../includes/db_query.php");
 include("../includes/settings.php");
@@ -100,7 +104,15 @@ if (isset($_POST['opret'])){
 			$verify_adm_pw = "<i>Adgangskoder forskellige. Skal v&aelig;re ens.</i>";
 		}
 	}
-	$tmp.="<table>\n";
+	$_SESSION['db_encode']=$db_encode;
+	$_SESSION['db_type']=$_POST['db_type'];
+	$_SESSION['db_navn']=$db_navn;
+	$_SESSION['db_bruger']=$db_bruger;
+	$_SESSION['db_password']=$db_password;
+	$_SESSION['adm_navn']=$adm_navn;
+	$_SESSION['adm_password']=$adm_password;
+
+	$tmp = "<table>\n";
 	$tmp.="<tr><td colspan=\"2\" align=\"center\"><big><b>Oplysninger til SALDI-installering</b></big></td></tr>\n";	
 	$tmp.="<tr><td>Databaseserver </td><td><b>$db_type</b></td></tr>\n";
 	$tmp.="<tr><td>Tegns&aelig;t </td><td><b>$db_encode</b></td></tr>\n";
@@ -132,15 +144,15 @@ if (isset($_POST['opret'])){
 	}
 	if ($fp=fopen("../includes/connect.php","w")) {
 		fclose($fp);
-		unlink($fp);
+		unlink("../includes/connect.php");
 	}	else $noskriv="includes";
 	if ($fp=fopen("../temp/test.txt","w")) {
 		fclose($fp);
-		unlink($fp);
+		unlink("../temp/test.txt");
 	}	else $noskriv="temp";
 	if ($fp=fopen("../logolib/test.txt","w")) {
 		fclose($fp);
-		unlink($fp);
+		unlink("../logolib/test.txt");
 	}	else $noskriv="logolib";
 	if ($noskriv) {
 #		($db_encode=="UTF8")? $href="INSTALLATION_utf8.txt":$href="INSTALLATION_lat9.txt";
@@ -156,25 +168,33 @@ if (isset($_POST['opret'])){
 	$tmp="";
 
 	$host="localhost";
-	$tempdb="template1";
+	$tempdb="template0";
+
+	if ($db_type=="mysqli") {
+		$connection = db_connect ("$host", "$db_bruger", "$db_password");
+	} else {
+		$connection = db_connect ("$host", "$db_bruger", "$db_password", "template1");
+	}
 	
-	if ($db_type=="mysql") $connection = db_connect ("$host", "$db_bruger", "$db_password");
-	else $connection = db_connect ("$host", "$db_bruger", "$db_password", "$tempdb");
 	if (!$connection)	{
-		if ($db_type=="mysql") die( "Kan ikke oprette forbindelse til MySQL\n");
+		if ($db_type=="mysqli") die( "Kan ikke oprette forbindelse til MySQLi\n");
 		else die( "Kan ikke oprette forbindelse til PostgreSQL\n");
 	}
-
-	if ($db_type=="mysql") {
+	if (db_exists($db_navn)) {
+		$txt="$db_type databasen $db_navn eksisterer i forvejen";
+		alert($txt);
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=install.php\">";
+		exit;
+	}
+	if ($db_type=="mysqli") {
 		db_modify("CREATE DATABASE $db_navn",__FILE__ . " linje " . __LINE__);
-		mysql_select_db("$db_navn");
+		mysqli_select_db($connection,$db_navn);
 	} else {
-		if ($db_encode=="UTF8") db_modify("CREATE DATABASE $db_navn with encoding = 'UTF8'",__FILE__ . " linje " . __LINE__);
-		else db_modify("CREATE DATABASE $db_navn with encoding = 'LATIN9'",__FILE__ . " linje " . __LINE__);
+		if ($db_encode=="UTF8") db_modify("CREATE DATABASE $db_navn encoding = 'UTF8' template $tempdb",__FILE__ . " linje " . __LINE__);
+		else db_modify("CREATE DATABASE $db_navn encoding = 'LATIN9' template $tempdb",__FILE__ . " linje " . __LINE__);
 		db_close($connection);
 		$connection = db_connect ("$host", "$db_bruger", "$db_password", "$db_navn");
 	}
-
 	transaktion("begin");
 
 	db_modify("CREATE TABLE brugere(id serial NOT NULL, brugernavn text, kode text, status boolean, regnskabsaar integer, rettigheder text, PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
@@ -188,6 +208,33 @@ if (isset($_POST['opret'])){
 	db_modify("CREATE TABLE kundedata (id serial NOT NULL, firmanavn text, addr1 text, addr2 text, postnr varchar(10), bynavn text, kontakt text, email text, cvrnr text, regnskab text, regnskab_id integer,brugernavn text, kodeord text, kontrol_id text, aktiv int, logtime text,slettet varchar(2),PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE tekster (id serial NOT NULL, sprog_id integer, tekst_id integer, tekst text, PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE revisor(id serial NOT NULL,regnskabsaar integer,bruger_id integer,brugernavn text,db_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE settings ";
+	$qtxt.= "(id serial NOT NULL, var_name text, var_grp text, var_value text, var_description text, user_id integer, PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('timezone','globals','Europe/Copenhagen','Global Timezone','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('ps2pdf','globals',' 	/usr/bin/ps2pdf','Program for converting PostScript to PDF','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('html2pdf','globals','/usr/bin/weasyprint','Program for converting HTML to PDF','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('pdfmerge','globals','/usr/bin/pdftk','Program for merging PDF files','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('ftp','globals','/usr/bin/ncftp','Program for handling FTP','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('dbdump','globals','/usr/bin/pg_dump','Program for dumping database','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('zip','globals','/bin/gzip','Program for compressing files','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('tar','globals','/bin/tar','Program for packing files','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 
 	
 	transaktion("commit");
@@ -219,26 +266,38 @@ if (isset($_POST['opret'])){
 		exit;
 	}		
 } else {
+	$db_encode    = if_isset($_SESSION['db_encode']);
+	$db_type      = if_isset($_SESSION['db_type']);
+	$db_navn      = if_isset($_SESSION['db_navn']);
+	$db_bruger    = if_isset($_SESSION['db_bruger']);
+	$db_password  = if_isset($_SESSION['db_password']);
+	$adm_navn     = if_isset($_SESSION['adm_navn']);
+	$adm_password = if_isset($_SESSION['adm_password']);
+
 	print	"<table width=40% align=center border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print	"<tr><td colspan=\"5\" align=\"center\"><font face=\"Helvetica, Arial, sans-serif\"><big><b>Velkommen til SALDI</b></big></td></tr>";
 	print	"<tr><td colspan=\"5\"> <font face=\"Helvetica, Arial, sans-serif\">Hvis du har installeret webserveren Apache med PHP og en af databaseserverne PostgreSQL eller MySQL, kan du nu installere SALDI.</td></tr>";
 	print	"<FORM name=\"opret\" METHOD=POST ACTION=\"install.php\"><tr><td colspan=2><br></td></tr>";
-
-	print"<tr><td><font face=\"Arial,Helvetica\">Databaseserver</td><td title=\"V&aelig;lg den databaseserver, du &oslash;nsker at bruge.\"><SELECT NAME=db_type><option>PostgreSQL</option><option>MySQL</option></SELECT></td><td></td></tr>";;
+	$title="V&aelig;lg den databaseserver, du &oslash;nsker at bruge.";
+	print "<tr><td><font face=\"Arial,Helvetica\">Databaseserver</td><td title=\"$title\"><SELECT NAME=db_type>";
+	if ($db_type) print "<option>$db_type</option>";
+	if ($db_type!='PostgreSQL') print "<option>PostgreSQL</option>";
+	if ($db_type!='MySQLi') print "<option>MySQLi</option></SELECT>";
+	print "</td><td></td></tr>";
 	print"<tr><td><br></td></tr>";
 	print"<tr><td><font face=\"Arial,Helvetica\">Tegns&aelig;t</td><td title=\"V&aelig;lg det tegns&aelig;t du &oslash;nsker at bruge. Nyere versioner af PostgreSQL fungerer kun med UTF8\"><SELECT NAME=db_encode><option>UTF8</option><option>LATIN9</option></SELECT></td><td></td></tr>";;
 	print"<tr><td><br></td></tr>";
-	print	"<tr><td><font face=\"Arial,Helvetica\">Databasenavn</td><td title=\"&Oslash;nsket navn p&aring; din hoveddatabase for SALDI\"><INPUT TYPE=TEXT NAME=db_navn VALUE = \"saldi\"> <td><td width=5%></td></tr>";
+	print	"<tr><td><font face=\"Arial,Helvetica\">Databasenavn</td><td title=\"&Oslash;nsket navn p&aring; din hoveddatabase for SALDI\"><INPUT TYPE=TEXT NAME=db_navn VALUE = \"$db_navn\"> <td><td width=5%></td></tr>";
 	print"<tr><td><br></td></tr>";
-	print"<tr><td><font face=\"Arial,Helvetica\">Eksisterende databaseadministrator</td> <td title=\"Navn p&aring; en bruger, som har i forvejen har tilladelse til at oprette, rette og slette databaser. Typisk er det for PostgreSQL brugeren postgres og for MySQL brugeren root.\"><INPUT TYPE=TEXT NAME=db_bruger VALUE=\"postgres\"></td><td></td></tr>";
+	print "<tr><td><font face=\"Arial,Helvetica\">Eksisterende databaseadministrator</td> <td title=\"Navn p&aring; en bruger, som har i forvejen har tilladelse til at oprette, rette og slette databaser. Typisk er det for PostgreSQL brugeren postgres og for MySQL brugeren root.\"><INPUT TYPE=TEXT NAME=db_bruger VALUE=\"$db_bruger\"></td><td></td></tr>";
 	print"<tr><td><br></td></tr>";
-	print"<tr><td><font face=\"Arial,Helvetica\">Adgangskode for databaseadministrator</td><td title=\"Adgangskode for ovenst&aring;ende bruger\"><INPUT TYPE=password NAME=db_password></td><td></td></tr>";
+	print "<tr><td><font face=\"Arial,Helvetica\">Adgangskode for databaseadministrator</td><td title=\"Adgangskode for ovenst&aring;ende bruger\"><INPUT TYPE=password NAME=db_password VALUE=\"$db_password\"></td><td></td></tr>";
 	print"<tr><td><br></td></tr>";
-	print"<tr><td><font face=\"Arial,Helvetica\">SALDI-administratorens brugernavn</td><td title=\"&Oslash;nsket navn p&aring; din administratorkonto til dit SALDI-system\"><INPUT TYPE=TEXT NAME=adm_navn VALUE = \"admin\"></td><td></td></tr>";
+	print "<tr><td><font face=\"Arial,Helvetica\">SALDI-administratorens brugernavn</td><td title=\"&Oslash;nsket navn p&aring; din administratorkonto til dit SALDI-system\"><INPUT TYPE=TEXT NAME=adm_navn VALUE = \"$adm_navn\"></td><td></td></tr>";
 	print"<tr><td><br></td></tr>";
-	print"<tr><td><font face=\"Arial,Helvetica\">SALDI-administratorens adgangskode</td><td title=\"&Oslash;nsket adgangskode for administratoren af dit SALDI-system\"><INPUT TYPE=password NAME=adm_password></td><td></td></tr>";
+	print "<tr><td><font face=\"Arial,Helvetica\">SALDI-administratorens adgangskode</td><td title=\"&Oslash;nsket adgangskode for administratoren af dit SALDI-system\"><INPUT TYPE=password NAME=adm_password VALUE = \"$adm_password\"></td><td></td></tr>";
 	print"<tr><td><br></td></tr>";
-	print"<tr><td><font face=\"Arial,Helvetica\">SALDI-administratorens adgangskode igen</td><td title=\"Verificering af ovenst&aring;ende adgangskode\"><INPUT TYPE=password NAME=verify_adm_password></td><td></td></tr>";
+	print "<tr><td><font face=\"Arial,Helvetica\">SALDI-administratorens adgangskode igen</td><td title=\"Verificering af ovenst&aring;ende adgangskode\"><INPUT TYPE=password NAME=verify_adm_password VALUE = \"$adm_password\"></td><td></td></tr>";
 	print"<tr><td><br></td></tr>";
 	print"<tr><td colspan=2 align=center title=\"Klik her for at oprette dit SALDI-system\"><INPUT TYPE=submit name=opret VALUE=Install&eacute;r></td></tr>";
 	print"<tr><td><br></td></tr>";
@@ -316,16 +375,16 @@ function skriv_connect($fp,$host,$db_bruger,$db_password,$db_navn,$db_encode,$db
 	fwrite($fp,"\n");
 	fwrite($fp,"\$font = \"<font face='Arial, Helvetica, sans-serif'>\";\n");
 	fwrite($fp,"\n");
-	if ($db_type=='mysql') {
+	if ($db_type=='mysqli') {
 		fwrite($fp,"\$connection = db_connect (\"\$sqhost\", \"\$squser\", \"\$sqpass\");\n");
 	} else {
 		fwrite($fp,"if (\$sqpass) \$connection = db_connect (\"\$sqhost\", \"\$squser\", \"\$sqpass\", \"\$sqdb\");\n");
 		fwrite($fp,"else \$connection = db_connect (\"\$sqhost\", \"\$squser\", \"\$sqpass\", \"\$sqdb\");\n");
 	}
 	fwrite($fp,"if (!isset(\$connection)) die( \"Unable to connect to database\");\n");
-	if ($db_type=='mysql') {
-		fwrite($fp,"elseif (!mysql_select_db(\"\$sqdb\")) die( \"Unable to connect to MySQL\");\n");
-		fwrite($fp,"else mysql_query(\"SET storage_engine=INNODB\");\n");
+	if ($db_type=='mysqli') {
+		fwrite($fp,"elseif (!mysqli_select_db(\$connection,\$sqdb)) die( \"Unable to connect to MySQL\");\n");
+		fwrite($fp,"else mysqli_query(\$connection,\"SET storage_engine=INNODB\");\n");
 	}
 	fwrite($fp,"\n");
 	fwrite($fp,"?".">\n");

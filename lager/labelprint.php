@@ -62,8 +62,25 @@ for ($x=0;$x<count($banned);$x++) {
 $r=db_fetch_array(db_select("select * from varer where id='$id'",__FILE__ . " linje " . __LINE__));
 $momsfri='on';
 $salgspris=$r['salgspris']; #20160505
+$gruppe=$r['gruppe'];
 #$salgspris2=$r['salgspris2'];
 $special_price=$r['special_price'];
+$qtxt="select var_value from settings where var_name = 'vatOnItemCard' and var_grp = 'items'";
+$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+$vatOnItemCard=$r2['var_value'];
+$qtxt="select box4,box7 from grupper where art='VG' and kodenr='$gruppe' and box7!='on'";
+if ($vatOnItemCard && $r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+	$konto = $r2['box4'];
+	$qtxt="select moms from kontoplan where kontonr='$r2[box4]' order by id desc limit 1";
+	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$momskode=str_replace("S","",$r2['moms']);	
+	$qtxt="select box2 from grupper where art='SM' and kodenr = '$momskode'";
+	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$incl_moms=$r2['box2']*1;
+	$salgspris*=(100+$incl_moms)/(100);
+	$special_price*=(100+$incl_moms)/(100);
+} 
+/*
 $incl_moms=0;
 if($r2=db_fetch_array(db_select("select box7 from grupper where art='VG' and kodenr='$r[gruppe]' and box7!='on'",__FILE__ . " linje " . __LINE__))) {
 	$momsfri = $r2['box7'];
@@ -76,6 +93,7 @@ if($r2=db_fetch_array(db_select("select box7 from grupper where art='VG' and kod
 		$special_price=$r['special_price']*=(100+$incl_moms)/100;
 	}
 }
+*/
 $dkkpris=str_replace(',00',',-',dkdecimal($salgspris,2));
 $txt=str_replace('$beskrivelse',$r['beskrivelse'],$txt);
 $txt=str_replace('$varenr',$r['varenr'],$txt);
@@ -111,6 +129,7 @@ if (strpos($txt,'$variant')) { #20170628
 	$qtxt="select variant_id,variant_type from variant_varer where variant_stregkode='$stregkode'";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$variant_id=$r2['variant_id'];
+	if ($variant_id) {
 	$variant_type_id=explode(chr(9),$r2['variant_type']);
 	$qtxt="select beskrivelse from varianter where id='$variant_id'";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -118,9 +137,9 @@ if (strpos($txt,'$variant')) { #20170628
 	$qtxt="select beskrivelse from variant_typer where id='$variant_type_id[0]'";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$variant_type=$r2['beskrivelse'];
-
-	$txt=str_replace('$variant',$variant." ".$variant_type,$txt);
+	} else $variant=$variant_type=NULL;
 }
+$txt=str_replace('$variant',$variant." ".$variant_type,$txt);
 $txt=str_replace('$kostpris',$r['kostpris'],$txt);
 $txt=str_replace('$img',$img,$txt);
 $txt=str_replace('$pris',dkdecimal($salgspris,2),$txt);

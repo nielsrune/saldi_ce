@@ -1,33 +1,35 @@
 <?php
-//----------------- includes/vareopslag.php -----ver 3.2.6---- 2011.11.29 ----------
+//----------------- includes/vareopslag.php -----ver 3.8.1---- 2019.06.26 ----------
 // LICENS
-//
+
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// af denne licens eller en senere version efter eget valg
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 // 
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2011 DANOSOFT ApS
+// Copyright (c) 2004-2019 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20190626 PHT Added missing '__FILE__ . " linje " . __LINE__' to queries
 
 function vareopslag ($sort, $fokus, $id, $vis_kost, $ref, $find, $retur) {
 
 	global $bgcolor;
 	global $bgcolor5;
  
+	$lager=$linjebg=$x=NULL;
 	
-	if ($find) {
+	if (isset($find) && $find) {
 		$find=str_replace("*","%",$find);
 		$find=" and $fokus like $find and id!='$id'";
 	} else $find=" and id!='$id'";
@@ -39,8 +41,14 @@ function vareopslag ($sort, $fokus, $id, $vis_kost, $ref, $find, $retur) {
 	print"<table cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"100%\" valign = \"top\">";
 	print"<tbody><tr>";
 	print "<td><a href=\"$retur?fokus=$fokus&id=$id\">Luk</a></td>";
-	if ($vis_kost) {print "<td colspan=7 align=center><a href=$retur?sort=varenr&funktion=vareopslag&x=$x&fokus=$fokus&id=$id&find=$find>Udelad kostpriser</a></td></tr>";}
-	else {print "<td colspan=3 align=center><a href=$retur?sort=varenr&funktion=vareopslag&x=$x&fokus=$fokus&id=$id&vis_kost=on&find=$find>Vis kostpriser</a></td></tr>";}
+	if ($vis_kost) {
+		print "<td colspan=7 align=center><a href=$retur?sort=varenr&funktion=vareopslag&x=$x&fokus=$fokus&id=$id&find=$find>";
+		print "Udelad kostpriser</a></td></tr>";
+	}
+	else {
+		print "<td colspan=3 align=center>";
+		print "<a href=$retur?sort=varenr&funktion=vareopslag&x=$x&fokus=$fokus&id=$id&vis_kost=on&find=$find>Vis kostpriser</a></td></tr>";
+	}
 	print"<td><b><a href=$retur?sort=varenr&funktion=vareopslag&x=$x&fokus=$fokus&id=$id&vis_kost=$vis_kost&find=$find>Varenr</a></b></td>";
 	print"<td><b> Enhed</b></td>";
 	print"<td><b><a href=$retur?sort=beskrivelse&funktion=vareopslag&x=$x&fokus=$fokus&id=$id&vis_kost=$vis_kost&find=$find>Beskrivelse</a></b></td>";
@@ -53,21 +61,21 @@ function vareopslag ($sort, $fokus, $id, $vis_kost, $ref, $find, $retur) {
 	print "<tr><td colspan=\"6\"><hr></td></tr>";
 	if ($ref){
 		if ($row= db_fetch_array(db_select("select afd from ansatte where navn = '$ref'"))) {
-			if ($row= db_fetch_array(db_select("select kodenr from grupper where box1='$row[afd]' and art='LG'"))) {$lager=$row['kodenr'];}
+			if ($row= db_fetch_array(db_select("select kodenr from grupper where box1='$row[afd]' and art='LG'",__FILE__ . " linje " . __LINE__))) {$lager=$row['kodenr'];}
 		}
 	}
 	$lager=$lager*1;
 	if (!$sort) {$sort = varenr;}
-	if ($find) $query = db_select("select * from varer where lukket != '1' $find order by $sort");
-	else $query = db_select("select * from varer where lukket != '1' order by $sort");
+	if ($find) $query = db_select("select * from varer where lukket != '1' $find order by $sort",__FILE__ . " linje " . __LINE__);
+	else $query = db_select("select * from varer where lukket != '1' order by $sort",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query))
 	{
-		$query2 = db_select("select box8 from grupper where art='VG' and kodenr='$row[gruppe]'");
+		$query2 = db_select("select box8 from grupper where art='VG' and kodenr='$row[gruppe]'",__FILE__ . " linje " . __LINE__);
 		$row2 =db_fetch_array($query2);
-		if (($row2[box8]=='on')||($row[samlevare]=='on')){
-			if (($row[beholdning]!='0')and(!$row[beholdning])){db_modify("update varer set beholdning='0' where id=$row[id]");}
+		if (($row2['box8']=='on')||($row['samlevare']=='on')){
+			if (($row['beholdning']!='0')and(!$row['beholdning'])){db_modify("update varer set beholdning='0' where id=$row[id]",__FILE__ . " linje " . __LINE__);}
 		}
-		elseif ($row[beholdning]){db_modify("update varer set beholdning='0' where id=$row[id]");}
+		elseif ($row['beholdning']){db_modify("update varer set beholdning='0' where id=$row[id]",__FILE__ . " linje " . __LINE__);}
 
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
@@ -75,32 +83,32 @@ function vareopslag ($sort, $fokus, $id, $vis_kost, $ref, $find, $retur) {
 		print "<td><a href=\"$retur?vare_id=$row[id]&fokus=$fokus&id=$id\">$row[varenr]</a></td>";	
 		print "<td>$row[enhed]<br></td>";
 		print "<td>$row[beskrivelse]<br></td>";
-		$salgspris=dkdecimal($row[salgspris]);
+		$salgspris=dkdecimal($row['salgspris']);
 		print "<td align=right>$salgspris<br></td>";
 		if ($vis_kost=='on') {
-			$query2 = db_select("select kostpris from vare_lev where vare_id = $row[id] order by posnr");
+			$query2 = db_select("select kostpris from vare_lev where vare_id = $row[id] order by posnr",__FILE__ . " linje " . __LINE__);
 			$row2 = db_fetch_array($query2);
-			$kostpris=dkdecimal($row2[kostpris]);
+			$kostpris=dkdecimal($row2['kostpris']);
 			print "<td align=right>$kostpris<br></td>";
 		}
 		$reserveret=0;
 #		$linjetext="<span title= 'Der er $y i tilbud og $z i ordre '>";
 		if ($lager>=1){
-			$q2 = db_select("select * from batch_kob where vare_id=$row[id] and rest>0 and lager=$lager");
+			$q2 = db_select("select * from batch_kob where vare_id=$row[id] and rest>0 and lager=$lager",__FILE__ . " linje " . __LINE__);
 			while ($r2 = db_fetch_array($q2)) {
 				$q3 = db_select("select * from reservation where batch_kob_id=$r2[id]");
-				while ($r3 = db_fetch_array($q3)) {$reserveret=$reserveret+$r3[antal];}
+				while ($r3 = db_fetch_array($q3)) {$reserveret=$reserveret+$r3['antal'];}
 			}
 			$linjetext="<span title= 'Reserveret: $reserveret'>";
-			if ($r2= db_fetch_array(db_select("select beholdning from lagerstatus where vare_id=$row[id] and lager=$lager"))) {
+			if ($r2= db_fetch_array(db_select("select beholdning from lagerstatus where vare_id=$row[id] and lager=$lager",__FILE__ . " linje " . __LINE__))) {
 				print "<td align=right>$linjetext $r2[beholdning]</span></td>";
 			} 
 		}
 		else { 
-			$q2 = db_select("select * from batch_kob where vare_id=$row[id] and rest > 0");
+			$q2 = db_select("select * from batch_kob where vare_id=$row[id] and rest > 0",__FILE__ . " linje " . __LINE__);
 			while ($r2 = db_fetch_array($q2)) {
-				$q3 = db_select("select * from reservation where batch_kob_id=$r2[id]");
-				while ($r3 = db_fetch_array($q3)) {$reserveret=$reserveret+$r3[antal];}
+				$q3 = db_select("select * from reservation where batch_kob_id=$r2[id]",__FILE__ . " linje " . __LINE__);
+				while ($r3 = db_fetch_array($q3)) {$reserveret=$reserveret+$r3['antal'];}
 			}
 			$linjetext="<span title= 'Reserveret: $reserveret'>";
 			print "<td align=right>$linjetext $row[beholdning]</span></td>";

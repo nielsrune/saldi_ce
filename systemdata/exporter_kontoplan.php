@@ -16,6 +16,7 @@
 //
 // Copyright (c) 2004-2009 DANOSOFT ApS
 // ----------------------------------------------------------------------
+// 2019.02.25 MSC - Rettet topmenu design
 
 @session_start();
 $s_id=session_id();
@@ -34,7 +35,7 @@ $filnavn="../temp/".trim($db."_ktoplan_".date("Y-m-d").".csv");
 
 $fp=fopen($filnavn,"w");
 if (fwrite($fp, "kontonr".chr(9)."beskrivelse".chr(9)."kontotype".chr(9)."momskode".chr(9)."fra_konto\r\n")) {
-	$q=db_select("select * from kontoplan where regnskabsaar='$regnskabsaar' order by kontonr");
+	$q=db_select("select * from kontoplan where regnskabsaar='$regnskabsaar' order by kontonr",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$beskrivelse=$r['beskrivelse'];
 		if ($charset=="UTF-8") $beskrivelse=utf8_decode($beskrivelse);
@@ -44,6 +45,22 @@ if (fwrite($fp, "kontonr".chr(9)."beskrivelse".chr(9)."kontotype".chr(9)."momsko
 } 
 fclose($fp);
 
+if ($menu=='T') {
+	$border="0";
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">\n";
+	print "<div class=\"headerbtnLft\"><a class='button red small' href=diverse.php?sektion=div_io accesskey=L>Luk</a></div>\n";
+	print "</div><!-- end of header -->";
+	print "<div id=\"leftmenuholder\">";
+	include_once 'left_div_menu.php';
+	print "</div><!-- end of leftmenuholder -->\n";
+	print "<div class=\"maincontentLargeHolder\">\n";
+	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
+
+	print "<tr><td align=center> H&oslash;jreklik her: </td><td><a class='button blue medium' href='$filnavn'>Kontoplan</a></td></tr>";
+	print "<tr><td align=center colspan=2> V&aelig;lg \"gem destination som\"</td></tr>";
+} else {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
@@ -57,6 +74,7 @@ print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
 
 print "<tr><td align=center> H&oslash;jreklik her: </td><td $top_bund><a href='$filnavn'>Kontoplan</a></td></tr>";
 print "<tr><td align=center colspan=2> V&aelig;lg \"gem destination som\"</td></tr>";
+}
 
 print "</tbody></table>";
 

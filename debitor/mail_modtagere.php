@@ -6,7 +6,7 @@ $s_id=session_id();
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------debitor/mail_modtagere.php---------------------Patch 3.7.2-----2018.09.27---
+// ---------debitor/mail_modtagere.php---------------------Patch 3.7.4-----2018.12.28---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -30,18 +30,22 @@ $s_id=session_id();
 // 20170613 PHR Tilføjet flere variabler til mailteksten og rettet datoudtræk fra beskrivelse. 
 // 20180417 PHR	rettet ',$mailtekst)' til ',$mtxt)' i '$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt)'
 // 20100907	PHR tilføjet and art='D' så den ikke fanger en kreditor...
+// 20181228 PHR tilføjet and ordrelinjer.fast_db > '0' så rabatlinjer ikke medregnes i antal.
 
 $modulnr=12;
 $css="../css/standard.css";
+
 
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/forfaldsdag.php");
 
+$emne=if_isset($_POST['emne']);
 $liste_id=if_isset($_GET['liste_id']);
 $mailtekst=if_isset($_POST['mailtekst']);
-$emne=if_isset($_POST['emne']);
+$send_mails=if_isset($_POST['send_mails']);
+$testmail=if_isset($_POST['testmail']);
 
 ini_set("include_path", ".:../phpmailer");
 require("class.phpmailer.php");
@@ -63,8 +67,9 @@ list($tmp,$slut[$x])=explode(" - ",$r['beskrivelse']);
 	$belob[$x]=$r['belob'];
 	$qtxt="select sum(antal) as antal from ordrelinjer,ordrer where ";
 	$qtxt.="(ordrer.art='PO') and ordrer.fakturadate >= '$start[$x]' and ordrer.fakturadate <= '$slut[$x]' and ";
-	$qtxt.="ordrelinjer.ordre_id = ordrer.id and ordrelinjer.varenr like '%$kontonr[$x]'";
+	$qtxt.="ordrelinjer.ordre_id = ordrer.id and ordrelinjer.varenr like '%$kontonr[$x]' and ordrelinjer.fast_db > '0'";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+if ($kontonr==1030) echo "$qtxt<br>";	
 	$antal[$x]=$r2['antal']*1;
 	$qtxt="select id,firmanavn,email from adresser where kontonr='$kontonr[$x]' and art='D'	";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -73,7 +78,7 @@ list($tmp,$slut[$x])=explode(" - ",$r['beskrivelse']);
 	$x++;
 }
 $mailantal=$x;
-if ($_POST['testmail']) {
+if ($testmail) {
 	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 	echo "sender til $r[email]<br>";
 	$x=0;
@@ -87,7 +92,7 @@ if ($_POST['testmail']) {
 	send_mail($emne,$mtxt,$r['email'],$r['email'],$r['firmanavn']);
 }
 
-if ($_POST['send_mails']) {
+if ($send_mails) {
 	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 	for ($x=0;$x<count($modt_navn);$x++) {
 		$mtxt=str_replace('$navn',$modt_navn[$x],$mailtekst);
@@ -141,7 +146,7 @@ for ($x=0;$x<$mailantal;$x++) {
 	$eksempel=str_replace("\n","<br>",$eksempel);
 	print "<tr><td>$eksempel</td></tr>";
 	print "<tr><td><hr></td></tr>";
-	if ($x>2) break 1;
+#	if ($x>2) break 1;
 }
 
 print "</tbody></table>";
@@ -210,23 +215,6 @@ function send_mail($subjekt,$mailtekst,$modtager,$afsendermail,$afsendernavn) {
     $mailbody .= "$mailtext\n";
 		$mailbody .= "</body></html>";
 
-/*
-		$mailaltbody = "Hermed fremsendes kontoudtog fra ".$afsendernavn.".\n\n";
-    $mailaltbody .= "Den vedlagte fil er en HTML-fil og kan ses i din webbrowser eksempelvis \n";
-		$mailaltbody .= "ved at dobbeltklikke på den.\n";
-		$mailaltbody .= "-- \n";
-		$mailaltbody .= $row['firmanavn']."\n";
-		if ( $row['addr1'] ) $mailaltbody .= $row['addr1']."\n";
-		if ( $row['addr2'] ) $mailaltbody .= $row['addr2']."\n";
-		if ( $row['postnr'] ) $mailaltbody .= $row['postnr']." ".$row['bynavn']."\n";
-		if ( $row['tlf'] ) $mailaltbody .= "tlf ".$row['tlf'];
-		if ( $row['fax'] ) $mailaltbody .= " * fax ".$row['fax'];
-		if ( $row['cvr'] ) $mailaltbody .= " * cvr ".$row['fax'];
-*/		
-#		if ($charset=="UTF-8"){
-#				$mailbody=utf8_decode($mailbody);
-#				$mailaltbody=utf8_decode($mailaltbody);
-#		}
 		$mail->Body     =  $mailbody;
 #		$mail->AltBody  =  $mailaltbody;
 		if(!$mail->Send()){
@@ -240,114 +228,5 @@ function send_mail($subjekt,$mailtekst,$modtager,$afsendermail,$afsendernavn) {
 #	unlink("$tmpmappe/afregning.html");
 #	rmdir($tmpmappe);
 }
-
-
-
-
-
-
-/*
-else {
-}
-	$query = db_select("select * from adresser where id=$konto_id[$x]",__FILE__ . " linje " . __LINE__);
-	$row = db_fetch_array($query);
-	if (!$email[$x]){$email[$x]=$row['email'];}
-	print "<tr><td colspan=8><hr style=\"height: 10px; background-color: rgb(200, 200, 200);\"></td></tr>";
-	print "<tr><td colspan=\"5\">$row[firmanavn]</td><td colspan=\"2\" align=\"right\">Dato</td><td align=right> ".date('d-m-Y')."</td></tr>\n";
-	print "<tr><td colspan=\"5\">$row[addr1]</td><td colspan=\"2\" align=\"right\">Kontonr.</td><td align=right> $row[kontonr]</td></tr>\n";
-	if ( $row['addr2'] ) print "<tr><td colspan=\"8\">$row[addr2]</td></tr>\n";
-	print "<tr><td colspan=\"8\">$row[postnr] $row[bynavn]</td></tr>\n";
-	print "<tr><td colspan=\"8\">Tlf. $row[tlf]</td></tr>\n";
-	print "<tr><td><br></td></tr>";
-	print "<tr><td><br></td></tr>";
-	print "<tr><td width=10%> Dato</td><td width=5%> Bilag</td><td width=5%> Faktura</td><td width=40% align=center> Tekst</td><td> Forfaldsdato</td><td width=10% align=right> Debet</td><td width=10% align=right> Kredit</td><td width=10% align=right> Saldo</td></tr>";
-	print "<tr><td colspan=8><hr></td></tr>";
-	$betalingsbet=trim($row['betalingsbet']);
-	$betalingsdage=$row['betalingsdage'];
-	$kontosum=0;
-	$primo=0;
-	$primoprint=0;
-	if (!$fromdate[$x]) { #20150305-1
-		$y=0;
-		$q=db_select("select * from openpost where konto_id=$konto_id[$x] and transdate<='$todate[$x]' order by transdate, faktnr",__FILE__ . " linje " . __LINE__);
-		while ($r = db_fetch_array($q)) {
-			$td[$y]=$r['transdate'];
-			($y)?$am[$y]=$am[$y-1]+afrund($r['amount'],2):$am[$y]=afrund($r['amount'],2);
-			$y++;
-		}
-		for ($y=0;$y<count($td);$y++) {
-			if (!$y) $fromdate[$x]=$td[$y];
-			if ($am[$y]==0 && $y<count($td)-1) $fromdate[$x]=$td[$y+1]; 
-			$fra[$x]=dkdato($fromdate[$x]);
-		}
-	}
-	if (!$fromdate[$x]) {
-		$fromdate[$x]=usdate($fra[$x]);
-	}
-	
-	$query = db_select("select * from openpost where konto_id=$konto_id[$x] and transdate<='$todate[$x]' order by transdate, faktnr",__FILE__ . " linje " . __LINE__);
-	while ($row = db_fetch_array($query)) {
-		$amount=afrund($row['amount'],2);
-		$forfaldsdag=NULL;
-		$forfaldsdate=NULL;
-		if ($row['forfaldsdate']) {
-			$forfaldsdate=$row['forfaldsdate'];
-			$forfaldsdag=dkdato($forfaldsdate);
-		}
-	 if ($row['transdate']<$fromdate[$x]) {
-			$primoprint=0;
-			$kontosum=$kontosum+$amount;
-		}		 
-		else { 
-			if ($primoprint==0) {
-				$tmp=dkdecimal($kontosum,2);
-				$linjebg=$bgcolor5; $color='#000000';
-				print "<tr bgcolor=\"$linjebg\"><td colspan=\"3\"></td><td> Primosaldo</td><td colspan=\"3\"></td><td align=right> $tmp</td></tr>";
-				$primoprint=1;
-			}
-		    	if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
-			elseif ($linjebg!=$bgcolor5){$linjebg=$bgcolor5; $color='#000000';}
-			print "<tr bgcolor=\"$linjebg\"><td align=left> ".dkdato($row['transdate'])."&nbsp;</td><td> $row[refnr]</td><td align=right> $row[faktnr]&nbsp;</td><td> $row[beskrivelse]</td>";
-			
-			if ($amount < 0) $tmp=0-$amount;
-			else $tmp=$amount;
-			$tmp=dkdecimal($tmp,2);
-			if (!$forfaldsdag && $amount > 0) {
-				$forfaldsdag=forfaldsdag($row['transdate'], $betalingsbet, $betalingsdage);
-				$forfaldsdate=usdate($forfaldsdag);
-			}
-			if (($row['udlignet']!='1')&&($forfaldsdate<$currentdate)) $stil="<span style='color: rgb(255, 0, 0);'>";
-			else $stil="<span style='color: rgb(0, 0, 0);'>";
-			if ($amount > 0) {
-				print "<td>$stil"."$forfaldsdag</td><td align=right>$stil $tmp</td><td></td>";
-				$forfaldsum=$forfaldsum+$amount;
-			}
-			else {print "<td></td><td></td><td align=right> $tmp</td>";}
-			
-			$kontosum=$kontosum+$amount;
-			$tmp=dkdecimal($kontosum,2);
-			print "<td align=right> $tmp</td>";
-			print "</tr>";
-		}
-	}
-	if ($primoprint==0) {
-		$tmp=dkdecimal($kontosum,2);
-		print "<tr><td></td><td></td><td></td><td> Primosaldo</td><td></td><td></td><td></td><td align=right> $tmp</td></tr>";
-	}
-	print "<tr><td colspan=8><hr></td></tr>";
- 	print "<tr><td colspan=8> email til: <input type=text name=email[$x] value=$email[$x]> Periode: <input type=text style=\"text-align:right\" size=10 name=fra[$x] value=$fra[$x]> - <input type=text style=\"text-align:right\" size=10 name=til[$x] value=$til[$x]></td></tr>";
-	print "<tr><td colspan=8><hr style=\"height: 10px; background-color: rgb(200, 200, 200);\"></td></tr>";
-	print "<tr><td colspan=8><hr></td></tr>";
-	print "<input type = hidden name=konto_id[$x] value=$konto_id[$x]>";
-}
-print "<input type = hidden name=kontoantal value=$kontoantal>";
-print "<input type = hidden name=dato_fra value=$dato_fra>";
-print "<input type = hidden name=dato_til value=$dato_til>";
-#print "<input type = hidden name=regnaar value=$regnaar>";
-print "<tr><td colspan=10 align=center><input type=submit value=\"&nbsp;&nbsp;&nbsp;&nbsp;Opdat&eacute;r&nbsp;&nbsp;&nbsp;&nbsp;\" name=\"submit\">&nbsp;<input type=submit value=\"Send mail(s)\" name=\"submit\"></td>";
-
-print "</form>\n";
-
-*/
 ?>
 

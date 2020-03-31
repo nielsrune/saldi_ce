@@ -277,9 +277,5 @@ echo $url;
 	transaktion('commit');
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=varekort.php?id=$flet_id\">";
 }
-if (!function_exists('alert')) {
-function alert($msg) {
-    echo "<script type='text/javascript'>alert('$msg');</script>";
-}}
 
 ?>

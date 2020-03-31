@@ -36,7 +36,6 @@ div.vindue  {
 }
 .inputbox {
 	margin-bottom: 1px;
-	font-size: 12px;
 	padding: 1px 1px;
 	height: 20px;
 	border: 1px solid #DDDDDD;
@@ -51,4 +50,11 @@ position:static;
 position:relative;
 top:+2px;
 left:+2px;
+}
+
+.italic {
+	  font-style:italic;
+}
+.bold {
+		font-weight:bold;
 }

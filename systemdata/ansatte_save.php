@@ -64,10 +64,13 @@ if ($konto_id=$_POST['konto_id']) {
 	$gruppe_id=$_POST['gruppe_id'];
 	$pro_antal=$_POST['pro_antal'];
 
+	echo "$nummer $initialer $afd $id<br>";
+	
 		if (!is_numeric($nummer) && $id) { #20140923
 			$messages = "Skal være et tal";
-		} elseif ($id && $r=db_fetch_array(db_select("SELECT id FROM ansatte WHERE nummer='$nummer' AND id != '$id'",__FILE__ . " linje " . __LINE__))){
-			$messages = "Medarbejdernummer eksisterer i forvejen ";
+	} elseif ($id && $r=db_fetch_array(db_select("SELECT id,navn FROM ansatte WHERE nummer='$nummer' AND id != '$id'",__FILE__ . " linje " . __LINE__))){
+			$message = "Medarbejdernummer eksisterer i forvejen (". $r['navn'] .")";
+			alert($message); 
 		} else {
 		if ($postnr && !$bynavn) $bynavn=bynavn($postnr);
 		if (!$navn && !$id) $messages1 = "Medarbejder skal have et navn"; #20140924
@@ -86,9 +89,10 @@ if ($konto_id=$_POST['konto_id']) {
 		} elseif ($id > 0) {
 			if (!$startdate) $startdate="1900-01-01";
 			if (!$slutdate) $slutdate="9999-12-31";
-			if ($slutdate<date("Y-m-d")) $lukket='on';
+			if ($slutdate<=date("Y-m-d")) $lukket='on';
 	#echo "update ansatte set navn='$navn',nummer='$nummer',initialer='$initialer',konto_id='$konto_id',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',email='$email',tlf='$tlf',fax='$fax',privattlf='$privattlf',mobil='$mobil',cprnr='$cprnr',notes='$notes',afd='$afd',lukket='$lukket',bank='$bank',startdate='$startdate',slutdate='$slutdate',loen='$loen',extraloen='$extraloen',trainee='$trainee' where id='$id'<br>";		
-			db_modify("update ansatte set navn='$navn',nummer='$nummer',initialer='$initialer',konto_id='$konto_id',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',email='$email',tlf='$tlf',fax='$fax',privattlf='$privattlf',mobil='$mobil',cprnr='$cprnr',notes='$notes',afd='$afd',lukket='$lukket',bank='$bank',startdate='$startdate',slutdate='$slutdate',loen='$loen',extraloen='$extraloen',trainee='$trainee' where id='$id'",__FILE__ . " linje " . __LINE__);
+			$qtxt="update ansatte set navn='$navn',nummer='$nummer',initialer='$initialer',konto_id='$konto_id',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',email='$email',tlf='$tlf',fax='$fax',privattlf='$privattlf',mobil='$mobil',cprnr='$cprnr',notes='$notes',afd='$afd',lukket='$lukket',bank='$bank',startdate='$startdate',slutdate='$slutdate',loen='$loen',extraloen='$extraloen',trainee='$trainee' where id='$id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			if ($menu=='T') header("location:ansatte.php?id=$id&funktion=ret_ansat");
 		}
 		for ($x=1; $x<=$pro_antal; $x++) { 

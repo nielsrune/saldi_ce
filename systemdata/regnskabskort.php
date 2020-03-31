@@ -29,6 +29,8 @@
 // 2015-01-02 Tilrettet til dynamisk lagerværdi. Søg find_lagervaerdi
 // 20150327 CA  Topmenudesign tilføjet søg 20150327
 // 20170516 Div oprydning samt tilføjelse af laas_lager Søg laas
+// 2019.02.21 MSC - Rettet topmenu design og isset fejl
+// 2019.02.25 MSC - Rettet topmenu design
 
 @session_start();
 $s_id=session_id();
@@ -43,6 +45,8 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/genberegn.php");
+
+$aaben = $aut_lager = $beskrivelse = null;
 /*
 if ($menu=='T') {  # 20150327 start
         include_once '../includes/top_header.php';
@@ -62,14 +66,30 @@ if ($menu=='T') {  # 20150327 start
 */
 
 print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>";
-
+if ($menu=='T') {
+	#	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
+		include_once '../includes/top_header.php';
+		include_once '../includes/top_menu.php';
+		print "<div id=\"header\">\n";
+		print "<div class=\"headerbtnLft\"></div>\n";
+		print "<span class=\"headerTxt\">Regnskabskort</span>\n";     
+		print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">Ny debitor</a>--></div>";       
+		print "</div><!-- end of header -->";
+		print "<div id=\"leftmenuholder\">";
+		include_once 'left_menu.php';
+		print "</div><!-- end of leftmenuholder -->\n";
+		print "<div class=\"maincontentLargeHolder\">\n";
+	} else {
+		include("top.php");
+		print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
 print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody>"; ####################table 1a start.
 print "<tr><td align=center valign=top>";
 print "<table width=100% align=center border=0 cellspacing=4 cellpadding=0><tbody>\n"; ##############table 2b start
 print "<tr>\n";
+	}
 
 if ($menu=='T') { # 20150327 stare
-	print "<td align=\"center\"><b>Regnskabskort</b></td>\n";
+	
 } else {
 	$tekst=findtekst(154,$sprog_id);
 	print "<td width=\"10%\" align=center><div class=\"top_bund\"><a href=\"javascript:confirmClose('regnskabsaar.php','$tekst')\" accesskey=L>Luk</a></div></td>\n";
@@ -81,33 +101,33 @@ print "</tbody></table>\n"; ####################################################
 print "</td></tr>\n";
 print "<tr>\n";
 print "<td align = center valign = center>";
-print "<table cellpadding=0 cellspacing=0 border=1><tbody>\n"; ############################	##table 3b start
+	print "<table class='dataTable2' cellpadding=0 cellspacing=0 border=1><tbody>\n"; ############################	##table 3b start
 
-$id=$_GET['id'];
+$id=if_isset($_GET['id']);
 
 if ($_POST) {
 	transaktion ("begin");
-	$id=$_POST['id'];
-	$beskrivelse=$_POST['beskrivelse'];
-	$kodenr=$_POST['kodenr'];
-	$kode=$_POST['kode'];
-	$startmd=$_POST['startmd'];
-	$startaar=$_POST['startaar'];
-	$slutmd=$_POST['slutmd'];
-	$slutaar=$_POST['slutaar'];
+	$id = if_isset($_POST['id']);
+	$beskrivelse = if_isset($_POST['beskrivelse']);
+	$kodenr = if_isset($_POST['kodenr']);
+	$kode=if_isset($_POST['kode']);
+	$startmd = if_isset($_POST['startmd']);
+	$startaar = if_isset($_POST['startaar']);
+	$slutmd = if_isset($_POST['slutmd']);
+	$slutaar = if_isset($_POST['slutaar']);
 	$aaben=trim($_POST['aaben']);
-	$fakt=$_POST['fakt']*1;
-	$modt=$_POST['modt']*1;
-	$no_faktbill=trim($_POST['no_faktbill']);
-	$faktbill=trim($_POST['faktbill']);
-	$modtbill=trim($_POST['modtbill']);
-	$kontoantal=$_POST['kontoantal'];
-	$kontonr=$_POST['kontonr'];
-	$debet=$_POST['debet'];
-	$kredit=$_POST['kredit'];
-	$saldo=$_POST['saldo'];
-	$overfor_til=$_POST['overfor_til'];
-#		$primotal=$_POST['primotal'];
+	$fakt=if_isset($_POST['fakt'])*1;
+	$modt=if_isset($_POST['modt'])*1;
+	$no_faktbill=trim(if_isset($_POST['no_faktbill']));
+	$faktbill=trim(if_isset($_POST['faktbill']));
+	$modtbill=trim(if_isset($_POST['modtbill']));
+	$kontoantal = if_isset($_POST['kontoantal']);
+	$kontonr = if_isset($_POST['kontonr']);
+	$debet=if_isset($_POST['debet']);
+	$kredit=if_isset($_POST['kredit']);
+	$saldo = if_isset($_POST['saldo']);
+	$overfor_til = if_isset($_POST['overfor_til']);
+#		$primotal = if_isset($_POST['primotal']);
 	$aar=date("Y");
 	$topaar=$aar+10;
 	$bundaar=$aar-10;
@@ -195,7 +215,7 @@ if ($_POST) {
 					$query = db_select("select * from kontoplan where regnskabsaar=$kodenr-1 order by kontonr",__FILE__ . " linje " . __LINE__);
 					$y=0;
 					while ($row = db_fetch_array($query)) {
-						if ($row[kontotype]=="S") { 
+						if ($row['kontotype']=="S") { 
 						$belob=$row['saldo'];
 						} else $belob='0';
 						if (!$belob) $belob='0';
@@ -207,7 +227,7 @@ if ($_POST) {
 				}	
 			}
 		}
-		if ($_POST['laas_lager']) {
+		if (isset($_POST['laas_lager']) && $_POST['laas_lager']) {
 			$fra=$startaar."-".$startmd."01";
 			$til=usdate("31-".$slutmd."-".$slutaar);
 			print "<meta http-equiv=\"refresh\" content=\"1;URL=laas_lager.php?fra=$fra&til=$til\">"; 
@@ -276,7 +296,7 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	if (!$fakt) $fakt='1';
 	if (!$modt) $modt='1';
 	
-	print "<form name=aar_1 action=regnskabskort.php method=post>";
+	print "<form name='aar_1' action='regnskabskort.php' method='post'>";
 	if ($id){print "<tr><td colspan=4 align = center><big><b>Ret 1. regnskabs&aring;r: $beskrivelse</big></td></tr>\n";}
 	else {
 		print "<tr><td colspan=4 align = center><big><b>Velkommen til som SALDI bruger</b></big><br />
@@ -319,7 +339,7 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	print "<tr><td align=center>Brug modtagelsesnummer som bilagsnummer</td><td align=center><input type=checkbox name=modtbill $modtbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
 	print "</tbody></table></td>\n"; ##########################################################table 7d slut
 	print "<td valign=\"top\"><table border=0><tbody>\n"; ##############################################table 8d start
-	print "<tr><td><input type=submit accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<tr><td><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 	print "</tbody></table></td></tr>\n";#####################################################table8d slut
 	print "</td></tbody></table></td></tr>\n";#####################################################table5c slut
 	print "<tr><td colspan=2 align=center> Indtast primotal for 1. regnskabs&aring;r:</td><td align = center> Debet</td><td align = center> Kredit</td></tr>\n";
@@ -352,7 +372,7 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
-	print "<tr><td colspan='4' align='center'><input type='submit' accesskey=\"g\" value=\"Gem/opdat&eacute;r\" style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<tr><td colspan='4' align='center'><input class='buttom green medium' type='submit' accesskey=\"g\" value=\"Gem/opdat&eacute;r\" style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 	print "</form>";
 	exit;
 }
@@ -480,7 +500,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		for ($x=1;$x<=$kontoantal;$x++) print "<option>$kontonr[$x]</option>";
 		print "</SELECT></td>";
 		print "<td width=10><br /></td></tr>\n";
-		$ny_sum+=$ny_primo[$y];
+		if (isset($ny_primo[$y])) $ny_sum+=$ny_primo[$y];
 	}
 #cho "select * from kontoplan where kontotype='S' and regnskabsaar='$pre_regnaar' order by kontonr<br>";
 	$query = db_select("select * from kontoplan where kontotype='S' and regnskabsaar='$pre_regnaar' order by kontonr",__FILE__ . " linje " . __LINE__);
@@ -536,7 +556,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	if ($debetsum-$kreditsum!=0) {print "<BODY onload=\"javascript:alert('Konti er ikke i balance')\">";}
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
-	print "<tr><td colspan = 5 align = center><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
+	print "<tr><td colspan = 5 align = center><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
 	if ($aut_lager && date("Y-m-d")>$pre_regnslut) {
 		$title="Bogfører alle lagerbevægelser i det foregående år. Bør gøres umiddelbart efter årsskifte og lageroptælling".
 		$confirmtxt="";

@@ -50,7 +50,7 @@ if (!$sort) {
 		<table width="100%" align="center" border="0" cellspacing="2" cellpadding="0"><tbody>
 		<td width="10%" <?php echo $top_bund ?>><font face="Helvetica, Arial, sans-serif" color="#000066"><a href="rapport.php" accesskey=L>Luk</a></td>
 		<td width="80%" <?php echo $top_bund ?> ><font face="Helvetica, Arial, sans-serif" color="#000066">betalingsliste</td>
-		<td width="10%" <?php echo $top_bund ?>><font face="Helvetica, Arial, sans-serif" color="#000066"><?php echo"<a href=betalingsliste.php?sort=$sort&rf=$rf&vis=$vis accesskey=N>"?>Ny</a></td>
+		<td width="10%" <?php echo $top_bund ?>><font face="Helvetica, Arial, sans-serif" color="#000066"><?php echo"<a href=betalinger.php?id=0 accesskey=N>"?>Ny</a></td>
 		</tbody></table>
 		</td></tr>
 		<tr><td valign="top">

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------includes/tjek4opdat.php----------lap 3.7.0----- 2017-11-14------
+// --------------includes/tjek4opdat.php----------lap 3.8.0----- 2019-06-06------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk ApS
+// Copyright (c) 2003-2019 saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2013.09.06 Indsat $b=3;$c=0;  Søg 20130906  
@@ -31,6 +31,7 @@
 // 2015.02.09 Indsat $b==5{ osv. PHR Danosoft Søg 20150209
 // 2016.01.16 Indsat $b==6{ osv. PHR Danosoft Søg 20160116
 // 2017.11.14 Indsat $b==7{ osv. PHR Søg 20171114
+// 2019.06.06 PHR added $b==8{ etc. 20190606
 
 if (!function_exists('tjek4opdat')) {
 	function tjek4opdat($dbver,$version) {
@@ -111,6 +112,11 @@ if (!function_exists('tjek4opdat')) {
 					include("../includes/opdat_3.7.php");
 					opdat_3_7($b,$c);
 					$b=8;$c=0;
+				}
+				if ($b==8) { #20190606
+					include("../includes/opdat_3.8.php");
+					opdat_3_8($b,$c);
+					$b=9;$c=0;
 				}
 			}
 		}
