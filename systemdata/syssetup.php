@@ -1,16 +1,16 @@
 <?php
 
-// ----------------- systemdata/syssetup.php ------- lap 3.6.5 -- 2016-10-22 --
+// ----------------- systemdata/syssetup.php ------- lap 3.8.9 -- 2020-03-08 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -19,8 +19,9 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// // Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk ApS
 // ----------------------------------------------------------------------
+//
 // 20132127 Indsat kontrol for at kodenr er numerisk på momskoder.
 // 20140621 Ændret "kontrol for at kodenr er numerisk på momskoder" til at acceptere "-".
 // 20141002 Tilføjet felt for omvendt betaling på kunder og varer.
@@ -32,6 +33,13 @@
 // 20160808 PHR function nytaar $box3,$box3 rettet til box2,box3 (Tak til forumbruger 'ht'). 
 // 20161022 PHR tilretning iht flere afd pr lager. 20161022
 // 20170405 PHR	Ganger resultat med 1 for at undgå NULL værdier
+// 20181102 PHR Oprydning, udefinerede variabler.
+// 2018.12.20 MSC - Rettet isset fejl
+// 2019.02.21 MSC - Rettet topmenu design
+// 2019.02.21 MSC - Rettet isset fejl
+// 2019.02.25 MSC - Rettet topmenu design
+// 2020.03.08 PHR	Added Mysqli
+// 2020.03.08 PHR Removed 'Lagertilgang', 'Lagertræk' & 'Lagerregulering' from 'Varegrupper' 
 
 @session_start();
 $s_id=session_id();
@@ -41,7 +49,6 @@ $nopdat=NULL;
 $modulnr=1;
 $title="Systemsetup";
 $css="../css/standard.css";
-$dd=date("Y-m-d");
 $genberegn=NULL;
 
 
@@ -50,6 +57,9 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("skriv_formtabel.inc.php");
 include("../includes/genberegn.php");
+
+if (!isset ($fejl)) $fejl = NULL;
+$dd=date("Y-m-d");
 
 if ($menu=='T') {
 #	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
@@ -63,8 +73,8 @@ if ($menu=='T') {
 	print "<div id=\"leftmenuholder\">";
 	include_once 'left_menu.php';
 	print "</div><!-- end of leftmenuholder -->\n";
-	print "<div class=\"maincontent\">\n";
-	print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>";
+	print "<div class=\"maincontentLargeHolder\">\n";
+	print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable2\"><tbody>";
 } else {
 	include("top.php");
 	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
@@ -101,6 +111,22 @@ if ($_POST){
 	$y=0;
 	for($x=0; $x<=$antal; $x++) {
 		$set=0;
+		if (!isset ($box6[$x])) $box6[$x] = null;
+		if (!isset ($box7[$x])) $box7[$x] = null;
+		if (!isset ($box8[$x])) $box8[$x] = null;
+		if (!isset ($box9[$x])) $box9[$x] = null;
+		if (!isset ($box10[$x])) $box10[$x] = null;
+		if (!isset ($box11[$x])) $box11[$x] = null;
+		if (!isset ($box12[$x])) $box12[$x]= null;
+		if (!isset ($box13[$x])) $box13[$x] = null;
+		if (!isset ($box14[$x])) $box14[$x] = null;
+		if (!isset ($box2[$x])) $box2[$x] = null;
+		if (!isset ($box3[$x])) $box3[$x] = null;
+		if (!isset ($box3[$y])) $box3[$y] = null;
+		if (!isset ($box4[$x])) $box4[$x] = null;
+		if (!isset ($box4[$y])) $box4[$y] = null;
+		if (!isset ($box5[$x])) $box5[$x] = null;
+		if (!isset ($box1[$x])) $box1[$x] = null;
 		if (isset($art[$x])) $set=1;
 		if (isset($beskrivelse[$x])) $set=1;
 		if (isset($kodenr[$x])) $set=1;
@@ -240,10 +266,28 @@ if ($_POST){
 			$box8[$x]=''; $box9[$x]='';
 		} 
 		if ($art[$x]=='VPG') {
-			list($box1[$x],$box2[$x],$box3[$x],$box4[$x])=explode(";",opdater_varer($kodenr[$x],$art[$x],$box1[$x],$box2[$x],$box3[$x],$box4[$x])); 
+			list($box1[$x],
+			$box2[$x],
+			$box3[$x],
+			$box4[$x])=explode(";", opdater_varer(
+			$kodenr[$x],
+			$art[$x],
+			$box1[$x],
+			$box2[$x],
+			$box3[$x],
+			$box4[$x])); 
 		} 
 		if ($art[$x]=='VTG') {
-			list($box1[$x],$box2[$x],$box3[$x],$box4[$x])=explode(";",opdater_varer($kodenr[$x],$art[$x],$box1[$x],$box2[$x],$box3[$x],$box4[$x])); 
+			list($box1[$x],
+			$box2[$x],
+			$box3[$x],
+			$box4[$x])=explode(";", opdater_varer(
+			$kodenr[$x],
+			$art[$x],
+			$box1[$x],
+			$box2[$x],
+			$box3[$x],
+			$box4[$x])); 
 		} 
 		if ($art[$x]=='VRG') opdater_varer($kodenr[$x],$art[$x],$box1[$x],$box2[$x],$box3[$x],$box4[$x]); 
 		if (($art[$x]=='SM')||($art[$x]=='KM')||($art[$x]=='YM')||($art[$x]=='EM')||($art[$x]=='VK')) $box2[$x]=usdecimal($box2[$x]); 
@@ -331,17 +375,17 @@ if ($_POST){
 	transaktion('commit');
 	if ($genberegn) genberegn($regnaar);
 }
-
 #########################################################################################################################################
 if ($nopdat!=1) {
 	$x=0;
 	if ($valg=="projekter") $tmp='kodenr desc';
 	else {
-		if ($db_type=='mysql') $tmp="CAST(kodenr AS SIGNED)";
+		if ($db_type=='mysql' || $db_type=='mysqli') $tmp="CAST(kodenr AS SIGNED)";
 		else $tmp="to_number(textcat('0',kodenr),text(99999999))";
 	} 
 	$query = db_select("SELECT * FROM grupper order by $tmp",__FILE__ . " linje " . __LINE__);
 	$feltbredde=6;
+	$stockIO=NULL;
 	while ($row = db_fetch_array($query)){
 		$x++;
 		$id[$x]=$row['id'];
@@ -364,6 +408,7 @@ if ($nopdat!=1) {
 		$box12[$x]=$row['box12'];
 		$box13[$x]=$row['box13'];
 		$box14[$x]=$row['box14'];
+		if ($art[$x]=='VG' && $box1[$x] && $box2[$x]) $stockIO=1;
 	}
 }
 if (!$valg) $valg='moms';
@@ -445,53 +490,74 @@ elseif($valg=='lagre'){
 	$y=skriv_formtabel('LG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'2',"-",'2',"-",'2','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 }
 elseif($valg=='varer'){
+	if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) 
 	$t6="Hvis varegruppen er omfattet af omvendt betalingspligt afmærkes dette felt";
 	$q = db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box4='on'",__FILE__ . " linje " . __LINE__);
 	if (db_fetch_array($q)){
 		print "<tr><td></td><td colspan=10 align=\"center\"><b>Varegrupper</td></tr><tr><td colspan=13><hr></td></tr>\n";
-		print "<tr><td align=\"center\"></td><td></td><td></td><td align=\"center\">Lager-</td><td align=\"center\">Lager-</td><td align=\"center\">K&oslash;b</td><td align=\"center\">Salg</td><td align=\"center\">Lager-</td>
-			<td title=\"$t6\" align=\"center\">Omvendt-</td><td align=\"center\">Moms-</td><td align=\"center\">Lager-</td><td align=\"center\">Opera-</td>\n";
+		print "<tr>";
+		print "<td align=\"center\"></td><td></td><td></td><td align=\"center\">Lager-</td><td align=\"center\">Lager-</td>";
+		print "<td align=\"center\">K&oslash;b</td><td align=\"center\">Salg</td><td align=\"center\">Lager-</td>";
+		print "<td title=\"$t6\" align=\"center\">Omvendt-</td><td align=\"center\">Moms-</td><td align=\"center\">Lager-</td><td align=\"center\">Opera-</td>\n";
 		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>K&oslash;b</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>Salg</td>\n";
 		print "<td title='Kontonummer for en af Varek&oslash;b uden for EU, Ydelsesk&oslash;b uden for EU eller Vare- og ydelsesk&oslash;b uden for EU.'>K&oslash;b uden</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>Salg uden</td></tr>\n";
-		print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td><td align=\"center\">tilgang</td><td align=\"center\">tr&aelig;k</td><td align=\"center\">k&oslash;b</td><td align=\"center\">salg</td><td align=\"center\">regulering</td>
+		print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td>";
+		if ($stockIO) print "<td align=\"center\">tilgang</td><td align=\"center\">tr&aelig;k</td>";
+		print "<td align=\"center\">k&oslash;b</td><td align=\"center\">salg</td><td align=\"center\">regulering</td>
 			<td  title=\"$t6\" align=\"center\">betaling</td><td align=\"center\">fri</td><td align=\"center\">f&oslash;rt</td><td align=\"center\">tion</td>\n";
 		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>i EU</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>til EU</td>\n";
 		print "<td title='Kontonummer for en af Varek&oslash;b uden for EU, Ydelsesk&oslash;b uden for EU eller Vare- og ydelsesk&oslash;b uden for EU.'>for EU</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>for EU</td></tr>\n";
+		if ($stockIO) {
 		$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4',$box5,'4',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box10,'checkbox','-','2',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
 	} else {
-		print "<tr><td colspan=13 align=\"center\"><b>Varegrupper</td></tr><tr><td colspan=13><hr></td></tr>\n";
-		print "<tr><td  title=\"$t6\" align=\"center\"></td><td></td><td></td><td align=\"center\">Lager-</td><td align=\"center\">Lager-</td><td align=\"center\">Vare-</td><td align=\"center\">Vare-</td><td align=\"center\">Lager-</td>
-			<td align=\"center\">Omvendt-</td><td align=\"center\">Moms-</td><td align=\"center\">Lager-</td><td align=\"center\">Batch-</td><td align=\"center\">Opera-</td>\n";
+			$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,'-','','-','',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box10,'checkbox','-','2',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
+		}
+	} else {
+		print "<tr><td colspan=20 align=\"center\"><b>Varegrupper</td></tr><tr><td colspan=20><hr></td></tr>\n";
+		print "<tr><td  title=\"$t6\" align=\"center\"></td><td></td><td></td>";
+		if ($stockIO) {
+			print "<td align=\"center\">Lager-</td><td align=\"center\">Lager-</td>";
+		}	
+		print "<td align=\"center\">Vare-</td><td align=\"center\">Vare-</td>";
+#		print "<td align=\"center\">Lager-</td>";
+		print "<td align=\"center\">Omvendt-</td><td align=\"center\">Moms-</td><td align=\"center\">Lager-</td><td align=\"center\">Batch-</td><td align=\"center\">Opera-</td>\n";
 		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>K&oslash;b</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>Salg</td>\n";
 		print "<td title='Kontonummer for en af Varek&oslash; uden for EU, Ydelsesk&oslash; uden for EU eller Vare- og ydelsesk&oslash; uden for EU.'>K&oslash;b uden</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>Salg uden</td></tr>\n";
-		print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td><td align=\"center\">tilgang</td><td align=\"center\">tr&aelig;k</td><td align=\"center\">k&oslash;b</td><td align=\"center\">salg</td><td align=\"center\">regulering</td>
-			<td  title=\"$t6\" align=\"center\">betaling</td><td align=\"center\">fri</td><td align=\"center\">f&oslash;rt</td><td align=\"center\">kontrol</td><td align=\"center\">tion</td>\n";
+		print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td>";
+		if ($stockIO) print "<td align=\"center\">tilgang</td><td align=\"center\">tr&aelig;k</td>";
+		print "<td align=\"center\">k&oslash;b</td><td align=\"center\">salg</td>";
+#		print "<td align=\"center\">regulering</td>";
+		print "<td  title=\"$t6\" align=\"center\">betaling</td><td align=\"center\">fri</td><td align=\"center\">f&oslash;rt</td><td align=\"center\">kontrol</td><td align=\"center\">tion</td>\n";
 		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>i EU</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>til EU</td>\n";
 		print "<td title='Kontonummer for en af Varek&oslash; uden for EU, Ydelsesk&oslash; uden for EU eller Vare- og ydelsesk&oslash; uden for EU.'>for EU</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>for EU</td></tr>\n";
+		if ($stockIO) {
 		$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4',$box5,'4',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box9,'checkbox',$box10,'checkbox',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
+		} else {
+			$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,'-','','-','',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box9,'checkbox',$box10,'checkbox',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
+		}
 	}
-	print "<tr><td colspan=13 align=\"center\"><hr><b>Prisgrupper</td></tr><tr><td colspan=13><hr></td></tr>\n";
-	print "<tr><td colspan=13><table><tbody>";
+	print "<tr><td colspan=20 align=\"center\"><hr><b>Prisgrupper</td></tr><tr><td colspan=20><hr></td></tr>\n";
+	print "<tr><td colspan=20><table width='100%' align=\"center\"><tbody>";
 	print "<tr><td align=\"center\"></td><td></td><td></td><td align=\"center\">Kost-</td><td align=\"center\">Salgs-</td><td align=\"center\">Vejl-</td><td align=\"center\">B2B-</td></tr>\n";
 	print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td><td align=\"center\">pris</td><td align=\"center\">pris</td><td align=\"center\">pris</td><td align=\"center\">pris</td></tr>\n";
 	$y=skriv_formtabel('VPG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4','-','6','-','2','-','0','-','0','-','0','-','0','-','0','-','0','-','0','-','0');
 	print "</tbody></table></td></tr>";
-	print "<tr><td colspan=13 align=\"center\"><hr><b>Tilbudsgrupper</td></tr><tr><td colspan=13><hr></td></tr>\n";
-	print "<tr><td colspan=13><table><tbody>";
+	print "<tr><td colspan=20 align=\"center\"><hr><b>Tilbudsgrupper</td></tr><tr><td colspan=20><hr></td></tr>\n";
+	print "<tr><td colspan=20><table width='100%'><tbody>";
 	print "<tr><td align=\"center\"></td><td></td><td></td><td align=\"center\">Kost-</td><td align=\"center\">Salgs-</td><td align=\"center\">Start-</td><td align=\"center\">Slut-</td></tr>\n";
 	print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td><td align=\"center\">pris</td><td align=\"center\">pris</td><td align=\"center\">dato</td><td align=\"center\">dato</td></tr>\n";
 	$y=skriv_formtabel('VTG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'7',$box4,'7','-','6','-','2','-','0','-','0','-','0','-','0','-','0','-','0','-','0','-','0');
 	print "</tbody></table></td></tr>";
-	print "<tr><td colspan=13><table><tbody>";
-	print "<tr><td colspan=13 align=\"center\"><hr><b>Rabatgrupper</td></tr><tr><td colspan=13><hr></td></tr>\n";
+	print "<tr><td colspan=20><table width='100%'><tbody>";
+	print "<tr><td colspan=20 align=\"center\"><hr><b>Rabatgrupper</td></tr><tr><td colspan=20><hr></td></tr>\n";
 	print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td><td align=\"center\">Type</td><td align=\"center\">Stk. rabat</td><td align=\"center\">v. antal</td></tr>\n";
 	$y=skriv_formtabel('VRG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'2',$box2,'20',$box3,'20','-','2','-','4','-','2','-','4','-','2','-','7','-','7','-','0','-','0','-','0','-','0');
 	print "</tbody></table></td></tr>";
@@ -505,7 +571,7 @@ elseif($valg=='formularer'){
 print "<tr><td><br></td></tr>\n";
 print "</tbody></table></td>";
 print "<input type = \"hidden\" name=antal value=$y><input type = \"hidden\" name=valg value=$valg>";
-print "<tr><td colspan = 3 align = center><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"submit\"></td></tr>\n";
+print "<tr><td colspan = 3 align = center><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"submit\"></td></tr>\n";
 print "</form>";
 print "</div>";
 

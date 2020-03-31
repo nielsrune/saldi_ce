@@ -1,5 +1,5 @@
 <?php
-// -------------systemdata/rabatgrupper.php----ver 3.2.5-------2012.01.01-----------
+// -------------systemdata/rabatgrupper.php--------- ver 3.5.5 -- 2015.03.13 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -16,10 +16,13 @@
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2012 DANOSOFT ApS
-// ----------------------------------------------------------------------
+// Copyright (c) 2004-2015 DANOSOFT ApS
+// ----------------------------------------------------------------------------
+// 20150313 CA  Topmenudesign tilføjet og udvidet feltet %/kr/stk  søg 20150313
+// 2019.02.21 MSC - Rettet topmenu design og isset fejl
+// 2019.02.25 MSC - Rettet topmenu design
 
 @session_start();
 $s_id=session_id();
@@ -32,7 +35,26 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 
+if (!isset ($_POST['id'])) $_POST['id'] = null;
+if (!isset ($_POST['rabat'])) $_POST['rabat'] = null;
+if (!isset ($_POST['drg_antal'])) $_POST['drg_antal'] = null;
+if (!isset ($_POST['ny_rabat'])) $_POST['ny_rabat'] = null;
+
+if ($menu=='T') {  # 20150313 start
+        include_once '../includes/top_header.php';
+        include_once '../includes/top_menu.php';
+        print "<div id=\"header\">\n";
+        print "<div class=\"headerbtnLft\"></div>\n";
+        print "</div><!-- end of header -->";
+        print "<div id=\"leftmenuholder\">";
+        include_once 'left_menu.php';
+        print "</div><!-- end of leftmenuholder -->\n";
+		print "<div class=\"maincontentLargeHolder\">\n";
+} else {
 include("top.php");
+        print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
+}  # 20150313 stop
+
 
 $dgselfdef=if_isset($_GET['dgselfdef']);
 $vgselfdef=if_isset($_GET['vgselfdef']);
@@ -52,7 +74,7 @@ if(isset($_POST['gem'])) {
 	$rabatart=if_isset($_POST['rabatart']);
 	$ny_rabatart=if_isset($_POST['ny_rabatart']);
 	$ny_rabat=$_POST['ny_rabat'];
-	$vrg_antal=$_POST['vrg_antal'];
+	$vrg_antal=if_isset($_POST['vrg_antal']);
 	$vg_antal=$_POST['vg_antal'];
 	$vrgnavn=if_isset($_POST['vrgnavn']);
 
@@ -115,7 +137,7 @@ if(isset($_POST['gem'])) {
 $id=array();$dg=array();$dgnavn=array();$rabat=array();$vg=array();$vgnavn=array();
 
 $x=0;$y=0;
-$q=db_select("select * from grupper where art = 'DRG' order by ".nr_cast(kodenr)."",__FILE__ . " linje " . __LINE__);
+$q=db_select("select * from grupper where art = 'DRG' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
 	$x++;
 	$dg_id[$x][0]=$r['id'];
@@ -125,7 +147,7 @@ while ($r=db_fetch_array($q)) {
 $drg_antal=$x;
 if ($drg_antal || $dgselfdef) $drg_antal++;
 if (!$drg_antal) {
-	$q=db_select("select * from grupper where art = 'DG' order by ".nr_cast(kodenr)."",__FILE__ . " linje " . __LINE__);
+	$q=db_select("select * from grupper where art = 'DG' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$x++;
 		$dg[$x][0]=$r['kodenr'];
@@ -134,7 +156,7 @@ if (!$drg_antal) {
 	$dg_antal=$x;
 } else $dg_antal=$drg_antal;
 $x=0;$y=0;
-$q=db_select("select * from grupper where art = 'DVRG' order by ".nr_cast(kodenr)."",__FILE__ . " linje " . __LINE__);
+$q=db_select("select * from grupper where art = 'DVRG' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
 		$y++;
 		$vg_id[0][$y]=$r['id'];
@@ -144,7 +166,7 @@ while ($r=db_fetch_array($q)) {
 $vrg_antal=$y;
 #if ($vrg_antal || $vgselfdef) $vrg_antal++;
 if (!$vrg_antal) {
-	$q=db_select("select * from grupper where art = 'VG' order by ".nr_cast(kodenr)."",__FILE__ . " linje " . __LINE__);
+	$q=db_select("select * from grupper where art = 'VG' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$y++;
 		$vg[0][$y]=$r['kodenr'];
@@ -152,7 +174,7 @@ if (!$vrg_antal) {
 	}
 	$vg_antal=$y;
 } else $vg_antal=$vrg_antal;
-$colspan=$vg_antal+3;
+$colspan=$vg_antal+4;
 $x=0;
 $y=0;
 $rabatantal=0;
@@ -168,10 +190,10 @@ while ($r=db_fetch_array($q)) {
 print "<form name=rabat action=rabatgrupper.php method=post>";
 print "<input type=hidden name=dg_antal value=\"".$dg_antal."\">";
 print "<input type=hidden name=vg_antal value=\"".$vg_antal."\">";
-print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border:solid 1px $bgcolor5\"><tbody>"; #tabel 1.1.3 ->
+print "<table class='dataTable2' id='dataTable' cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border:solid 1px $bgcolor5\"><tbody>"; #tabel 1.1.3 ->
 if (!$drg_antal && !$rabatantal && !$dgselfdef) {
 #	echo "valgmulighed"
-	print "<tr bgcolor=\"$bgcolor5\"><td colspan=\"$colspan\" align=\"center\"><a href=\"rabatgrupper.php?dgselfdef=1\">Definer selv debitorrabatgrupper</a></td></tr>";
+	print "<tr bgcolor=\"$bgcolor5\"><td colspan=\"$colspan\" align=\"center\"><a class='button blue medium' href=\"rabatgrupper.php?dgselfdef=1\">Definer selv debitorrabatgrupper</a></td></tr>";
 	print "<tr bgcolor=\"$bgcolor5\"><td colspan=\"$colspan\" align=\"center\"><hr></td></tr>";
 }
 if (!$vrg_antal && !$rabatantal && !$vgselfdef) {
@@ -188,6 +210,7 @@ for ($y=1;$y<=$vg_antal;$y++) {
 }
 #$y++;
 if ($vrg_antal) print "<td title=\"Opret ny vare-rabatgruppe\"><a href=\"rabatgrupper.php?vgselfdef=$y\">Ny</a></td>";
+$linjebg=$bgcolor;
 print "</tr>";
 print "<tr><td colspan=\"$colspan\"><hr></td></tr>";
 #if (!$vgselfdef) {
@@ -195,14 +218,17 @@ print "<tr><td colspan=\"$colspan\"><hr></td></tr>";
 		($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 		print "<tr bgcolor=\"$linjebg\">";
 		if ($drg_antal) {
+		if (!isset($dg[$x][0])) $dg[$x][0]=NULL;
+		if (!isset($dgnavn[$x][0])) $dgnavn[$x][0]=NULL;
 			print "<input type=\"hidden\" name=\"drg_nr[$x]\" value = \"".$dg[$x][0]."\">";
 			print "<td colspan=\"2\"><input class=\"inputbox\" type=\"text\" style=\"width:250px\" name=\"drgnavn[$x]\" value = \"".$dgnavn[$x][0]."\"></td>";
 		} else {
 			print "<td align=\"right\">".$dg[$x][0]."</td>";
 			print "<td>&nbsp;".$dgnavn[$x][0]."</td>";
 		}
+		if (!isset($rabatart[$x])) $rabatart[$x]='percent';
 		print "<input type=\"hidden\" name=\"rabatart[$x]\" value=\"".$rabatart[$x]."\">";
-		print "<td><select class=\"inputbox\" style=\"width:35px\" name=\"ny_rabatart[$x]\">";
+		print "<td><select class=\"inputbox\" style=\"width:60px\" name=\"ny_rabatart[$x]\">"; # 20150313
 		if ($rabatart[$x]=="amount") {
 			print "<option value='amount'>kr/stk</option>";
 			print "<option value='%'>%</option>";
@@ -211,23 +237,10 @@ print "<tr><td colspan=\"$colspan\"><hr></td></tr>";
 			print "<option value='amount'>kr/stk</option>";
 		}
 		print "</select</td>";
-/*
-		if ($vrg_antal) {
-			for ($y=1;$y<=$vrg_antal;$y++) {
-				if ($dg[$x][0]) {
-					if ($id[$x][$y]) $rabat[$x][$y]=str_replace(".",",",$rabat[$x][$y]);
-					else $rabat[$x][$y]=NULL;	
-					print "<input type=\"hidden\" name=\"id[$x][$y]\" value=\"".$id[$x][$y]."\">";
-					print "<input type=\"hidden\" name=\"rabat[$x][$y]\" value=\"".$rabat[$x][$y]."\">";
-					print "<input type=\"hidden\" name=\"drg_antal\" value=\"".$drg_antal."\">";
-					print "<td align=\"center\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:35px\" name=\"ny_rabat[$x][$y]\" value=\"".$rabat[$x][$y]."\"</td>";
-				} else print "<td colspan=\"vg_antal\"><br></td>";
-			}
-		} else {
-*/
 			for ($y=1;$y<=$vg_antal;$y++) {
-				if ($dg[$x][0]) {
-					if ($id[$x][$y]) $rabat[$x][$y]=str_replace(".",",",$rabat[$x][$y]);
+				if (isset($dg[$x][0]) && $dg[$x][0]) {
+					if (!isset($id[$x][$y])) $id[$x][$y]=NULL;
+					if (isset($rabat[$x][$y]) && $id[$x][$y]) $rabat[$x][$y]=str_replace(".",",",$rabat[$x][$y]);
 					else $rabat[$x][$y]=NULL;	
 					print "<input type=\"hidden\" name=\"id[$x][$y]\" value=\"".$id[$x][$y]."\">";
 					print "<input type=\"hidden\" name=\"rabat[$x][$y]\" value=\"".$rabat[$x][$y]."\">";
@@ -239,7 +252,12 @@ print "<tr><td colspan=\"$colspan\"><hr></td></tr>";
 		print "<td>&nbsp;</td></tr>\n";
 	}
 #}
-print "<tr><td colspan=\"$colspan\" align = \"center\"><input STYLE=\"width: 100%;height: 1.5em;margin-bottom:1px;padding: 1px 1px;border: 1px solid #DDDDDD;background:url('../img/knap_bg.gif');\" type=submit accesskey=\"g\" value=\"Gem\" name=\"gem\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+if ($menu=='T'){
+	$style = "class='button green medium'";
+} else {
+	$style = "STYLE=\"width: 100%;height: 1.5em;margin-bottom:1px;padding: 1px 1px;border: 1px solid #DDDDDD;background:url('../img/knap_bg.gif');\"";
+}
+print "<tr><td colspan=\"$colspan\" align = \"center\"><input $style type=submit accesskey=\"g\" value=\"Gem\" name=\"gem\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 print "</form>";
 
 print "</tbody></table></td></tr>"; # <- tabel 1.1.3

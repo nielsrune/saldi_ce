@@ -1,10 +1,10 @@
 <?php
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------systemdata/importer_adresser.php---lap 3.6.6---2017-01-04--------
+// ------systemdata/importer_adresser.php---lap 3.8.4---2019-10-21--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,13 +23,14 @@
 // En dansk oversaetelse af licensen kan laeses her:
 // http://www.fundanemt.com/gpl_da.html
 //
-// Copyright (c) 2003-2017 DANOSOFT ApS
+// Copyright (c) 2003-2019 DANOSOFT ApS
 // -----------------------------------------------------------------------
 
 // 2013.02.10 Break ændret til break 1
 // 2014.07.04 Ansatte og primær kontakt opdateres nu også ved opdatering 
 // 2014.08.11 se $find_kontakt... 
 // 2017.01.04 rettet else til elseif ($feltnavn[$y] != 'kontoansvarlig') 20170104
+// 2019.10.21 PHR Added '&& strpos($felt[$y]," "))' ad field was emptied if not  #20191021
 
 @session_start();
 $s_id=session_id();
@@ -106,9 +107,9 @@ function upload($bilag){
 }
 
 function vis_data($filnavn, $splitter, $feltnavn, $feltantal){
+global $art,$db;
 global $charset;
 global $sprog_id;
-global $art;
 global $opdat;
 
 $fp=fopen("$filnavn","r");
@@ -263,9 +264,9 @@ print "</td></tr>";
 }
 
 function overfoer_data($filnavn, $splitter, $feltnavn, $feltantal){
+global $art,$db;
 global $charset;
 global $kontotype;
-global $art;
 global $opdat;
 
 $x=0;
@@ -274,7 +275,7 @@ if ($fp) {
 	while (!feof($fp)) {
 		$x++;
 		$linje=trim(fgets($fp));
-		list($postnr[$x],$bynavn[$x])=explode(chr(9),$linje);
+		list($post_nr[$x],$by_navn[$x])=explode(chr(9),$linje);
 	}
 }
 fclose($fp);
@@ -384,7 +385,7 @@ if ($fp) {
 					$skriv_linje=2;
 				} elseif ($feltnavn[$y]=='kontonr') $kontonr=$felt[$y];
 				if ($feltnavn[$y]=='pbs_nr' && $felt[$y]) $felt[$pbs]='on';
-				if ($feltnavn[$y]=="postnr") list($felt[$y],$bynavn[$y]) = explode(" ",$felt[$y],2);
+				if ($feltnavn[$y]=="postnr" && strpos($felt[$y]," ")) list($felt[$y],$bynavn[$y]) = explode(" ",$felt[$y],2); #20191021
 				if ($feltnavn[$y]=='kontoansvarlig'&&$felt[$y]&&$kontonr){
 					$r=db_fetch_array(db_select("select id from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 					#$konto_id=$r['id']*1;
@@ -471,15 +472,6 @@ if ($fp) {
 				$addr_b=$addr_b.",'1'";
 				$upd=$upd.",gruppe='1'";
 			}
-#			if (!strpos($addr_a,'art')) {
-#				$addr_a=$addr_a.",art";
-#				$addr_b=$addr_b.",'$art'";
-#				$upd=$upd.",art='$art'";
-#			} else {
-#				for ($y=0; $y<=$feltantal; $y++) {
-#				if ($feltnavn[$y]=='art') $art=$felt[$y];
-#				}
-#			}
 			if ($r=db_fetch_array(db_select("select id from adresser where kontonr='$kontonr' and art='$art'",__FILE__ . " linje " . __LINE__))) {
 				if ($opdat) {
 					$konto_id=$r['id'];

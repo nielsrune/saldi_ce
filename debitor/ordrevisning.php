@@ -4,28 +4,31 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------debitor/ordrevisning.php-----lap 3.7.2-------2018.11.28-----------
+// --------debitor/ordrevisning.php-----lap 3.7.9-------2019.07.03-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
 // i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
+// Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2018 DANOSOFT ApS
+// Copyright (c) 2003-2019 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2018.11.28	PHR Tilføjet kundegruppe som søgefelt
+// 2098.05.02	PHR Corrected error in first time '$vis_feltantal' 20190502
+// 2019.07.03 PHR - Users can now choose whether they want dropdown. Search $dropDown
+
 	
 @session_start();
 $s_id=session_id();
@@ -56,19 +59,23 @@ if (isset($_POST) && $_POST) {
 	$feltbredde=if_isset($_POST['feltbredde']);
 	$justering=if_isset($_POST['justering']);
 	$feltnavn=if_isset($_POST['feltnavn']);
-
+	$dropDown=if_isset($_POST['dropDown']);
+	for ($x=0;$x<=$vis_feltantal;$x++) {
+		if (!isset($dropDown[$x])) $dropDown[$x]=NULL;
+	}
 	$vis_felt=sorter($pos,$vis_felt,$vis_feltantal);
 	$feltbredde=sorter($pos,$feltbredde,$vis_feltantal);
 	$justering=sorter($pos,$justering,$vis_feltantal);
 	$feltnavn=sorter($pos,$feltnavn,$vis_feltantal);
-	
-#	if (!isset($vis_felt[0])) $vis_felt[0]="";
+	$dropDown=sorter($pos,$dropDown,$vis_feltantal);
 	$box3='ordrenr';
 	$box5=$justering[0];
 	$box6=db_escape_string($feltnavn[0]);
 	$box7=$vis_linjeantal*1;
+	$box10=$dropDown[0];
 	if (!$vis_linjeantal) $vis_linjeantal=50; 
 	for ($x=1;$x<=$vis_feltantal;$x++) {
+		if (!isset($pos[$x])) $pos[$x]=NULL; 
 		if ($pos[$x]!='-') {
 			if (!isset($vis_felt[$x])) $vis_felt[$x]="";
 			$box3=$box3.",".$vis_felt[$x];
@@ -76,12 +83,13 @@ if (isset($_POST) && $_POST) {
 			$box4=$box4.",".$feltbredde[$x];
 			$box5=$box5.",".$justering[$x];
 			$box6=$box6.",".db_escape_string($feltnavn[$x]);
+			$box10=$box10.",".$dropDown[$x];
 	}
 }
 
 # echo "update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$vis_linjeantal' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'<br>";
 #exit;
-	db_modify("update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$vis_linjeantal' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+	db_modify("update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$vis_linjeantal',box10='$box10' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 }
 
 print "<div align=\"center\"><table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
@@ -120,17 +128,20 @@ $i++;
 $felter[$i] = 'kundegruppe';
 sort($felter);
 #$feltantal=count($felter);
-print "<tr><td colspan=\"6\">V&aelig;lg hvilke felter der skal v&aelig;re synlige p&aring; oversigten</td></tr>";
-print "<tr><td colspan=\"6\">Ordrenr kan ikke frav&aelig;lges</td></tr>";
-print "<tr><td colspan=\"6\"><hr></td></tr>";
+print "<tr><td colspan='7'>V&aelig;lg hvilke felter der skal v&aelig;re synlige p&aring; oversigten</td></tr>";
+print "<tr><td colspan='7'>Ordrenr kan ikke frav&aelig;lges</td></tr>";
+print "<tr><td colspan='7'><hr></td></tr>";
 
-$r = db_fetch_array(db_select("select box3,box4,box5,box6,box7 from grupper where art = 'OLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
+#box1, 2, 8 & 9 er reserveret se ordrevisning.php
+$r = db_fetch_array(db_select("select box3,box4,box5,box6,box7,box10 from grupper where art = 'OLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
 $vis_felt=explode(",",$r['box3']);
 $feltbredde=explode(",",$r['box4']);
 $justering=explode(",",$r['box5']);
 $feltnavn=explode(",",$r['box6']);
 $vis_linjeantal=$r['box7'];
-$vis_feltantal=count($feltbredde)-1;
+$dropDown=explode(",",$r['box10']);
+$vis_feltantal=count($feltbredde);
+if (!isset($feltnavn[$vis_feltantal])) $vis_feltantal--; #20190502 ('-1' removed from line above)
 if (count($feltbredde)<=1) {
 	if ($valg=="tilbud") {
 		$vis_felt="ordrenr,ordredate,kontonr,firmanavn,ref,sum";
@@ -154,7 +165,7 @@ if (count($feltbredde)<=1) {
 print "<tr><td colspan=\"3\">Antal felter p&aring; fakturaoversigten</td><td><input class=\"inputbox\" type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
 print "<tr><td colspan=\"3\">Antal linjer p&aring; fakturaoversigten</td><td><input class=\"inputbox\" type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td></tr>";
 print "<tr><td colspan=\"6\"><hr></td></tr>";	
-print "<tr><td ><b>Pos</b></td><td colspan=\"2\"><b>Felt</b></td><td><b>Valgfri overskrift</b></td><td align=\"right\"><b>Feltbredde</b></td><td><b>Justering</b></td></tr>";
+print "<tr><td ><b>Pos</b></td><td colspan=\"2\"><b>Felt</b></td><td><b>Valgfri overskrift</b></td><td align=\"right\"><b>Feltbredde</b></td><td><b>Justering</b></td><td><b>DropDown</b></td></tr>";
 if (!$feltnavn[0]) $feltnavn[0]="Ordrenr";
 if (!$feltbredde[0]) $feltbredde[0]=50;
 if ($feltbredde[0]<=10) $feltbredde[0]*=10;
@@ -167,12 +178,13 @@ if ($justering[0]) print "<option>$justering[0]</option>";
 if ($justering[0] != "L") print "<option value=\"left\" style=\"text-align:left\">left</option>"; 
 if ($justering[0] != "C") print "<option value=\"center\" style=\"text-align:center\">center</option>"; 
 if ($justering[0] != "R") print "<option value=\"right\" style=\"text-align:right\">right</option>"; 
-print "</SELECT></td></tr>";
+print "</SELECT>";
+print "<input type='hidden' name='dropDown[0]' value=''></td></tr>";
 #cho count($feltbredde)."<br>";
 for ($x=1;$x<=$vis_feltantal;$x++) {
 if (!$feltnavn[$x]) $feltnavn[$x]=$vis_felt[$x];
+	if (!isset($feltbredde[$x])) $feltbredde[$x]=100;
 	if ($feltbredde[$x]<=10) $feltbredde[$x]*=10;
-	if (!$feltbredde[$x]) $feltbredde[$x]=100;
 	print "<tr><td><input class=\"inputbox\" type=text name=pos[$x] style=\"text-align:right;width:40px;\" value=$x></td>";
 	print "<td colspan=2><SELECT class=\"inputbox\" NAME=vis_felt[$x]>";
 	print "<option>$vis_felt[$x]</option>";
@@ -187,17 +199,19 @@ if (!$feltnavn[$x]) $feltnavn[$x]=$vis_felt[$x];
 	if ($justering[$x] != "L") print "<option value=\"left\" style=\"text-align:left\">left</option>"; 
 	if ($justering[$x] != "C") print "<option value=\"center\" style=\"text-align:center\">center</option>"; 
 	if ($justering[$x] != "R") print "<option value=\"right\" style=\"text-align:right\">right</option>"; 
-	print "</SELECT></td></tr>";
+	($dropDown[$x])?$dropDown[$x]='checked':$dropDown[$x]=''; 
+	print "</SELECT></td>";
+	print "<td align='center'><input class='inputbox' type='checkbox' name='dropDown[$x]' $dropDown[$x]></td></tr>";
 }
-print "<tr><td colspan=\"6\"><hr></td></tr>\n";
-print "<tr><td colspan=\"6\" align = center><input type=submit accesskey=\"a\" value=\"OK\" name=\"submit\"></td></tr>\n";
+print "<tr><td colspan='7'><hr></td></tr>\n";
+print "<tr><td colspan='7' align = 'center'><input type='submit' accesskey='a' value='OK' name='submit'></td></tr>\n";
 print "</form>";
 
 function sorter($pos,$var,$vis_feltantal) {
 	$swapped = true;
   while ($swapped){
 		$swapped = false;
-		for ($i=0;$i<$vis_feltantal;$i++){
+		for ($i=0;$i<=$vis_feltantal;$i++){
 		if (!isset($pos[$i]))	$pos[$i]=0;
 		$pos[$i]=str_replace(",",".",$pos[$i]);
 			if ($i && ($pos[$i-1] > $pos[$i])) {

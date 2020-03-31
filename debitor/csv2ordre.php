@@ -1,8 +1,8 @@
 <?php
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
 // -------------debitor/csv2ordre.php----------lap 3.5.6-----2016-05-02----
 // LICENS
@@ -10,22 +10,23 @@
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
 // som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2019 saldi.dk aps
 // -----------------------------------------------------------------------
 // 20160502 PHR Sat returnconfirm på [Hent] for at hindre dobbeltimport ved dobbeltklik.
+// 20190812 PHR	More information from address is importrtes.
 
 @session_start();
 $s_id=session_id();
@@ -50,13 +51,13 @@ print "</tbody></table>";
 print "</td></tr>";
 
 if($_POST) {
-	$submit=$_POST['submit'];
-	$gruppe=$_POST['gruppe'];
+	$submit=if_isset($_POST['submit']);
+	$gruppe=if_isset($_POST['gruppe']);
 
 	if (basename($_FILES['uploadedfile']['name'])) {
 		$filnavn="../temp/".$db."_".str_replace(" ","_",$brugernavn).".csv";
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $filnavn)) {
-			overfoer_data($filnavn, $splitter, $feltnavn, $feltantal);
+			overfoer_data($filnavn);
 		}
 	}
 } else {
@@ -102,10 +103,12 @@ function overfoer_data($filnavn){
 	global $charset;
 	global $gruppe;
 	
+	
 	$betalingsbet='Netto';
 	$betalingsdage=8;
 
 	$x=0;
+	$oid=array();
 	$q=db_select("select kontonr from adresser where art = 'D'",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array ($q)){
 		$kontonumre[$x]=$r['kontonr'];
@@ -124,7 +127,6 @@ function overfoer_data($filnavn){
 			while (!feof($fp)) {
 				$skriv_linje=0;
 				if ($linje=fgets($fp)) {
-				$x++;
 				$skriv_linje=1;
 				if ($charset=='UTF-8') $linje=utf8_encode($linje);
 				if ($x) $pre_kontonr=$kontonr;
@@ -137,9 +139,41 @@ function overfoer_data($filnavn){
 						$kontonumre[count($kontonumre)]=$kontonr;
 					}
 					if ($pre_kontonr!=$kontonr) {
-						$qtxt="select id from adresser where art='D' and kontonr = '$kontonr'";
+						$qtxt="select * from adresser where art='D' and kontonr = '$kontonr'";
 						$r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__));
 						$konto_id=$r['id'];
+						if (!$firmanavn) $firmanavn=$r['firmanavn'];
+						if (!$addr1) $addr1=$r['addr1'];
+						if (!$addr2) $addr2=$r['addr2'];
+						if (!$postnr) $postnr=trim($r['postnr']);
+						if (!$bynavn) $bynavn = $r['bynavn'];
+						if ($postnr && !$bynavn) $bynavn=bynavn($postnr);
+						$land=$r['land'];
+						$betalingsdage=$r['betalingsdage'];
+						$betalingsbet=$r['betalingsbet'];
+						$cvrnr=$r['cvrnr'];
+						$ean=$r['ean'];
+						$institution=$r['institution'];
+						if (!$email) $email=$r['email'];
+						$mail_fakt=$r['mailfakt'];
+						($mail_fakt)?$udskriv_til='email':$udskriv_til='PDF';
+						if ($r['pbs_nr']>0) {
+							$pbs_nr=$r['pbs_nr'];
+							$pbs='bs';
+							$udskriv_til='PBS';
+						}
+						$kontakt=$r['kontakt'];
+						$gruppe=$r['gruppe'];
+						$kontoansvarlig=$r['kontoansvarlig'];
+
+						$lev_firmanavn=$r['lev_firmanavn'];
+						$lev_addr1=$r['lev_addr1'];
+						$lev_addr2=$r['lev_addr2'];
+						$lev_postnr=trim($r['lev_postnr']);
+						$lev_bynavn = $r['lev_bynavn'];
+						if ($lev_postnr && !$lev_bynavn) $lev_bynavn=bynavn($lev_postnr);
+						$lev_land=$r['lev_land'];
+						$lev_kontakt=$r['lev_kontakt'];
 					
 						$qtxt="select max(ordrenr) as ordrenr from ordrer where art='DO'";
 						$r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__));
@@ -158,9 +192,18 @@ function overfoer_data($filnavn){
 						$r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__));
 						$momssats=$r['box2']*1;
 						
-						db_modify("insert into ordrer(ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,email,art,projekt,momssats,betalingsbet,betalingsdage,status,ordredate) values ('$ordrenr','$konto_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($addr1)."','".db_escape_string($addr2)."','".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($email)."','DO','$projektnr','$momssats','$betalingsbet','$betalingsdage','0','".usdate($dato)."')",__FILE__ . " linje " . __LINE__);
+						$qtxt = "insert into ordrer ";
+						$qtxt.= "(ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,email,mail_fakt,udskriv_til,art,projekt,momssats,";
+						$qtxt.= "betalingsbet,betalingsdage,status,ordredate,levdate,ean)";
+						$qtxt.= " values "; 
+						$qtxt.= "('$ordrenr','$konto_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($addr1)."',";
+						$qtxt.= "'".db_escape_string($addr2)."','".db_escape_string($postnr)."','".db_escape_string($bynavn)."',";
+						$qtxt.= "'".db_escape_string($email)."','$mail_fakt','$udskriv_til','DO','$projektnr','$momssats','$betalingsbet','$betalingsdage',";
+						$qtxt.= "'1','".usdate($dato)."','".usdate($dato)."','".db_escape_string($ean)."')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 						$r=db_fetch_array($q=db_select("select max(id) as id from ordrer where kontonr='$kontonr'",__FILE__ . " linje " . __LINE__));
 						$ordre_id=$r['id'];
+						if (!in_array($ordre_id,$oid)) $oid[count($oid)]=$ordre_id;
 						$posnr=0;
 						$imp_antal++;
 					}
@@ -169,21 +212,27 @@ function overfoer_data($filnavn){
 					else $qtxt="select id,varenr,salgspris,beskrivelse from varer where beskrivelse = '$varenavn'";
 					$r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__));
 					if ($r['id']) {
-						opret_ordrelinje($ordre_id,$r['id'],$r['varenr'],usdecimal($antal),$varenavn,usdecimal($pris),0,100,'DO','',$posnr,'0','on','','','0');
+						opret_ordrelinje($ordre_id,$r['id'],$r['varenr'],usdecimal($antal),$varenavn,usdecimal($pris),0,100,'DO','',$posnr,'0','on','','','0','','','','','');
 						} else {
 							if (!$varenavn) $varenavn="ukendt, $antal stk á $pris";
 							db_modify("insert into ordrelinjer(ordre_id,posnr,beskrivelse) values ('$ordre_id','$posnr','".db_escape_string($varenavn)."')",__FILE__ . " linje " . __LINE__);
 						}
 					}
+					$x++;
 				}
 			}
 		}
 		fclose($fp);
+		for ($x=0;$x<count($oid);$x++) {
+			$qtxt="select sum(antal*(pris-(pris*rabat/100))) as ordresum from ordrelinjer where ordre_id='$oid[$x]'";
+			$r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__));
+			if ($r['ordresum']) db_modify ("update ordrer set sum='$r[ordresum]' where id=$oid[$x]",__FILE__ . " linje " . __LINE__);
+		}
 		transaktion('commit');
 	}	
 	print "</tbody></table>";
 	print "</td></tr>";
-	print "<BODY onLoad=\"javascript:alert('$imp_antal adresser importeret')\">";
+	print "<BODY onLoad=\"javascript:alert('$imp_antal ordrer importeret')\">";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/ordreliste.php?valg=tilbud\">";
 	exit;
 } # endfunc overfoer_data

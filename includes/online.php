@@ -4,17 +4,17 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------------------includes/online.php----lap 3.7.0---2017-10-09---
+// // ---------------------includes/online.php----lap 3.8.9---2020-03-08---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2017 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2012.09.05 $ansat_navn bliver nu sat her. Søg 20120905
 // 2013.01.20 $sag_rettigheder bliver nu sat her. Søg 20130120
@@ -34,13 +34,22 @@
 // 2015.01.04 Ændret alert til tekstboks. Søg tekstboks
 // 2017.02.13 Initialiserer $meta_returside. 
 // 2017.10.09 Table / body styles flyttet fra css/pos.css så font size kan sættes som variabel. søg 21071009
+// 2019.01.10 timezone og andre systemvariabler hentes nu fra tabellen settings. 
+// 2019.04.12 customAlertText hentes nu fra tabellen settings. 
+// 2019.04.12 PHR - "1)!='1')" changed to "1)<'1')" to support read only function. 20190529
+// 2019.06.05 PHR Check for version from 'regnskab' before trying to fetch from 'settings' 20190605.
+// 2019.07.04 RG (Rune Grysbæk) Mysqli implementation 
+// 2019.08.21 PHR Check if account is closed ($lukket). 
+// 2020.02.25 PHR Some corrections regarding MySQLi;
 
-if (isset($_COOKIE['timezone'])) {
+
+if (isset($_COOKIE['timezone'])) { #20190110
 	$timezone=$_COOKIE['timezone'];
 	date_default_timezone_set($timezone);
 } else {
 	date_default_timezone_set('Europe/Copenhagen');
-	if ($r['version'] >= '3.7.2') {
+	$r=db_fetch_array(db_select("select lukket,version from regnskab where id='1'",__FILE__ . " linje " . __LINE__)); # 20190605
+	if (isset($dbver) && $dbver >= '3.7.2') {
 		$r=db_fetch_array(db_select("select id, var_value from settings where var_name='timezone'",__FILE__ . " linje " . __LINE__));
 		if ($r['var_value']) {
 		$timezone=$r['var_value'];
@@ -54,6 +63,20 @@ if (isset($_COOKIE['timezone'])) {
 			}
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
+		$r=db_fetch_array(db_select("select var_value from settings where var_name='alertText'",__FILE__ . " linje " . __LINE__));
+		($r['var_value'])?$customAlertText=$r['var_value']:$customAlertText=NULL;
+		$r=db_fetch_array(db_select("select var_value from settings where var_name='ps2pdf'",__FILE__ . " linje " . __LINE__));
+		($r['var_value'])?$ps2pdf=$r['var_value']:$ps2pdf=NULL;
+		$r=db_fetch_array(db_select("select var_value from settings where var_name='pdftk'",__FILE__ . " linje " . __LINE__));
+		($r['var_value'])?$pdftk=$r['var_value']:$pdftk=NULL;
+		$r=db_fetch_array(db_select("select var_value from settings where var_name='ftp'",__FILE__ . " linje " . __LINE__));
+		($r['var_value'])?$ftp=$r['var_value']:$ftp=NULL;
+		$r=db_fetch_array(db_select("select var_value from settings where var_name='dbdump'",__FILE__ . " linje " . __LINE__));
+		($r['var_value'])?$dbdump=$r['var_value']:$dbdump=NULL;
+		$r=db_fetch_array(db_select("select var_value from settings where var_name='tar'",__FILE__ . " linje " . __LINE__));
+		($r['var_value'])?$tar=$r['var_value']:$tar=NULL;
+		$r=db_fetch_array(db_select("select var_value from settings where var_name='zip'",__FILE__ . " linje " . __LINE__));
+		($r['var_value'])?$zip=$r['var_value']:$zip=NULL;
 	}
 }
 ini_set('display_errors',0);
@@ -74,8 +97,10 @@ $unixtime=date("U");
 		$regnaar = trim($row['regnskabsaar']);
 		$brugernavn = db_escape_string($row['brugernavn']);
 		$rettigheder=$row['rettigheder'];
+		$superUserPermission = $rettigheder;
 		$revisor=$row['revisor'];
-		if ($row['logtime']) db_modify("update online set logtime = '$unixtime' where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
+		$logtime=$row['logtime'];
+		if ($logtime) db_modify("update online set logtime = '$unixtime' where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
 	} elseif ($title!='login' && $title!='opdat' && $title!='logud' && $title!='Aaben regnskab') {
 		if ($webservice) return ('Session expired');
 		else {
@@ -114,23 +139,28 @@ if ($modulnr && $modulnr<100 && $db==$sqdb) { #Lukker vinduet hvis revisorbruger
 	print "<meta http-equiv=\"refresh\" content=\"4;URL=../includes/luk.php\">";
 	exit;
 }
-#echo "select * from regnskab where db = '$db'<br>";
 if ($row = db_fetch_array(db_select("select * from regnskab where db = '$db'",__FILE__ . " linje " . __LINE__))){
 	$db_id = $row['id'];
 	$db_skriv_id = $db_id;
 	$db_ver = $row['version'];  # 20150104
 	$regnskab = $row['regnskab'];
 	$max_posteringer = $row['posteringer'];
+	$lukket=$row['lukket'];
 }
+
 if ($db && $sqdb && $db!=$sqdb) {
 	if (!isset($nextver)) { # 20150104
 			if ($version>$db_ver) { 
 			if ($db_type=='mysql') {
-				if (!mysql_select_db("$db")) die( "Unable to connect to MySQL");
+				if (!mysql_select_db($db)) die( "Unable to connect to MySQL");
+			}	elseif ($db_type=='mysqli') { #RG_mysqli
+				$connection = db_connect ($sqhost, $squser, $sqpass, $db);
+				if (!mysqli_select_db($connection, $db)) die( "Unable to connect to MySQLi");
 			} else {
-				$connection = db_connect ("$sqhost", "$squser", "$sqpass", "$db", __FILE__ . " linje " . __LINE__);
+				$connection = db_connect ($sqhost, $squser, $sqpass, $db, __FILE__ . " linje " . __LINE__);
 				if (!$connection) die( "Unable to connect to PostgreSQL");
 			}
+			if (tbl_exists('grupper')) {
 			$r = db_fetch_array(db_select("select box1 from grupper where art='VE'",__FILE__ . " linje " . __LINE__));
 			include("../includes/connect.php");
 			if ($r['box1']>$db_ver) {
@@ -138,19 +168,29 @@ if ($db && $sqdb && $db!=$sqdb) {
 				db_modify("update regnskab set version = '$db_ver' where id = '$db_id'", __FILE__ . " linje " . __LINE__);
 			}
 			if ($version>$db_ver && $title!='Aaben regnskab') {
-				include("../includes/std_func.php");
-				$txt="Saldi er blevet opdateret, log af og p&aring; igen";
-				print tekstboks($txt);
+					include("../includes/tjek4opdat.php");
+					tjek4opdat($db_ver,$version);
+				}
+			} else {
+				echo "stopper her";
+				exit;
 			}
 		}
 	}
 	if ($db_type=='mysql') {
-		if (!mysql_select_db("$db")) die( "Unable to connect to MySQL");
+		if (!mysql_select_db($db)) die( "Unable to connect to MySQL");
+	} elseif ($db_type=='mysqli') {
+		if (!mysqli_select_db($connection,$db)) die( "Unable to connect to MySQL");
 	} else {
-	$connection = db_connect ("$sqhost", "$squser", "$sqpass", "$db", __FILE__ . " linje " . __LINE__);
+	$connection = db_connect ($sqhost, $squser, $sqpass, $db, __FILE__ . " linje " . __LINE__);
 		if (!$connection) die( "Unable to connect to PostgreSQL");
 	}	
 	if (!$revisor) {
+		if ($lukket) {
+			echo "regnskabet er lukket";
+			print "<meta http-equiv=\"refresh\" content=\"4;URL=../index/index.php\">";
+			exit;
+		}
 		$r=db_fetch_array(db_select("select * from brugere where brugernavn= '$brugernavn'",__FILE__ . " linje " . __LINE__));
 		$bruger_id=$r['id'];
 		$rettigheder = trim($r['rettigheder']);
@@ -171,8 +211,8 @@ if ($db && $sqdb && $db!=$sqdb) {
 	}	else $bruger_id=-1;
 	if (!$sprog_id)$sprog_id=1;
 	$jsvars="statusbar=0,menubar=0,titlebar=0,toolbar=0,scrollbars=1,resizable=1,dependent=1";
-
-	if (!$r = db_fetch_array(db_select("select box1,box2,box3,box4,box5 from grupper where art = 'USET' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__))) {
+	$qtxt="select box1,box2,box3,box4,box5 from grupper where art = 'USET' and kodenr = '$bruger_id'";
+	if (!$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 #		$r = db_fetch_array(db_select("select max(id) as id from grupper",__FILE__ . " linje " . __LINE__)); 20140117 
 #		$g_id=$r['id']+1;
 		db_modify("insert into grupper(beskrivelse,art,kodenr,box1,box2,box3,box4,box5) values ('Usersettings','USET','$bruger_id','$jsvars','','on','#eeeef0','')",__FILE__ . " linje " . __LINE__);
@@ -211,8 +251,7 @@ if (!isset($bgnuance1)) $bgnuance1="+01+01-55"; # Aendring af nuancen til gult v
 		$bg='nix';
 		$css=NULL;
 	}
-#	echo "$rettigheder -> $modulnr -> ".substr($rettigheder,$modulnr,1)."<br>";
-	if (($rettigheder)&&($modulnr)&&(substr($rettigheder,$modulnr,1)!='1')) {
+	if (($rettigheder)&&($modulnr)&&(substr($rettigheder,$modulnr,1)<'1')) { #20190529
 		include("../includes/std_func.php");
 		$txt="Du har ikke nogen rettigheder her - din aktivitet er blevet logget";
 		print tekstboks($txt);

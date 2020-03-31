@@ -20,6 +20,8 @@
 //
 // Copyright (c) 2004-2011 DANOSOFT ApS
 // ----------------------------------------------------------------------
+// 2019.02.13 MSC - Rettet isset fejl og db fejl + rettet topmenu design til
+// 2019.02.15 MSC - Rettet topmenu design
 
 @session_start();
 $s_id=session_id();
@@ -47,11 +49,29 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 
+if (!isset ($_GET['konto_id'])) $_GET['konto_id'] = NULL;
+if (!isset ($historik_id)) $historik_id = NULL;
+if (!isset ($_GET['handling'])) $_GET['handling'] = NULL;
+if (!isset ($_GET['ordre_id'])) $_GET['ordre_id'] = NULL;
+if (!isset ($_GET['fokus'])) $_GET['fokus'] = NULL;
+if (!isset ($_POST['submit'])) $_POST['submit'] = NULL;
+if (!isset ($kontaktet)) $kontaktet = NULL;
+if (!isset ($oprettet)) $oprettet = NULL;
+if (!isset ($kontaktes)) $kontaktes = 0;
+if (!isset ($ansat_id)) $ansat_id = 0;
+if (!isset ($ansat)) $ansat = 0;
+if (!isset ($kontakt)) $kontakt = 0;
+if (!isset ($_GET['id'])) $_GET['id'] = 0;
+if (!isset ($_POST['historik_id'])) $_POST['historik_id'] = NULL;
+if (!isset ($_POST['oprettet'])) $_POST['oprettet'] = NULL;
+if (!isset ($r1['navn'])) $r1['navn'] = NULL;
+if (!isset ($vis_bilag)) $vis_bilag = NULL;
+
 print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>";
 
 $id = $_GET['id']*1;
 if ($_GET['konto_id']) $id = $_GET['konto_id'];
-if ($_GET['historik_id']) $historik_id=$_GET['historik_id'];
+if (isset ($_GET['historik_id'])) $historik_id=$_GET['historik_id'];
 $handling=$_GET['handling'];
 
 if ($handling=='slet') {
@@ -102,9 +122,9 @@ if ($_POST['submit']){
 		} else {
 			$notedate=date("Y-m-d");
 			$r = db_fetch_array(db_select("select id from ansatte where konto_id = '$egen_id' and navn = '$ansat'",__FILE__ . " linje " . __LINE__));
-			$ansat_id=$r[id]*1;
-			$r = db_fetch_array(db_select("select id from ansatte where konto_id = '$id' and navn = '$kontakt'"));
-			$kontakt_id=$r[id]*1;
+			$ansat_id=$r['id']*1;
+			$r = db_fetch_array(db_select("select id from ansatte where konto_id = '$id' and navn = '$kontakt'",__FILE__ . " linje " . __LINE__));
+			$kontakt_id=$r['id']*1;
 			if ($kontaktes) db_modify("insert into historik (konto_id, kontakt_id, ansat_id, notat, notedate, kontaktet, kontaktes) values ($id , $kontakt_id, $ansat_id, '$notat', '$notedate', '$kontaktet', '$kontaktes')",__FILE__ . " linje " . __LINE__);
 			else db_modify("insert into historik (konto_id, kontakt_id, ansat_id, notat, notedate, kontaktet) values ('$id' , '$kontakt_id', '$ansat_id', '$notat', '$notedate', '$kontaktet')",__FILE__ . " linje " . __LINE__);
 		}
@@ -119,6 +139,16 @@ if ($_POST['submit']){
 if (!$id) print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 if (strstr($returside,'historikkort.php')) $returside="historik.php";
 
+if ($menu=='T') {
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\"> 
+		<div class=\"headerbtnLft\"><a class='button red small' href=\"javascript:confirmClose('historikkort.php?luk=luk.php')\" accesskey=L>Luk</a></div>
+		<span class=\"headerTxt\">Historik</span>";     
+	print "<div class=\"headerbtnRght\"></div>";
+	print "</div><!-- end of header -->
+		<div class=\"maincontentLargeHolder\">\n";
+} else {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n"; #tabel1 start
 print "<tr><td align=\"center\" valign=\"top\" height=\"1%\">\n";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"4\" cellpadding=\"0\"><tbody>\n";#tabel2a start
@@ -131,7 +161,8 @@ print "<td width=\"10%\" align=center><div class=\"top_bund\"><a href=\"javascri
 print "</tbody></table>\n";#tabel2a slut
 print "</td></tr>\n";
 print "<tr><td height=\"99%\"  width=\"100%\" valign=\"top\">";
-print "<table width=\"100%\" cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";#tabel2b start
+}
+print "<table class='dataTable2' width=\"100%\" cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";#tabel2b start
 
 if ($id > 0){
 	$q = db_select("select * from adresser where id = '$id'",__FILE__ . " linje " . __LINE__);
@@ -179,8 +210,9 @@ if ($email || $web) print "<tr>";
 if ($email) print "<tr><td> mail $email</td>";
 if ($web) print "<td width=\"50%\"> web $web</td>";
 if ($email || $web) print "</tr>\n"; 
+$hrtd="align='center'";
 print "</tbody></table></td></tr>";#tabel3a slut;
-print "<tr><td colspan=6><hr></td></tr>";
+print "<tr><td $hrtd colspan=6><hr class='hrtd'></td></tr>";
 print "<tr><td width=10%><table border=0 width=100%><tbody>";#tabel3b start;
 if ($historik_id) {
 	$r=db_fetch_array(db_select("select * from historik where id = '$historik_id'",__FILE__ . " linje " . __LINE__));
@@ -188,8 +220,8 @@ if ($historik_id) {
 	$kontaktet=dkdato($r['kontaktet']);
 	if ($r['kontaktes']) $kontaktes=dkdato($r['kontaktes']);
 	else $kontaktes=NULL;
-	$ansat_id=$r[ansat_id]*1;
-	$kontakt_id=$r[kontakt_id]*1;
+	$ansat_id=$r['ansat_id']*1;
+	$kontakt_id=$r['kontakt_id']*1;
 	$r = db_fetch_array(db_select("select id, navn from ansatte where id = $ansat_id",__FILE__ . " linje " . __LINE__));
 	$ansat=$r['navn'];
 	$r = db_fetch_array(db_select("select id, navn from ansatte where id = $kontakt_id",__FILE__ . " linje " . __LINE__));
@@ -225,15 +257,15 @@ print "<tr><td> Kontaktes igen</td>";
 print "<td><input type=text size=11 name=kontaktes value=\"$kontaktes\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
 if ($historik_id) {
 	print "<input type=hidden name=historik_id value=$historik_id>";
-	print "<td align=right><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<td align=right><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 } else {
-	print "<td colspan=2 align=right><input type=submit accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<td colspan=2 align=right><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 }
 print "</td></tbody></table></td>";#tabel3b slut;
 print "<td colspan=4><textarea name=\"note\" rows=\"10\" cols=\"100\" onchange=\"javascript:docChange = true;\">$notat</textarea></td></tr>\n";
 print "</form>";
 $q = db_select("select * from historik where konto_id = $id order by kontaktet desc, id desc",__FILE__ . " linje " . __LINE__);
-print "<tr><td colspan=6><hr></td></tr>";
+print "<tr><td $hrtd colspan=6><hr class='hrtd'></tr>";
 while ($r=db_fetch_array($q)){
 	$ansat_id=$r['ansat_id']*1;
 	$kontakt_id=$r['kontakt_id']*1;
@@ -261,7 +293,7 @@ while ($r=db_fetch_array($q)){
 	print "</tbody></table>";
 
 	print "</td><td style='vertical-align:top' width=90%>$notat</td></tr>";
-	print "<tr><td colspan=6><hr></td></tr>";
+	print "<tr><td $hrtd colspan=6><hr class='hrtd'></tr>";
 }
 ?>
 </tbody>

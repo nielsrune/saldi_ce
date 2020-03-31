@@ -24,6 +24,8 @@
 // 2013.02.10 Break ændret til break 1
 // 20160116 Tilføjet valuta  
 // 20160129	Valutakode og kurs blev ikke sat ved oprettelse af ny driftskonti.
+// 2019.02.20 MSC - Rettet isset fejl og topmenu design
+// 2019.02.21 MSC - Rettet isset fejl
 
 @session_start();
 $s_id=session_id();
@@ -50,6 +52,18 @@ include("../includes/std_func.php");
 include("../includes/genberegn.php");
 
 $kontotype=NULL; # ellers hentes typen fra connect.php  
+
+if (!isset ($_POST['gem'])) $_POST['gem'] = NULL;
+if (!isset ($forrige)) $forrige = 0;
+if (!isset ($naeste)) $naeste = 0;
+if (!isset ($valuta)) $valuta = 0;
+if (!isset ($saldo)) $saldo = 0;
+if (!isset ($kontonr)) $kontonr = 0;
+if (!isset ($beskrivelse)) $beskrivelse = 0;
+if (!isset ($lukket)) $lukket = 0;
+if (!isset ($slet)) $slet = 0;
+if (!isset ($_POST['fra_kto'])) $_POST['fra_kto'] = NULL;
+if (!isset ($valuta_kode)) $valuta_kode = null;
 
 $id = if_isset($_GET['id']);
 if (isset($_POST['slet'])){
@@ -223,6 +237,17 @@ elseif($kontotype=='Z') $kontotype='Sum';
 elseif($kontotype=='R') $kontotype='Resultat';
 elseif($kontotype=='X') $kontotype='Sideskift';
 
+if ($menu=='T') {
+	include_once '../includes/top_menu.php';
+	include_once '../includes/top_header.php';
+	print "<div id=\"header\"> 
+	<div class=\"headerbtnLft\"><a title=\"Klik her for at lukke kassekladden\" class=\"button red small left\" href=\"kontoplan.php\" accesskey=\"L\">Luk</a></div>
+	<span class=\"headerTxt\">Kontokort</span>";     
+	print "<div class=\"headerbtnRght\"></div>";       
+	print "</div><!-- end of header -->
+		<div class=\"maincontentLargeHolder\">\n";
+	print  "<table class='dataTable2' border='0' cellspacing='1' align='center';>";
+} else {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\"  height=1% valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
@@ -237,6 +262,7 @@ print "</tbody></table>";
 print "</td></tr>";
 print "<td align = center valign = center height=99%>";
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
+}
 
 
 
@@ -334,18 +360,23 @@ print "<tr><td><br></td></tr>\n";
 print "<tr><td><br></td></tr>\n";
 print "<tr><td colspan=4 align=center>";
 print "<table width=\"100%\" cellpadding=\"0\" cellspaci ng=\"0\" border=\"0\"><tbody>";
-print "<td align=center><input type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"gem\"></td>";
-if ($slet==1) print "<td align = center><input type=submit accesskey=\"s\" value=\"&nbsp;&nbsp;&nbsp;&nbsp;Slet&nbsp;&nbsp;&nbsp;&nbsp;\" name=\"slet\" onclick=\"return confirm('Vil du slette konto $kontonr?')\" ></td>";
+print "<td align=center><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"gem\"></td>";
+if ($slet==1) print "<td align = center><input class='button red medium' type=submit accesskey=\"s\" value=\"&nbsp;&nbsp;&nbsp;&nbsp;Slet&nbsp;&nbsp;&nbsp;&nbsp;\" name=\"slet\" onclick=\"return confirm('Vil du slette konto $kontonr?')\" ></td>";
 print "</tr>\n</tbody></table>";
 
+print "</tbody>";
+print "</table>";
+print "</td></tr>";
+print "<tr><td align = 'center' valign = 'bottom'>";
+if ($menu=='T') {
+
+} else {
+print "		<table width='100%' align='center' border='1' cellspacing='0' cellpadding='0'><tbody>";
+print "			<td width='100%' $top_bund><font face='Helvetica, Arial, sans-serif' color='#000066'><br></td>";
+print "		</tbody></table>";
+}
+print "</td></tr>";
+print "</tbody></table>";
+print "</body></html>";
+
 ?>
-</tbody>
-</table>
-</td></tr>
-<tr><td align = "center" valign = "bottom">
-		<table width="100%" align="center" border="1" cellspacing="0" cellpadding="0"><tbody>
-			<td width="100%" <?php echo $top_bund ?>><font face="Helvetica, Arial, sans-serif" color="#000066"><br></td>
-		</tbody></table>
-</td></tr>
-</tbody></table>
-</body></html>

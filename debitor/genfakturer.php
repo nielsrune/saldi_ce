@@ -4,32 +4,36 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------debitor/genfakturer.php-----lap 3.7.0-----2018-01-05------
+// ---------debitor/genfakturer.php-----lap 3.8.9-----2020-02-20------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
+// som er udgivet af The Free Software Foundation; enten i version 2
+// af denne licens eller en senere version efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
+// Programmet er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
-// En dansk oversaetelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// En dansk oversaettelse af licensen kan laeses her:
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2018 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // Erstattet addslashes med db_escape_string
 // 2014.03.17 Tilføjet procent til "insert into ordrelinjer... 
 // 2016.08.25 Kontonr blev ikke opdatere hvid der var blevet skiftet kontonr på kunde inden genfakt 21060825
 // 2017.01.03 Funktion find_nextfakt flyttet til ../includes/ordrefunc.php
 // 2018.01.05 Tilføjet opdatering af varetekster. $opdat_text 
+// 2019.10.22 PHR - Added update of 'varenr' if changed at 'varekort.
+// 2020.01.13 PHR - Added  check for vat settings - search '$vatAccount'
+// 2020.02.03 PHR - Critical '$vatAccount' was insertet instead of vat_account. 
+// 2020.02.20 PHR - $cvrnr set to '' if not valid; 
 
 @session_start();
 $s_id=session_id();
@@ -84,6 +88,18 @@ if (!$gf_id) {
 if ($_POST) {
 	$ok=findtekst(80,$sprog_id);
 
+	$year=date("Y");
+	$month=date("m");
+	$del1="(box1<='$month' and box2<='$year' and box3>='$month' and box4>='$year')";
+	$del2="(box1<='$month' and box2<='$year' and box3<'$month' and box4>'$year')";
+	$del3="(box1>'$month' and box2<'$year' and box3>='$month' and box4>='$year')";
+	$qtxt="select kodenr from grupper where art='RA' and ($del1 or $del2 or $del3)";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+		$regnaar=$r['kodenr']*1;
+	} elseif ($r=db_fetch_array(db_select("select max(kodenr) as kodenr from grupper where art='RA'",__FILE__ . " linje " . __LINE__))) {
+		$regnaar=$r['kodenr']*1;
+	} else $regnaar=1;
+
 	$afbryd=findtekst(81,$sprog_id);
 	if ($afbryd==if_isset($_POST[$afbryd])) {
  		print "<BODY onLoad=\"javascript:alert('Genfakturering afbrudt')\">";
@@ -104,7 +120,7 @@ if ($_POST) {
 		$udskriv_antal=0;
 		$ny_liste='';
 		for ($q=0; $q<$ordre_antal; $q++) {
-			list($id,$pbs)=explode(",",genfakt($ordre_id[$q],$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato));
+			list($id,$pbs)=explode(",",genfakt($ordre_id[$q],$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato,$regnaar));
 
 			if ($komplet) {
 				levering($id,'on','on');
@@ -149,7 +165,8 @@ if ($_POST) {
 	print "</form>";
 }
 	
-function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato) {
+function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato,$regnaar) {
+	
 	transaktion('begin');
 	if ($r=db_fetch_array(db_select("select * from ordrer where id = $id",__FILE__ . " linje " . __LINE__))){
 		$pbs=$r['pbs'];
@@ -160,6 +177,10 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato) {
 		$bynavn=db_escape_string($r['bynavn']);
 		$land=db_escape_string($r['land']);
 		$cvrnr=db_escape_string($r['cvrnr']);
+		if ($cvrnr && !is_numeric(substr($cvrnr,2))) {
+			$cvrnr='';
+			alert("fejl i CVR nr for $firmanavn\\rCVR nr fjernet"); 
+		}
 		$ean=db_escape_string($r['ean']);
 		$sprog=db_escape_string($r['sprog']);
 		$valuta=db_escape_string($r['valuta']);
@@ -190,8 +211,16 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato) {
 		}
 		$r2=db_fetch_array(db_select("select kontonr from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__)); #20160825
 		$kontonr=$r2['kontonr'];
-		db_modify("insert into ordrer (ordrenr, konto_id, kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,betalingsdage,betalingsbet,cvrnr,ean,institution,notes,art,ordredate,momssats,moms,ref,valuta,sprog,kontakt,kundeordnr,lev_navn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,levdate,fakturadate,nextfakt,sum,status,projekt,email,mail_fakt,pbs,udskriv_til,procenttillag) values 
-				('$ordrenr','$konto_id','$kontonr','$firmanavn','$addr1','$addr2','$r[postnr]','$bynavn','$land','$r[betalingsdage]','$r[betalingsbet]','$cvrnr','$ean','$institution','$notes','$r[art]','$r[ordredate]','$r[momssats]','$r[moms]','$ref','$valuta','$sprog','$kontakt','$kundeordnr','$lev_navn','$lev_addr1','$lev_addr2','$r[lev_postnr]','$lev_bynavn','$fakturadate','$fakturadate','$nextfakt','$r[sum]','2','$projekt','$email','$r[mail_fakt]','$pbs','$udskriv_til','$procenttillag')",__FILE__ . " linje " . __LINE__);
+		$qtxt = "insert into ordrer ";
+		$qtxt.= "(ordrenr, konto_id, kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,betalingsdage,betalingsbet,cvrnr,ean,";
+		$qtxt.= "institution,notes,art,ordredate,momssats,moms,ref,valuta,sprog,kontakt,kundeordnr,lev_navn,lev_addr1,lev_addr2,";
+		$qtxt.= "lev_postnr,lev_bynavn,levdate,fakturadate,nextfakt,sum,status,projekt,email,mail_fakt,pbs,udskriv_til,procenttillag)";
+		$qtxt.= " values ";
+		$qtxt.= "('$ordrenr','$konto_id','$kontonr','$firmanavn','$addr1','$addr2','$r[postnr]','$bynavn','$land','$r[betalingsdage]',";
+		$qtxt.= "'$r[betalingsbet]','$cvrnr','$ean','$institution','$notes','$r[art]','$r[ordredate]','$r[momssats]','$r[moms]','$ref','$valuta',";
+		$qtxt.= "'$sprog','$kontakt','$kundeordnr','$lev_navn','$lev_addr1','$lev_addr2','$r[lev_postnr]','$lev_bynavn','$fakturadate',";
+		$qtxt.= "'$fakturadate','$nextfakt','$r[sum]','2','$projekt','$email','$r[mail_fakt]','$pbs','$udskriv_til','$procenttillag')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$r2=db_fetch_array(db_select("select id from ordrer where ordrenr='$ordrenr' and nextfakt='$nextfakt' and (art='DO' or art='DK') order by id desc",__FILE__ . " linje " . __LINE__));
 		$ny_id=$r2['id'];
 		$sum=0;
@@ -199,10 +228,13 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato) {
 		$q=db_select("select * from ordrelinjer where ordre_id = $id and (kdo!='on' or kdo is NULL) order by posnr",__FILE__ . " linje " . __LINE__);
 		while($r=db_fetch_array($q)) {
 			($r['projekt'])?$projekt=$r['projekt']:$projekt='';
+			$lev_varenr=$r['lev_varenr'];
 			if ($r['vare_id']){
-				$r2=db_fetch_array(db_select("select gruppe from varer where id='$r[vare_id]'",__FILE__ . " linje " . __LINE__));
+				$r2=db_fetch_array(db_select("select varenr,gruppe from varer where id='$r[vare_id]'",__FILE__ . " linje " . __LINE__));
 				$gruppe=$r2['gruppe'];
-				$r2=db_fetch_array(db_select("select box7 from grupper where art='VG' and kodenr='$gruppe'",__FILE__ . " linje " . __LINE__));
+				$varenr=$r2['varenr'];
+				$r2=db_fetch_array(db_select("select box4,box7 from grupper where art='VG' and kodenr='$gruppe'",__FILE__ . " linje " . __LINE__));
+				$bogfkto = $r2['box4'];
 				$momsfri=$r2['box7'];
 				if ($opdat_pris) {
 					$r2=db_fetch_array(db_select("select salgspris,kostpris from varer where id='$r[vare_id]'",__FILE__ . " linje " . __LINE__));
@@ -219,12 +251,49 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato) {
 				} else {
 					$beskrivelse=$r['beskrivelse'];
 				}
+				if ($r['vare_id']){
+					
+				}
+				if ($bogfkto && !$momsfri) {
+					$qtxt="select moms from kontoplan where kontonr = '$bogfkto' and regnskabsaar = '$regnaar'";
+					$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+					if ($tmp=trim($r2['moms'])) { # f.eks S3
+						$tmp=substr($tmp,1); #f.eks 3
+						$qtxt="select box1,box2 from grupper where art = 'SM' and kodenr = '$tmp'";
+						$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+						if ($r2['box1']) $vatAccount=$r2['box1']*1;
+						if ($r2['box2']) $varemomssats=$r2['box2']*1;
+					}	else {
+						$varemomssats=$momssats;
+						$vatAccount=0;
+					}	
+				} else {
+					$varemomssats=0;
+					$vatAccount=0;
+				}
+				if (!$momsfri && !$vatAccount && $varemomssats) {
+					$alerttxt = "Varegruppe $gruppe som er momsbelagt er tilknyttet konto $bogfkto. (varenr $varenr)\\n";
+					$alerttxt.= "Konto $bogfkto er ikke momsbelagt i regnskabsår $regnaar.\\n";
+					$alerttxt.= "Genfakturering afbrudt";
+					alert ($alerttxt);
+					print "<meta http-equiv=\"refresh\" content=\"1;URL=ordreliste.php\">";
+					exit;
+				}
+/*
+				if ($varemomssats && !$vatAccount) {
+					$alerttxt="Manglende konto for salgsmoms. (Varenr: $varenr) \\nGenfakturering afbrudt";
+					alert ($alerttxt);
+					print "<meta http-equiv=\"refresh\" content=\"1;URL=ordreliste.php\">";
+					exit;
+				}
+*/				
 				$qtxt="insert into ordrelinjer ";
-				$qtxt.="(ordre_id,posnr,varenr,vare_id,beskrivelse,enhed,antal,pris,rabat,procent,lev_varenr,momsfri,samlevare,kostpris,leveres,projekt) ";
+				$qtxt.="(ordre_id,posnr,varenr,vare_id,beskrivelse,enhed,antal,pris,rabat,procent,lev_varenr,momsfri,samlevare,kostpris";
+				$qtxt.=",leveres,projekt,bogf_konto) ";
 				$qtxt.="values ";
-				$qtxt.="('$ny_id','$r[posnr]','".db_escape_string($r['varenr'])."','$r[vare_id]','".db_escape_string($beskrivelse)."','$r[enhed]','$r[antal]',";
-				$qtxt.="'$pris','$r[rabat]','$r[procent]','".db_escape_string($r['lev_varenr]'])."','$momsfri','$r[samlevare]','$kostpris','$r[antal]',";
-				$qtxt.="'".db_escape_string($projekt)."')";
+				$qtxt.="('$ny_id','$r[posnr]','".db_escape_string($varenr)."','$r[vare_id]','".db_escape_string($beskrivelse)."','$r[enhed]','$r[antal]',";
+				$qtxt.="'$pris','$r[rabat]','$r[procent]','".db_escape_string($lev_varenr)."','$momsfri','$r[samlevare]','$kostpris','$r[antal]',";
+				$qtxt.="'".db_escape_string($projekt)."','$bogfkto')";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}	else {
 				$qtxt="insert into ordrelinjer (ordre_id, posnr, beskrivelse) values ('$ny_id','$r[posnr]','".db_escape_string($r['beskrivelse'])."')";
@@ -235,6 +304,7 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato) {
 		if ($slet_gfdato) db_modify("update ordrer set nextfakt=NULL where id='$id'",__FILE__ . " linje " . __LINE__);	
 	}
 	transaktion('commit');
+#exit;
 	$tmp=$ny_id.",".$pbs;
 	return($tmp);
 }	

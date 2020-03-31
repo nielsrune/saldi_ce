@@ -85,7 +85,9 @@ if ($lukket && !$slutdate) {
 	$lukket="checked";
 	print "<tr><td valign=top width=\"150px\">".findtekst(660,$sprog_id)."<!--tekst 660--></td><td></td><td><input type=\"checkbox\" name=\"lukket\" $lukket></td></tr>\n";
 } else {
-	print "<tr><td width=\"150px\">".findtekst(663,$sprog_id)."<!--tekst 663--></td><td width=\"180px\"><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"startdato\" value=\"".dkdato($startdate)."\"></td>";
+	print "<tr><td width=\"150px\">";
+	print "<input type='hidden' name=\"lukket\" value='$lukket'>";
+	print findtekst(663,$sprog_id)."<!--tekst 663--></td><td width=\"180px\"><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"startdato\" value=\"".dkdato($startdate)."\"></td>";
 	print "<td width=\"150px\">".findtekst(660,$sprog_id)."<!--tekst 660--></td><td style width=\"180px\"><input class=\"inputbox\" type=\"text\" style=\"width:180px\" name=\"slutdato\" value=\"".dkdato($slutdate)."\"></td></tr>\n";
 }
 if (isset($box)&&count($box)) {

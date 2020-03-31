@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------lager/vareproduktion.php------------lap 3.7.1------2018-03-02---
+// ------------lager/vareproduktion.php------------lap 3.8.1------2019-06-26---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2018 saldi.dk aps
+// Copyright (c) 2004-2019 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 2012.10.16 Fejl i lagertræk v. varesalg efter produktionsordre med antal != 0. Søg 21121016
@@ -31,6 +31,7 @@
 // 2018.02.04 Div ændringer i forbindelse med varianter - funkionen kaldes ikke, hvis der anvendes varianter.
 // 2018.03.02 Gevaldig omskrivning
 // 2018.03.14 Lager blev ikke taget med fra form. 
+// 2019.06.26 Fjernet kald til transtjek.
 
 
 @session_start();
@@ -193,32 +194,25 @@ if ($_POST['OK']) {
 				$qtxt.=" values ";
 				$qtxt.="($kontonr[$x],'$bilag','$transdate','$transdate','$logtime',";
 				$qtxt.="'Produktionsordre: $varenr[0] ($brugernavn)','0','$amount[$x]','','0','0','0','0','1','100','0')";
-#cho __line__." $qtxt<br>";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				$tjeksum+=$amount[$x];
-#cho __line__." $tjeksum+=$amount[$x]<br>";
 			}
-#cho __line__." $tjeksum-$afgangsum = ". $tjeksum-$afgangsum ."<br>";			
 			if (abs($tjeksum-$afgangsum)>0.01) {
 				print "<BODY onLoad=\"javascript:alert('Ubalance i posteringssum -kontakt Saldi teamet på tlf. 4690 2208')\">";
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=varekort.php?id=$id[0]\">";
 				exit;
 			}
-			db_modify("insert into transaktioner (kontonr,bilag,transdate,logdate,logtime,beskrivelse,debet,kredit,faktura,kladde_id,afd,ansat,projekt,valuta,valutakurs,ordre_id)
-				values
-			('$tilgang','$bilag','$transdate','$transdate','$logtime','Produktionsordre: $varenr[0] ($brugernavn)','$afgangsum','0','','0','0','0','0','1','100','0')",__FILE__ . " linje " . __LINE__);
-		$diff=transtjek();
+			$qtxt = "insert into transaktioner"; 
+			$qtxt.= "(kontonr,bilag,transdate,logdate,logtime,beskrivelse,debet,kredit,faktura,kladde_id,afd,ansat,projekt,valuta,valutakurs,ordre_id)";
+			$qtxt.= "	values ";
+			$qtxt.= "('$tilgang','$bilag','$transdate','$transdate','$logtime',";
+			$qtxt.= "'Produktionsordre: $varenr[0] ($brugernavn)','$afgangsum','0','','0','0','0','0','1','100','0')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
-#xit;
-		if ($diff > 1) print "<BODY onLoad=\"javascript:alert('Ubalance i transaktioner -kontakt Saldi teamet på tlf. 4690 2208')\">";
-		else transaktion('commit'); 
+		transaktion('commit'); 
 
 		print "<BODY onLoad=\"javascript:alert('Vareproduktion gennemført')\">";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=varekort.php?id=$id[0]\">";
-
-		
-#cho "$diff<br>";
-#exit;
 	} else {
 		print "<table><tbody>";
 		print "<form name=\"vareproduktion\" action=\"vareproduktion.php?antal=$antal&samlevare=$samlevare&lager=$lager\" method=\"post\">";

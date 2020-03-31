@@ -27,7 +27,23 @@ $rightoptxt="<a href=\"tekster.php?ryd=1\" >ryd</a>";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
-include("top.php");
+
+if (!isset ($sprog)) $sprog = null;
+
+if ($menu=='T') {
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">\n";
+	print "<div class=\"headerbtnLft\"></div>\n";
+#	print "<span class=\"headerTxt\">Systemsetup</span>\n";     
+#	print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">Ny debitor</a>--></div>";       
+	print "</div><!-- end of header -->";
+	print "<div id=\"leftmenuholder\">";
+	include_once 'left_div_menu.php';
+	print "</div><!-- end of leftmenuholder -->\n";
+	print "<div class=\"maincontentLargeHolder\">\n";
+} else include("top.php");
+
 
 if ($ryd=if_isset($_GET['ryd'])) {
 	db_modify("delete from tekster where sprog_id='$sprog_id'",__FILE__ . " linje " . __LINE__);
@@ -44,7 +60,7 @@ if($_POST) {
 	$tekst=if_isset($_POST['tekst']); 
 	$ny_tekst=if_isset($_POST['ny_tekst']); 
 	for ($x=1;$x<=$tekstantal;$x++) {
-		$tmp=addslashes(trim($ny_tekst[$x]));
+		$tmp=db_escape_string(trim($ny_tekst[$x]));
 		if ($id[$x] && $tmp && $tekst[$x]!=$ny_tekst[$x]) db_modify("update tekster set tekst='$tmp' where id='$id[$x]'",__FILE__ . " linje " . __LINE__);
 	}
 }
@@ -81,7 +97,7 @@ $tekstantal=$x;
 print "<form name=\"tekster\" action=\"tekster.php?sprog_id=$sprog_id&sort=$sort\" method=\"post\">";
 print "<input type=hidden name=tekstantal value=\"$tekstantal\">";
 
-print "<table border=1><tbody>";
+print "<table class='dataTable2'><tbody>";
 print "<tr><td><a href=tekster.php?sprog_id=$sprog&sort=tekst_id>Id</a></td>";
 print "<td width=400><a href=tekster.php?sprog_id=$sprog&sort=tekst>".findtekst(31,$sprog_id)."</a></td>";
 print "<td title=\"".findtekst(33,$sprog_id)."\">".findtekst(32,$sprog_id)."</td>";
@@ -92,7 +108,7 @@ for($x=1; $x<=$tekstantal; $x++){
 #	print "<td><textarea class=\"inputbox\" name=\"ny_tekst[$x]\" rows=\"3\" cols=\"85\">$tekst[$x]</textarea></td>";
 	print "<td><input type=text class=\"inputbox\" name=\"ny_tekst[$x]\" size=\"90\" value=\"$tekst[$x]\"></td>";
 }
-print "<tr><td colspan=3 align=center><input type=submit accesskey=\"o\" value=\"OK\" name=\"submit\"></td></tr>";
+print "<tr><td colspan=3 align=center><input class='button blue medium' type=submit accesskey=\"o\" value=\"OK\" name=\"submit\"></td></tr>";
 print "</form>";
 print "</tbody></table>";
 ?>

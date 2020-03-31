@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------- includes/stykliste.php lap 3.7.1 ------2018-03-27-----------
+// ------- includes/stykliste.php lap 3.6.7 ------2019-06-26-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,17 +23,15 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2017 saldi.dk aps
+// Copyright (c) 2004-2019 saldi.dk aps
 // ----------------------------------------------------------------------
-// 2017.02.15 PHR Tilføjet ',2' i samtlige 'dkdcimal'
-// 2018.03.27 PHR Tilføjet ',__FILE__ . " linje " . __LINE__' på sql kommandoer
+// 20170215 PHR Tilføjet ',2' i samtlige 'dkdcimal'
+// 20190626 PHT Added missing '__FILE__ . " linje " . __LINE__' to queries
 
 if (!function_exists('stykliste')) {
 function stykliste($id, $udskriv, $udvalg) {
-	GLOBAL $charset;
 
-	$ialt=0;
-	$x=0;
+	$ialt=$x=0;
 	$query = db_select("select * from styklister where indgaar_i='$id' order by posnr",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
 		$x++;
@@ -49,12 +47,12 @@ function stykliste($id, $udskriv, $udvalg) {
 	if ($udskriv) {
 		print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\" width=80% align=center><tbody>";
 		print "<tr><td colspan=6 align=center><big><b>Stykliste for <a href=varekort.php?id=$id>".htmlentities($row['varenr'],ENT_COMPAT,$charset)."</a></b></big></td></tr>";
-		print "<tr><td align=center> Varenr:</td><td align=center> Beskrivelse</td><td align=center> Kostpris</td><td align=center> Antal</td><td align=center> Sum</td></tr>";
+		print "<tr><td align=center> Varenr:</td><td align=center> Beskrivelse</td><td align=center> Kostpris</td><td align=center> Antal</td><td align=center> Sum</td><td>Beholdning</td></tr>";
 	}
 	for ($x=1; $x<=$vareantal; $x++) {
 		$query = db_select("select * from varer where id=$vare_id[$x]",__FILE__ . " linje " . __LINE__);
 		$row = db_fetch_array($query);
-#		$query2 = db_select("select kostpris from vare_lev where vare_id=$row[id] order by posnr",__FILE__ . " linje " . __LINE__);
+		#		$query2 = db_select("select kostpris from vare_lev where vare_id=$row[id] order by posnr");
 #		if ($row2 = db_fetch_array($query2)) {
 #			$sum=$row2['kostpris']*$antal[$x];
 #			$ialt=$ialt+$sum;
@@ -67,7 +65,7 @@ function stykliste($id, $udskriv, $udvalg) {
 			$pris=dkdecimal($row2['kostpris'],2);
 #		}
 		$sum=dkdecimal($sum,2);
-	if ($udskriv) print "<tr><td>".htmlentities($row['varenr'],ENT_COMPAT,$charset)."</td><td>".htmlentities($row['beskrivelse'],ENT_COMPAT,$charset)."</td><td align=right> $pris</td><td align=right> ".dkdecimal($antal[$x],2)."</td><td align=right> $sum</td></tr>";
+	if ($udskriv) print "<tr><td>".htmlentities($row['varenr'],ENT_COMPAT,$charset)."</td><td>".htmlentities($row['beskrivelse'],ENT_COMPAT,$charset)."</td><td align=right> $pris</td><td align=right> ".dkdecimal($antal[$x],2)."</td><td align=right> $sum</td><td align=right>".dkdecimal($row['beholdning'])."</td></tr>";
 	}
 #	$ialt=dkdecimal($ialt,2);
 	if ($udskriv) {

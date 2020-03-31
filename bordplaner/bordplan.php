@@ -1,15 +1,20 @@
 <?php
-// ------------- bordplaner/bordplan.php ---------- lap 3.4.9----2015.01.10-------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ------------- bordplaner/bordplan.php ---------- lap 3.8.1----2019.07.11-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -18,16 +23,20 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2019 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2014.11.11 Bordplan bruges nu også selvom der ikke er individuel bordplan
 // 2015.01.10 Bord sætttes kun som optaget hvis der er et bordnr.
+// 2016.10.14 Bord sætttes kun som optaget hvis der er ordrelinjer.
+// 2018.05.14 Tilføjet mulighed for "underborde". Søg "$_GET['bordplan']".
+// 2019.07.10 Rettet $flyt til $bord[$flyt] så bordnavn og ikke bord ID vises i overskrift ved del / ftyt
 
 @session_start();
 $s_id=session_id();
 ob_start();
 
 $modulnr=5;
+$z=NULL;
 $title="POS_ordre";
 $css="../css/pos.css";
 
@@ -43,16 +52,37 @@ $flyt=if_isset($_GET['flyt']);
 $id=if_isset($_GET['id']);
 $delflyt=if_isset($_GET['delflyt']);
 $optaget=array();
+$bnr=array();
+$dubletter=array();
 $x=0;
+$y=0;
 $q=db_select("select id,nr,hvem from ordrer where art = 'PO' and status < 3",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
-	if ($id==$r['id']) $bordnr=$r['nr'];
-	if ($r['hvem'] && is_numeric($r['nr'])) {
+	$bordnr=$r['nr'];
+	if (in_array($bordnr,$bnr)) {
+		$dubletter[$z]=$bordnr;
+		$z++;
+	}
+	$bnr[$y]=$bordnr;
+	if (is_numeric($r['nr'])) {
+		$r2=db_fetch_array(db_select("select id from ordrelinjer where ordre_id='$r[id]' limit 1",__FILE__ . " linje " . __LINE__));
+		if ($r2['id']) {
 		$optaget[$x]=$r['nr'];
 		$x++;
 	} 
 }
-if ($flyt || $flyt=='0') print "<b><big>Vælg det bord $bord[$bordnr] skal flyttes til.</big></b><br>"; 
+	$y++;
+}
+if ($delflyt) print "<b>Vælg det bord $bord[$flyt] skal deles til</b><br>"; 
+elseif ($flyt || $flyt=='0') print "<b>Vælg det bord $bord[$flyt] skal flyttes til</b><br>"; 
+if (count($dubletter)) {
+	for ($z=0;$z<count($dubletter);$z++) {
+		for ($y=0;$y<count($bord);$y++) {
+			
+		}
+	}
+}
+
 
 
 $w="17px";
@@ -60,7 +90,8 @@ $h="17px";
 $bg1="ff0000";
 $bg2="00ff00";
 $bg3="0000ff";
-if (file_exists("bordplan_$db_id.php")) include("bordplan_$db_id.php");
+if (isset($_GET['bordplan']) && file_exists($_GET['bordplan'])) include($_GET['bordplan']);
+elseif (file_exists("bordplan_$db_id.php")) include("bordplan_$db_id.php");
 else {
 	$stil="STYLE=\"
 		display: table-cell;
@@ -105,10 +136,12 @@ global $id;
 global $bord;
 global $delflyt;
 
-$rw=$w*$cs;
-$rh=$h*$rs;
+$rw=$w*$cs.'px';
+$rh=$h*$rs.'px';
 $th=$h;
-if (strpos($bord[$bordnr]," ")) list($tmp,$bordnavn)=explode(" ",$bord[$bordnr]);
+
+if (!isset($bord[$bordnr])) $bord[$bordnr]=NULL;
+if (strpos($bord[$bordnr]," ") && strpos($bord[$bordnr]," ")) list($tmp,$bordnavn)=explode(" ",$bord[$bordnr]);
 else $bordnavn=$bord[$bordnr];
 (in_array($bordnr,$optaget))?$bgcolor=$bg1:$bgcolor=$bg2;
 	if ($flyt || $flyt=='0') {

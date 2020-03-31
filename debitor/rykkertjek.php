@@ -85,8 +85,14 @@ else {
 function send_mail($email,$subjekt,$mailtext) {
 	
 	$r = db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
-	$afsendermail=$r['email'];
+	
+	$afsendermail=$from=$r['email'];
 	$afsendernavn=$r['firmanavn'];
+	
+	if (strpos($_SERVER['SERVER_NAME'],'saldi.dk')) { #20121016
+		$from = $db.'@'.$_SERVER['SERVER_NAME']; #20130731
+	}
+
 	
 	
 	/*
@@ -104,10 +110,12 @@ echo "tekst	$mailtext<br>";
 			#	$mail->Username = "jswan";  // SMTP username
 			#	$mail->Password = "secret"; // SMTP password
 			
-	$mail->From     = $afsendermail;
+	$mail->From     = $from;
 	$mail->FromName = $afsendernavn;
+	$mail->AddReplyTo($afsendermail,$afsendernavn);
 	$mail->AddAddress($email); 
 	$mail->AddBCC($afsendermail); 
+
 	#	$mail->AddAddress("ellen@site.com");               // optional name
 	#	$mail->AddReplyTo("info@site.com","Information");
 

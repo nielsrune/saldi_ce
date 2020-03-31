@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//----------------- includes/posmenufunc.php -----ver 3.7.1---- 2018.03.13 ----------
+//----------------- includes/posmenufunc.php -----ver 3.7.4---- 2019.01.07 ----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2018 saldi.dk aps
+// Copyright (c) 2003-2019 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2015.08.20 Mulig for pris på varegenveje. Søg $pris
 // 2015.10.23	Diverse nye ændringer 
@@ -38,7 +38,16 @@
 // 2017.12.10 Hvis ip ikke er sat disables terminal knap. #20171210
 // 2018.01.25 Tilføjet $varenr_ny så det også fungerer med variant stregkoder # 20180125 
 // 2018.03.13	-	PHR Kontoopslag ændret til debitorposlag og kreditoropslag tilføjet.
+// 2018.10.30 CA  Håndtering af gavekort og tilgodebeviser med nummerering # 20181030
+// 2018.12.16 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
+//2018.12.16 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
+// 2019.01.07	PHR	Tilføjet systemknapknap til totalrabat Søg totalrabat
+// 20190107 PHR	Tilføjet 'change_cardvalue' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$change_cardvalue'
+// 2019.03.05	LN Added new button: Z-Rapport
+// 2019.03.13	LN Add more language txt to the buttons
+// 2019.03.14	LN Disable z-report button for ten seconds if clicked
 
+include ("posmenufunc_includes/buttonFunc.php");
 
 if (!function_exists('menubuttons')) {
 function menubuttons($id,$menu_id,$vare_id,$plads) {
@@ -55,6 +64,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 	global $varenr_ny,$vare_id,$vare_id_ny;
 
 	$b=NULL;
+	$buttonTextArr = setAccordinglyLanguage();
 	
 	$dd=date("Y-m-d");
 	$tt=date("H:i:s");
@@ -186,32 +196,36 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 				  print "<td><INPUT TYPE=\"button\" $tmp NAME=\"$a\" VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += '$a';pos_ordre.$fokus.focus();\">\n";
 				} elseif ($d==6) {
 					if ($c==1) {
-						$txt='Bord';
+                        $txt = $buttonTextArr['table'];
 						for ($z=0;$z<count($bord);$z++) {
 							if ($bordnr==$z) $txt=$bord[$z];
 						}
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"bordvalg\" VALUE=\"$txt\">";
 					} elseif ($c=='2') {
-						$txt=str_replace('$brugernavn',$brugernavn,$a);
+						$txt=str_replace('$brugernavn',$buttonTextArr['user'],$a);
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<td><INPUT $disabled onclick=\"window.location.href='pos_ordre.php?id=$id&skift_bruger=1&bordnr=$bordnr'\" type=\"button\" $tmp value= \"$txt\">\n";
 					} elseif ($c=='3') {
+                        $txt = $buttonTextArr['splitTable'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"del_bord\" VALUE=\"Del bord\">";
+						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"del_bord\" VALUE=\"$txt\">";
 					} elseif ($c=='4') {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<td><INPUT $tmp TYPE=\"submit\" NAME=\"OK\" VALUE=\"Enter\">";
 					} elseif ($c=='5') {
+                        $txt = $buttonTextArr['findReceipt'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<td><input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php?id=$id&find_bon=1'\" $tmp value=\"$a\">\n";
+						print "<td><input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php?id=$id&find_bon=1'\" $tmp value=\"$txt\">\n";
 #						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 #						print "<td>".$knap;
 					} elseif ($c=='6') {
+                        $txt = $buttonTextArr['moveTable'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"flyt_bord\" VALUE=\"Flyt bord\">";
+						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"flyt_bord\" VALUE=\"$txt\">";
 					} elseif ($c=='7') {
-						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php?id=$id&kasse=$kasse&kassebeholdning=on&bordnr=$bordnr'\" $stil value=\"$a\">\n";
+                        $txt = $buttonTextArr['boxCount'];
+						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php?id=$id&kasse=$kasse&kassebeholdning=on&bordnr=$bordnr'\" $stil value=\"$txt\">\n";
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} elseif ($c=='8') {
@@ -225,28 +239,36 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
 						if ($r['iordre']>$r['bestilt']) $kstil=str_replace($b,'#ff0000',$kstil);
 						if ($c==9) print "<td><INPUT $disabled $kstil TYPE=\"submit\" NAME=\"koekken\"VALUE=\"$a\">";
-						else print "<td><INPUT $disabled $kstil TYPE=\"submit\" NAME=\"send_koekken\"VALUE=\"$a\">";
+						else {
+                            $txt = $buttonTextArr['sendToKitchen'];
+                            print "<td><INPUT $disabled $kstil TYPE=\"submit\" NAME=\"send_koekken\"VALUE=\"$txt\">";
+                        }
 					} elseif ($c=='10') { #Luk
-						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='../index/menu.php'\" $stil value=\"$a\">\n";
+                        $txt = $buttonTextArr['close'];
+						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='../index/menu.php'\" $stil value=\"$txt\">\n";
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} elseif ($c=='11') {
+                        $txt = $buttonTextArr["draw"];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"skuffe\" VALUE=\"Skuffe\">";
+						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"skuffe\" VALUE=\"$txt\">";
 					} elseif ($c=='12') {
+                        $txt = $buttonTextArr['print'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"udskriv\" VALUE=\"Udskriv\">";
+						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"udskriv\" VALUE=\"$txt\">";
 					} elseif ($c=='13') {
+                        $txt = $buttonTextArr['start'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<td onclick=\"return confirm('Slet alt og start forfra')\"><INPUT TYPE=\"submit\" $tmp NAME=\"forfra\"VALUE=\"Forfra\" OnClick=\"pos_ordre.$fokus.value += 'f';pos_ordre.$fokus.focus();\">\n";
+						print "<td onclick=\"return confirm('Slet alt og start forfra')\"><INPUT TYPE=\"submit\" $tmp NAME=\"forfra\" VALUE=\"$txt\" OnClick=\"pos_ordre.$fokus.value += 'f';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($c=='14') {
 						$knap="<input $disabled onclick=\"window.location.href='pos_ordre.php?id=$id&skift_bruger=2&brugernavn=$a&bordnr=$bordnr&$menu=$menu_id'\" type=\"button\" $stil value= \"$a\">\n";
 						if (strtolower($brugernavn)==strtolower($a)) $knap=str_replace("background-color: ;","background-color: #00ff00;",$knap);
 						else $knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} elseif ($c=='15') {
+                        $txt = $buttonTextArr['clear'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<td><INPUT TYPE=\"button\" $tmp NAME=\"clear\" VALUE=\"Ryd\" OnClick=\"pos_ordre.$fokus.value = '';pos_ordre.$fokus.focus();\">";
+						print "<td><INPUT TYPE=\"button\" $tmp NAME=\"clear\" VALUE=\"$txt\" OnClick=\"pos_ordre.$fokus.value = '';pos_ordre.$fokus.focus();\">";
 					} elseif ($c=='16') {
 						($disabled)?$dis="disabled='disabled'":$dis=NULL;
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
@@ -260,11 +282,13 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<td><INPUT TYPE=\"submit\" $tmp $dis NAME=\"$a\" VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($c=='19') {
+                        $txt = $buttonTextArr['back'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<TD><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\"VALUE=\"Tilbage\" OnClick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\"></TD>\n";
-#						print "<TD onclick=\"return confirm('Tilbage til varescanning')\"><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\"VALUE=\"Tilbage\" OnClick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\"></TD>\n";
+						print "<TD><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\" VALUE=\"$txt\" OnClick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\">\n";
+#						print "<TD onclick=\"return confirm('Tilbage til varescanning')\"><INPUT TYPE=\"submit\" $stil NAME=\"tilbage\" VALUE=\"Tilbage\" OnClick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($c=='20') {
-						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php'\" $stil value=\"$a\">\n";
+                        $txt = $buttonTextArr['newCustomer'];
+						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php'\" $stil value=\"$txt\">\n";
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 						$r = db_fetch_array(db_select("select box13 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
@@ -281,8 +305,9 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 							} else print "<meta http-equiv=\"refresh\" content=\"$timeout;URL=pos_ordre.php?id=0\">\n";
 						}
 					} elseif ($c=='21') {
+                        $txt = $buttonTextArr['correction'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
-						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp NAME=\"krediter\" VALUE=\"$a\">\n";
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp NAME=\"krediter\" VALUE=\"$txt\">\n";
 					} elseif ($c=='22') { #Kortterminal
 						$dis=$disabled;
 						if ($terminal_ip) { #20171210
@@ -351,6 +376,43 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='35') {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"kreditoropslag\" VALUE=\"$a\">\n";
+					} elseif ($c=='36') {
+						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"gavekortsalg\" VALUE=\"$a\">\n";	# 20181030
+					} elseif ($c=='37') {
+						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"gavekortstatus\" VALUE=\"$a\">\n"; 	# 20181030
+					} elseif ($c=='38') {
+						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"totalrabat\" VALUE=\"$a\">\n"; 	# 20181030
+                    } elseif ($c=='39') {   ### LN 20190205
+						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp NAME=\"return\" VALUE=\"$a\">\n";
+                    } elseif ($c=='40') {
+ 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+ 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"proforma\" VALUE=\"Proforma\">";
+                            ### LN
+					} elseif ($c=='41') {
+ 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+ 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"xRapport\" VALUE=\"X-Rapport\">";
+                            ### LN
+					} elseif ($c=='42') {
+                        handleZreportClick($tmp, $b, $stil, $disabled);
+                            ### LN
+					} elseif ($c=='43') {
+                        $txt = $buttonTextArr['copy'];
+ 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+ 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"kopi\" VALUE=\"$txt\">";
+					} elseif ($c=='44') {
+						$txt = "Hent bestilling";
+						$knap="<input type=\"submit\" name=\"getOrder\" onclick=\"window.location.href='pos_ordre.php?id=$id&getOrder=true\" $disabled $tmp value=\"$txt\">\n";
+						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
+						print "<td>".$knap;
+					} elseif ($c=='45') {
+						$txt = "Gem bestilling";
+						$knap="<input type=\"submit\" name=\"saveOrder\" onclick=\"window.location.href='pos_ordre.php?id=$id&saveOrder=true\" $disabled $tmp value=\"$txt\">\n";
+						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
+						print "<td>".$knap;
 					} else {
 						$knap=str_replace('$kasse',$kasse,$knap);
 						$knap=str_replace('$brugernavn',$brugernavn,$knap);
@@ -363,19 +425,21 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 					(((!$id && !$varenr_ny) || $betalingsbet!='Kontant') && !$indbetaling)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp; #20160927 $kontonr rettet til $betalingsbet.:: 20161006
 					if ($a=='Kontant') {
-						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n"; #20160927 $tmp rettet til $tmp2
+						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n"; #20160927 $tmp rettet til $tmp2
 					} elseif ($a=='Kontant på beløb') {
-						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
+						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($a=='Konto') {
 						($betalingsbet=='Kontant' || !$sum)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp;
-						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
+						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($a=='Betalingskort') {
-						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"Betalings \nkort\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\"></TD>\n";
+						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"Betalings \nkort\" OnClick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($a=='Gem som tilbud') {
-						print "<TD onclick=\"return confirm('Gem ordre som tilbud?')\"><INPUT TYPE=\"submit\" $tmp NAME=\"gem\" VALUE=\"Gem som tilbud\"></TD>\n";
+						print "<TD onclick=\"return confirm('Gem ordre som tilbud?')\"><INPUT TYPE=\"submit\" $tmp NAME=\"gem\" VALUE=\"Gem som tilbud\">\n";
+					} elseif ($a=='Gavekort') {
+						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"Gavekort\" OnClick=\"pos_ordre.$fokus.value += 'q';pos_ordre.$fokus.focus();\">\n";
 					} else {
 						#if ($betvaluta && $betvaluta!='DKK') $tmp2="disabled=\"disabled\" ".$tmp;
-						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD>\n"; #20160418
+						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\">\n"; #20160418
 					}
 				} elseif ($d==8) {
 					$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
@@ -414,10 +478,11 @@ function systemknap($system_id) {
 		$href="../index/menu.php";
 		$return="onclick=\"window.location.href='$href'\"";
 	} elseif ($system_id==11) {
-		$return="TYPE=\"submit\" NAME=\"skuffe\"VALUE=\"Skuffe\"";
+        $txt = $buttonTextArr["draw"];
+		$return="TYPE=\"submit\" NAME=\"skuffe\"VALUE=\"$txt\"";
 	} elseif ($system_id==13) {
-
-	$return="TYPE=\"submit\" NAME=\"skuffe\"VALUE=\"Skuffe\"";
+        $txt = $buttonTextArr["draw"];
+        $return="TYPE=\"submit\" NAME=\"skuffe\"VALUE=\"$txt\"";
 	}
 
 	
@@ -545,6 +610,7 @@ function tastatur($kasse,$status) {
 		print "<td><INPUT $disabled $stil TYPE=\"submit\" NAME=\"flyt_bord\"VALUE=\"Flyt bord\"></td>\n"; #20140508
 		print "<td><INPUT $disabled $stil TYPE=\"submit\" NAME=\"del_bord\"VALUE=\"Del bord\"></td>\n";
 		if ($koekkenprint) print "<td><INPUT $disabled $kstil TYPE=\"submit\" NAME=\"koekken\"VALUE=\"Køkken\"></td>\n";
+
 		print "<td><INPUT $disabled $stil TYPE=\"submit\" NAME=\"udskriv\"VALUE=\"Udskriv\"></td>\n";
 		print "<td><INPUT $disabled $stil TYPE=\"submit\" NAME=\"skuffe\"VALUE=\"Skuffe\"></td>\n";
 	}  
@@ -568,6 +634,8 @@ function tastatur($kasse,$status) {
 	$vis_hurtigknap=$r['box12'];
 	$vis_indbetaling=$r['box14'];
 	$timeout=$r['box13']*1;
+	$r = db_fetch_array(db_select("select var_value from settings where var_name = 'card_enabled'",__FILE__ . " linje " . __LINE__));
+	$card_enabled=explode(chr(9),$r['var_value']);
 
 	$vis_gem=1;
 	if ($varenr_ny || $fokus=='modtaget' || $fokus=='modtaget2') $vis_gem=0;
@@ -583,7 +651,10 @@ function tastatur($kasse,$status) {
 		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"three\" VALUE=\"3\" OnClick=\"pos_ordre.$fokus.value += '3';pos_ordre.$fokus.focus();\"></TD>\n";
 		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"plus\"  VALUE=\"+\" OnClick=\"pos_ordre.$fokus.value += '+';pos_ordre.$fokus.focus();\"></TD>\n";
 		if ($vis_saet) print "<td><INPUT $disabled ".find_stil('knap',1,0.7)." TYPE=\"submit\" NAME=\"saet\"VALUE=\"Sæt\"></td>\n";
-		elseif ($db=='bizsys_48') print "<td><INPUT $disabled $stil TYPE=\"submit\" NAME=\"skuffe\"VALUE=\"Skuffe\"></td>\n";
+		elseif ($db=='bizsys_48') {
+            $txt = $buttonTextArr["draw"];
+            print "<td><INPUT $disabled $stil TYPE=\"submit\" NAME=\"skuffe\"VALUE=$txt></td>\n";
+        }
 	print "</tr>\n";
 		print "<TD></TD></TR><TR><TD></TD>\n";
 		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"four\"  VALUE=\"4\" OnClick=\"pos_ordre.$fokus.value += '4';pos_ordre.$fokus.focus();\"></TD>\n";
@@ -616,9 +687,12 @@ function tastatur($kasse,$status) {
 		print "<TR><TD></TD>\n";
 		if ($fokus=='varenr_ny') print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"varer\"VALUE=\"Varer\" OnClick=\"pos_ordre.$fokus.value += 'v';pos_ordre.$fokus.focus();\"></TD>\n";
 		elseif ($fokus=='antal_ny' || $fokus=='pris_ny') { #20130310 Tilføjet: || $fokus=='pris_ny' 
-			if ($fokus=='antal_ny') print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\"VALUE=\"Pris\" OnClick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
-			else print "<TD COLSPAN=\"1\"></TD>\n";
-			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"Rabat\" OnClick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
+			if ($fokus=='antal_ny') {
+                $txt = $buttonTextArr['price'];
+                print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\" VALUE=\"$txt\" OnClick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
+			} else print "<TD COLSPAN=\"1\"></TD>\n";
+			$txt = $buttonTextArr['discount'];
+			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"$txt\" OnClick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
 		} elseif ($fokus=='modtaget' && ($modtaget>=$sum || !$modtaget==0.00) && !$indbetaling && $betalingsbet) {
 			print "<TR><TD></TD><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"betaling\" VALUE=\"Konto\" OnClick=\"pos_ordre.$fokus.value += 'k';pos_ordre.$fokus.focus();\"></TD>\n";
 		} elseif ($fokus=='modtaget2' && $modtaget+$modtaget2>=$sum && !$indbetaling && $betalingsbet) {
@@ -640,7 +714,12 @@ function tastatur($kasse,$status) {
 			} else {
 				for($x=0;$x<$kortantal;$x++) {
 					($fokus=='modtaget2')?$tmp="betaling2":$tmp="betaling";
-					print "<TR><TD></TD><TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"$korttyper[$x]\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\"></TD></tr>\n";
+					if ($card_enabled[$x]) {
+						print "<TR><TD></TD><TD COLSPAN=\"2\">";
+						print "<INPUT TYPE=\"submit\" $stil2 NAME=$tmp VALUE=\"$korttyper[$x]\" ";
+						print "OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\">";
+						print "</TD></tr>\n";
+					}
 				}
 			}
 			if (!$indbetaling) {
@@ -658,7 +737,10 @@ function tastatur($kasse,$status) {
 #		$stil2="STYLE=\"width: 9.5em;height: 2em;font-size:150%;\"";
 		print "<TR><TD COLSPAN=\"6\"><br></TD></TR>\n";
 		print "<TR><TD><br></TD>\n";
-		print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"udskriv\"VALUE=\"Udskriv\"></TD>\n";
+    print "<TD COLSPAN=\"4\"><INPUT TYPE=\"submit\" $stil2 NAME=\"proforma\"VALUE=\"Proforma\"></TD>\n"; # LN 20190205
+ 		print "<TD COLSPAN=\"4\"><INPUT TYPE=\"submit\" $stil2 NAME=\"xRapport\"VALUE=\"X-Rapport\"></TD>\n"; # LN 20190205
+ 		print "<TD COLSPAN=\"4\"><INPUT TYPE=\"submit\" $stil2 NAME=\"xRapport\"VALUE=\"Z-Rapport\"></TD>\n"; # LN 20190305
+		print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"udskriv\"VALUE=\"Udskriv\"></TD>\n"; # LN 20190205
 		print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"ny\"VALUE=\"Ny kunde\"></TD></TR>\n";
 		print "<TD COLSPAN=\"6\"><br></TD></TR>\n";
 		print "<TD COLSPAN=\"6\"><br></TD></TR>\n";
@@ -666,6 +748,7 @@ function tastatur($kasse,$status) {
 		if ($id && $vis_saet) print "<TD COLSPAN=\"2\" align=\"center\"><a style=\"text-decoration: none\" href=udskriftsvalg.php?id=$id&valg=1&formular=3><INPUT TYPE=\"button\" $stil2 VALUE=\"Følgeseddel\"></a></TD>\n";
 		else print "<TD><br></TD>";
 		print "<TD COLSPAN=\"2\" align=\"center\"><INPUT TYPE=\"submit\" $stil2 NAME=\"krediter\"VALUE=\"Korrektion\"></TD>\n";
+		print "<TD COLSPAN=\"2\" align=\"center\"><INPUT TYPE=\"submit\" $stil2 NAME=\"return\"VALUE=\"Returnering\"></TD>\n"; # LN 20190205
 #		print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"ny\"VALUE=\"Ny kunde\"></TD>\n";
 		if ($timeout && !$bon) print "<meta http-equiv=\"refresh\" content=\"$timeout;URL=pos_ordre.php?id=0\">\n";
 	}

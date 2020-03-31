@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------includes/udskriv.php----lap 3.7.2----2018.04.18-------------------
+// -------includes/udskriv.php----lap 3.8.9----2020.01.13-------------------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,16 +23,20 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2018 saldi.dk aps
+// Copyright (c) 2003-2019 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2013.03.20 Tilføjet mulighed for fravalg af logo på udskrift. Søg "PDF-tekst"
 // 2013.12.02	Efter udskrivning af kreditorordre, åbnes ordre som debitorordre. Tilføjer $art. Søg $art.
 // 2013.12.10	Efter udskrivning, åbnes ordren 2. gang v. popup. Tilføjet "|| $popup", søg 20131210
 // 2014.06.13 Har sat gammel og ny kode sammen, så det virker til både saldi og stillads. Søg efter 'stillads' for indsat kode
 // 2016.11.25 PHR Indført html som formulargenerator som alternativ til postscript. Søg htmfp, .htm & weasyprint
-// 2017.03.24	PHR Blev smidt af efer udskriv som PDF grundet at de ikke mere kører i popup. Søg art='R'
+// 2017.03.24	PHR Blev smidt af efter udskriv som PDF grundet at det ikke mere kører i popup. Søg art='R'
 // 2018.04.18	PHR Tilføjet udskriv til='fil'
-
+// 2019.01.03 PHR	Tilføjet '.ps' 20190103
+// 2019.04.16 PHR - Added localPrint for printing through local webserver (raspberry) 
+// 2019.10.23 PHR - $exec_path now read from admin settings #20191023
+// 2019.11.05 PHR - Varius cleanup
+// 2002.01.13 PHR - Print from 'genfakturer' returned to includes/ordreliste.php which does not exist. 20200113
 
 @session_start();
 $s_id=session_id();
@@ -49,6 +53,7 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 
 if (!isset($exec_path)) $exec_path="/usr/bin";
+$localPrint=if_isset($_COOKIE['localPrint']);
 $udfil=$zx=NULL;
 
 $ps_fil=if_isset($_GET['ps_fil']);
@@ -62,6 +67,11 @@ $art=if_isset($_GET['art']);
 $ordreliste=if_isset($_GET['ordreliste']);
 $ordre_antal=if_isset($_GET['ordre_antal']);
 $returside=if_isset($_GET['returside']);
+
+if ($returside=='ordreliste.php') { #20200113
+	if ($art=='KO' || $art=='KK') $returside="../kreditor/ordreliste.php";
+	else $returside="../debitor/ordreliste.php";
+}
 
 if ($udskriv_til=='historik') {
 	historik($id,$ps_fil);
@@ -112,6 +122,11 @@ if (!$valg) {
 	} else $valg="pdf";
 }
 if ($valg) {
+	include("../includes/connect.php"); #20191023
+	$r=db_fetch_array(db_select("select var_value from settings where var_name='ps2pdf'",__FILE__ . " linje " . __LINE__));
+	if ($r['var_value']) $ps2pdf=$r['var_value'];
+	else $ps2pdf="$exec_path/ps2pdf";
+	include("../includes/online.php");
 	$log=fopen("../temp/$db/udskriv.log","a");
 	fwrite($log,__line__." Valg: $valg\n");
 	$qtxt="select box1,box2,box3 from grupper where art='PV'";
@@ -120,8 +135,8 @@ if ($valg) {
   if ($valg=="pdf" || $valg=="ip")  {
 #		print "<!--";
     if ($r['box2']) {
-	fwrite($log,__line__." system (\"$r[box2] ../temp/$ps_fil ../temp/$ps_fil.pdf\"\n");
-			system ("$r[box2] ../temp/$ps_fil ../temp/$ps_fil.pdf");
+	fwrite($log,__line__." system (\"$r[box2] ../temp/$ps_fil.ps ../temp/$ps_fil.pdf\"\n");
+			system ("$r[box2] ../temp/$ps_fil.ps ../temp/$ps_fil.pdf");
 		} elseif ($r['box3'] && $udskrift!='kontokort') { # Brug html
 		fwrite($log,__line__." unlink(\"../temp/".$ps_fil."_*.pdf\"\n");
 		if (file_exists("../temp/".$ps_fil."_*.pdf")) unlink("../temp/".$ps_fil."_*.pdf");
@@ -131,8 +146,8 @@ if ($valg) {
 		for ($i=0;$i<count($htmfil);$i++) {
 			if (filesize($htmfil[$i])) {
 				$pdf[$i]=str_replace("htm","pdf",$htmfil[$i]);
-				fwrite($log,__line__." $pdf[$i]=str_replace(\"htm\",\"pdf\",$htmfil[$i])\n");
-				fwrite($log,__line__." system (\"weasyprint -e UTF-8 $htmfil[$i] $pdf[$i]\")\n");
+				fwrite($log,__line__." $pdf[$i]=str_replace(\"htm\",\"pdf\",$htmfil[$i])\n"); #20190103
+				fwrite($log,__line__." system (\"weasyprint -e UTF-8 $htmfil[$i] $pdf[$i]\")\n"); #20190103
 				system ("weasyprint -e UTF-8 $htmfil[$i] $pdf[$i]");
 				($indfil)?$indfil.=" ".$pdf[$i]:$indfil=$pdf[$i];
 				fwrite($log,__line__." indfil $indfil\n");
@@ -157,6 +172,8 @@ if ($valg) {
 			}
 		}
 	} else { # Brug PostScript 
+		$ps_fil=str_replace("../temp/","",$ps_fil);
+		$ps_fil=str_replace("$db/$db","$db",$ps_fil);
 		if (file_exists("../temp/".$ps_fil."_*.pdf")) {
 			unlink("../temp/".$ps_fil."_*.pdf");
 			fwrite($log,__line__." unlink(\"../temp/".$ps_fil."_*.pdf\"\n");
@@ -170,8 +187,8 @@ if ($valg) {
 			if (filesize($psfil[$i])) {
 				$pdf[$i]=str_replace("ps","pdf",$psfil[$i]);
 				fwrite($log,__line__." $pdf[$i]=str_replace(\"ps\",\"pdf\",$psfil[$i])\n");
-				fwrite($log,__line__." system (\"ps2pdf  $psfil[$i] $pdf[$i]\")\n");
-				system ("ps2pdf $psfil[$i] $pdf[$i]");
+				fwrite($log,__line__." system (\"$ps2pdf  $psfil[$i] $pdf[$i]\")\n");
+				system ("$ps2pdf $psfil[$i] $pdf[$i]");
 				($indfil)?$indfil.=" ".$pdf[$i]:$indfil=$pdf[$i];
 				fwrite($log,__line__." indfil $indfil\n");
 			} 
@@ -229,15 +246,17 @@ echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
 #echo __line__."<br>";
 #exit;
 	if ($zx) { # Brug PostScript 
-#		$tmp = system ("ls");
-#		echo $tmp;
-			fwrite($log,__line__." system (\"$exec_path/ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf\")\n");
-			system ("$exec_path/ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf");
+		$tmp = system ("ls");
+		echo $tmp;
+			fwrite($log,__line__." system (\"$ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf\")\n");
+			system ("$ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf");
 		}
 #echo "$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil.ps<br>";
 #		system ("$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil.ps");
 #		print "-->";
+		
 		fwrite($log,__line__." if (file_exists(\"../temp/$ps_fil.pdf\")\n");
+		$ps_fil=str_replace("../temp/$db","",$ps_fil);
 		if (file_exists("../temp/$ps_fil.pdf")) {
 			if (strpos($ps_fil,'tilbud') && file_exists("../logolib/$db_id/tilbud_bg.pdf")) $bg_fil="../logolib/$db_id/tilbud_bg.pdf";
 			elseif (strpos($ps_fil,'ordre') && file_exists("../logolib/$db_id/ordrer_bg.pdf")) $bg_fil="../logolib/$db_id/ordrer_bg.pdf";
@@ -255,7 +274,35 @@ echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
 				fwrite($log,__line__." system  (\"mv $out ../temp/$ps_fil.pdf\")\n");
 			}
 			print "--> \n";
-			if ($valg=='ip') {
+			
+			if ($localPrint == 'on') {
+				$qtxt="select id,box1 from grupper where art='PV'";
+				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				if ($r['box1']=='on') { 
+					$filnavn="http://saldi.dk/kasse/".$_SERVER['REMOTE_ADDR'].".ip";
+					if ($fp=fopen($filnavn,'r')) {
+						$ip=trim(fgets($fp));
+						fclose ($fp);
+					} else $ip=NULL;
+				}
+			}
+			if ($localPrint == 'on' && $ip) {
+				$url="://".$_SERVER['SERVER_NAME'].=$_SERVER['PHP_SELF'];
+				$url=str_replace("/includes/udskriv.php","",$url);
+				if ($_SERVER['HTTPS']) $url="s".$url;
+				$url="http".$url;
+				if ($art=='PO') $returside=$url."/debitor/pos_ordre.php";
+				else $returside=$url."/debitor/ordre.php";
+				$url.="/temp/$ps_fil";
+				$printfil=end(explode('/', $ps_fil));
+				$url=str_replace($printfil,'',$url);
+				$qtxt="select firmanavn,fakturanr from ordrer where id=$id";
+				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				$firmanavn=htmlentities($r['firmanavn']);
+				$fakturanr=htmlentities($r['fakturanr']);
+				print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$ip/localprint.php?printfil=$printfil.pdf&url=$url&id=$id&returside=$returside&bruger_id=$bruger_id&firmanavn=$firmanavn&fakturanr=$fakturanr\">\n";
+				exit;
+			} elseif ($valg=='ip') {
 				print "<!--!";
 				system("lpr -P $ip ../temp/$ps_fil.pdf &");
 				print "--> \n";
@@ -268,6 +315,7 @@ echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
 #				print "<span>Højreklik og vælg 'Gem som'<a href='../temp/$ps_fil.pdf' download='$r[kundeordnr]_$r[firmanavn].pdf'>$r[kundeordnr]_$r[firmanavn].pdf</a></span>";
 				exit;
 			}
+echo __line__." $returside<br>";
 			print "<table width=100% height=100%><tbody>";
 			if ($returside) $href="\"$returside\" accesskey=\"L\"";
 			else $href="\"udskriv.php?valg=tilbage&id=$id&art=$art\" accesskey=\"L\"";
@@ -323,6 +371,9 @@ global $bruger_id;
 global $sprog_id;
 global $exec_path;
 
+	$r=db_fetch_array(db_select("select var_value from settings where var_name='ps2pdf'",__FILE__ . " linje " . __LINE__));
+	if ($r['var_value']) $ps2pdf=$r['var_value'];
+	else $ps2pdf="$exec_path/ps2pdf";
 
 	if (!file_exists("$filnavn")) {
 	print "<BODY onLoad=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
@@ -371,7 +422,7 @@ global $exec_path;
 	}
 	fclose($fp);
 	$pdfnavn=$ftpfilnavn.".pdf";
-	$kommando="cd \"../temp/$db\"\nrm \"$ftpfilnavn\"\nmv \"../$filnavn\" \"$ftpfilnavn\"\n$exec_path/ps2pdf \"$ftpfilnavn\"\n rm \"$ftpfilnavn\"\nmv \"$pdfnavn\" \"$ftpfilnavn\"\n$exec_path/ncftp ftp://".$box2.":".$box3."@".$box1." < ftpscript.$bruger_id > ftplog\nrm $ftpfilnavn\n";#rm ftpscript.$bruger_id";
+	$kommando="cd \"../temp/$db\"\nrm \"$ftpfilnavn\"\nmv \"../$filnavn\" \"$ftpfilnavn\"\n$ps2pdf \"$ftpfilnavn\"\n rm \"$ftpfilnavn\"\nmv \"$pdfnavn\" \"$ftpfilnavn\"\n$exec_path/ncftp ftp://".$box2.":".$box3."@".$box1." < ftpscript.$bruger_id > ftplog\nrm $ftpfilnavn\n";#rm ftpscript.$bruger_id";
 	system ($kommando);
 		$fp=fopen("../temp/$db/ftpscript.$bruger_id","w");
 		if ($fp) {

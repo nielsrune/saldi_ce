@@ -1,25 +1,32 @@
 <?php
-// ----------finans/pbsm602import.php------------patch 3.2.9-----2012.06.12-----------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ----------finans/pbsm602import.php------------patch 3.8.9-----2020.01.02-----------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
 // GNU General Public Licensen for flere detaljer.
 //
 // En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2012 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
+//
+// 20200102 PHR Instead of finding the latest invoice it now finds the oldest unpaid invoice. 20200102
 
 @session_start();
 $s_id=session_id();
@@ -201,7 +208,9 @@ function flyt_data($kladde_id, $filnavn, $bilag, $modkonto){
 		for ($x=1;$x<=$linjeantal;$x++) {
 			if ($skriv_linje[$x]==1) {
 #			$bilag++;
-				$r=db_fetch_array(db_select("select faktnr from openpost where amount = '$amount[$x]' and konto_nr = '$debitor[$x]' order by transdate desc",__FILE__ . " linje " . __LINE__));
+				$qtxt = "select faktnr from openpost where amount = '$amount[$x]' and konto_nr = '$debitor[$x]' and udlignet='0' ";
+				$qtxt.= "order by transdate limit 1"; #20200102
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$faktura=$r['faktnr'];
 				db_modify("insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,amount,kladde_id,faktura) values ('$bilag','$date[$x]','$beskrivelse[$x]','F','0','D','$debitor[$x]','$amount[$x]','$kladde_id','$faktura')",__FILE__ . " linje " . __LINE__);
 				if ($date[0]!=$date[$x]) {

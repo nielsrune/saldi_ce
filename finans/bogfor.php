@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------------finans/bogfor.php------ lap 3.7.0 -- 2017-05-16	 --
+// --------------------finans/bogfor.php------ lap 3.7.9 -- 2019-04-26 -----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller 
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk ApS
+// Copyright (c) 2003-2019 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20121122 - Åbne poster udlignes ikke mere automatisk hvis forskelligt projektnummer. Søg 20121122
 // 20130210 - Break ændret til break 1
@@ -40,6 +40,12 @@
 // 20141128 -	Fejl i kontrolfunktion minus ændret til plus.
 // 20150527	- Som ovenstående minus ændret til plus.
 // 20170516 - Linjer uden indhold i debet og kredit slettes fra kladde ved bøgføring. 20170516
+// 2019.01.16 MSC - Rettet topmenu design til og rettet isset fejl
+// 2019.02.01 MSC - Rettet topmenu design til og gjort bogføring mere overskueligt med ny style.
+// 2019.02.05 MSC - Rettet isset fejl
+// 2019.02.13 MSC - Rettet topmenu design til
+// 2019.03.21 PHR Added call to equalizeMatchingRecords (in 'genberegn.php') to matches open records.
+// 2019.04.26 PHR Added 'genberegn' below includes includes to ensure that values in kontoplan is up to date.
 
 @session_start();
 $s_id=session_id();
@@ -56,11 +62,13 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/genberegn.php");
 
-
+genberegn($regnaar);
 
 $funktion=if_isset($_GET['funktion']);
 $kladde_id=if_isset($_GET['kladde_id']);
 if (($_POST) && ($_POST['kladde_id'])) $kladde_id = $_POST['kladde_id'];
+
+if (!isset ($onclick)) $onclick = NULL;
 
 #if ($popup) $returside="../includes/luk.php";
 #else $returside="kassekladde.php?kladde_id=$kladde_id";
@@ -93,7 +101,21 @@ if ($funktion=='bogfor') {
 	$overskrift="Simuleret bogf&oslash;ring, kladde $kladde_id";
 	$href="<a href=$returside accesskey=L>";
 } else $href="<a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>";
-print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+if ($menu=='T') {
+	print "";
+} else {
+	print "<center><table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+}
+if ($menu=='T') {
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\"> 
+			<div class=\"headerbtnLft\"></div>
+			<span class=\"headerTxt\">$overskrift</span>";     
+	print "<div class=\"headerbtnRght\"></div>";       
+	print "</div><!-- end of header -->
+		<div class=\"maincontentLargeHolder\">\n";
+} else {
 print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$href Luk</a></td>";
@@ -101,6 +123,12 @@ print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" c
 print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"></a></td>";
 print "</tbody></table>";
 print "</td></tr>";
+}
+
+if (!isset ($_POST['bogfor'])) $_POST['bogfor'] = 0;
+if (!isset ($_POST['simuler'])) $_POST['simuler'] = 0;
+if (!isset ($_POST['luk'])) $_POST['luk'] = 0;
+if (!isset ($_POST['kladdenote'])) $_POST['kladdenote'] = NULL;
 
 if ($_POST['bogfor'] || $_POST['simuler']) {
 	$bogfor = trim($_POST['bogfor']);
@@ -135,17 +163,18 @@ if ($_POST['bogfor'] || $_POST['simuler']) {
 		include("../includes/online.php");
 	}
 	if ($bogfor) {
-		transaktion(begin);
+		transaktion('begin');
 		bogfor($kladde_id, $kladdenote,'');
 		db_modify("delete from tmpkassekl where kladde_id = $kladde_id",__FILE__ . " linje " . __LINE__);
-		transaktion(commit);
+		transaktion('commit');
 		genberegn($regnaar);
+		equalizeMatchingRecords();
 		if ($popup) print "<BODY onLoad=\"javascript=opener.location.reload();\">";
 	} elseif ($simuler) {
-		transaktion(begin);
+		transaktion('begin');
 		bogfor($kladde_id, $kladdenote,'on');
 #		db_modify("delete from tmpkassekl where kladde_id = $kladde_id",__FILE__ . " linje " . __LINE__);
-		transaktion(commit);
+		transaktion('commit');
 		if ($popup) {
 			print "<BODY onLoad=\"javascript=opener.location.reload();\">";
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
@@ -348,18 +377,18 @@ print "<form name=kassekladde action=bogfor.php?funktion=$funktion method=post>"
 if ($funktion=='bogfor') {
 	$query = db_select("select kladdenote from kladdeliste where id=$kladde_id",__FILE__ . " linje " . __LINE__);
 	$row = db_fetch_array($query);
-	print "<td align=center><b><font face=\"Helvetica, Arial, sans-serif\">Bem&aelig;rkning:&nbsp;</b><input type=text size=95 name=kladdenote value='$row[kladdenote]'></td>";
-	print "</tr><tr><td><hr></td></tr>";
+	print "<td align=center valign=\"top\" height=10px><b><font face=\"Helvetica, Arial, sans-serif\">Bem&aelig;rkning:&nbsp;</b><input type=text size=95 name=kladdenote value='$row[kladdenote]'></td>";
+	print "</tr><tr><td height=10px><hr></td></tr>";
 }
 $d_sum=0; $k_sum=0;
-print "<tr><td align = center><table border=1 cellspacing=0 cellpadding=0><tbody>";
-print "<tr><td colspan=\"6\"><b>Finansbev&aelig;gelser</b></td></tr>
-	<tr><td>$font Konto</td>
-	<td>$font Beskrivelse</td>
-	<td align=\"center\">$font Saldo</td>
-	<td align=\"center\">$font Debet</td>
-	<td align=\"center\">$font Kredit</td>
-	<td align=\"center\">$font Ny saldo</td></tr>";
+print "<tr><td align = center valign=\"top\"><table class='dataTable2' border=1 cellspacing=0 cellpadding=0><tbody>";
+print "<tr><td colspan=\"6\" class='tableHeader'><b>Finansbev&aelig;gelser</b></td></tr>
+	<tr><td class='tableText'>$font Konto</td>
+	<td class='tableText'>$font Beskrivelse</td>
+	<td align=\"center\" class='tableText'>$font Saldo</td>
+	<td align=\"center\" class='tableText'>$font Debet</td>
+	<td align=\"center\" class='tableText'>$font Kredit</td>
+	<td align=\"center\" class='tableText'>$font Ny saldo</td></tr>";
 for ($y=0; $y<$kontoantal; $y++) {
 	$d_sum=$d_sum+afrund($kontodebet[$y],2);
 	$k_sum=$k_sum+afrund($kontokredit[$y],2);
@@ -427,14 +456,18 @@ $c=dkdecimal($k_sum);
 #cho "($diff==abs($valutadiff))<br>";
 print "<tr><td><br></td><td>$font Kontrolsum</td><td align=right><br></td><td align=right>$font $b</td><td align=right>$font $c</td><td align=right><br></td></tr>";
 
+if (!isset ($b_sum[$x])) $b_sum[$x] = NULL;
+
 # 20131115 ->
 $x=0;
 $diffbilag=array();
+
 for ($y=1;$y<=$posteringer;$y++) {
-	if ($bilag[$y-1] && $bilag[$y]!=$bilag[$y-1]) {
+	if (isset ($bilag[$y-1]) && $bilag[$y]!=$bilag[$y-1]) {
 			if (afrund($b_sum[$x],2)) $diffbilag[$y-1]=afrund($b_sum[$x],2);
 			$x++;
 	}
+		if (!isset ($b_sum[$x])) $b_sum[$x] = 0;
 		if ($debet[$y]>0)$b_sum[$x]+=$dkkamount[$y];
 		if ($kredit[$y]>0)$b_sum[$x]-=$dkkamount[$y];
 }
@@ -499,13 +532,13 @@ if (!$fejl) { #20140228
 	}
 
 	if ($debitorantal) {
-		print "<tr><td colspan=\"6\"><br><b>Debitorbev&aelig;gelser</b></td></tr>";
-		print "<tr><td>$font Konto</td>
-			<td>$font Beskrivelse</td>
-			<td align=\"center\">$font Saldo</td>
-			<td align=\"center\">$font Debet</td>
-			<td align=\"center\">$font Kredit</td>
-			<td align=\"center\">$font Ny saldo</td></tr>";
+		print "<tr><td colspan=\"6\" class='tableHeader'><b>Debitorbev&aelig;gelser</b></td></tr>";
+		print "<tr><td class='tableText'>$font Konto</td>
+			<td class='tableText'>$font Beskrivelse</td>
+			<td align=\"center\" class='tableText'>$font Saldo</td>
+			<td align=\"center\" class='tableText'>$font Debet</td>
+			<td align=\"center\" class='tableText'>$font Kredit</td>
+			<td align=\"center\" class='tableText'>$font Ny saldo</td></tr>";
 		for ($x=1;$x<=$debitorantal;$x++) {
 			print "<tr><td>$debitor[$x]</td>
 				<td>$debitor_navn[$x]</td>
@@ -536,13 +569,13 @@ if (!$fejl) { #20140228
 		$kreditor_post[$x]=$kreditor_pre[$x]+$kreditordebet[$x]-$kreditorkredit[$x];
 	}
 	if ($kreditorantal) {
-		print "<tr><td colspan=\"6\"><br><b>Kreditorbev&aelig;gelser</b></td></tr>";
-		print "<tr><td>$font Konto</td>
-			<td>$font Beskrivelse</td>
-			<td align=\"center\">$font Saldo</td>
-			<td align=\"center\">$font Debet</td>
-			<td align=\"center\">$font Kredit</td>
-			<td align=\"center\">$font Ny saldo</td></tr>";
+		print "<tr><td colspan=\"6\" class='tableHeader'><b>Kreditorbev&aelig;gelser</b></td></tr>";
+		print "<tr><td class='tableText'>$font Konto</td>
+			<td class='tableText'>$font Beskrivelse</td>
+			<td align=\"center\" class='tableText'>$font Saldo</td>
+			<td align=\"center\" class='tableText'>$font Debet</td>
+			<td align=\"center\" class='tableText'>$font Kredit</td>
+			<td align=\"center\" class='tableText'>$font Ny saldo</td></tr>";
 		for ($x=1;$x<=$kreditorantal;$x++) {
 			print "<tr><td>$kreditor[$x]</td>
 				<td>$kreditor_navn[$x]</td>
@@ -577,9 +610,9 @@ if (!$fejl) { #20140228
 				}
 			} 
 		}
-		print "<tr><td colspan=6><br></td></tr><tr><td colspan=6 align=center><input type=submit $onclick accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"bogfor\"></td></tr>";
+		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button green medium' type=submit $onclick accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"bogfor\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"&nbsp;&nbsp;Luk&nbsp;&nbsp;\" name=\"luk\"></td></tr>";
 	} else {
-		print "<tr><td colspan=6><br></td></tr><tr><td colspan=6 align=center><input type=submit $onclick accesskey=\"b\" value=\"Simuleret bogføring\" name=\"simuler\"><input type=submit accesskey=\"l\" value=\"&nbsp;&nbsp;Luk&nbsp;&nbsp;\" name=\"luk\"></td></tr>";
+		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button white medium' type=submit $onclick accesskey=\"b\" value=\"Simuleret bogføring\" name=\"simuler\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"&nbsp;&nbsp;Luk&nbsp;&nbsp;\" name=\"luk\"></td></tr>";
 	}
 	print "</form>";
 }
@@ -594,6 +627,11 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 	$posteringer=0;
 	$transantal=0;
 	$transtjek=0;
+
+	if (!isset ($valutakurs)) $valutakurs = NULL;
+	if (!isset ($b_antal)) $b_antal = NULL;
+	if (!isset ($y)) $y = NULL;
+	if (!isset ($momsart)) $momsart = NULL;
 
 	($simuler)?$tabel='simulering':$tabel='transaktioner';
 	
@@ -636,10 +674,12 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 		$projekt[$y]=$row['projekt'];
 		$valuta[$y]=$row['valuta']*1;
 		$ordre_id[$y]=$row['ordre_id']*1;
+			if (!isset ($valutakurs[$y])) $valutakurs[$y] = NULL;
 		if (!$valutakurs[$y]) $valutakurs[$y]=100;
 		$transdate[$y]=$row['transdate'];
 		$forfaldsdate[$y]=$row['forfaldsdate'];
 		$betal_id[$y]=$row['betal_id'];
+			if (!isset ($bilag[$y-1])) $bilag[$y-1] = NULL;
 		if ($bilag[$y]==$bilag[$y-1]) {
 			if ($valuta[$y]!='DKK') {
 				$b_afd[$b_antal]=$afd[$y];
@@ -709,6 +749,8 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 		$logtime=date("H:i");
 		list ($x, $month, $x)=explode('-', $transdate[$y]);
 		if (!$afd[$y]){$afd[$y]=0;}
+			if (!isset ($d_momsart[$y])) $d_momsart[$y] = NULL;
+			if (!isset ($k_momsart[$y])) $k_momsart[$y] = NULL;
 		if ((!$momsfri[$y])&&($debet[$y]>0)&&($d_amount[$y]>0)&&(substr($momsart,0,1)!='E')&&(substr($momsart,0,1)!='Y')) list ($d_amount[$y], $d_moms[$y], $d_momskto[$y], $d_modkto[$y])=momsberegning($debet[$y], $d_amount[$y], $d_momsart[$y], $k_momsart[$y]);
 		if ((!$momsfri[$y])&&($kredit[$y]>0)&&($k_amount[$y]>0)&&(substr($momsart,0,1)!='E')&&(substr($momsart,0,1)!='Y')) list ($k_amount[$y], $k_moms[$y], $k_momskto[$y], $k_modkto[$y])=momsberegning($kredit[$y], $k_amount[$y], $k_momsart[$y], $d_momsart[$y]);
 		} elseif (!$row['debet'] && !$row['kredit'] && $row['id']) { #20170516
@@ -775,8 +817,8 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 				$transtjek++;
 				$query = db_select("select id, saldo from kontoplan where kontonr='$debet[$y]' and regnskabsaar=$regnaar",__FILE__ . " linje " . __LINE__);
 				$row= db_fetch_array($query);
-				$kasklid[$transtjek]=$row[id];
-				$kasklmonth[$transtjek]=$row[saldo];
+				$kasklid[$transtjek]=$row['id'];
+				$kasklmonth[$transtjek]=$row['saldo'];
 				$transamount[$transtjek]=$d_amount[$y];
 			} else print "<tr><td>Der er sket en fejl ved bogf&oslash;ring af bilag: $bilag[$y], debetkonto: $debet[$y]!</td></tr>";
 		}
@@ -887,7 +929,7 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 			for ($x=1; $x<=$transtjek; $x++) {
 				$query = db_select("select saldo from kontoplan where id='$kasklid[$x]'",__FILE__ . " linje " . __LINE__);
 				$row= db_fetch_array($query);
-				$temp=$row[saldo];
+				$temp=$row['saldo'];
 				if (!$temp) {$temp=0;}
 				$transamount[$x]=($temp+$transamount[$x]);
 				db_modify("update kontoplan set saldo = $transamount[$x] where id = '$kasklid[$x]'",__FILE__ . " linje " . __LINE__);

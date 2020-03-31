@@ -1,6 +1,5 @@
-Saldi - A Danish Financial Accounting System
 Saldi - et frit, dansk økonomisystem
-Copyright (C) 2003-2017 saldi.dk aps
+Copyright (C) 2003-2020 saldi.dk aps
 
 Dette program er frit software; du kan videredistribuere og/eller ændre 
 det under vilkårene i GNU General Public License, som de er 
@@ -8,7 +7,7 @@ offentliggjort af Free Software Foundation; enten i licensens version 2
 eller (efter dit valg) enhver senere version, dog under iagttagelse af følgende:
 
 Programmet må ikke uden forudgående skriftlig aftale anvendes
-i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+i konkurrence med Saldi.dk ApS eller anden rettighedshaver til programmet.
 
 Dette program er distribueret med håbet om, at det vil være brugbart, 
 men UDEN NOGEN GARANTI; uden selv den underforståede garanti for 

@@ -24,11 +24,9 @@
 //	2014.03.15 Indsat ,100 (procent) før ,'DO' i opret_ordrelinje grundet ændring af funktion
 //	2014.04.26 Indsat ,$vare_id før ,$r['varenr'] i opret_ordrelinje grundet ændring af funktion
 //	2015.08.30 Konto oprettes kun hvis den ikke allerede eksisterer. Søg efter $konto_id
-// 	2016.06.01 Tilrettet til ny quickpayportal.
 
 @session_start();
 $s_id=session_id();
-$webservice='on';
 
 include("../includes/connect.php");
 include("../includes/std_func.php");
@@ -79,8 +77,8 @@ if ($tilmeld=(if_isset($_POST['tilmeld']))) {
 	$alert=tjek($metode,$belob,$bank_navn,$bank_reg,$bank_konto,$kontakt,$cvrnr,$firmanavn,$addr1,$postnr,$bynavn,$email,$tlf);
 	if ($alert=='OK') {
 		$konto_id=NULL;
-		if ($cvrnr != 'daaewd') {
-			if ($cvrnr && $r=db_fetch_array(db_select("select * from adresser where art='D'  and cvrnr !='' and cvrnr ='$cvrnr'",__FILE__ . " linje " . __LINE__))) {
+		if ($cvrnr) {
+			if ($r=db_fetch_array(db_select("select * from adresser where art='D' and cvrnr ='$cvrnr'",__FILE__ . " linje " . __LINE__))) {
 				$konto_id=$r['id'];
 				$kontonr=$r['kontonr'];
 			} elseif ($r=db_fetch_array(db_select("select * from adresser where art='D' and tlf='$tlf' and addr1='$addr1' and postnr='$postnr'",__FILE__ . " linje " . __LINE__))) {
@@ -161,7 +159,7 @@ if ($tilmeld=(if_isset($_POST['tilmeld']))) {
 			$txt="Tak for din tilmelding";
 			print "<BODY onLoad=\"javascript:alert('$txt')\">";
 		} else {
-			quickpay($regnskab,$ordrenr,$ordre_id,$amount,$kontakt,$cvrnr,$firmanavn,$addr1,$postnr,$bynavn,$email,$tlf,$korttxt);
+			kortbetaling($regnskab,$ordrenr,$ordre_id,$amount,$kontakt,$cvrnr,$firmanavn,$addr1,$postnr,$bynavn,$email,$tlf,$korttxt);
 		}
 	} else {
 		print "<BODY onLoad=\"javascript:alert('$alert')\">";
@@ -193,14 +191,7 @@ if (!$alert) {
 		$belob=dkdecimal($r['pris']);
 	}
 	
-	if ($firmanavn && !$kontakt) {
-		$kontakt=$firmanavn;
-		$firmanavn='';
-	}
-	
 	$x=0;
-	$vare_id=array();
-	$beskrivelse=array();
 	$qtxt="select id,beskrivelse from varer where publiceret='on' and lukket !='on' order by beskrivelse";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
@@ -294,7 +285,6 @@ function kortbetaling($regnskab,$ordernumber,$ordre_id,$sum,$kontakt,$cvrnr,$fir
 	$r = db_fetch_array(db_select("select * from grupper where art = 'DIV' and kodenr = '5'",__FILE__ . " linje " . __LINE__));
 	$merchant=trim($r['box4']);
 	$md5secret=trim($r['box5']);
-	$agreement_id=trim($r['box9']);
 
 	$protocol='6';
 	$msgtype='authorize';
@@ -344,8 +334,7 @@ function kortbetaling($regnskab,$ordernumber,$ordre_id,$sum,$kontakt,$cvrnr,$fir
 	<input type=\"hidden\" name=\"continueurl\" value=\"$continueurl\" />
 	<input type=\"hidden\" name=\"cancelurl\" value=\"$cancelurl\" />
 	<input type=\"hidden\" name=\"callbackurl\" value=\"$callbackurl\" />
-	<input type=\"hidden\" name=\"md5check\" value=\"$md5check\" />
-	<input type=\"hidden\" name=\"agreement_id\" value=\"$agreement_id\" />";
+	<input type=\"hidden\" name=\"md5check\" value=\"$md5check\" />";
 	
 	$sum=0;
 	print "<tr><td colspan=\"2\" style=\"text-align:center;\"><b>Betalingsinformation</b></td></tr>";
@@ -390,158 +379,4 @@ function kortbetaling($regnskab,$ordernumber,$ordre_id,$sum,$kontakt,$cvrnr,$fir
 #	<input type=\"submit\" value=\"Open Quickpay payment window\" />";
 exit;
 }
-function quickpay($regnskab,$ordernumber,$ordre_id,$sum,$kontakt,$cvrnr,$firmanavn,$addr1,$postnr,$bynavn,$email,$tlf,$korttxt) {
-?>
-<script LANGUAGE="JavaScript" SRC="overlib.js"></script>
-<script Language="JavaScript">
-	function Form_Validator(theForm) {
-		if (!theForm.betingelser.checked) {
-			alert("Betingelser skal accepteres");
-			theForm.betingelser.focus();
-			return (false);
-		}
-		return (true);
-	}
-</script>
-<?php
-
-	while (strlen($ordernumber)<4) $ordernumber='0'.$ordernumber;  
-
-	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
-	$eget_firmanavn=$r['firmanavn'];
-	$egen_addr1=$r['addr1'];
-	$eget_postnr=$r['postnr'];
-	$eget_bynavn=$r['bynavn'];
-	$egen_tlf=$r['tlf'];
-	$egen_email=$r['email'];
-	$eget_cvrnr=$r['cvrnr'];
-
-	$x=0;
-	$q=db_select("select * from ordrelinjer where ordre_id='$ordre_id'",__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)){
-		$posnr[$x]==$r['posnr'];
-		$vare_id[$x]=$r['vare_id'];
-		$antal[$x]=$r['antal'];
-		$beskrivelse[$x]=$r['beskrivelse'];
-		$pris[$x]=$r['pris'];
-		$x++;
-	}
-	$r = db_fetch_array(db_select("select * from grupper where art = 'DIV' and kodenr = '5'",__FILE__ . " linje " . __LINE__));
-	$merchant=trim($r['box4']);
-	$md5secret=trim($r['box5']);
-	$agreement_id=trim($r['box9']);
-
-	$protocol='6';
-	$msgtype='authorize';
-#	$merchant='11637744';#89898978';
-	$language='da';
-#	$ordernumber = $arr_klub."-".$ordrenr;
-	$amount=round($sum*100,2);
-#cho "amount $amount<br>";
-	$currency='DKK';
-	$filnavn="$merchant.$ordernumber"."_ok.php";
-	$fp=fopen("$filnavn","w");
-	fwrite($fp, "<?php\n");
-	fwrite($fp, "@session_start();\n");
-	fwrite($fp, "$"."s_id=session_id();\n");
-	fwrite($fp, "include(\"../includes/connect.php\");\n");
-	fwrite($fp, "include(\"../includes/std_func.php\");\n");
-	fwrite($fp, "include(\"bet_func.php\");\n");
-	fwrite($fp, "$"."svar=logon("."$"."s_id,'".$regnskab."',"."$"."brugernavn,"."$"."password,"."$"."sqhost,"."$"."squser,"."$"."sqpass,"."$"."sqdb);\n");
-	$txt="Betalt med kreditkort";
-	$txt=db_escape_string($txt);
-	fwrite($fp, "db_modify(".'"'."update ordrelinjer set beskrivelse = '".$txt."' where vare_id = '0' and ordre_id = '".$ordre_id."' and beskrivelse = '$korttxt'\",__FILE__ . \" linje \" . __LINE__);\n");
-	fwrite($fp, "print \"<meta http-equiv=\\\"refresh\\\" content=\\\"0;URL=tak.php?id=$merchant.$ordernumber\\\">\";\n");
-	fwrite($fp, "?>\n");
-	fclose($fp);
-	if ($_SERVER['HTTPS']) $ht_prot='https';
-	else $ht_prot='http';
-	list($tmp,$mappe,$tmp)=explode("/",$_SERVER['PHP_SELF']);
-	$continueurl="$ht_prot://".$_SERVER['SERVER_NAME']."/$mappe/api/$filnavn";
-#cho "$continueurl<br>";
-	$cancelurl="$ht_prot://".$_SERVER['SERVER_NAME']."/$mappe/api/fejl.htm";
-	$callbackurl="$ht_prot://".$_SERVER['SERVER_NAME']."/$mappe/api/callback.php"; //see http://quickpay.dk/clients/callback-quickpay.php.txt
-	
-
-	$params = array(
-		"agreement_id" => $agreement_id,
-		"amount"       => $amount,
-		"callbackurl" => $callbackurl,
-		"cancelurl"   => $cancelurl,
-		"continueurl" => $continueurl,
-		"autocapture" => "1",
-		"autofee"     => "0",
-		"currency"     => $currency,
-		"merchant_id"  => $merchant,
-		"order_id"     => $ordernumber,
-		"payment_methods" => "creditcard",
-		"version"      => "v10"
-	);
-	$params["checksum"] = sign($params,$md5secret);
-
-	print "<table border=\"0\"><tbody>
-	<form action=\"https://payment.quickpay.net/framed/\" onsubmit=\"return Form_Validator(this)\" method=\"post\">
-	<input type=\"hidden\" name=\"version\" value=\"v10\" />
-	<input type=\"hidden\" name=\"merchant_id\" value=\"$params[merchant_id]\" />
-	<input type=\"hidden\" name=\"agreement_id\" value=\"$params[agreement_id]\" />
-	<input type=\"hidden\" name=\"order_id\" value=\"$params[order_id]\" />
-	<input type=\"hidden\" name=\"amount\" value=\"$params[amount]\" />
-	<input type=\"hidden\" name=\"currency\" value=\"$params[currency]\" />
-	<input type=\"hidden\" name=\"continueurl\" value=\"$params[continueurl]\" />
-	<input type=\"hidden\" name=\"cancelurl\" value=\"$params[cancelurl]\" />
-	<input type=\"hidden\" name=\"callbackurl\" value=\"$params[callbackurl]\" />
-	<input type=\"hidden\" name=\"autofee\" value=\"$params[autofee]\" />
-	<input type=\"hidden\" name=\"autocapture\" value=\"$params[autocapture]\" />
-	<input type=\"hidden\" name=\"payment_methods\" value=\"$params[payment_methods]\" />
-	<input type=\"hidden\" name=\"checksum\" value=\"$params[checksum]\" />";
-	
-	$sum=0;
-	print "<tr><td colspan=\"2\" style=\"text-align:center;\"><b>Betalingsinformation</b></td></tr>";
-	print "<tr><td colspan=\"2\"><hr></td></tr>";
-	print "<tr><td style=\"width:200px\"><b>Modtager<b></td><td style=\"width:200px\"></td></tr>";
-	print "<tr><td style=\"width:200px\">Navn</td><td style=\"width:200px\">$eget_firmanavn</td></tr>";
-	print "<tr><td style=\"width:200px\">Adresse</td><td style=\"width:200px\">$egen_addr1</td></tr>";
-	print "<tr><td style=\"width:200px\"></td><td style=\"width:200px\">$eget_postnr $eget_bynavn</td></tr>";
-	#cho "ECV $eget_cvrnr<br>";
-	if ($eget_cvrnr) print "<tr><td style=\"width:200px;\">CVR:&nbsp;</td><td style=\"width:200px\">$eget_cvrnr</td></tr>";
-	print "<tr><td colspan=\"2\"><hr></td></tr>";
-	print "<tr><td style=\"width:200px\"><b>Afsender<b></td><td style=\"width:200px\"></td></tr>";
-	IF ($medlemsnr) print "<tr><td style=\"width:200px\">Medlemsnummer</td><td style=\"width:200px\">$medlemsnr</td></tr>";
-	print "<tr><td>Navn</td><td>$firmanavn</td></tr>";
-	print "<tr><td>adresse</td><td>$addr1</td></tr>";
-	print "<tr><td></td><td>$postnr $bynavn</td></tr>";
-	print "<tr><td colspan=\"2\"><hr></td></tr>";
-	print "<tr><td colspan=\"2\"><table><tbody>";
-	print "<tr><td style=\"width:200px\"><b>Bestilt</b></td><td style=\"width:65px\" align=\"right\"><b>Antal</b></td><td style=\"width:65px\" align=\"right\"><b>Pris</b></td><td style=\"width:65px\" align=\"right\"><b>I alt</b></td></tr>";
-	$y=count($vare_id);
-	for($x=0;$x<$y;$x++) {
-		if ($antal[$x]) {
-			$dkantal=number_format($antal[$x],2,',','.');
-			$dkantal=str_replace(",00","",$dkantal);
-			print "<tr><td align=\"left\">$beskrivelse[$x]</td>
-			<td align=\"right\">$dkantal</td>
-			<td align=\"right\">".number_format($pris[$x],2,',','.')."</td>
-			<td align=\"right\">".number_format($pris[$x]*$antal[$x],2,',','.')."</td></tr>";
-		}	
-		$sum+=$pris[$x]*$antal[$x];
-	}
-	print "<tr><td colspan=\"4\"><hr></td></tr>";
-	print "<tr><td colspan=\"3\" align=\"left\"><b>I alt til betaling</b></td><td align=\"right\"><b>".number_format($sum,2,',','.')."</b></td></tr>";
-	print "</tbody></table></td></tr>";
-	$spantekst="<big>Klik her for at l&aelig;se handelsbetingelserne.</big>";
-	print "<tr><td>Accepterer <span onmouseover=\"return overlib('$spantekst', WIDTH=800);\" onmouseout=\"return nd();\"><a onMouseOver=\"this.style.cursor = 'pointer'\" onClick=\"javascript:betingelser=window.open('betingelser.html','betingelser','left=10,top=10,width=400,height=400,scrollbars=1,resizable=1');betingelser.focus();\"><u>betingelser</u></a></span></td>\n";
-	print "<td colspan= \"1\" align=\"right\"><input type=\"checkbox\" name=\"betingelser\" $betingelser></td></tr>";
-	print "<tr><td colspan=\"2\"><input style=\"width:100%\" type=\"submit\" value=\"Gå til betaling\" /><td></tr></form>";
-	print "<form action=\"kortbetaling.php?regnskab=$regnskab&ordre_id=$ordre_id&ordernumber=$ordernumber\" method=\"post\">";#
-	print "<tr><td colspan=\"2\"><input style=\"width:100%\" type=\"submit\" value=\"Fortryd\" /><td></tr></form>";
-	print "</tbody></table>";
-#	<input type=\"submit\" value=\"Open Quickpay payment window\" />";
-exit;
-}
-function sign($params, $api_key) {
-	ksort($params);
-	$base = implode(" ", $params);
-  return hash_hmac("sha256", $base, $api_key);
-}
-
 ?>

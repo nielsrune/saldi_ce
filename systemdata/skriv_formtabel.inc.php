@@ -1,15 +1,20 @@
 <?php
-// ------ systemdata/syssetup_skriv_formtabel.php -- lap 3.5.6 -- 2015-04-24 --
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ------ systemdata/syssetup_skriv_formtabel.php -- lap 3.8.9 -- 2020-03-08 --
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
 // Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -18,32 +23,34 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// // Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk ApS
 // ----------------------------------------------------------------------
+//
+// 20181102 PHR Oprydning, udefinerede variabler.
+// 20190221 MSC - Rettet isset fejl
+// 20200308 PHR - Added $stockIO
 
 function skriv_formtabel($a,$x,$y,$art,$id,$k,$kodenr,$beskrivelse,$box1,$b1,$box2,$b2,$box3,$b3,$box4,$b4,$box5,$b5,$box6,$b6,$box7,$b7,$box8,$b8,$box9,$b9,$box10,$b10,$box11,$b11,$box12,$b12,$box13,$b13,$box14,$b14) {
-#function skriv_formtabel($a,$x,$y,$art,$id,$k,$kodenr,$beskrivelse,$box1,$b1,$box2,$b2,$box3,$b3,$box4,$b4,$box5,$b5,$box6,$b6,$box7,$b7,$box8,$b8,$box9,$b9,$box10,$b10,$box11="-",$b11=2,$box12="-",$b12=2,$box13="-",$b13=2,$box14="-",$b14=2) {
-#echo "$a,$x,$y,$art,$id,$k,$kodenr,$beskrivelse,1:$box1,$b1,2:$box2,$b2,3:$box3,$b3,4:$box4,$b4,5:$box5,$b5,6:$box6,$b6,7:$box7,$b7,8:$box8,$b8,9:$box9,$b9,10:$box10,$b10,11:$box11,$b11,12:$box12,$b12,13:$box13,$b13,14:$box14,$b14<br>";
-global $valg;
-global $charset;
-global $feltbredde;
+
+global $charset,$feltbredde,$stockIO,$valg;
+
+if (!isset ($b)) $b = null;
 
 	for ($i=1; $i<=$x; $i++) {
 		if (!isset($art[$i])) $art[$i]=NULL; 
 		if ($art[$i]=='MR') $momsrapport=$i;
-		if (($art[$i]=='SM' || $art[$i]=='KM' || $art[$i]=='YM' || $art[$i]=='EM' || $art[$i]=='VK') && $box2!='-') $box2[$i]=dkdecimal($box2[$i]);
-		if ($art[$i]=='DG' && isset($box6[$i])) $box6[$i]=dkdecimal($box6[$i]);
-		if ($art[$i]=='DG' && isset($box7[$i])) $box7[$i]=dkdecimal($box7[$i]);
-		if ($art[$i]=='VK' && isset($box3[$i])) $box3[$i]=dkdato($box3[$i]);
+		if (($art[$i]=='SM' || $art[$i]=='KM' || $art[$i]=='YM' || $art[$i]=='EM' || $art[$i]=='VK') && $box2!='-') $box2[$i]=dkdecimal($box2[$i],2);
+		if ($art[$i]=='DG' && isset($box6[$i])) $box6[$i]=dkdecimal($box6[$i],2);
+		if ($art[$i]=='DG' && isset($box7[$i])) $box7[$i]=dkdecimal($box7[$i],2);
 		if ($art[$i]=='VPG') {
-			if ($box1[$i]) $box1[$i]=dkdecimal($box1[$i]);
-			if ($box2[$i]) $box2[$i]=dkdecimal($box2[$i]);
-			if ($box3[$i]) $box3[$i]=dkdecimal($box3[$i]);
-			if ($box4[$i]) $box4[$i]=dkdecimal($box4[$i]);
+			if (isset($box1[$i]) && $box1[$i]) $box1[$i]=dkdecimal($box1[$i],2);
+			if (isset($box2[$i]) && $box2[$i]) $box2[$i]=dkdecimal($box2[$i],2);
+			if (isset($box3[$i]) && $box3[$i]) $box3[$i]=dkdecimal($box3[$i],2);
+			if (isset($box4[$i]) && $box4[$i]) $box4[$i]=dkdecimal($box4[$i],2);
 		}
 		if ($art[$i]=='VTG') {
-			if ($box1[$i]) $box1[$i]=dkdecimal($box1[$i]);
-			if ($box2[$i]) $box2[$i]=dkdecimal($box2[$i]);
+			if ($box1[$i]) $box1[$i]=dkdecimal($box1[$i],2);
+			if ($box2[$i]) $box2[$i]=dkdecimal($box2[$i],2);
 			if ($box3[$i]) $box3[$i]=dkdato($box3[$i]);
 			if ($box4[$i]) $box4[$i]=dkdato($box4[$i]);
 		}
@@ -101,7 +108,7 @@ global $feltbredde;
 			print "<input type = \"hidden\" name=\"id[$i]\" value=\"$id[$i]\"><input type = \"hidden\" name=\"art[$i]\" value=\"$art[$i]\"><input type = \"hidden\" name=\"kode[$i]\" value=\"$k\">";
 			if (($box3!="-") &&($b3!="checkbox")){
 				($art[$i]=='DG' || $art[$i]=='KG')?$readonly='readonly="readonly"':$readonly=NULL;
-				print "<td title=\"".titletxt($art[$y],'box3')."\"><input class=\"inputbox\" $readonly type=\"text\" style=\"text-align:right\" size=\"$b3\" name=\"box3[$i]\" value=\"$box3[$i]\"></td>";
+				print "<td title=\"".titletxt($art[$i],'box3')."\"><input class=\"inputbox\" $readonly type=\"text\" style=\"text-align:right\" size=\"$b3\" name=\"box3[$i]\" value=\"$box3[$i]\"></td>";
 			} elseif($b3=="checkbox"){
 				if (strstr($box3[$i],'on')){print "<td><input class=\"inputbox\" type=\"checkbox\" name=\"box3[$i]\" checked></td>";}
 				else {print "<td><input class=\"inputbox\" type=\"checkbox\" name=\"box3[$i]\"></td>";}
@@ -166,6 +173,7 @@ global $feltbredde;
 	}
 	if (($k!='R')||(!$momsrapport)) {
 		$y++;
+		if (!isset($art[$y])) $art[$y]=NULL; 
 		print "<tr>";
 		print "<td>$k</td>";			
 		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:$size\" name=\"kodenr[$y]\"></td>";

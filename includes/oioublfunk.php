@@ -1,5 +1,5 @@
 <?php
-// -------includes/oioublfunk.php-----patch 3.6.3-----2016-02-08--------
+// -------includes/oioublfunk.php-----patch 3.7.6-----2019-02-04--------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -18,7 +18,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2016 DANOSOFT ApS
+// Copyright (c) 2003-2019 DANOSOFT ApS
 // ----------------------------------------------------------------------
 //
 // 20140206 Afrundingsfejl,saldi_390 ordre id 16090 differ 1 øre på linjesum. 
@@ -29,6 +29,7 @@
 // 20150825 - Forkert tjeksum v. kreditnota og fortegn blev ikke sat på momsberegning.
 // 20150922 - Div elimineringer af fejl og kommentarer medtages nu til kr. 0,00
 // 20160208 - PHR Ordredato blev skrevet som fakturadato Søn 20160208
+// 20190204	- PHR lidt ændringer i forhold til kommentarer. 20190204 
 
 $oioxmlubl="OIOUBL";
 
@@ -69,7 +70,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		$bynavn=utf8_encode($r_faktura['bynavn']);
 		$land=utf8_encode($r_faktura['land']);
 		$kontakt=utf8_encode($r_faktura['kontakt']);
-		$bank_navn=utf8_encode($r_faktura['bank_navn']);
+#		$bank_navn=utf8_encode($r_faktura['bank_navn']);
 		$kundeordnr=utf8_encode($r_faktura['kundeordnr']);
 		$cvrnr=utf8_encode($r_faktura['cvrnr']);
 		$tlf=utf8_encode($r_faktura['tlf']);
@@ -83,7 +84,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		$bynavn=$r_faktura['bynavn'];
 		$land=$r_faktura['land'];
 		$kontakt=$r_faktura['kontakt'];
-		$bank_navn=$r_faktura['bank_navn'];
+#		$bank_navn=$r_faktura['bank_navn'];
 		$kundeordnr=$r_faktura['kundeordnr'];
 		$cvrnr=$r_faktura['cvrnr'];
 		$tlf=$r_faktura['tlf'];
@@ -97,7 +98,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$bynavn=htmlspecialchars($bynavn, ENT_QUOTES);
 	$land=htmlspecialchars($land, ENT_QUOTES);
 	$kontakt=htmlspecialchars($kontakt, ENT_QUOTES);
-	$bank_navn=htmlspecialchars($bank_navn, ENT_QUOTES);
+#	$bank_navn=htmlspecialchars($bank_navn, ENT_QUOTES);
 	$kundeordnr=htmlspecialchars($kundeordnr, ENT_QUOTES);
 	$cvrnr=htmlspecialchars(str_replace(" ","",$cvrnr), ENT_QUOTES);
 	$tlf=htmlspecialchars($tlf, ENT_QUOTES);
@@ -318,15 +319,19 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		$beskrivelse=htmlspecialchars(strip_tags($beskrivelse), ENT_QUOTES);
 		$pris=$r_linje['pris']*1;
 		$antal=$r_linje['antal'];
-		if(!$antal) { #20150922
-			$pris=0;
-			$antal=1;
-		}	
+#		if(!$antal) { #20150922 removed 20190204
+#			$pris=0;
+#			$antal=1;
+#		}	
 		$momsfri=$r_linje['momsfri'];
 		$varemomssats=$r_linje['momssats']*1;
 		if (!$momsfri && !$varemomssats) $varemomssats=$l_momssats;
 		if ($varemomssats > $l_momssats) $varemomssats=$l_momssats;
-		if (!$varenr) $varenr='.'; #phr 20080803 + 20150922
+		if (!$varenr) { #20190204 Put in 'tuborgs' and added $antal & $pris
+			$varenr='.'; #phr 20080803 + 20150922
+			$antal=1;
+			$pris=0.00;
+		}
 		if ($r_linje['procent']) $pris*=$r_linje['procent']/100; #20150525
 		$pris=$pris-($r_linje['rabat']*$pris)/100; #20140206 + næste 2 linjer
 		$linjepris=afrund($r_linje['antal']*$pris,2);
@@ -361,8 +366,14 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		$l_retur.="</cac:TaxTotal>\n";
 		$l_retur.="<cac:Item>\n";
 		$l_retur.="<cbc:Description>".$beskrivelse."</cbc:Description>\n";
-		$tmp=substr(utf8_decode($beskrivelse),0,40);
+		$tmp=$beskrivelse;
+		while (strlen($tmp)>40) {
+			$tmp=htmlspecialchars_decode($tmp);
+			$tmp=substr($tmp,0,strlen($tmp)-1);
+			$tmp=substr(utf8_decode($tmp),0,40);
 		$tmp=utf8_encode($tmp);
+			$tmp=htmlspecialchars($tmp);
+		}
 		$l_retur.="<cbc:Name>".$tmp."</cbc:Name>\n";
 #		$l_retur.="<cbc:Name>".substr($beskrivelse,0,15)."</cbc:Name>\n";
 		$l_retur.="<cac:SellersItemIdentification>\n";
@@ -377,7 +388,6 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		$l_retur.="</cac:".$l_doctype."Line>\n";
 	}
 	if ($tjeksum!=$l_sumbeloeb) {
-	echo "$tjeksum!=$l_sumbeloeb"; 
 		$l_retur.="<cac:".$l_doctype."Line>\n";
 		$tmp=$posnr+1; 
 		$l_retur.="<cbc:ID>".$tmp."</cbc:ID>\n";

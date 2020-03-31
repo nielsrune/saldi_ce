@@ -25,6 +25,8 @@
 // 20150327 CA  Dansk valutakode ændret DKR -> DKK                søg 20150327d
 // 20150327 CA  Valutakoder opdateret fra ISO 4217 samt tilføjet XBT Bitcoin søg 20150327v
 // 20160116	PHR	Kursgevinst / tab bogføres ved kursændringer og kursændringer blokeres hvis der er bogført efter anført dato søg 20160116
+// 2019.02.21 MSC - Rettet topmenu design
+// 2019.02.25 MSC - Rettet topmenu design
 
 @session_start();
 $s_id=session_id();
@@ -48,8 +50,8 @@ if ($menu=='T') {  # 20150313 start
         print "<div id=\"leftmenuholder\">";
         include_once 'left_menu.php';
         print "</div><!-- end of leftmenuholder -->\n";
-        print "<div class=\"maincontent\">\n";
-        print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>";
+		print "<div class=\"maincontentLargeHolder\">\n";
+        print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable2\"><tbody>";
 } else {
         include("top.php");
         print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
@@ -70,7 +72,7 @@ if (isset($_POST['submit'])) {
 	$beskrivelse=addslashes(if_isset($_POST['beskrivelse']));
 	$difkto=if_isset($_POST['difkto'])*1;
 	$ny_valdate=usdate($dato);
-	$ny_kurs=usdecimal($kurs);
+	$ny_kurs=usdecimal($kurs,2);
 
 	$r=db_fetch_array(db_select("select max(transdate) as transdate from transaktioner where valuta = '$kodenr'",__FILE__ . " linje " . __LINE__));
 	$transdate=$r['transdate'];
@@ -78,8 +80,8 @@ if (isset($_POST['submit'])) {
 		print "<BODY onLoad=\"javascript:alert('Det er foretaget posteringer i $vauta efter $dato! Kursændring afbrudt')\">";
 		$dato=NULL;
 	}
-	
-	if (!$r = db_fetch_array(db_select("select id from kontoplan where kontonr='$difkto' and kontotype = 'D' and regnskabsaar= '$regnaar'"))){
+	$qtxt="select id from kontoplan where kontonr='$difkto' and kontotype = 'D' and regnskabsaar= '$regnaar'";
+	if (!$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
 		print "<BODY onLoad=\"javascript:alert('Driftkonto $difkto eksisterer ikke')\">";
 		$difkto='';$kodenr=-1;
 	}	
@@ -204,13 +206,18 @@ if (isset($_POST['submit'])) {
 	$dato="";
 	$kurs="";
 	$id=0;
+	echo "genberegn($regnaar)<br>";
 	genberegn($regnaar) ;
 }
 
 if ($kodenr < 0) $bredde = "width=\"500px\"";
 else $bredde = "width=\"300px\"";
 
+if ($menu=='T') {
+	print "";
+} else {
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" $bredde><tbody>";
+}
 print "<tbody>";
 if ($kodenr < 0) ny_valuta(); 
 if ($kodenr) {
@@ -250,7 +257,7 @@ if ($kodenr) {
 		if ($bgcolor1!=$bgcolor){$bgcolor1=$bgcolor; $color='#000000';}
 		elseif ($bgcolor1!=$bgcolor5){$bgcolor1=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$bgcolor1\">";
-		$kurs=dkdecimal($r['kurs']);
+		$kurs=dkdecimal($r['kurs'],2);
 		$dato=dkdato($r['valdate']);
 		print "<td> $dato</td>";
 		print "<td align=\"right\"> $kurs &nbsp;</td>";
@@ -275,7 +282,7 @@ function ny_valuta() {
 	print "</td></tr>";
 	print "<tr><td>Valutabeskrivelse&nbsp;-&nbsp;f.eks.&nbsp;Amerikanske&nbsp;dollar</td><td><input type=text name=beskrivelse size=30></td></tr>";
 	print "<tr><td>Kontonummer&nbsp;til&nbsp;valutakursdifferencer&nbsp;og&nbsp;&oslash;reafrunding</td><td title='Kontonummer fra kontoplanen som skal bruges til valutakursdifferencer og &oslash;reafrunding'><input type=text name=difkto size=8 value=$difkto></td>";
-	print "<tr><td colspan=2 align=center><input type=submit name=submit value=Tilf&oslash;j></td></tr>";
+	print "<tr><td colspan=2 align=center><input class='button green medium'  type=submit name=submit value=Tilf&oslash;j></td></tr>";
 	print "</form>";	
 	exit;
 }

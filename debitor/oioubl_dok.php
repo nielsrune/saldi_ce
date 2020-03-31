@@ -54,6 +54,7 @@ $bg="nix";
 
 # Udskriv OIOUBL-faktura
 $printfilnavn="doktype-".$doktype."_dokid-".$id.".xml";
+$testdok=NULL;
 
 if ( ! file_exists("../temp/$db") ) mkdir("../temp/$db", 0775);
 
@@ -117,7 +118,7 @@ if ($r['box8']) {
 	print "OIOUBL-filen $printfilnavn</a></p>\n\n";
 
 	print "\n<h1>Send OIOUBL-filen</h1>\n\n";
-	print "Du kan bl.a. sende oioubl-filen via <a href=\"http://www.ebconnect.dk\" target=\"blank\">ebConnect</a> eller via <a href=\"http://www.sproom.dk\" target=\"blank\">Sproom</a>\n\n";
+	print "Du kan bl.a. sende oioubl-filen via <a href=\"http://www.ebconnect.dk\" target=\"blank\">ebConnect</a> eller via <a href=\"http://www.sproom.net\" target=\"blank\">Sproom</a>\n\n";
 
 	print "\n<h1>Test OIOUBL-filen</h1>\n\n";
 	print "<p>Hvis du vil teste OIOUBL-filen kan validering af filen ske med \n";

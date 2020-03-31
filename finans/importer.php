@@ -4,31 +4,33 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------finans/importer.php----------lap 3.6.7-----2017-01-03-------
-// LICENS
+// ----------finans/importer.php----------lap 3.9.0-----2020-03-05-------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20130415 - Fejl hvis linje starter med separatortegn.
 // 20150105 - Transdate sættes til dd hvis den ikke er sat20150105
 // 20170307 - Tilføjet loppeafregning.
+// 20180611 - Udkommenteret datotjek da den genererer en ugyldig dato fra en gyldig. 20180611 
+// 2019.01.16 MSC - Rettet topdesign til og rettet isset fejl.
+// 2019.01.19 PHR - Added dataløn.
+// 2019.03.11 PHR - Added UTF-8 - $fileCharSet.
+// 2020.03.05 LOE - Changed tavle height from '100%' to 'auto' as it looked awfull in FF  
 
 @session_start();
 $s_id=session_id();
@@ -42,23 +44,46 @@ include("../includes/std_func.php");
 
 print "<div align=\"center\">";
 
+$fileCharSet="ISO-8895-1";
+$feltnavn = array();
+$fieldnames =  array('bilag','dato','beskrivelse','debet(konto)','kredit(konto)','debet(beløb)','kredit(beløb)','debitor','kreditor','fakturanr','beløb','forfaldsdag');
+
+
 if(($_GET)||($_POST)) {
 
-	if ($_GET) {
+	if (isset($_GET['bilagsnr'])) {
 		$kladde_id=$_GET['kladde_id'];
 		$bilag=$_GET['bilagsnr'];
 	}
 	else {
-		$submit=$_POST['submit'];
-		$kladde_id=$_POST['kladde_id'];
-		$filnavn=$_POST['filnavn'];
-		$splitter=$_POST['splitter'];
-		$feltnavn=$_POST['feltnavn'];
-		$feltantal=$_POST['feltantal'];
+		$submit=if_isset($_POST['submit']);
+		$kladde_id=if_isset($_POST['kladde_id']);
+		$filnavn=if_isset($_POST['filnavn']);
+		$splitter=if_isset($_POST['splitter']);
+		(isset($_POST['feltnavn']))?$feltnavn=$_POST['feltnavn']:$feltnavn=array();
+		$feltantal=if_isset($_POST['feltantal']);
 #		$kontonr=$_POST['kontonr'];
-		$bilag=$_POST['bilag'];
-		$datoformat=$_POST['datoformat'];
+		$bilag=if_isset($_POST['bilag']);
+		$datoformat=if_isset($_POST['datoformat']);
+		$fileCharSet=if_isset($_POST['fileCharSet']);
 	}
+	if ($menu=='T') {
+		print "<center><table width=\"75%\" height=\"auto\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+	} else {
+		print "<center><table width=\"100%\" height=\"auto\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+	}
+	if ($menu=='T') {
+		include_once '../includes/top_header.php';
+		include_once '../includes/top_menu.php';
+		print "<div id=\"header\"> 
+				<div class=\"headerbtnLft\"></div>
+				<span class=\"headerTxt\">Importer til kassekladde (Kassekladde $kladde_id)</span>";     
+		print "<div class=\"headerbtnRght\"></div>";       
+		print "</div><!-- end of header -->
+			<div class=\"maincontentLargeHolder\">\n";
+		print  "<center><table border='0' cellspacing='1' width='75%'>";
+	
+	} else {
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
@@ -67,11 +92,14 @@ if(($_GET)||($_POST)) {
 	print "<td width=\"10%\" $top_bund ><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"></td>";
 	print "</tbody></table>";
 	print "</td></tr>";
+	}
+
+	if (!isset ($_FILES['uploadedfile'])) $_FILES['uploadedfile'] = NULL;
+	if (!isset ($submit)) $submit = NULL;
 
 	if (basename($_FILES['uploadedfile']['name'])) {
 		$filnavn="../temp/".$db."_".str_replace(" ","_",$brugernavn).".csv";
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $filnavn)) {
-		$feltnavn=array();
 		if ($r=db_fetch_array(db_select("select * from grupper where ART = 'KASKL' and kode='2' and kodenr='$bruger_id'",__FILE__ . " linje " . __LINE__))) {
 			$feltantal=if_isset($r['box1']);
 			$feltnavn=explode(",",$r['box2']);
@@ -84,25 +112,19 @@ if(($_GET)||($_POST)) {
 			if (in_array('bilag',$feltnavn)) vis_data($kladde_id, $filnavn, '', $feltnavn, $feltantal, 0,$datoformat);
 			else vis_data($kladde_id, $filnavn, '', $feltnavn, $feltantal, $bilag,$datoformat);
 		}
-		else{
-			echo "Der er sket en fejl under hentningen, pr&oslash;v venligst igen";
-		}
-	}
-	elseif($submit=='Vis'){
+		else echo "Der er sket en fejl under hentningen, pr&oslash;v venligst igen";
+	} elseif($submit=='Vis'){
 		if (in_array('bilag',$feltnavn)) vis_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, 0,$datoformat);
 		else vis_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bilag,$datoformat);
-	}
-	elseif($submit=='Flyt'){
+	} elseif($submit=='Flyt'){
 		if (($kladde_id)&&($filnavn)&&($splitter))	{
 			if (in_array('bilag',$feltnavn)) flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, 0,$datoformat);
 			else flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bilag,$datoformat);
-		}
-		else {
+		} else {
 			if (in_array('bilag',$feltnavn)) vis_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, 0,$datoformat);
 			else vis_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bilag,$datoformat);
 		}
-	}
-	else {
+	} else {
 		if (in_array('bilag',$feltnavn)) upload($kladde_id, 0);
 		else upload($kladde_id, $bilag);
 	}
@@ -117,7 +139,13 @@ if ($kladde_id)
 print "</tbody></table>";
 ################################################################################################################
 function upload($kladde_id, $bilag){
-global $charset;
+global $charset,$menu;
+
+if ($menu =='T') {
+	$hrlinje = "<hr width=100%>";
+} else {
+	$hrlinje = "<hr width=30%>";
+}
 
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td width=100% align=center><b>Import af bankposteringer</b></td></tr>";
@@ -131,10 +159,10 @@ print "<tr><td><br></td></tr>";
 print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td><hr width=30%></td></tr>";
+print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 
-$title='"';
+$title='';
 print "<tr><td width=100% align=center title='$title'><b>Import fra Danl&oslash;n</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"danlonimport.php\" method=\"POST\">";
@@ -146,7 +174,22 @@ print "<tr><td><br></td></tr>";
 print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td><hr width=30%></td></tr>";
+print "<tr><td>$hrlinje</td></tr>";
+print "<tr><td width=100% align=center><br></td></tr>";
+
+$title='';
+print "<tr><td width=100% align=center title='$title'><b>Import fra Datal&oslash;n</b></td></tr>";
+print "<tr><td width=100% align=center><br></td></tr>";
+print "<form enctype=\"multipart/form-data\" action=\"datalonimport.php\" method=\"POST\">";
+print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
+print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
+if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
+print "<tr><td width=100% align=center title='$title'> V&aelig;lg datafil: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td><br></td></tr>";
+print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td></form></td></tr>";
+print "<tr><td><br></td></tr>";
+print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 
 $title='Import at betalingsoplysninger leverance 0602"';
@@ -162,7 +205,7 @@ print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 
 print "<tr><td><br></td></tr>";
-print "<tr><td><hr width=30%></td></tr>";
+print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 $title='Filen skal v&aelig;re af typen "udenopkrævningsarter.csv"';
 print "<tr><td width=100% align=center title='$title'><b>Import af pbs betalinger fra web</b></td></tr>";
@@ -177,7 +220,7 @@ print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 
 print "<tr><td><br></td></tr>";
-print "<tr><td><hr width=30%></td></tr>";
+print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<tr><td width=100% align=center><b>Import af andre data</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
@@ -191,7 +234,7 @@ print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 
 print "<tr><td><br></td></tr>";
-print "<tr><td><hr width=30%></td></tr>";
+print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<tr><td width=100% align=center><b>Afregning Kommisionssalg</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
@@ -201,9 +244,19 @@ print "</td></tr>";
 }
 
 function vis_data($kladde_id,$filnavn,$splitter,$feltnavn,$feltantal,$bilag,$datoformat){
-global $charset;
-global $bruger_id;
+global $charset,$fileCharSet,$fieldnames,$bruger_id;
 
+$x=0;
+$check=array();
+for ($y=0;$y<count($feltnavn);$y++) {
+	if (in_array($feltnavn[$y],$check)) alert("Der må kun være en kolonne med $feltnavn[$y]");
+	if ($feltnavn[$y]) {
+		$check[$x]=$feltnavn[$y];
+		$x++;
+	}
+}
+
+$komma=$semikolon=$tabulator=NULL;
 if (!$datoformat) $datoformat="mm-dd-yyyy";
 
 $fp=fopen("$filnavn","r");
@@ -243,15 +296,13 @@ if ($fp) {
 	while ($linje=fgets($fp)) {
 		$linje=trim($linje);
 		if ($linje) {
+			if (!$y && ord(substr($linje,0,1))==239 && ord(substr($linje,1,1))==187 && ord(substr($linje,2,1))==191) $linje=substr($linje,3);	
 			$y++;
-			if ($charset=='UTF-8') $linje=utf8_encode($linje);
+			if ($charset=='UTF-8' && $fileCharSet!='UTF-8') $linje=utf8_encode($linje);
 			$anftegn=0;
 				$felt=array();
 				$z=0;
 				for ($x=0; $x<strlen($linje);$x++) {
-#echo substr($linje,$x,1);
-
-#if ($x+1==strlen($linje)) echo "<br>";
 				if ($x==0 && substr($linje,$x,1)=='"') {
 					$z++; $anftegn=1; $felt[$z]='';
 				} elseif ($x==0 && substr($linje,$x,1)==$splittegn) { #20130415
@@ -274,10 +325,12 @@ if ($fp) {
 			}
 			if ($z>$feltantal) $feltantal=$z-1;
 			for ($x=1; $x<=$z; $x++) {
+			if (!isset($felt[$x])) $felt[$x]=NULL;
+			if (!isset($ny_linje[$y])) $ny_linje[$y]=NULL;
 				$ny_linje[$y]=$ny_linje[$y].$felt[$x].chr(9);
-#				echo "$felt[$x]|".chr(9);	
 			}
 			$x++;
+			if (!isset($felt[$x])) $felt[$x]=NULL;
 			$ny_linje[$y]=$ny_linje[$y].$felt[$x]."\n";
 		}
 	}
@@ -290,10 +343,20 @@ for ($y=1; $y<=$linjeantal;$y++) {
 	fwrite($fp,$ny_linje[$y]);
 }
 fclose ($fp);
+#print "<tr><td><hr></td></tr>";
+#print "<tr><td><hr></td></tr>";
+#print "<tr><td><hr></td></tr>";
+#print "<tr><td><hr></td></tr>";
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\"><tbody>";
 print "<form enctype=\"multipart/form-data\" action=\"importer.php\" method=\"POST\">";
 #print "<tr><td colspan=6 width=100% align=center> $filnavn</td></tr>";
-print "<tr><td colspan=$cols align=center>Datofotmat <input style=\"width:80px\" type=\"text\" name=\"datoformat\" value=\"$datoformat\"> ";
+print "<tr><td colspan='$cols' align=center>";
+print "Tegnsæt <select style=\"width:80px\" type=\"text\" name=\"fileCharSet\" >";
+if ($fileCharSet) print "<option>$fileCharSet</option>";
+if ($fileCharSet!='UTF-8') print "<option>UTF-8</option>";
+if ($fileCharSet!='ISO-8859-1') print "<option>ISO-8859-1</option>";
+print "</select> ";
+print "Datoformat <input style=\"width:80px\" type=\"text\" name=\"datoformat\" value=\"$datoformat\"> ";
 print "<span title='Angiv hvilket skilletegn der anvendes til opdeling af kolonner'>Separatortegn&nbsp;<select name=\"splitter\">\n";
 if ($splitter) {print "<option>$splitter</option>\n";}
 if ($splitter!='Semikolon') print "<option>Semikolon</option>\n";
@@ -314,78 +377,24 @@ $splitter=chr(9);
 print "<tr>";
 if (!in_array('bilag',$feltnavn)) print "<td><span title='Angiv 1. bilagsnummer'><input class=\"inputbox\" type=text size=4 name=bilag value=$bilag></span></td>";
 for ($y=0; $y<=$feltantal; $y++) {
-	if (in_array('bilag',$feltnavn) && $feltnavn[$y]=='bilag' && $bilag==1) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bilag')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='dato') &&($dato==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Dato')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='beskrivelse') &&($beskr==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Beskrivelse')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='debitor') &&($debitor==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Debitor')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='kreditor') &&($kreditor==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kreditor')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='debet') &&($debet==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Debet')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='kredit') &&($kredit==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Kredit')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='fakturanr') &&($fakturanr==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Fakturanr')\">";
-		$feltnavn[$y]='';
-	}
-	if (($feltnavn[$y]=='belob')&&($belob==1)) {
-		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med Bel&oslash;b')\">";
-		$feltnavn[$y]='';
-	}
-
-	if ($feltnavn[$y]=='bilag' || $feltnavn[$y]=='belob') print "<td align=right><select name=\"feltnavn[$y]\">\n";
+	if ($feltnavn[$y]=='bilag' || strstr($feltnavn[$y],'beløb')) print "<td align=right><select name=\"feltnavn[$y]\">\n";
 #	elseif (!$feltnavn[$y]) print "<td><select>\n";
 	else  print "<td align=center><select name=\"feltnavn[$y]\">\n";
 	if (!$feltnavn[$y]) print "<option></option>\n";
-	elseif ($feltnavn[$y]=='bilag') print "<option \"align=right\" value='bilag'>Bilag</option>\n";
-	elseif ($feltnavn[$y]=='dato') print "<option value='dato'>Dato</option>\n";
-	elseif ($feltnavn[$y]=='beskrivelse') print "<option value='beskrivelse'>Beskrivelse</option>\n";
-	elseif ($feltnavn[$y]=='debet') print "<option value='debet'>Debet</option>\n";
-	elseif ($feltnavn[$y]=='kredit') print "<option value='kredit'>Kredit</option>\n";
-	elseif ($feltnavn[$y]=='debitor') print "<option value='debitor'>Debitor</option>\n";
-	elseif ($feltnavn[$y]=='kreditor') print "<option value='kreditor'>Kreditor</option>\n";
-	elseif ($feltnavn[$y]=='fakturanr') print "<option value='fakturanr'>Fakturanr</option>\n";
-	elseif ($feltnavn[$y]=='belob') print "<option \"align=right\" value='belob'>Bel&oslash;b</option>\n";
-
- 	if ($feltnavn[$y]!='bilag') print "<option value='bilag'>Bilag</option>\n";
-	elseif (in_array('bilag',$feltnavn)) $bilag=1;
-	if ($feltnavn[$y]!='dato') print "<option value='dato'>Dato</option>\n";
-	else $dato=1;
-	if ($feltnavn[$y]!='beskrivelse') print "<option value='beskrivelse'>Beskrivelse</option>\n";
-	else $beskr=1;
-	if ($feltnavn[$y]!='debet') print "<option value='debet'>Debet</option>\n";
-	else $debet=1;
-	if ($feltnavn[$y]!='kredit') print "<option value='kredit'>Kredit</option>\n";
-	else $kredit=1;
-	if ($feltnavn[$y]!='debitor') print "<option value='debitor'>Debitor</option>\n";
-	else $debitor=1;
-	if ($feltnavn[$y]!='kreditor') print "<option value='kreditor'>Kreditor</option>\n";
-	else $kreditor=1;
-	if ($feltnavn[$y]!='fakturanr') print "<option value='fakturanr'>Fakturanr</option>\n";
-	else $fakturanr=1;
-	if ($feltnavn[$y]!='belob') print "<option value='belob'>Bel&oslash;b</option>\n";
-	else $belob=1;
+	for ($f=0;$f<count($fieldnames);$f++) {
+		if($feltnavn[$y]==$fieldnames[$f]) print "<option \"align=right\" value='$fieldnames[$f]'>$fieldnames[$f]</option>\n";
+	}
+	for ($f=0;$f<count($fieldnames);$f++) {
+		if($feltnavn[$y]!=$fieldnames[$f]) print "<option \"align=right\" value='$fieldnames[$f]'>$fieldnames[$f]</option>\n";
+	}
 	if ($feltnavn[$y]) print "<option></option>\n";
 	print "</select></td>";
 }
+if (!in_array('beløb',$feltnavn) && !in_array('debet(beløb)',$feltnavn) && !in_array('kredit(beløb)',$feltnavn)) {
+	alert('Der skal være en kolonne med beløb');
+}
+
+
 print "</form>";
 $fp=fopen($filnavn."2","r");
 if ($fp) {
@@ -399,7 +408,7 @@ if ($fp) {
 			$felt=array();
 			$felt = explode($splitter, $linje);
 			for ($y=0; $y<=$feltantal; $y++) {
-				$felt[$y]=trim($felt[$y]);
+				$felt[$y]=trim(if_isset($felt[$y]));
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if ($feltnavn[$y]=='dato') $felt[$y]=str_replace(".","-",$felt[$y]);
 				if ($feltnavn[$y]=='belob') {
@@ -417,7 +426,7 @@ if ($fp) {
 			if (!in_array('bilag',$feltnavn)) print "<td>$bilag</td>";
 			for ($y=0; $y<=$feltantal; $y++) {
 				if ($feltnavn[$y]=='dato') $felt[$y]=datotjek($datoformat,$felt[$y]);
-				if ($feltnavn[$y]=='bilag' || $feltnavn[$y]=='belob') {
+				if ($feltnavn[$y]=='bilag' || strstr($feltnavn[$y],'beløb')) {
 					print "<td align=right>$felt[$y]&nbsp;</td>";
 				}
 				elseif ($feltnavn[$y]) {print "<td>$felt[$y]&nbsp;</td>";}
@@ -430,10 +439,10 @@ if ($fp) {
 			if (!in_array('bilag',$feltnavn)) print "<td><span style=\"color: rgb(153, 153, 153);\">-</span></td>";
 			for ($y=0; $y<=$feltantal; $y++) {
 #				if ($feltnavn[$y]=='dato') $felt[$y]=datotjek($datoformat,$felt[$y]);
-				if ($feltnavn[$y]=='bilag' || $feltnavn[$y]=='belob') {
+				if ($feltnavn[$y]=='bilag' || strstr($feltnavn[$y],'beløb')) {
 					print "<td align=right><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 				} elseif ($feltnavn[$y]) print "<td><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
-				else {print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";}
+				else print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 			}
 			print "</tr>";
 		}	
@@ -448,8 +457,8 @@ db_modify("update grupper set box1='$feltantal',box2='$box2',box3='$datoformat' 
 } # function vis_data slut;
 
 function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bilag,$datoformat){
-	global $charset;
-
+	global $charset,$fieldnames;
+	$forfaldsdate=$komma=$semikolon=$tabulator=NULL;
 	transaktion('begin');
 	$splitter=chr(9);
 	$fp=fopen($filnavn."2","r");
@@ -462,28 +471,42 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bila
 				$skriv_linje=1;
 				$felt=array();
 				$felt = explode($splitter, $linje);
-				for ($y=0; $y<=$feltantal; $y++) {
-					$felt[$y]=trim($felt[$y]);
+				for ($y=0;$y<$feltantal;$y++) {
+					(isset($felt[$y]))?$felt[$y]=trim($felt[$y]):$felt[$y]=NULL;
 					if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
-					if ($feltnavn[$y]=='dato') $felt[$y]=datotjek($datoformat,$felt[$y]);
+					if ($feltnavn[$y]=='dato') {
+#						$felt[$y]=datotjek($datoformat,$felt[$y]); # Udkommenteret 20180611
+					}
 #					if ($feltnavn[$y]=='dato') $felt[$y]=str_replace(".","-",$felt[$y]);
-					if ($feltnavn[$y]=='belob') {
-						if (nummertjek($felt[$y])=='US') $felt[$y]=dkdecimal($felt[$y]);
-						elseif (nummertjek($felt[$y])!='DK') $skriv_linje=0;		
+					if (strstr($feltnavn[$y],'beløb')) {
+						if (nummertjek($felt[$y])=='DK') $felt[$y]=usdecimal($felt[$y])*1;
+						elseif (nummertjek($felt[$y])!='US') $skriv_linje=0;
 					}
 				}
  			}		
 			if ($skriv_linje==1){
+				$amount=$debet=$kredit=$forfaldsdag=NULL;
 				for ($y=0; $y<=$feltantal; $y++) {
 					$bilag=$bilag*1;
 					if ($feltnavn[$y]=='bilag') $bilag=$felt[$y]*1;
-					if ($feltnavn[$y]=='belob') $amount=usdecimal($felt[$y]);
+					if (!$amount && $feltnavn[$y]=='debet(beløb)'){
+						if (nummertjek($felt[$y])=='DK') $amount=usdecimal($felt[$y])*1;
+						elseif (nummertjek($felt[$y])=='US') $amount=$felt[$y]*1;
+					}
+					if (!$amount && $feltnavn[$y]=='kredit(beløb)') {
+						if (nummertjek($felt[$y])=='DK') $amount=usdecimal($felt[$y])*1;
+						elseif (nummertjek($felt[$y])=='US') $amount=$felt[$y]*1;
+					}	
+					if (!$amount && $feltnavn[$y]=='beløb') {
+						if (nummertjek($felt[$y])=='DK') $amount=usdecimal($felt[$y])*1;
+						elseif (nummertjek($felt[$y])=='US') $amount=$felt[$y]*1;
+					}
 					elseif ($feltnavn[$y]=="dato") $transdate=usdate($felt[$y]);
-					elseif ($feltnavn[$y]=="beskrivelse") $beskrivelse=addslashes($felt[$y]);
-					elseif ($feltnavn[$y]=="debet") {
+					elseif ($feltnavn[$y]=="beskrivelse") $beskrivelse=db_escape_string($felt[$y]);
+					elseif ($feltnavn[$y]=="debet(konto)") {
 						$d_type="F";
 						$debet=$felt[$y];
-					} elseif ($feltnavn[$y]=="kredit") {
+					} elseif ($feltnavn[$y]=="kredit(konto)") {
 						$d_type="F";
 						$kredit=$felt[$y];
 					} elseif ($feltnavn[$y]=="debitor") {
@@ -492,21 +515,26 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bila
 					} elseif ($feltnavn[$y]=="kreditor") {
 						$k_type="K";
 						$kredit=$felt[$y];
-					} elseif ($feltnavn[$y]=="fakturanr") $fakturanr=addslashes($felt[$y]);
+					} elseif ($feltnavn[$y]=="fakturanr") $fakturanr=db_escape_string($felt[$y]);
+					elseif ($feltnavn[$y]=="forfaldsdag") {
+						($felt[$y])?$forfaldsdate=usdate($felt[$y]):$forfaldsdate=NULL;
 				}
+					}
 				if (!$transdate) $transdate=date('Y-m-d'); #20150105
-				if ($amount*1!=0) {
-#					$debet=$debet*1;$kredit=$kredit*1;
-					$felttext1=NULL;$felttext2=NULL;
-					if (is_numeric($debet)) {
-						$felttext1 = "d_type,debet,";
-						$felttext2 = "'$d_type','$debet',";
-					}
-					if (is_numeric($kredit)) {
-						$felttext1 = $felttext1."k_type,kredit,";
-						$felttext2 = $felttext2."'$k_type','$kredit',";
-					}
-					db_modify("insert into kassekladde (bilag, transdate, beskrivelse,$felttext1 faktura, amount, kladde_id) values ('$bilag', '$transdate', '$beskrivelse',$felttext2 '$fakturanr','$amount', '$kladde_id')",__FILE__ . " linje " . __LINE__);
+				if ($amount) {
+					$amount*=1;
+					$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,faktura,amount,kladde_id";
+					if ($debet) $qtxt.=",d_type,debet";
+					if ($kredit) $qtxt.=",k_type,kredit";
+					if ($forfaldsdate) $qtxt.=",forfaldsdate";
+					$qtxt.=")";
+					$qtxt.=" values ";
+					$qtxt.="('$bilag','$transdate','$beskrivelse','$fakturanr','$amount','$kladde_id'";
+					if ($debet) $qtxt.=",'$d_type','$debet'";
+					if ($kredit) $qtxt.=",'$k_type','$kredit'";
+					if ($forfaldsdate) $qtxt.=",'$forfaldsdate'";
+					$qtxt.=")";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					if (!in_array('bilag',$feltnavn)) $bilag++;
 				}
 			}
@@ -519,6 +547,7 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bila
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=kassekladde.php?kladde_id=$kladde_id\">";
 }
 function nummertjek ($nummer){
+	$komma=$punktum=NULL;
 	$nummer=trim($nummer);
 	$retur=1;
 	$nummerliste=array("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", ".", "-");
@@ -544,6 +573,7 @@ function datotjek ($datoformat,$dato){
 	
 	$tal="01234567890";
 	$tegn_a=substr($datoformat,0,1);
+	$dag=$tegn_b=$tegn_c=NULL;
 	$a=substr($dato,0,1);
 	$b=NULL;
 	$c=NULL;

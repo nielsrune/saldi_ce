@@ -276,9 +276,9 @@
 276	Kontonr.
 277	Kontonr. <variable> eksisterer ikke
 278	Kontonr skal udfyldes for alle kasser
-279	Skriv her hvor mange forskellige kreditkort der modtages
-280	Antal kreditkort
-281	Type af kredikort, f.eks Dankort, Mastercard eller lign.
+279	Skriv her hvor mange forskellige betalingskort og andre betalingsmuligheder der modtages
+280	Antal betalingsmåder
+281	Type af betalingsmåde, f.eks Dankort, Mastercard, Mobilepay eller lign.
 282	Vælg det kontonummer hvor betalinger skal konteres.
 283	Kreditkort
 284	Kontonr
@@ -791,3 +791,19 @@
 856	Gavekorttekst
 857	Angiv den tekst, der skal stå på bonen
 858	Vælg gavekort først før du kan tilføje en gavekorttekst.
+859	Vælg rækkefølge kort skal vises i, her og i ordrer.
+860	Aktivt
+861	Afmærk om kortet skal vises i ordrer. Inaktive kort bruges til genkendelse ved integreret terminal og import fra feks. webshop.
+862	Pos
+863	Afmærk, hvis det ved kasseoptælling skal være muligt at ændre i kortsummer. Bør kun anvendes hvis der ikke er integreret kortterminal.
+864	Ret i kortsum v. kasseopt.
+865	GLS ID
+866	Skriv dit GLS ID hvis du har en konto hoS GLS og vil kunne sende oprette GLS labels fra Saldi.
+867	GLS Brugernavn
+868	Skriv dit brugernavn hos GLS
+869	GLS adgangskode
+870	Skriv din adgangskode hos GLS
+871	Saldo for driftkonti i valgt år og foregående år og summering af disse for valgte konti i valgt periode.
+872	Resultat/Sidste år
+873	GLS Kontakt Id
+874	Skriv dit Kontakt Id hos GLS

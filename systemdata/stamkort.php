@@ -24,6 +24,8 @@
 // 2014.11.20 Opdater mastersystem ved ændring af email.
 // 2015.01.23 Indhente virksomhedsdata fra CVR via CVRapi - tak Niels Rune https://github.com/nielsrune
 // 20150331 CA  Topmenudesign tilføjet søg 20150331
+// 2018.12.20 MSC - Rettet isset fejl
+// 20190304 Set countryConfig depending on the users permission
 
 @session_start();
 $s_id=session_id();
@@ -35,6 +37,8 @@ $modulnr=1;
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+include("stamkort_includes/calcCountryPermissions.php"); # LN 20190304 Use file to handle countryConfig
+include("../debitor/pos_ordre_includes/helperMethods/helperFunc.php"); #20190304
 
 if ($menu=='T') {  # 20150331 start
         include_once '../includes/top_header.php';
@@ -52,7 +56,11 @@ if ($menu=='T') {  # 20150331 start
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>";
 }  # 20150331 stop
 
+
+if (!isset ($notes)) $notes = NULL;
+
 if ($_POST) {
+    $country = isset($_POST['landeconfig']) ?  $_POST['landeconfig'] : getCountry();
 	$id=$_POST['id'];
 	$kontonr=trim($_POST['kontonr']);
 	$firmanavn=addslashes(trim($_POST['firmanavn']));
@@ -64,35 +72,35 @@ if ($_POST) {
 	$tlf=addslashes(trim($_POST['tlf']));
 	$fax=addslashes(trim($_POST['fax']));
 	$cvrnr=addslashes(trim($_POST['cvrnr']));
-	$ans_id=$_POST['ans_id'];
+	$ans_id=if_isset($_POST['ans_id']);
 	$ans_ant=$_POST['ans_ant'];
-	$lukket_ant=$_POST['lukket_ant'];
-	$posnr=$_POST['posnr'];
+	$lukket_ant=if_isset($_POST['lukket_ant']);
+	$posnr=if_isset($_POST['posnr']);
 	$bank_navn=addslashes(trim($_POST['bank_navn']));
 	$bank_reg=addslashes(trim($_POST['bank_reg']));
 	$bank_konto=addslashes(trim($_POST['bank_konto']));
 	$email=addslashes(trim($_POST['email']));
 	$ny_email=addslashes(trim($_POST['ny_email']));
-	$mailfakt=addslashes(trim($_POST['mailfakt']));
-	$vis_lukket=trim($_POST['vis_lukket']);
+	$mailfakt=addslashes(trim(if_isset($_POST['mailfakt'])));
+	$vis_lukket=trim(if_isset($_POST['vis_lukket']));
 	$pbs_nr=trim($_POST['pbs_nr']);
-	$pbs=trim($_POST['pbs']);
+	$pbs=trim(if_isset($_POST['pbs']));
 	$gruppe=if_isset($_POST['gruppe'])*1;
 	$fi_nr=trim($_POST['fi_nr']);
 	if ($postnr && !$bynavn) $bynavn=bynavn($postnr);
 	if ($id==0) {
-		$qtxt="insert into adresser"; $qtxt.="(kontonr,firmanavn,addr1,addr2,postnr,bynavn,tlf,fax,cvrnr,art,bank_navn,bank_reg,bank_konto,";
+		$qtxt="insert into adresser"; $qtxt.="(kontonr,firmanavn,addr1,addr2,postnr,bynavn, land,tlf,fax,cvrnr,art,bank_navn,bank_reg,bank_konto,";
 		$qtxt.="email,mailfakt,pbs_nr,pbs,bank_fi,gruppe,kontakt)";
-		$qtxt.="values"; $qtxt.="('$kontonr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$tlf','$fax','$cvrnr','S','$bank_navn','$bank_reg','$bank_konto',";
+		$qtxt.="values"; $qtxt.="('$kontonr','$firmanavn','$addr1','$addr2','$postnr','$bynavn',"; $qtxt.="'$country','$tlf','$fax','$cvrnr','S','$bank_navn','$bank_reg','$bank_konto',";
 		$qtxt.="'$ny_email','$mailfakt','$pbs_nr','$pbs','$fi_nr','$gruppe','$kontakt')";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$qtxt="select id from adresser where art = 'S'";
 		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$id = $r['id'];
 	}	elseif ($id > 0) {
-		$qtxt="update adresser set kontonr = '$kontonr', firmanavn = '$firmanavn', addr1 = '$addr1', addr2 = '$addr2', postnr = '$postnr',";
+		$qtxt="update adresser set kontonr = '$kontonr', firmanavn = '$firmanavn', addr1 = '$addr1', addr2 = '$addr2', postnr = '$postnr', land = '$country',";
 		$qtxt.="bynavn = '$bynavn', tlf = '$tlf', fax = '$fax', cvrnr = '$cvrnr', bank_navn='$bank_navn', bank_reg='$bank_reg', bank_konto='$bank_konto',";
-		$qtxt.="email='$ny_email',mailfakt='$mailfakt', notes = '$notes', pbs_nr='$pbs_nr', pbs='$pbs', bank_fi='$fi_nr',gruppe='$gruppe' ";
+		$qtxt.="email='$ny_email',mailfakt='$mailfakt', notes = '$notes', pbs_nr='$pbs_nr', pbs='$pbs', bank_fi='$fi_nr',gruppe='$gruppe',kontakt='$kontakt' ";
 		$qtxt.="where art = 'S'";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		for ($x=1; $x<=$ans_ant; $x++) {
@@ -114,8 +122,10 @@ if ($_POST) {
 $saldinames=array('ssl.saldi.dk','ssl2.saldi.dk','ssl3.saldi.dk','ssl4.saldi.dk','udvikling.saldi.dk');
 $q = db_select("select * from adresser where art = 'S'",__FILE__ . " linje " . __LINE__);
 $r = db_fetch_array($q);
+$countryConfig = $r['land'];
 $id=$r['id']*1;
 $kontonr=$r['kontonr'];
+$kontakt=$r['kontakt'];
 $firmanavn=$r['firmanavn'];
 $addr1=$r['addr1'];
 $addr2=$r['addr2'];
@@ -155,9 +165,12 @@ if(db_fetch_array(db_select("select id from ansatte where konto_id = '$id' and l
 }
 print "<tr><td>Bank</td><td><input class=\"inputbox\" type=\"text\" style='width:200;' name=\"bank_navn\" value=\"$bank_navn\"></td></tr>\n";
 print "<tr><td>Email dataansvarlig</td><td><input class=\"inputbox\" type=\"text\" style='width:200;' name=\"kontakt\" value=\"$kontakt\"></td></tr>";
-echo $_SERVER["SERVER_NAME"]."<br>";
+#cho $_SERVER["SERVER_NAME"]."<br>";
 if (in_array($_SERVER["SERVER_NAME"],$saldinames)) {
-	print "<tr><td>Databehandleraftale</td><td><a href=\"http://saldi.dk/dok/saldi_gdpr_20180525.pdf\" target=\"blank\"><button type='button' style='width:200px;'>Databehandleraftale</button></a></td></tr>";
+	if (substr($db,0,6)=='bizsys' || substr($db,0,7)=='grillbar') {
+		$href='https://bizsys.dk/wp-content/uploads/2018/05/Bizsys-databehandleraftale.pdf';
+	} else $href='http://saldi.dk/dok/saldi_gdpr_20180525.pdf';
+	print "<tr><td>Databehandleraftale</td><td><a href=\"$href\" target=\"blank\"><button type='button' style='width:200px;'>Databehandleraftale</button></a></td></tr>";
 }
 print "</tbody></table>\n"; # 20150331
 print "</td>\n"; # 20150331
@@ -176,11 +189,20 @@ if ($pbs_nr) {
 	print "</select></td></tr>";
 	print "<tr><td>PBS Debitorgruppe</td><td><input class=\"inputbox\" type=\"text\" style='width:150;' name=\"gruppe\" value=\"$gruppe\">";
 }
+if (!isset ($returside)) $returside = NULL;
+if (!isset ($ordre_id)) $ordre_id = NULL;
+if (!isset ($fokus)) $fokus = NULL;
+if (!isset ($vis_lukket)) $vis_lukket = NULL;
+
+
 print "</td></tr>";
 #print "<input class=\"inputbox\" type=\"checkbox\" size=10 name=\"pbs\" value=\"$pbs\"></td></tr>";
 print "<tr><td>FI Kreditornr.</td><td><input class=\"inputbox\" type=\"text\" style='width:150;' name=\"fi_nr\" value=\"$fi_nr\"></td></tr>";
 print "<td>Reg./konto</td><td><input class=\"inputbox\" type=\"text\" style='width:50;' name=\"bank_reg\" value=\"$bank_reg\">";
 print "<input class=\"inputbox\" type=\"text\" style='width:100;' name=\"bank_konto\" value=\"$bank_konto\"></td></tr>";
+
+checkUserAndSetCountryConfig($countryConfig, $superUserPermission);
+
 print "<tbody></table></td></tr>";
 if ($id) {
 	if (! $menu=='T') print "<tr><td colspan=2><hr></td></tr>";  # 20150331

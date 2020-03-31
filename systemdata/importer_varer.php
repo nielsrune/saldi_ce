@@ -169,7 +169,7 @@ print "<input type='hidden' name='feltantal' value='$feltantal'>\n";
 print "&nbsp; <input type='submit' name='submit' value='Vis' />\n";
 
 #20140718
-$felt_navn=array("varenr","stregkode","varemærke","beskrivelse","kostpris","salgspris","vejl.pris","notes","enhed","enhed2","forhold","gruppe","provisionsfri","leverandor","min_lager","max_lager","lokation","lukket","serienr","samlevare","delvare","trademark","	retail_price","special_price","	campaign_cost","tier_price","	open_colli_price","colli","	outer_colli","outer_colli_price","special_from_date","special_to_date","	komplementaer","circulate","operation","prisgruppe","tilbudgruppe","	rabatgruppe","dvrg","m_type","m_rabat","m_antal","folgevare","kategori","varianter","publiceret","indhold");
+$felt_navn=array("varenr","stregkode","varemærke","beskrivelse","kostpris","salgspris","vejl.pris","notes","enhed","enhed2","forhold","gruppe","provisionsfri","leverandor","min_lager","max_lager","lokation","lukket","serienr","samlevare","delvare","trademark","	retail_price","special_price","	campaign_cost","tier_price","	open_colli_price","colli","	outer_colli","outer_colli_price","special_from_date","special_to_date","	komplementaer","circulate","operation","prisgruppe","tilbudgruppe","	rabatgruppe","dvrg","m_type","m_rabat","m_antal","folgevare","kategori","varianter","publiceret","indhold","montage","demontage");
 
 
 $felt_antal=count($felt_navn);
@@ -235,6 +235,16 @@ if ($fp) {
 					if ($tmp && !is_numeric($tmp)) $skriv_linje=2;
 				}
 				if ($feltnavn[$y]=='retail_price')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje=2;
+				}
+				if ($feltnavn[$y]=='montage')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje=2;
+				}
+				if ($feltnavn[$y]=='demontage')	{
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
 					if ($tmp && !is_numeric($tmp)) $skriv_linje=2;
@@ -407,6 +417,18 @@ if ($fp) {
 					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
 					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
 					$retail_price=$felt[$y]*1;
+				}
+				if ($feltnavn[$y]=='montage')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
+					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
+				}
+				if ($feltnavn[$y]=='demontage')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
+					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
 				}
 				if ($feltnavn[$y]=='min_lager')	{
 					$tmp=str_replace(",","",$felt[$y]);

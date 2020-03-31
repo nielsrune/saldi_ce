@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| | | |
 //                        |___/_/ \_|___|__/|_|
 //
-// ----------finans/bankimport.php------------patch 3.7.1------2018.03.14---
+// ----------finans/bankimport.php------------patch 3.8.1------2019.09.17---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2018 saldi.dk aps
+// Copyright (c) 2003-2019 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.11.10 Indsat mulighed for valutavalg ved import - søg: valuta
@@ -48,6 +48,9 @@
 // 2017.08.16 Tilføjet genkendelse af UTF-8 i filindhold og fjerner ukendt tegn i starte og slut af linje . Søg $tegnsaet;  
 // 2017.09.14 mb_detect_encoding fejlfortolker så jeg har skrevet min egen. 21070914
 // 2018.03.14 den udlignede de nyeste istedet for de ældste 20180318
+// 2019.09.11 PHR Added 'DK3DSF' at SparNord Ny 20190911
+// 2019.09.17 PHR Added 'DK3DSF' at DanskeBank Ny 20190917
+
 
 ini_set("auto_detect_line_endings", true);
 
@@ -530,11 +533,11 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 					} elseif (strlen($beskrivelse)==30 && substr($beskrivelse,0,2)=='DK' && is_numeric(substr($beskrivelse,4,7)) && is_numeric(substr($beskrivelse,12,9)) && is_numeric(substr($beskrivelse,25,5))) { # Dankort betaling 20140708 
 						$betalings_id="%".substr($beskrivelse,12,9);
 						$qtxt="select fakturanr,kontonr,sum,moms from ordrer where betalings_id LIKE '$betalings_id' and sum = '$amount'";
-					} elseif (strlen($beskrivelse)==30 && substr($beskrivelse,0,5)=='DKSSL' && is_numeric(substr($beskrivelse,6,4)) && is_numeric(substr($beskrivelse,11,7)) && is_numeric(substr($beskrivelse,19,11))) { # SparNord Ny 20160909 
+					} elseif (strlen($beskrivelse)==30 && (substr($beskrivelse,0,5)=='DKSSL' || substr($beskrivelse,0,6)=='DK3DSF') && is_numeric(substr($beskrivelse,6,4)) && is_numeric(substr($beskrivelse,11,7)) && is_numeric(substr($beskrivelse,19,11))) { # SparNord Ny 20160909 
 						$tmp=$amount-3;
 						$betalings_id="%".substr($beskrivelse,21,11);
 						$qtxt="select fakturanr,kontonr,sum,moms from ordrer where betalings_id LIKE '$betalings_id' and sum >= '$tmp' and sum <='$amount'";
-					} elseif (strlen($beskrivelse)==22 && substr($beskrivelse,0,5)=='DKSSL' && is_numeric(substr($beskrivelse,6,4)) && is_numeric(substr($beskrivelse,11,7)) && is_numeric(substr($beskrivelse,19,11))) { # DanskeBank Ny 20161101 
+					} elseif (strlen($beskrivelse)==22 && (substr($beskrivelse,0,5)=='DKSSL' || substr($beskrivelse,0,6)=='DK3DSF') && is_numeric(substr($beskrivelse,6,4)) && is_numeric(substr($beskrivelse,11,7)) && is_numeric(substr($beskrivelse,19,11))) { # DanskeBank Ny 20161101 
 						$tmp=$amount-3;
 						$ordrenr=substr($beskrivelse,-4);
 						$qtxt="select fakturanr,kontonr,sum,moms from ordrer where ordrenr = '$ordrenr' and sum >= '$tmp' and sum <='$amount' and art='DO'";
@@ -617,7 +620,7 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=kassekladde.php?kladde_id=$kladde_id\">";
 }
 function nummertjek ($nummer){
-	$nummer=trim($nummer);
+	$nummer=trim($nummer)*1;
 	$retur=1;
 	$nummerliste=array("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", ".", "-");
 	for ($x=0; $x<strlen($nummer); $x++) {
