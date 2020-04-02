@@ -4337,8 +4337,8 @@ if ($sag_id) { #20140425 Kaldes kun hvis sag_id
 			// Function som sortere i table
 		$("document").ready(function() {
 			$(".ordretekstSort .ordretekstListe").tableDnD({
-				ondragclass: "highlight",
-				ondrop: function(table, row) {
+				onDragClass: "highlight",
+				onDrop: function(table, row) {
 				var orders = $.tableDnD.serialize();
 				$.post('../debitor/sort.php', { orders : orders });
 				},

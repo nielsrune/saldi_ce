@@ -21,14 +21,25 @@ ikoner/l_arrow.png
 ikoner/sqlfinans.png
 ikoner/tux.gif
 importfiler/formular_ny.txt
+includes/betalingsdage.php
+includes/dkdato.php
+includes/usdate.php
+includes/funktioner.php
 includes/importer.php
+includes/logoupload.php
 includes/opdater.php
 includes/ordrefunc.php.110110
 index/backup.php
 index/favicon.ico
 index/komigang.html
 lager/enheder.php
+lager/vareimport.php
 lager/vareliste.php
+lager/vvsimport.php
+systemdata/solarvvs.php
+
+# Mappen Produktion ser ud til at være opgivet
+produktion/
 
 #*~
 #.svn/
