@@ -1,24 +1,21 @@
 <?php
-// -------includes/oioublfunk.php-----patch 3.7.6-----2019-02-04--------
-// LICENS
+// --- includes/oioublfunk.php --- patch 4.0.2 --- 2021-05-26 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 DANOSOFT ApS
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20140206 Afrundingsfejl,saldi_390 ordre id 16090 differ 1 øre på linjesum. 
@@ -30,6 +27,7 @@
 // 20150922 - Div elimineringer af fejl og kommentarer medtages nu til kr. 0,00
 // 20160208 - PHR Ordredato blev skrevet som fakturadato Søn 20160208
 // 20190204	- PHR lidt ændringer i forhold til kommentarer. 20190204 
+// 20210526 - PHR Changed CustomizationID from OIOUBL-2.01 to OIOUBL-2.02. Requirement from ebConnect
 
 $oioxmlubl="OIOUBL";
 
@@ -171,7 +169,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	$l_retur.="<".$l_doctype." xsi:schemaLocation=\"urn:oasis:names:specification:ubl:schema:xsd:".$l_doctype."-2 UBL-".$l_doctype."-2.0.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:oasis:names:specification:ubl:schema:xsd:".$l_doctype."-2\" xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\" xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\" xmlns:ccts=\"urn:oasis:names:specification:ubl:schema:xsd:CoreComponentParameters-2\" xmlns:sdt=\"urn:oasis:names:specification:ubl:schema:xsd:SpecializedDatatypes-2\" xmlns:udt=\"urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2\">\n";
 	$l_retur.="<cbc:UBLVersionID>2.0</cbc:UBLVersionID>\n";
-	$l_retur.="<cbc:CustomizationID>OIOUBL-2.01</cbc:CustomizationID>\n";
+	$l_retur.="<cbc:CustomizationID>OIOUBL-2.02</cbc:CustomizationID>\n";
 #	$l_retur.="<cbc:ProfileID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:profileid-1.1\">Procurement-BilSim-1.0</cbc:ProfileID>\n"; 20210725
 	$l_retur.="<cbc:ProfileID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:profileid-1.2\">urn:www.nesubl.eu:profiles:profile5:ver2.0</cbc:ProfileID>\n";
 	$l_retur.="<cbc:ID>".$r_faktura['fakturanr']."</cbc:ID>\n";

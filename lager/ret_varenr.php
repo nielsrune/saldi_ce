@@ -4,29 +4,27 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------lager/ret_varenr.php-------------patch 3.7.1 -- 20180518----------
+// ----------lager/ret_varenr.php-------------patch 3.9.1 -- 20200612 ----------
 // LICENS
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2018 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2015.12.08 Tilføjet flet funtion til sammenlægning af varer.
 // 2018.05.15 Kontrol mod flet af styklister og vares som indgår.
+// 2020.06.12 PHR Added pattern match on item no (varenr).
 
 @session_start();
 $s_id=session_id();
@@ -136,7 +134,9 @@ print "<tr><td align=center>ind i og sætter et lighedstegn foran, f.eks.: '=100
 print "<tr><td align=center>Så vil al historik mm, varebeholdning og evt.leverandør og shop bindinger blive lagt sammen til 1 vare, og varenr $varenummer vil blive slettet</td></tr>";
 
 print "<tr><td align=center><hr width=50%></td></tr>";
-print "<tr><td align=center>Ret varenummer $varenr til: <input type=text name=nyt_varenr  width=30 value=\"$varenr\"></td></tr>";
+print "<tr><td align=center>Ret varenummer $varenr til: ";
+print "<input type='text' name='nyt_varenr' pattern='^[a-zA-Z0-9=+._ -][a-zA-Z0-9+._ -]+' width='30' value='$varenr'></td></tr>";
+print "<tr><td align=center>Tilladte tegn er: a-z A-Z 0-9 . + - _</td></tr>";
 print "<input type=hidden name='id' value='$id'>";
 print "<input type=hidden name='varenr' value=\"$varenr\">";
 print "<input type=hidden name='stregkode' value=\"$stregkode\">";

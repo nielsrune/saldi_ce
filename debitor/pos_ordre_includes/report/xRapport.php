@@ -32,9 +32,7 @@
 printReportFunctions($fp, $firmanavn, $cvrnr, $orgNr, $date, $uniqueShopId, $reportArray, $type, $kasse);
 
 fclose($fp);
-
-if ($kontonr && $betalingsbet!='Kontant') $bonantal=2;
-else $bonantal=1;
+$bonantal=1;
 
 $tmp="/temp/".$db."/".$bruger_id.".txt";
 $url="://".$_SERVER['SERVER_NAME'].=$_SERVER['PHP_SELF'];
@@ -58,7 +56,7 @@ if ($printserver=='box') {
 
 if ($printserver=='box' || !$printserver) $printserver=$_COOKIE['saldi_printserver'];
 
-($fakturanr)?$skuffe=1:$skuffe=0;
+$skuffe=0;
 
 print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/saldiprint.php?printfil=&url=$url&bruger_id=$bruger_id&bon=$bon&bonantal=$bonantal&id=$id&skuffe=$skuffe&returside=$returside&logo=on\">\n";
 

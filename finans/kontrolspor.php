@@ -121,7 +121,7 @@ if (!$idnumre&&!$kontonumre&&!$fakturanumre&&!$bilagsnumre&&!$debetbelob&&!$kred
 }
 
 $r=db_fetch_array(db_select("select * from grupper where art = 'PRJ' and kodenr!='0'",__FILE__ . " linje " . __LINE__));
-$vis_projekt=$r['id'];
+(isset($r['id']))?$vis_projekt=$r['id']:$vis_projekt=NULL;
 
 if ($logtid) {
 	list ($h,$m)=explode(":",$logtid);

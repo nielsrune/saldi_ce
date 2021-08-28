@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------index/login.php----------lap 3.7.2------2019-07-04------
-// LICENS
+// --------------index/login.php----------lap 3.9.2------2020-06-22------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+// 
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2003-2020 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2013.09.19 Tjekkede ikke om der var opdateringer ved login i "hovedregnskab" Søg 20130919
 // 2014.01.06	Tilføjet opslag i tmp_kode. Søg tmp_kode
@@ -40,8 +37,9 @@
 // 2018.01.08	PHR	-	Udfaset gammelt API kald 20180108
 // 2018.03.05	PHR	-	Opdateret API kald
 // 2018.11.28 PHR - Timezone hentes nu fra tabellen settings.
-// 2019.07.04 RG (Rune Grysbæk) Mysqli implementation
-
+// 2019.07.04 RG	-	(Rune Grysbæk) Mysqli implementation 
+// 2020.06.22 PHR - Added include addrOpdat.php - can be removed after 3.9.3 (dome 20210127)
+// 2021.01.27 PHR - Added trim() to $r['lukket']
 
 ob_start(); //Starter output buffering
 @session_start();
@@ -136,15 +134,16 @@ if ((isset($_POST['regnskab']))||($_GET['login']=='test')) {
 		$db = trim($r['db']);
 		$db_id= trim($r['id']);
 		$post_max = $r['posteringer']*1;
-		$bruger_max = $r['brugerantal']*1;
-		$lukket = $r['lukket'];
+		$bruger_max = $r['brugerantal']*1;	
+		$lukket = trim($r['lukket']);
 		if (!$db) {
 			$db=$sqdb;
 			db_modify("update regnskab set db='$sqdb' where id='$db_id'",__FILE__ . " linje " . __LINE__);
 		}
 		if ($lukket) {
 			if (!$mastername) $mastername='SALDI';
-			$fejltxt="Regnskab '$regnskab' er lukket!<br>Kontakt $mastername for gen&aring;bning";
+			if (!$mastertel) $mastertel='+45 4690 2208';
+			$fejltxt="Regnskab '$regnskab' er lukket!<br>Ring $mastertel for gen&aring;bning";
 			login($regnskab,$brugernavn,$fejltxt);
 #			print "<meta http-equiv=\"refresh\" content=\"0;URL=index.php?regnskab=".htmlentities($regnskab,ENT_COMPAT,$charset)."&navn=".htmlentities($brugernavn,ENT_COMPAT,$charset)."\">";
 			exit;
@@ -209,7 +208,7 @@ elseif($db) {
 }
 else db_modify("delete from online where db=''",__FILE__ . " linje " . __LINE__);
 ## Versions kontrol / opdatering af database.
-if (($regnskab)&&($regnskab!=$sqdb)) {
+if ( $regnskab && $regnskab!=$sqdb ) {
 	if (!file_exists("../temp/$db")) {
 		mkdir("../temp/$db");
 	}
@@ -234,8 +233,8 @@ if (($regnskab)&&($regnskab!=$sqdb)) {
 	if ($dbver<$version) tjek4opdat($dbver,$version);
 }
 include("../includes/online.php");
-$bruger_id=NULL;
 
+$bruger_id=NULL;
 if (isset ($brug_timestamp)) {
 	$row=db_fetch_array(db_select("select * from brugere where brugernavn='".db_escape_string($brugernavn)."' and (upper(md5('$timestamp' || upper(kode)))=upper('$password'))",__FILE__ . " linje " . __LINE__));
 	$bruger_id=$row['id'];
@@ -323,7 +322,6 @@ if(!isset($afbryd)){
 		if (file_exists("../utils/rotary_addrsync.php") && is_numeric($regnskab) && !file_exists("../temp/$db/rotary_addrsync.txt")) include("../utils/rotary_addrsync.php");
 #		$r=db_fetch_array(db_select("select box4 from grupper where art='API'",__FILE__ . " linje " . __LINE__));
 		hent_shop_ordrer(0,'');
-
 		if (!$sag_rettigheder&&$rettigheder) print "<meta http-equiv=\"refresh\" content=\"0;URL=menu.php\">";
 		elseif (substr($sag_rettigheder,2,1)) print "<meta http-equiv=\"refresh\" content=\"0;URL=../sager/sager.php\">";
 		elseif (substr($sag_rettigheder,0,1)) print "<meta http-equiv=\"refresh\" content=\"0;URL=../sager/loen.php\">";

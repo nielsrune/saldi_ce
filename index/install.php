@@ -4,31 +4,29 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//------------index/install.php----lap 3.8.9---2020-03-08---
-// LICENS
+//------------index/install.php----lap 3.9.9---2021-01-25---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2020 Saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20140701 Tilføjet bilag til create regnskab
 // 20161106 Tilrettet til ny adgangskodehåndtering. Søg saldikrypt.
 // 20200308	Added MySQLi support etc.
+// 20210125 PHR Added table mysale
 
 session_start();
 ob_start(); //Starter output buffering
@@ -202,12 +200,28 @@ if (isset($_POST['opret'])){
 	$r=db_fetch_array(db_select("SELECT id FROM brugere where brugernavn='$adm_navn'",__FILE__ . " linje " . __LINE__));	
 	$adm_password=saldikrypt($r['id'],$adm_password);
 	db_modify("UPDATE brugere SET kode='$adm_password' where id = '$r[id]'",__FILE__ . " linje " . __LINE__); 
-	db_modify("CREATE TABLE regnskab (id serial NOT NULL,	regnskab text, dbhost text, dbuser text, db text, version text, sidst text, brugerantal numeric, posteringer numeric, posteret numeric, lukket text,administrator text,lukkes date, betalt_til date,logintekst text,email text,bilag numeric(1,0), PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("INSERT INTO regnskab (regnskab, dbhost, dbuser, db, version,bilag) values ('$db_navn' ,'$host', '$db_bruger', '$db_navn', '$version','0')",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE online (session_id text, brugernavn text, db text, dbuser text, rettigheder text, regnskabsaar integer, logtime text, revisor boolean)",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE kundedata (id serial NOT NULL, firmanavn text, addr1 text, addr2 text, postnr varchar(10), bynavn text, kontakt text, email text, cvrnr text, regnskab text, regnskab_id integer,brugernavn text, kodeord text, kontrol_id text, aktiv int, logtime text,slettet varchar(2),PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE tekster (id serial NOT NULL, sprog_id integer, tekst_id integer, tekst text, PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE revisor(id serial NOT NULL,regnskabsaar integer,bruger_id integer,brugernavn text,db_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE regnskab (id serial NOT NULL,	regnskab varchar(16), dbhost varchar(16), dbuser varchar(16), ";
+	$qtxt.= "db varchar(16), version  varchar(16), sidst  varchar(16), brugerantal numeric(2,0), posteringer numeric(10,0), ";
+	$qtxt.= "posteret numeric(10,0), mysale numeric(1,0), lukket  varchar(2),administrator  varchar(2),lukkes date, ";
+	$qtxt.= "betalt_til date,logintekst text,email  varchar(2),bilag numeric(1,0), PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "INSERT INTO regnskab (regnskab, dbhost, dbuser, db, version,bilag) values ";
+	$qtxt.= "('$db_navn' ,'$host', '$db_bruger', '$db_navn', '$version','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE online (session_id text, brugernavn text, db text, dbuser text, rettigheder text, ";
+	$qtxt.= "regnskabsaar integer, logtime text, revisor boolean)";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE kundedata (id serial NOT NULL, firmanavn text, addr1 text, addr2 text, postnr varchar(10), ";
+	$qtxt.= "bynavn text, kontakt text, email text, cvrnr text, regnskab text, regnskab_id integer,brugernavn text, ";
+	$qtxt.= "kodeord text, kontrol_id text, aktiv int, logtime text,slettet varchar(2),PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE tekster (id serial NOT NULL, sprog_id integer, tekst_id integer, tekst text, PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE revisor";
+	$qtxt.= "(id serial NOT NULL,regnskabsaar integer,bruger_id integer,brugernavn text,db_id integer,PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE mysale (id serial NOT NULL,deb_id int, db varchar(20), email varchar(60), link text, PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "CREATE TABLE settings ";
 	$qtxt.= "(id serial NOT NULL, var_name text, var_grp text, var_value text, var_description text, user_id integer, PRIMARY KEY (id))";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);

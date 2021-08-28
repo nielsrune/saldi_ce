@@ -70,8 +70,12 @@ function acceptPrint() {
     }
 }
 
-function setPrintTxt($fp, $log, $FromCharset, $ToCharset, $ore_50, $kr_1, $kr_2, $kr_5, $kr_10, $kr_20, $kr_50, $kr_100, $kr_200, $kr_500, $kr_1000, $kr_andet, $valuta, $optval,$changeCardValue) {
+function setPrintTxt($fp, $log, $FromCharset, $ToCharset, $ore_50, $kr_1, $kr_2, $kr_5, $kr_10, $kr_20, $kr_50, $kr_100, $kr_200, $kr_500, $kr_1000, $kr_andet, $valuta, $optval,$changeCardValue,$reportNumber) {
 
+	echo __line__ ."$reportNumber<br>";
+
+
+	$dd=date("Y-m-d");
 	$specifiedCashTxt = setSpecifiedPrintText();
 	$cashCountTxt = setSpecifiedCashPrintText();
 	$country = getCountry();
@@ -86,6 +90,10 @@ function setPrintTxt($fp, $log, $FromCharset, $ToCharset, $ore_50, $kr_1, $kr_2,
 	$kortsum=if_isset($_POST['kortsum']);
 	$ny_kortsum=if_isset($_POST['ny_kortsum']);
 	$kontosum=if_isset($_POST['kontosum']);
+	$ValutaByttePenge=if_isset($_POST['ValutaByttePenge']);
+	$ValutaTilgang=if_isset($_POST['ValutaTilgang']);
+	$ValutaKasseDiff=if_isset($_POST['ValutaKasseDiff']);
+	$ValutaUdtages=if_isset($_POST['ValutaUdtages']);
 	
 	$kortdiff=0;
 	if ($changeCardValue) {
@@ -93,6 +101,83 @@ function setPrintTxt($fp, $log, $FromCharset, $ToCharset, $ore_50, $kr_1, $kr_2,
 			$kortdiff+=$kortsum[$x]-usdecimal($ny_kortsum[$x],2);
 		}
 		$kortdiff=afrund($kortdiff,2);
+	}
+	if ($reportNumber) {
+		$qtxt  = "insert into report (date,type,description,count,total,report_number) values ";
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[half]','0','". $ore_50*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[one]','0','". $kr_1*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[two]','0','". $kr_2*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[five]','0','". $kr_5*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[ten]','0','". $kr_10*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[twenty]','0','". $kr_20*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[fifty]','0','". $kr_50*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[hundred]','0','". $kr_100*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[twoHundred]','0','". $kr_200*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[fiveHundred]','0','". $kr_500*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[thousand]','0','". $kr_1000*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__);
+		$qtxt2 = "('$dd','cashCount','$specifiedCashTxt[other]','0','". $kr_andet*1 ."','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		if (count($valuta)) {
+			for ($x=0;$x<count($valuta);$x++) {
+				$qtxt2 = "('$dd','cashCount','$valuta[$x]','0','". usdecimal($optval[$x],2)	 ."','$reportNumber')";
+				db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+			}
+		}
+		$qtxt2 = "('$dd','cashCount','$cashCountTxt[turnover]','0','$omsatning','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$cashCountTxt[portfolio]','0','$byttepenge','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$cashCountTxt[dayApproach]','0','$tilgang','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__);
+		$tmp=$byttepenge+$tilgang;
+		$qtxt2 = "('$dd','cashCount','$cashCountTxt[expInv]','0','$tmp','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$cashCountTxt[countInv]','0','$optalt','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__);
+		$tmp=$optalt-($byttepenge+$tilgang+$kortdiff);
+		$qtxt2 = "('$dd','cashCount','$cashCountTxt[diff]','0','$tmp','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		$qtxt2 = "('$dd','cashCount','$cashCountTxt[fromBox] $kasse $cashCountTxt[currency]','0','$udtages','$reportNumber')";
+		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		for ($x=0;$x<count($valuta);$x++) {
+			$qtxt2 = "('$dd','cashCount','Morgenbeholdning $valuta[$x]:','0','". $ValutaByttePenge[$x] ."','$reportNumber')";
+			db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+			$qtxt2 = "('$dd','cashCount','Dagens tilgang $valuta[$x]:','0','". usdecimal($ValutaTilgang[$x],2) ."','$reportNumber')";
+			db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+			$tmp=usdecimal($ValutaByttePenge[$x],2)+usdecimal($ValutaTilgang[$x],2);
+			$qtxt2 = "('$dd','cashCount','Forventet beholdning $valuta[$x]:','0','$tmp','$reportNumber')";
+			db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+			$qtxt2 = "('$dd','cashCount','Optalt beholdning $valuta[$x]:','0','". usdecimal($optval[$x],2) ."','$reportNumber')";
+			db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+			$qtxt2 = "('$dd','cashCount','Difference $valuta[$x]:','0','". usdecimal($ValutaKasseDiff[$x],2) ."','$reportNumber')";
+			db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+			$qtxt2 = "('$dd','cashCount','Udtaget fra kasse $kasse  $valuta[$x]:','0','". usdecimal($ValutaUdtages[$x],2) ."','$reportNumber')";
+			db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		}
+		if ($kontosum) {
+			$qtxt2 = "('$dd','cashCount','Salg på konto','0','". usdecimal($kontosum,2) .#','$reportNumber')";
+			db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		}
+		for ($x=0;$x<count($kortnavn);$x++) {
+				$txt1="$kortnavn[$x]";
+			if ($changeCardValue) {
+				$txt1.="(". dkdecimal($kortsum[$x],2) .")";
+				$txt2=usdecimal($ny_kortsum[$x],2);
+			} else $txt2=usdecimal($kortsum[$x],2);
+			$qtxt2 = "('$dd','cashCount','$txt1','0','$txt2','$reportNumber')";
+				if ($txt1) db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
+		}
 	}
 	$tmp = iconv($FromCharset, $ToCharset,$specifiedCashTxt['half']);
 	fwrite($fp,"  $tmp:  $ore_50\n");
@@ -132,6 +217,7 @@ function setPrintTxt($fp, $log, $FromCharset, $ToCharset, $ore_50, $kr_1, $kr_2,
 	while (strlen($txt1)+strlen($txt2)<40) $txt2=" ".$txt2;
 	fwrite($fp,"$txt1$txt2\n");
 	fwrite($log,"$txt1$txt2\n");
+
 	$txt1 = $cashCountTxt['portfolio'];
 	$txt2=dkdecimal($byttepenge,2);
 	while (strlen($txt1)+strlen($txt2)<40) $txt2=" ".$txt2;

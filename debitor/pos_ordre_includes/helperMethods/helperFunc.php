@@ -138,7 +138,7 @@ function countPriceCorrectionSetup($newPrice, $oldPrice)
 
 function countPriceCorrection($id, $price, $kasse)
 {
-    $temp = $_SESSION['price_correction'];
+    $temp = if_isset($_SESSION['price_correction']);
     if ($temp == true) {
         db_modify("insert into price_correction (id, price, kasse) values ($id, $price, $kasse)", __LINE__ . "linje" . __LINE__);
         unset($_SESSION['price_correction']);

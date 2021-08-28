@@ -1,25 +1,22 @@
 <?php
 
-// ------------lager/optalling.php------------patch 3.6.6------2016.10.15---
-// LICENS
+// ------------lager/optalling.php------------patch 3.9.3------2020.06.06---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 20120913 Der kan nu optaelles til 0
@@ -40,7 +37,11 @@
 // 20161031 Opdatering af batch_kob_salg samt rettelse af fejl af søgestreng. # 20161031
 // 20161031 Function opdat_behold - trækker nu antal fra batch_kob og batch_salg da der kan være fejl i lagerstatus.
 // 20170915	Opdat behold satte negativt antal på forbrugsvarer.Søg 20170915
-
+// 20180703 $reg_variant_id[$x] ændret fra $r['variant_id'] til $r['vare_id'].".".$r['variant_id'] 20180703
+// 20180703 Hovedvare for varer med varianter fjernet fra batch kob & salg samt lagerstatus  20180703
+// 20200629	PHR Speed optimizing.Look for 20200629 twice
+// 20200905 PHR varenr not found wher seraching for barcode. Inserted: or stregkode = '$varenr'
+// 20200905 PHR Updating api now witten to apilog and & removed from  exec command as call was interrupted?
 
 @session_start();
 $s_id=session_id();
@@ -62,8 +63,8 @@ else $returside="rapport.php";
 $importer=if_isset($_GET['importer']);
 $nulstil=if_isset($_GET['nulstil']);
 $lager=if_isset($_GET['lager']);
-if (!$lager) $lager=if_isset($_POST['lager']);
-if (!$lager) $lager=1; #20160211
+if (isset($_POST['lager'])) $lager=$_POST['lager'];
+if (!isset($lager)) $lager=1; #20160211
 
 $slet=if_isset($_GET['slet']);
 $vare_id=if_isset($_GET['vare_id']);
@@ -78,6 +79,9 @@ db_modify("update batch_kob set variant_id = '0' where variant_id is NULL",__FIL
 db_modify("update batch_salg set variant_id = '0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
 
 if ($bogfor) {
+	$qtxt="select box4 from grupper where art='API'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$api_fil=trim($r['box4']);
 	$nulstil_ej_optalt=if_isset($_GET['nulstil_ej_optalt']);
 	if (isset($_POST['nulstil_ej_optalt']) && $_POST['nulstil_ej_optalt']) $nulstil_ej_optalt=$_POST['nulstil_ej_optalt'];
 	$dato=if_isset($_GET['dato']); 
@@ -96,11 +100,31 @@ if ($slet && $vare_id && $varenr) {
 	db_modify("delete from regulering where bogfort='0' and lager='$lager'",__FILE__ . " linje " . __LINE__);
 } else {
 	$vare_id=if_isset($_POST['vare_id']);
-	if (!$varenr) $varenr=db_escape_string(if_isset($_POST['varenr']));
+	if (!$varenr) {
+		$varenr=db_escape_string(if_isset($_POST['varenr']));
+		if ($varenr) {
+			$qtxt="select variant_varer.id from varer,variant_varer where varer.varenr='$varenr' and variant_varer.vare_id=varer.id limit 1";
+			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				alert("varenr: $varenr indeholder varianter og kan kun reguleres på varekort eller gennem csv fil");
+				$varenr=NULL;
+			}
+			if ($varenr) {
+				$qtxt="select varenr from varer where varenr='$varenr' or stregkode='$varenr'";
+					if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $varenr=$r['varenr'];
+				else {
+					alert("varenr: $varenr ikke fundet");
+					$varenr=NULL;
+				}
+			}
+		}
+	}
 	$optalt=if_isset($_POST['optalt']);
 	$beholdning=if_isset($_POST['beholdning']);
 	$tidspkt=if_isset($_POST['tidspkt']);
 	$dato=if_isset($_POST['dato']);
+
+	
+	
 }
 if (!$dato) $dato=if_isset($_POST['dato']);
 if (!$dato) $dato=if_isset($_GET['dato']);
@@ -186,9 +210,10 @@ if (!$lager) {
 } 
 */
 
-print "<form name=\"optalling\" action=\"optalling.php?gentael=$gentael\" method=\"post\">\n";
+print "<form name=\"optalling\" action=\"optalling.php?gentael=$gentael&lager=$lager\" method=\"post\">\n";
 if ($varenr=trim($varenr)) {
 	$fokus="optalt";
+
 	print "<tr><td>Varenr</td><td><!-- Lager --></td><td>Beskrivelse</td><td align=\"left\">Beholdning ($dato)</td><td align=\"right\">Ny beholdning</td></tr>\n";
 	if (!$r=db_fetch_array(db_select("select * from varer where varenr='$varenr' or stregkode='$varenr'",__FILE__ . " linje " . __LINE__))) {
 		$r=db_fetch_array(db_select("select * from varer where lower(varenr)='".strtolower($varenr)."' or lower(stregkode)='".strtolower($varenr)."' or upper(varenr)='".strtoupper($varenr)."' or upper(stregkode)='".strtoupper($varenr)."'",__FILE__ . " linje " . __LINE__));
@@ -197,6 +222,7 @@ if ($varenr=trim($varenr)) {
 		# 20140625 ->
 		db_modify("update batch_kob set lager='0' where lager is NULL",__FILE__ . " linje " . __LINE__); 
 		db_modify("update batch_salg set lager='0' where lager is NULL",__FILE__ . " linje " . __LINE__);
+		db_modify("update lagerstatus set lager='0' where lager is NULL",__FILE__ . " linje " . __LINE__);
 		db_modify("update batch_kob set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__); 
 		db_modify("update batch_salg set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
 		db_modify("update lagerstatus set variant_id='0' where variant_id is NULL",__FILE__ . " linje " . __LINE__);
@@ -267,6 +293,7 @@ if ($varenr=trim($varenr)) {
 	print "<input type=\"hidden\" name=\"varenr\" value='$r[varenr]'>\n";
 	print "<input type=\"hidden\" name=\"lager\" value='$lager'>\n";
 	print "<input type=\"hidden\" name=\"vare_id\" value='$r[id]'>\n";
+	print "<input type=\"hidden\" name='tidspkt' value='".date('YmdHis')."'>\n";
 	print "<input type=\"hidden\" name=\"beholdning\" value='$beholdning'></td></tr>\n";
 } else {
 	$fokus="varenr";
@@ -287,12 +314,12 @@ if ($varenr=trim($varenr)) {
 		}
 		print "</select></td>";	
 	}
+	
 	print "<td align=\"center\"><input style=\"width:300px;text-align:left;\" type=\"text\" name=\"varenr\"></td>\n";
 }
-print "<input type=\"hidden\" name=\"tidspkt\" value=\"".date('YmdHis')."\">";
 
 print "</tr><tr><td colspan=\"5\" align=\"center\"><input type=\"submit\" value=\"OK\"></form>";
-if ($varenr) print "<a style=\"text-decoration:none\" href=optalling.php><input type=\"button\" value=\"Fortryd\"></a>";
+if ($varenr) print "<a style=\"text-decoration:none\" href=optalling.php?lager=$lager><input type=\"button\" value=\"Fortryd\"></a>";
 print "</td></tr>\n";
 print "</tbody></table  name=\"tabel_1.2\"></td></tr>\n"; # <- tabel 1.2
 print "<tr><td align=\"center\" width=\"100%\"><hr></td></tr>";
@@ -397,7 +424,7 @@ function vis_optalling($lager,$vnr,$gentael) {
 						print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\"><br></td><td align=\"right\"><br></td><td align=\"right\"><br></td><td colspan=\"4\"><br></td><tr>\n";
 						print "<tr bgcolor=\"$baggrund\"><td>".$variant_stregkode[$x]."</td><td><br></td><td>".$lager."</td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\">".dkdecimal($beholdning[$x],2)."</td><td align=\"right\">".dkdecimal($optalt[$x])."</td><tr>\n";
 					} else {
-						print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\">".dkdecimal($beholdning[$x],2)."</td><td align=\"right\">".dkdecimal($optalt[$x],2)."</td><td colspan=\"4\" align=\"right\" title=\"Klik her for at slette denne vare fra opt&aelig;llingen.\"><a style=\"text-decoration:none\" href=\"optalling.php?vare_id=$vare_id[$x]&varenr=$varenr[$x]&slet=y&gentael=$gentael\" onclick=\"return confirm('Vil du slette denne vare fra liste og opt&aelig;lle den igen?')\"><font color=\"#ff0000\"><b>X</b></font></a></td><tr>\n";
+						print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\">".dkdecimal($beholdning[$x],2)."</td><td align=\"right\">".dkdecimal($optalt[$x],2)."</td><td colspan=\"4\" align=\"right\" title=\"Klik her for at slette denne vare fra opt&aelig;llingen.\"><a style=\"text-decoration:none\" href=\"optalling.php?vare_id=$vare_id[$x]&varenr=$varenr[$x]&slet=y&lager=$lager&gentael=$gentael\" onclick=\"return confirm('Vil du slette denne vare fra liste og opt&aelig;lle den igen?')\"><font color=\"#ff0000\"><b>X</b></font></a></td><tr>\n";
 					}
 						$kpris=$kostpris[$x];
 						$behold=$beholdning[$x];
@@ -422,7 +449,7 @@ function vis_optalling($lager,$vnr,$gentael) {
 			$minut=substr($tidspkt[$x],10,2);
 			$kostsum=$kostpris[$x]*$optalt[$x];
 			$lagervalue+=$kostsum;
-			print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\"><b>".dkdecimal($beholdning[$x],2)."</b></td><td align=\"right\"><b>".dkdecimal($optalt[$x],2)."</b></td><td align=\"right\"><b>".dkdecimal($kostpris[$x],2)."</b></td><td align=\"right\"><b>".dkdecimal($kostsum,2)."</b></td><td align=\"right\"><b>".dkdecimal($lagervalue,2)."</b></td><td title=\"Klik her for at slette denne vare fra opt&aelig;llingen.\"><a  style=\"text-decoration:none\" href=\"optalling.php?vare_id=$vare_id[$x]&varenr=$varenr[$x]&slet=y\" onclick=\"return confirm('Vil du slette denne vare fra liste og opt&aelig;lle den igen?')\"><font color=\"#ff0000\"><b>X</b></font></a></td><tr>\n";
+			print "<tr bgcolor=\"$baggrund\"><td><b>$varenr[$x]</b></td><td><b>$beskrivelse[$x]</b></td><td><b>".$lager."</b></td><td align=\"center\">$dag.$md.$aar&nbsp;$time:$minut</td><td align=\"right\"><b>".dkdecimal($beholdning[$x],2)."</b></td><td align=\"right\"><b>".dkdecimal($optalt[$x],2)."</b></td><td align=\"right\"><b>".dkdecimal($kostpris[$x],2)."</b></td><td align=\"right\"><b>".dkdecimal($kostsum,2)."</b></td><td align=\"right\"><b>".dkdecimal($lagervalue,2)."</b></td><td title=\"Klik her for at slette denne vare fra opt&aelig;llingen.\"><a  style=\"text-decoration:none\" href=\"optalling.php?vare_id=$vare_id[$x]&varenr=$varenr[$x]&slet=y&lager=$lager\" onclick=\"return confirm('Vil du slette denne vare fra liste og opt&aelig;lle den igen?')\"><font color=\"#ff0000\"><b>X</b></font></a></td><tr>\n";
 		}
 #		if (!$vnr) print "<tr><td colspan=\"8\"><hr></td></tr>";
 	}
@@ -441,7 +468,7 @@ function vis_optalling($lager,$vnr,$gentael) {
 #		if ($antal) {	
 			print "<tr><td colspan=\"8\">";
 			if ($antal) print "Optalt ialt $antal varer udfra en samlet vareliste på $vareantal lagerf&oslash;rte varer.";
-			print "Klik <a href=optalling.php?vis_ej_optalt=1&dato=$dato>her</a> for liste over ikke optalte varer";
+			print "Klik <a href=optalling.php?vis_ej_optalt=1&dato=$dato&lager=$lager>her</a> for liste over ikke optalte varer";
 			print "<td></tr>"; 
 			print "<tr><td colspan=\"8\">";
 			#21130109 - linjen herunder
@@ -501,8 +528,7 @@ function vis_ej_optalt($lager) {
 } # vis_ej_optalt()
 ###########################################################################################################
 function bogfor($lager,$nulstil_ej_optalt,$dato,$bogfor,$godkend_regdif) {
-	global $regnaar;
-	global $bruger_id;
+	global $bruger_id,$db,$regnaar;
 
 	$r=db_fetch_array(db_select("select * from grupper where kodenr='$regnaar' and art='RA'",__FILE__ . " linje " . __LINE__));
 	$startaar=$r['box2']*1;
@@ -529,11 +555,11 @@ function bogfor($lager,$nulstil_ej_optalt,$dato,$bogfor,$godkend_regdif) {
 			$gruppe[$x]=$r['kodenr'];
 			$lagertraek[$x]=$r['box2'];
 			$lagerregulering[$x]=$r['box5'];
-			if ($lagertraek[$x] && !$lagerregulering[$x]) {
-				echo "konto for lagerregulering ikke sat for varegruppe $gruppe[$x]<br>";
-				$bogfor=0;
-				return ("konto for lagerregulering ikke sat for varegruppe $gruppe[$x]");
-			}
+#		if ($lagertraek[$x] && !$lagerregulering[$x]) {
+#			echo "konto for lagerregulering ikke sat for varegruppe $gruppe[$x]<br>";
+#			$bogfor=0;
+#			return ("konto for lagerregulering ikke sat for varegruppe $gruppe[$x]");
+#		}
 		$x++;
 		}
 	$y=0;
@@ -541,15 +567,16 @@ function bogfor($lager,$nulstil_ej_optalt,$dato,$bogfor,$godkend_regdif) {
 	$reg_vare_id=array();
 	$reg_diff=array();
 	$reguleres=array();
+	$reg_variant_id=array();
 	$qtxt="select * from regulering where bogfort='0' and lager='$lager' order by vare_id,variant_id,id";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
 		if (!in_array($r['vare_id'],$reg_vare_id) || !in_array($r['variant_id'],$reg_variant_id)) {
 			$x++;
 			$reg_vare_id[$x]=$r['vare_id'];
-			$reg_variant_id[$x]=$r['variant_id'];
+			($r['variant_id'])?$reg_variant_id[$x]=$r['vare_id'].".".$r['variant_id']:$reg_variant_id[$x]=NULL; #20180703
 			$id=$reg_vare_id[$x];
-			if($reg_variant_id[$x]) $id.=".".$reg_variant_id[$x];
+			if($reg_variant_id[$x]) $id=$reg_variant_id[$x];
 			$reg_id[$x]=$id;
 			$reg_diff[$id]=0;
 			$gl_beholdning[$id]=$r['beholdning'];
@@ -617,6 +644,7 @@ $tjek=0;
 		$qtxt="select * from varer where gruppe='$gruppe[$x]' and lukket != 'on' order by varenr";
 		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while($r=db_fetch_array($q)) {
+		if ($nulstil_ej_optalt || in_array($r['id'],$reg_vare_id)) { #20200629
 			$z=0;
 			$qtxt="select * from variant_varer where vare_id='$r[id]' order by variant_stregkode";
 			$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
@@ -644,6 +672,7 @@ $tjek=0;
 				$v++;
 			}
 		}
+		}
 		for ($v=0;$v<count($vare_id);$v++) {
 			$id=$vare_id[$v];
 			if ($variant_id[$v]) $id.=".".$variant_id[$v];
@@ -658,7 +687,7 @@ $tjek=0;
 				$gl_beholdning[$id]-=$r2['beholdning'];
 				$gl_kostsum=$beholdning[$v]*$kostpris[$v];
 				$bgcolor="#ffffff";
-				if ($lagerregulering[$x]) { # 20140615
+#				if ($lagerregulering[$x]) { # 20140615
 				if (in_array($id,$reg_id) || in_array($id,$reg_variant_id)) { 
 						if ($reguleres[$id]) {
 							$bgcolor="#00ff00";
@@ -733,16 +762,17 @@ $tjek=0;
 									$restsum+=$bk_rest[$y];
 									$y++;
 								}
-#xit;								
 								$y=0;
 								while($y<count($bk_id) && $reguleres[0] && $restsum) { 
 									if ($reguleres[0]<=$bk_rest[$y]) {
 										$bk_rest[$y]-=$reguleres[0];
 										$qtxt="update batch_kob set rest = '$bk_rest[$y]' where id = '$bk_id[$y]'";
 										db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-										$qtxt="insert into batch_salg(batch_kob_id,vare_id,linje_id,salgsdate,fakturadate,ordre_id,antal,pris,lev_nr,lager,variant_id)";
+										$qtxt="insert into batch_salg(batch_kob_id,vare_id,linje_id,salgsdate,fakturadate,ordre_id,antal,pris,lev_nr,";
+										$qtxt.="lager,variant_id)";
 										$qtxt.="values";
-										$qtxt.="('$bk_id[$y]','$vare_id[$v]','0','$transdate','$transdate','0',$reguleres[0],'$kostpris[$v]','1','$lager','$variant_id[$v]')";
+										$qtxt.="('$bk_id[$y]','$vare_id[$v]','0','$transdate','$transdate','0',$reguleres[0],'$kostpris[$v]','1',";
+										$qtxt.="'$lager','$variant_id[$v]')";
 										db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 										$restsum-=$reguleres[0];
 										$reguleres[0]=0;
@@ -768,14 +798,14 @@ $tjek=0;
 #									$r2=db_fetch_array(db_select("select max(id) as id from batch_kob where vare_id='$id' and linje_id=0",__FILE__ . " linje " . __LINE__));
 									$qtxt="insert into batch_salg(batch_kob_id, vare_id, linje_id, salgsdate,fakturadate, ordre_id, antal, pris, lev_nr,lager,variant_id)"; 
 									$qtxt.="values"; 
-									$qtxt.="('0', '$vare_id[$v]', '0', '$transdate', '$transdate', '0', '$reguleres[0]', '$kostpris[$v]', '1','$lager','$variant_id[$x]')";
+									$qtxt.="('0', '$vare_id[$v]', '0', '$transdate', '$transdate', '0', '$reguleres[0]', '$kostpris[$v]', '1','$lager','$variant_id[$v]')";
 									db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 								}
 								
 							}
 						}
 					}
-				} else print "<BODY onload=\"javascript:alert('Manglende kontonummer for lagerregulering (Varegruppe $gruppe[$x])')\">\n";
+#				} else print "<BODY onload=\"javascript:alert('Manglende kontonummer for lagerregulering (Varegruppe $gruppe[$x])')\">\n";
 			}
 		}
 		if (!$aut_lager) {
@@ -827,7 +857,6 @@ $tjek=0;
 	$qtxt="select * from regulering where bogfort='0' and variant_id > '0' and lager='$lager' order by variant_id,id";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
-#if ($r['vare_id']==3778) cho $r['optalt']." <br>";
 		if (!in_array($r['variant_id'],$reg_variant_id)) {
 			$x++;
 			$reg_variant_id[$x]=$r['variant_id'];
@@ -847,7 +876,6 @@ $tjek=0;
 		$reguleres[$id]=$ny_beholdning[$id]-$gl_beholdning[$id];
 	}
 	$reg_antal=$x;
-	
 	for ($x=0;$x<count($reg_vare_id);$x++){
 			if (isset($reg_variant_id[$x])) {
 		$id=$reg_variant_id[$x];
@@ -861,9 +889,10 @@ $tjek=0;
 		}
 	}
 	}
-	if ($bogfor>1) opdat_behold();
+#exit;	
+	 if ($bogfor>1) opdat_behold($reg_vare_id); # $reg_vare_id ADDED 20200629
 transaktion('commit');
-	if ($bogfor==1) print "<tr><td colspan=\"6\">Klik <a href=optalling.php?bogfor=2&nulstil_ej_optalt=$nulstil_ej_optalt&dato=$dato&lager=$lager&godkend_regdif=$godkend_regdif>her</a> for endelig lagerregulering og bogføring pr. $dato</td></tr>";
+	if ($bogfor==1) print "<tr><td colspan=\"6\">Klik <a href=optalling.php?bogfor=2&nulstil_ej_optalt=$nulstil_ej_optalt&dato=$dato&lager=$lager&godkend_regdif=$godkend_regdif>her</a> for endelig lagerregulering pr. $dato</td></tr>";
 	# else print "<tr><td colspan=\"6\">Lagerregulering udført.</td></tr>";
 	else {
 		print "<BODY onload=\"javascript:alert('Lagerregulering udført.')\">\n";
@@ -872,8 +901,10 @@ transaktion('commit');
 } # endfunc bogfor
 
 ########################################################################################################################
-function opdat_behold() {
+function opdat_behold($reg_vare_id) {
+	global $api_fil,$nulstil_ej_optalt;
 	echo "opdaterer beholdning<br>";
+	
 	$x=0; # hele select 20170915 
 	$qtxt="select kodenr from grupper where box8 = 'on' order by kodenr"; 
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
@@ -892,11 +923,13 @@ function opdat_behold() {
 	$x=0;
 	$q=db_select("select id,beholdning,gruppe from varer order by id",__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
+		if ($nulstil_ej_optalt || in_array($r['id'],$reg_vare_id)) { #20200629
 		$vare_id[$x]=$r['id'];
 		$gruppe[$x]=$r['gruppe'];
 		$beholdning[$x]=$r['beholdning'];
 		$variant_id[$x]=array();
 		$x++;		
+	}
 	}
 	$tmp=0;
 	$q=db_select("select * from variant_varer order by vare_id,id",__FILE__ . " linje " . __LINE__);
@@ -929,6 +962,14 @@ function opdat_behold() {
 		$ny_beholdning=0;
 		if (in_array($gruppe[$x],$v_grp)) { #if tilføjet 20170915
 			if (count($variant_id[$x])){
+				# -> 20180703
+				$qtxt="delete from lagerstatus where vare_id='$vare_id[$x]' and variant_id=0";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				$qtxt="delete from batch_kob where vare_id='$vare_id[$x]' and variant_id=0";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				$qtxt="delete from batch_salg where vare_id='$vare_id[$x]' and variant_id=0";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				# <- 20180703
 				for ($v=0;$v<count($variant_id[$x]);$v++) {
 				$ny_variant_beholdning=0;
 					for ($l=0;$l<count($lager);$l++) {
@@ -958,6 +999,15 @@ function opdat_behold() {
 					if ($ny_variant_beholdning != $variant_beholdning[$x][$v]) {
 						$qtxt="update variant_varer set variant_beholdning='$ny_variant_beholdning' where id='".$variant_id[$x][$v]."'";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
+						if ($api_fil) {
+							$qtxt="select shop_variant from shop_varer where saldi_id='$vare_id[$x]' and saldi_variant='".$variant_id[$x]."'";
+							if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+								$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
+								$txt = "/usr/bin/wget --spider --no-check-certificate --header='$header' ";
+								$txt.= "'$api_fil?update_stock=$r[shop_variant]&stock=".$ny_variant_beholdning ."'";
+								exec ("nohup $txt > /dev/null 2>&1 &\n");
+							}
+						}
 					}
 				}
 			} else {
@@ -972,6 +1022,18 @@ function opdat_behold() {
 		if ($ny_beholdning != $beholdning[$x]) {
 			$qtxt="update varer set beholdning='$ny_beholdning' where id='$vare_id[$x]'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
+		}
+		if ($api_fil) {
+			$qtxt="select shop_id from shop_varer where saldi_id='$vare_id[$x]'";
+			if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				$apilog=fopen("../temp/$db/rest_aip_log","a");
+				fwrite ($apilog, __file__." ".__line__." opdaterer vare_id:$vare_id[$x] ship_id:$r[shop_id] til $ny_beholdning stk\n")	;
+				fclose ($apilog);
+				$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
+				$txt = "/usr/bin/wget --spider --no-check-certificate --header='$header' ";
+				$txt.= "'$api_fil?update_stock=$r[shop_id]&stock=".$ny_beholdning ."'";
+				exec ("nohup $txt > /dev/null 2>&1\n");
+			}
 		}
 	}
 }
@@ -1105,6 +1167,10 @@ function importer($lager,$dato){
 					if (substr($varenr,0,1)=='"' && substr($varenr,-1,1)=='"') $varenr=substr($varenr,1,strlen($varenr)-2);
 #					$varenr=strtolower($varenr);
 					if (substr($antal,0,1)=='"' && substr($antal,-1,1)=='"') $antal=substr($antal,1,strlen($antal)-2);
+					$tmp=utf8_encode($varenr);
+					if (strpos($tmp,'æ') || strpos($tmp,'ø') || strpos($tmp,'å') || strpos($tmp,'Æ') || strpos($tmp,'Ø') || strpos($tmp,'Å')) {
+						$varenr=$tmp;
+					}
 					if (strpos($antal,",")) $antal=usdecimal($antal);
 					if (is_numeric($antal)) {
 						$vare_id=NULL;
@@ -1171,7 +1237,7 @@ function importer($lager,$dato){
 #cho __line__." $qtxt<br>"; 
 							db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 							$indsat++;
-						} elseif ($r=db_fetch_array(db_select("select id,vare_id from variant_varer where lower(variant_stregkode)='$varenr'",__FILE__ . " linje " . __LINE__))) {
+						} elseif ($r=db_fetch_array(db_select("select id,vare_id from variant_varer where lower(variant_stregkode)='". db_escape_string($varenr) ."'",__FILE__ . " linje " . __LINE__))) {
 							$variant_id=$r['id']*1;
 							$vare_id=$r['vare_id']*1;
 							$beholdning=0;

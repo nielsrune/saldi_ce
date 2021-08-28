@@ -4,32 +4,29 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/posTxtPrint/varHandle.php ---------- lap 3.7.4----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/divFuncs/drawer/drawerStatusFunc.php --- lap 3.9.9----2021.01.10-------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2019-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
-// 07.08.2019 LN Check drawer status and tell to close if open
+// 20190708 LN Check drawer status and tell to close if open
+// 20201010 PHR function getDrawerStatus - added: ?returside=$returside
 
-function getDrawerStatus()
-{
+function getDrawerStatus() {
 		$printserver = getPrintserver();
 		$drawerStatusLocation = 'http://' . $printserver . '/drawerstatus.php';
 
@@ -40,12 +37,11 @@ function getDrawerStatus()
 		$returside=$url."/debitor/pos_ordre.php";
 
 		//print "<meta http-equiv=\"refresh\" content=\"0; URL=$drawerStatusLocation\">\n";
-		print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/drawerstatus.php\">\n";
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/drawerstatus.php?returside=$returside\">\n";
 		usleep(10000);
 }
 
-function preDrawerCheck()
-{
+function preDrawerCheck() {
 		usleep(250000);
 		if(getCountry() == "Norway") {
 				if (isset($_POST['betaling']) || (isset($_POST['skuffe']) && $_POST['skuffe'] == 'Skuffe')) {
@@ -61,8 +57,7 @@ function preDrawerCheck()
 		}
 }
 
- function getPrintserver()
- {
+ function getPrintserver() {
 	 $r = db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 	 $printer_ip=explode(chr(9),$r['box3']);
 	 $printserver=$printer_ip[0];

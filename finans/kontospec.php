@@ -1,26 +1,31 @@
 <?php
-// ----------------------finans/kontospec.php------rev 3.5.2-----2015-02-18
-// LICENS
+// --- finans/kontospec.php --- rev 3.9.9 --- 2021.02.11 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2021 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2015.02.18 Tilføjet funktion lagerbev.
+// 2021.02.11 PHR some cleanup
+
+$fakturanr = array();
+$ordrenr   = array();
+$transdate = array();
+$varekob = $varelager_i = $varelager_u = array();
+
+$linjebg = NULL;
 
 @session_start();
 $s_id=session_id();
@@ -37,7 +42,7 @@ $month=if_isset($_GET['month']);
 $bilag=if_isset($_GET['bilag']);
 #if(!$month){$month=13;}
 
-$query = db_select("select * from grupper where art='RA' and kodenr='$regnaar'");
+$query = db_select("select * from grupper where art='RA' and kodenr='$regnaar'",__FILE__ . " linje " . __LINE__);
 if ($row = db_fetch_array($query)) {
 	$startaar=$row['box2'];
 	$month=trim($month);
@@ -120,10 +125,11 @@ if ($kontonr) {
 	$valg="and bilag = '$bilag'";
 	$x=0;
 }
-$q=db_select("select * from transaktioner where transdate >= '$start' and transdate <= '$slut' $valg order by transdate");
+$qtxt = "select * from transaktioner where transdate >= '$start' and transdate <= '$slut' $valg order by transdate";
+$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r = db_fetch_array($q)) {
 	$transdate[$x]=$r['transdate'];
-	$faktura[$x]=$r['fakturanr'];
+	$faktura[$x]=$r['faktura'];
 	$bilag[$x]=$r['bilag'];
 	$beskrivelse[$x]=$r['beskrivelse'];
 	$debet[$x]=$r['debet'];
@@ -135,8 +141,9 @@ while ($r = db_fetch_array($q)) {
 }
 
 for ($x=0;$x<count($transdate);$x++){
+	if (!isset($ordrenr[$x])) $ordrenr[$x] = 0;
 	if ($debet[$x] || $kredit[$x]) {
-		if (!$faktura[$x]) $faktura[$x]="ufakt";
+		if (!$faktura[$x]) $faktura[$x] = '';
 		if ($linjebg!=$bgcolor) {
 			$linjebg=$bgcolor; $color='#000000';
 		} else {
@@ -160,6 +167,9 @@ for ($x=0;$x<count($transdate);$x++){
 }
 
 function lagerbev ($kontonr,$varekob,$varelager_i,$varelager_u,$regnstart,$regnslut) {
+	
+	$beskrivelse = $bilag = $debet = $fakturanr = $kredit = $ordrenr = $transdate = array();
+	
 	$r=db_fetch_array(db_select("select kontotype from kontoplan where kontonr='$kontonr' order by regnskabsaar desc limit 1",__FILE__ . " linje " . __LINE__));
 	$kontotype=$r['kontotype'];
 	if (in_array($kontonr,$varekob) || in_array($kontonr,$varelager_i) || in_array($kontonr,$varelager_u)) {

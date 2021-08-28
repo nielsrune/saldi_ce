@@ -1,25 +1,23 @@
 <?php
-// -----------debitor/rykkertjek.php---------lap 3.2.5.------2011-12-02------
-// LICENS
+// -----------debitor/rykkertjek.php---------lap 3.9.4.------2020-09-18------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
-//
-// Copyright (c) 2004-2011 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20200918 Ckeck bypassed if no email.
 
 @session_start();
 $s_id=session_id();
@@ -42,7 +40,9 @@ $mailmodt_id=$r['box1'];
 $email=$r['box2'];
 $ffdage=$r['box5'];
 $chkdate=$r['box8'];
+if ($email) reminderCheck ($mailmodt_id,$email,$ffdage,$chkdate);
 
+function reminderCheck ($mailmodt_id,$email,$ffdage,$chkdate) {
 if (!$ffdage || $chkdate==$dd) echo '';
 else {
 	$rykkerdate=usdate(forfaldsdag($dd,'netto',$ffdage));
@@ -60,7 +60,8 @@ else {
 			if (!in_array($r['konto_id'],$konto_id)) {
 				$konto_id[$x]=$r['konto_id']; #Liste over konto id numre der skal rykkes
 				$x++;
-			} }
+					} 	
+				}
 		}
 	}
 	$ff_antal=$x;
@@ -82,34 +83,26 @@ else {
 # exit;
 }
 #exit;
+}
 function send_mail($email,$subjekt,$mailtext) {
-	
 	$r = db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
-	
 	$afsendermail=$from=$r['email'];
 	$afsendernavn=$r['firmanavn'];
-	
 	if (strpos($_SERVER['SERVER_NAME'],'saldi.dk')) { #20121016
 		$from = $db.'@'.$_SERVER['SERVER_NAME']; #20130731
 	}
-
-	
-	
 	/*
 echo "<br>Fra $afsendernavn | $afsendermail <br>";
 echo "Til $email<br>";
 echo "Emne: $subjekt<br>";
 echo "tekst	$mailtext<br>";
 */	
-	
 	$mail = new PHPMailer();
-
 	$mail->IsSMTP();                                   // send via SMTP
 	$mail->Host  = "localhost"; // SMTP servers
 	$mail->SMTPAuth = false;     // turn on SMTP authentication
 			#	$mail->Username = "jswan";  // SMTP username
 			#	$mail->Password = "secret"; // SMTP password
-			
 	$mail->From     = $from;
 	$mail->FromName = $afsendernavn;
 	$mail->AddReplyTo($afsendermail,$afsendernavn);

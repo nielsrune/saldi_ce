@@ -45,8 +45,8 @@ function saveLastReport($dataArray)
         } elseif ($key == "paymentArray") {
             $type = "Payment method";
             foreach($arrayType as $arrayKey => $arrayInfo) {
-                $description = $arrayInfo['payment'];
-                $total = $arrayInfo['price'];
+                (isset($arrayInfo['payment']))?$description = $arrayInfo['payment']: $description='';
+                (isset($arrayInfo['price']))?$total = $arrayInfo['price'] : $total = 0;
                 writeToDatabase($date, $type, $description, $count, $reportNumber, $total);
             }
         } elseif ($key == "vatArray") {
@@ -80,10 +80,11 @@ function saveLastReport($dataArray)
     unset($_SESSION['reportNumber']);
 }
 
-function writeToDatabase($date, $type, $descr, $count, $repNr, $total)
-{
-    db_modify("INSERT INTO report (date, type, description, count, report_number, total) values
-    ('$date', '$type', '$descr', $count, '$repNr', $total)", __FILE__ . "linje" . __LINE__);
+function writeToDatabase($date, $type, $descr, $count, $repNr, $total) {
+	if (!$total) $total = 0;
+	$qtxt = "INSERT INTO report (date, type, description, count, report_number, total) values ";
+  $qtxt.= "('$date', '$type', '$descr', $count, '$repNr', $total)";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 }
 
 function matchReceiptType($key)

@@ -4,37 +4,86 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/showPosLines/productLines.php ---------- lap 3.7.7----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.2 --- 2021.05.03 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2019-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
-// LN 20190508 Move function vis_pos_linjer here
+// 20190508	LN Move function vis-pos_linjer here
+// 20201031	PHR Background red if price is 0
+// 20201114	PHR Enhanged 'tilfravalg' add/remove to food items, (fx. extra bacon or no tomatoes in burger) $tilfravalgNy
+// 20210127 PHR Some minor design changes 
+// 20210320 PHR Made it possible to change qty in items with add ons and some cleanup 202103220
+// 20210503 PHR - Qty now red if stock below minimum stock - 20210503
 
+
+	print "<!-- ---------- start productLines.php ---------- -->\n";
+	if (isset($_GET['vare_id']) && $_GET['vare_id']) {
+		$itemIdNew=$_GET['vare_id'];	
+	} elseif ($varenr_ny) {
+		$qtxt = "select id from varer where varenr = '". db_escape_string($varenr_ny) ."'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$itemIdNew=$r['id'];
+	}
+	$folger=if_isset($_GET['folger']);
+	if (!$folger && isset($itemIdNew) && $tilfravalgNy && $show) {
+		$tfv=explode(chr(9),$tilfravalgNy);
+		for ($x=0;$x<count($tfv);$x++) {
+			if ($tfv[$x]) {
+				$qtxt = "select varenr,beskrivelse,salgspris from varer where id = '$tfv[$x]'";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				print "<tr><td></td><td></td><td>$r[beskrivelse]</td><td colspan='2'></td>";
+				print "<td align='center' style='color:red'>";
+				print "<a href='pos_ordre.php?id=$id&vare_id=$itemIdNew&tilfravalgNy=". str_replace(chr(9),'|',$tilfravalgNy) ."&delFrTfv=$x'>";
+				print "<button type='button' style='width:50px;height:30px;color:red'><big><big>X</big></big></button></a></td></tr>\n";
+			}
+		}
+	}
+	$s=0;
+	$qtxt = "select kodenr from grupper where art = 'VG' and box8 = 'on'";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r=db_fetch_array($q)) {
+		$stockGrp[$s]=$r['kodenr'];
+		$s++;
+	}
+	if (!isset($color)) $color=0;
 	for ($x=1;$x<=$varelinjer;$x++) {
+		if ($vare_id[$x]) {
+			$qtxt="select gruppe,beholdning,min_lager from varer where id = $vare_id[$x]";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$itemGroup[$x]  = $r['gruppe'];
+			$beholdning[$x] = $r['beholdning'];
+			$min_lager[$x]  = $r['min_lager'];
+			}	else $itemGroup[$x] = $beholdning[$x] = $min_lager[$x] = 0;
+		$txtColor = 'black';
+		$qtyTitle = '';
+		if (in_array($itemGroup[$x],$stockGrp) && $beholdning[$x] < $min_lager[$x]) { #20210503
+			$txtColor ='red';
+			$qtyTitle = "Obs!! Beholdning (". dkdecimal($beholdning[$x],0) .") mindre end ". dkdecimal($min_lager[$x],0);
+		}	elseif ($beholdning[$x]) $qtyTitle = "Beholdning: ". dkdecimal($beholdning[$x],0);
+
+		if (!isset($antal[$x])) $antal[$x]=0;
 		($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-		if ($posnr[$x]) {
+		if ($posnr[$x] && $show) {
 			if (!$samlevare[$x]) {
-				print "<tr bgcolor=\"$linjebg\">";
+				if ($pris[$x] == 0) $linjebg='red';
+				print "<tr style=\"background-color:$linjebg;text-color:$color\">";
 				print "<td style=\"width: 19%\">$varenr[$x]</td>";
-				print "<td style=\"width:7%;text-align:right\">".dkdecimal($antal[$x],2)."</td>";
+				print "<td title = '$qtyTitle' style=\"color:$txtColor;width:7%;text-align:right\">".dkdecimal($antal[$x],2)."</td>";
 				if ($lagerantal>1) print "<td style=\"width:7%;text-align:center\">$lager[$x]</td>";
 				print "<td>$beskrivelse[$x]</td>";
 				print "<td style=\"width:10%;text-align:right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[$x],2)."\">";
@@ -42,7 +91,7 @@
 				print "</td>";
 			}
 			if ($saet[$x]) {
-				if ($saet[$x-1] != $saet[$x]) $saetpris=0;
+				if (!isset($saet[$x-1]) || $saet[$x-1] != $saet[$x]) $saetpris=0;
 				if ($samlevare[$x]) print "<td align=\"right\"><br></td><td style=\"width:50px;height:30px;text-align:right\">\n";
 				$saetpris+=afrund($pris[$x]*$antal[$x]-($pris[$x]*$antal[$x]*$rabat[$x]/100),2); #20150214
 				$pris[$x]=0;
@@ -55,12 +104,12 @@
 				for ($a=0;$a<=$antal[$x];$a++) print "<option style=\"text-align:right\" value=\"$linje_id[$x]:$vare_id[$x]:$a\">$a</option>";
 				print "</select>";
 			} elseif ($status<'3' && !$varenr_ny && !$saet[$x]) {
-				$href="pos_ordre.php?id=$id&ret=$linje_id[$x]&leveret=$leveret[$x]";
+				$href="pos_ordre.php?id=$id&ret=$linje_id[$x]&antal=$antal[$x]&leveret=$leveret[$x]"; #20210320 Added antal
 				print "<input type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"Ret\">\n";
 			}
 			print "</td></tr>\n";
 		}
-		if ($rabat[$x] && !$saet[$x] && !$rvnr) {
+		if ($rabat[$x] && !$saet[$x] && !$rvnr && $show) {
 			($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 			if ($rabatart[$x]=="amount") {
 				if ($varemomssats[$x] & $momsfri[$x]!='on') $tmp=afrund($rabat[$x]+$rabat[$x]/100*$varemomssats[$x],2)*-1;
@@ -71,14 +120,14 @@
 				$tmp=afrund($pris[$x]*$rabat[$x]/-100,2);
 				if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>$rabat[$x]% rabat</td><td align=\"right\">".dkdecimal($tmp,2)."</td><td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n";
 			}
-		} elseif ($saetpris && ($saet[$x+1]!=$saet[$x]) && $saet[$x]) {
+			} elseif ($saetpris && isset($saet[$x+1]) && ($saet[$x+1]!=$saet[$x]) && $saet[$x] && $show) {
 			($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 			$saetpris=afrund($saetpris,2);
 			$r2=db_fetch_array(db_select("select id,antal,varenr,beskrivelse,lev_varenr from ordrelinjer where samlevare='on' and ordre_id='$id' and saet='$saet[$x]'",__FILE__ . " linje " . __LINE__));
 			list($lev_vnr,$srbt)=explode("|",$r2['lev_varenr']);
 			$lev_vnr*=$r2['antal'];
 			print "<tr bgcolor=\"$linjebg\"><td></td><td></td><td></td><td>$r2[beskrivelse]</td><td></td><td title=$srbt\" align=\"right\">".dkdecimal($lev_vnr,2)."</td>\n";
-			if ($r['varenr']!=$svnr) {
+			if ($r2['varenr']!=$svnr) {
 				$href="pos_ordre.php?id=$id&ret=$r2[id]&saet=$saet[$x]&leveret=$leveret[$x]";
 				print "<td><!--<input type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"Ret\">--></td></tr>\n";
 			}
@@ -89,23 +138,26 @@
 				else $tfvare[0]=$folgevare[$x];
 				for($fv=0;$fv<count($tfvare);$fv++) {
 					($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-					if ($tfvare[$fv]>0) {
-						$r=db_fetch_array(db_select("select varenr,beskrivelse,salgspris,gruppe from varer where id = '$tfvare[$fv]'",__FILE__ . " linje " . __LINE__));
-						$r2 = db_fetch_array(db_select("select box4, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'",__FILE__ . " linje " . __LINE__));
+					if ($tfvare[$fv]>0 && $show) {
+						$qtxt="select varenr,beskrivelse,salgspris,gruppe from varer where id = '$tfvare[$fv]'";
+						$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+						$qtxt="select box4, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'";
+						$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 						$f_bogfkto=$r2['box4'];
 						$f_momsfri=$r2['box7'];
 					if ($f_momsfri){
 						$f_momssats=0;
 						$f_pris=$r['salgspris'];
 					} else {
-						$r2 = db_fetch_array(db_select("select moms from kontoplan where kontonr = '$f_bogfkto' and regnskabsaar = '$regnaar'",__FILE__ . " linje " . __LINE__));
+						$qtxt="select moms from kontoplan where kontonr = '$f_bogfkto' and regnskabsaar = '$regnaar'";
+						$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 						$kodenr=substr($r2['moms'],1);
 						$r2 = db_fetch_array(db_select("select box2 from grupper where kodenr = '$kodenr' and art = 'SM'",__FILE__ . " linje " . __LINE__));
 						$f_momssats=$r2['box2']*1;
 						$f_pris=$r['salgspris']+$r['salgspris']*$f_momssats/100;
 					}
 				}
-				if ($posnr[$x] && $r['varenr']) print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>".stripslashes($r['beskrivelse'])."</td><td align=\"right\">".dkdecimal($f_pris,2)."</td><td align=\"right\">".dkdecimal($antal[$x]*$f_pris,2)."</td>\n";
+				if ($posnr[$x] && $r['varenr'] && $show) print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>".stripslashes($r['beskrivelse'])."</td><td align=\"right\">".dkdecimal($f_pris,2)."</td><td align=\"right\">".dkdecimal($antal[$x]*$f_pris,2)."</td>";
 				$sum+=afrund($antal[$x]*$f_pris,2);
 				}
 			}
@@ -113,18 +165,27 @@
 				($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 				list($grupperabat,$rabattype)=explode(";",grupperabat($rabatantal[$x],$rabatgruppe[$x]));
 				if ($grupperabat) {
-					if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($rabatantal[$x],2)."</td><td>Rabat</td><td align=\"right\">".dkdecimal($grupperabat,2)."</td><td align=\"right\">".dkdecimal($grupperabat*$rabatantal[$x],2)."</td>\n";
+					if ($posnr[$x] && $show) {
+						print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($rabatantal[$x],2)."</td><td>Rabat</td>";
+						print "<td align=\"right\">".dkdecimal($grupperabat,2)."</td>";
+						print "<td align=\"right\">".dkdecimal($grupperabat*$rabatantal[$x],2)."</td>\n";
+					}
 					$sum+=afrund($grupperabat*$rabatantal[$x],2);
 				}
 			} elseif ($m_rabat[$x] && !$rabatgruppe[$x]) {
-				if ($posnr[$x]) {
-					($r['beskrivelse'])?$tmp=$r['beskrivelse']:$tmp='Rabat';
-					print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>".stripslashes($tmp)."</td><td align=\"right\">".dkdecimal($m_rabat[$x],2)."</td><td align=\"right\">".dkdecimal($antal[$x]*$m_rabat[$x],2)."</td>\n";
+				if ($posnr[$x] && $show) {
+					if (!isset($antal[$x]))	   $antal[$x]   = 0;
+					if (!isset($r['varenr'])) $r['varenr'] = NULL;
+					(isset($r['beskrivelse']) && $r['beskrivelse'])?$tmp=$r['beskrivelse']:$tmp='Rabat';
+					print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td>";
+					print "<td>".stripslashes($tmp)."</td><td align=\"right\">".dkdecimal($m_rabat[$x],2)."</td>";
+					print "<td align=\"right\">".dkdecimal($antal[$x]*$m_rabat[$x],2)."</td>\n";
 				}
 				 $sum+=afrund($m_rabat[$x]*$antal[$x],2);
 			}
 		}
 	}
+	print "<!-- ---------- end productLines.php ---------- -->\n";
 
 
 

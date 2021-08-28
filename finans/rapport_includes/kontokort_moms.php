@@ -4,50 +4,47 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ finans/rapport_includes/kontokort_moms.php -------- lap 3.8.2 --- 2019-09-24 ---
-// LICENS
+// --- finans/rapport_includes/kontokort_moms.php --- lap 3.9.9 --- 2021-02-11 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2020-2021 saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 20190924 PHR Added option 'Poster uden afd". when "afdelinger" is used. $afd='0' 
+// 20210107 PHR Added totals for each account. 
+// 20210107 PHR Corrected error in 'deferred financial year'.
+// 20210125 PHR Added csv option.
+// 20210211 PHR some cleanup
 
 function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev) {
 
+	global $afd_navn,$ansatte,$ansatte_id;
+	global $bgcolor,$bgcolor4,$bgcolor5;
 	global $connection;
+	global $db;
+	global $md,$menu;
+	global $prj_navn_fra,$prj_navn_til;
 	global $top_bund;
-	global $md;
-	global $ansatte;
-	global $ansatte_id;
-	global $afd_navn;
-	global $prj_navn_fra;
-	global $prj_navn_til;
-	global $bgcolor;
-	global $bgcolor4;
-	global $bgcolor5;
-	global $menu;
 	
+	$csvfile="../temp/$db/rapport.csv";
+	$csv=fopen($csvfile,"w");
 	$query = db_select("select firmanavn from adresser where art='S'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {$firmanavn=$row['firmanavn'];}
 	$sim_kontonr=array();
 	
-
 	$regnaar=$regnaar*1; #fordi den er i tekstformat og skal vaere numerisk
 
 #	list ($aar_fra, $maaned_fra) = explode(" ", $maaned_fra);
@@ -80,7 +77,11 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 	$slutaar=$row['box4']*1;
 	$slutdato=31;
 
-	##
+	if ($aar_fra < $aar_til) { #20210107
+		if ($maaned_til > $slutmaaned ) $aar_til = $aar_fra;
+		elseif ($maaned_fra < $startmaaned ) $aar_fra = $aar_til;
+	}
+
 	$regnaarstart= $startaar. "-" . $startmaaned . "-" . '01';
 	
 	if ($aar_fra) $startaar=$aar_fra;
@@ -143,7 +144,7 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 		print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
 		print "<td width=\"10%\" $top_bund><a accesskey=L href=\"rapport.php?rapportart=kontokort_moms&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&aar_fra=$aar_fra&dato_til=$slutdato&maaned_til=$mt&aar_til=$aar_til&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&ansat_til=$ansat_til&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev\">Luk</a></td>";
 		print "<td width=\"80%\" $top_bund> Rapport - kontokort med moms</td>";
-		print "<td width=\"10%\" $top_bund><br></td>";
+		print "<td width=\"10%\" $top_bund><a href='$csvfile'>csv</a></td>";
 		print "</tbody></table>"; #B slut
 		print "</td></tr>";
 	}
@@ -211,7 +212,6 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 
 	$x=0;$kontonr=array();
 	$qtxt="select * from kontoplan where regnskabsaar='$regnaar' and kontonr>='$konto_fra' and kontonr<='$konto_til' order by kontonr";
-#cho "$qtxt<br>";
 	$q= db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($q)){
 		if (!in_array($row['kontonr'],$kontonr) && (trim($row['moms']) || $simulering)) {
@@ -234,22 +234,21 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 		}
 	}
 	$kontoantal=$x;
+/*
 	$fejltxt='';
-	$qtxt = "select distinct(kontonr) from transaktioner where transdate>='$regnstart' and transdate<='$regnslut' $dim order by kontonr";
+	$qtxt = "select distinct(kontonr) from transaktioner where transdate>='$regnstart' and transdate<='$regnslut' ";
+	$qtxt.= "and kontonr>='$konto_fra' and kontonr<='$konto_til' and (debet != 0 or kredit != 0) $dim order by kontonr";
 	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($row = db_fetch_array($q)){
-		if ($r['kontonr'] && !in_array($kontonr,$r['kontonr'])) {
-			($fejltxt)?$fejltxt.=', '.$r['kontonr']:$fejltxt='kontonummer :'. $r['kontonr'];
-		}
-		if ($fejltxt) {
-			$fejltxt.=" findes ikke i kontoplanen!";
-			print tekstboks($fejltxt);
+	while ($r = db_fetch_array($q)){
+		if ($r['kontonr'] && !in_array($r['kontonr'],$kontonr)) {
+			$fejltxt.='kontonummer :'. $r['kontonr'] .' findes ikke i kontoplanen!<br>';
 		}
 	}
+	if ($fejltxt) print tekstboks($fejltxt);
+*/
 	$ktonr=array();
 	$x=0;
 	$qtxt = "select kontonr,projekt from transaktioner where transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id";
-#cho "$qtxt<br>";
 	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($q)){
 #cho "$row[projekt]<br>";
@@ -259,19 +258,24 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 #cho "$ktonr[$x]<br>";
 		}
 	}
+	
 	$kontosum=0;
 
 	$founddate=false;
 	print "<tr><td colspan=6><hr></td></tr>";
-	print "<tr><td width=\"100px\">Dato</td><td width=\"60px\">Bilag</td><td>Tekst</td><td width=\"100px\" align=\"right\">Bel&oslash;b</td><td width=\"80px\" align=\"right\"> Moms</td><td width=\"100px\" align=\"right\">Incl. moms</td></tr>";
-	
+	print "<tr><td width=\"100px\">Dato</td><td width=\"60px\">Bilag</td><td>Tekst</td>";
+	print "<td width=\"100px\" align=\"right\">Bel&oslash;b</td><td width=\"80px\" align=\"right\"> Moms</td>";
+	print "<td width=\"100px\" align=\"right\">Incl. moms</td></tr>";
+	fwrite($csv, "\"Dato\";\"Bilag\";\"Tekst\";\"". utf8_decode('Beløb') ."\";\"Moms\";\"Incl. moms\"\n");
 	for ($x=1; $x<=$kontoantal; $x++){
 		$linjebg=$bgcolor5;
 		if (in_array($kontonr[$x], $ktonr)||$primo[$x]){
 			print "<tr><td colspan=6><hr></td></tr>";
 			print "<tr bgcolor=\"$bgcolor5\"><td></td><td></td><td colspan=4>$kontonr[$x] : $kontobeskrivelse[$x] : $kontomoms[$x]</tr>";
+			fwrite($csv, "\"\";\"\";\"". utf8_decode("$kontonr[$x] : $kontobeskrivelse[$x] : $kontomoms[$x]") ."\";\"\";\"\"\n");
 			print "<tr><td colspan=6><hr></td></tr>";
 			$kontosum=$primo[$x];
+			$xMomsSum=$momsSum=0;
 			$query = db_select("select debet, kredit from transaktioner where kontonr=$kontonr[$x] and transdate>='$regnaarstart' and transdate<'$regnstart' $dim order by transdate,bilag,id",__FILE__ . " linje " . __LINE__);
 			while ($row = db_fetch_array($query)){
 			 	$kontosum+=afrund($row['debet'],2)-afrund($row['kredit'],2);
@@ -317,7 +321,7 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 				$moms[$tr]=$r['moms'];
 				$logdate[$tr]=$r['logdate'];
 				$logtime[$tr]=$r['logtime'];
-				$transvaluta[$tr]=$row['valuta'];
+				$transvaluta[$tr]=$r['valuta'];
 				if ($kontovaluta[$x]) {
 					for ($y=0;$y<=count($valkode);$y++){
 						if ($valkode[$y]==$kontovaluta[$x] && $valdate[$y] <= $transdate[$tr]) {
@@ -334,9 +338,15 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 
 			for ($tr=0;$tr<count($transdate);$tr++) {		
 				($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-				print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." $kladde_id[$tr]</td><td onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:kassekladde=window.open('kassekladde.php?id=$kladde_id[$tr]&returside=../includes/luk.php','kassekladde','$jsvars')\">$bilag[$tr]</td><td>$kontonr[$x] : $beskrivelse[$tr]</td>";
+				print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." $kladde_id[$tr]</td>";
+				print "<td onmouseover=\"this.style.cursor = 'pointer'\"; ";
+				print "onclick=\"javascript:kassekladde=window.open('kassekladde.php?id=$kladde_id[$tr]&returside=../includes/luk.php',";
+				print "'kassekladde','$jsvars')\">$bilag[$tr]</td><td>$kontonr[$x] : $beskrivelse[$tr]</td>";
+				fwrite($csv, "\"". dkdato($transdate[$tr]) ."\";\"\";\"". utf8_decode("$kontonr[$x] : $beskrivelse[$tr]"). "\";");
 				$xmoms=$debet[$tr]-$kredit[$tr];
+			$xMomsSum+=$xmoms;
 				print "<td align=right>".dkdecimal($xmoms,2)."</td>";
+				fwrite($csv, "\"".dkdecimal($xmoms,2)."\";");
 #				$moms=$moms[$tr];
 				if (!$moms[$tr] && $moms[$tr]!='0.000' && $bilag[$tr]&& $kladde_id[$tr]) {
 					$q2=db_select("select * from transaktioner where transdate='$transdate[$tr]' and bilag='$bilag[$tr]' and logdate='$logdate[$tr]' and logtime='$logtime[$tr]'and beskrivelse='$beskrivelse[$tr]' $momsq",__FILE__ . " linje " . __LINE__);
@@ -349,9 +359,12 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 						}
 					}
 				}
+				$momsSum+=$moms[$tr];
 				print "<td align=right>".dkdecimal($moms[$tr],2)."</td>";
+				fwrite($csv, "\"".dkdecimal($moms[$tr],2)."\";");
 				$mmoms=$xmoms+$moms[$tr];
 				print "<td align=right>".dkdecimal($mmoms,2)."</td></tr>";
+				fwrite($csv, "\"".dkdecimal($mmoms,2)."\"\n");
 #cho "$kontonr[$x] - $transdate[$tr]<br>";
 				if (in_array($kontonr[$x],$sim_kontonr) && $transdate[$tr]!=$transdate[$tr+1]) {
 					for ($sim=0;$sim<count($sim_kontonr);$sim++) {
@@ -390,10 +403,20 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 					}
 				}
 			}
+			print "<tr><td colspan='2'></td><td><b>$kontonr[$x] : $kontobeskrivelse[$x] : $kontomoms[$x]</b></td>";
+			fwrite($csv, "\"Sum\";\"\";\"". utf8_decode("$kontonr[$x] : $kontobeskrivelse[$x] : $kontomoms[$x]") ."\";");
+			print "<td align='right'><b>". dkdecimal($xMomsSum,2) ."</b></td>";
+			fwrite($csv, "\"".dkdecimal($xMomsSum,2)."\";");
+			print "<td align='right'><b>". dkdecimal($momsSum,2) ."</b></td>";
+			fwrite($csv, "\"".dkdecimal($momsSum,2)."\";");
+			print "<td align='right'><b>". dkdecimal($xMomsSum+$momsSum,2) ."</b></td>";
+			fwrite($csv, "\"".dkdecimal($xMomsSum+$momsSum,2)."\"\n\n");
+			print "</tr>";
 		}
 	}
 	print "<tr><td colspan=6><hr></td></tr>";
 	print "</tbody></table>";
+	fclose($csv);
 }
 #################################################################################################
 ?>

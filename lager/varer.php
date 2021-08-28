@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------lager/varer.php-----lap 3.7.9-----2019-09-01--------
-// LICENS
+// --- lager/varer.php --- lap 3.7.9 --- 2021-02-11 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 2013.01.15 Wildcard forsvinder efter søgning - tak til Henrik Thomsen fra Basslab for rettelse - søg 20130115
@@ -55,6 +52,7 @@
 // 2019.06.12 PHR - Added 'if (!strstr($varenummer,'%'))' 20190612
 // 2019.08.28 PHR - Number of item lines per page was not saved. #20190828
 // 2019.91.02 PHR - Increased timeout. #20190901
+// 2021.02.11 PHR - Search now looks in 'trademark'
 
 @session_start();
 $s_id=session_id();
@@ -488,7 +486,10 @@ if ($varenummer) {
 	$low=strtolower($varenummer);
 	$upp=strtoupper($varenummer);
 	$udvalg.=" and ((varenr LIKE '$varenummer' or lower(varenr) LIKE '$low' or upper(varenr) LIKE '$upp' or stregkode = '$varenummer')";
-	if (!strstr($varenummer,'%')) $udvalg.=" or lower(beskrivelse) like '%".strtolower($varenummer)."%')"; #20190612
+	if (!strstr($varenummer,'%')) {
+		$udvalg.=" or lower(beskrivelse) like '%".strtolower($varenummer)."%'"; #20190612
+		$udvalg.=" or lower(trademark) like '%".strtolower($varenummer)."%')"; #20210211	
+	}
 	else $udvalg.=")";
 }
 if ($csv) {
@@ -548,7 +549,7 @@ if (!isset ($description)) $description = NULL;
 if (!isset ($gruppe)) $gruppe = NULL;
 if (!isset ($vatPrice)) $vatPrice = NULL;
 
-$tidspkt=time("u");
+$tidspkt=time();
 
 $z=0;$z1=0;
 $varer_i_ordre=array();
@@ -841,7 +842,7 @@ $vis2=1;
 	if ($z>=$slut) {
 		break;
 	}
-	if (time("u")-$tidspkt>120) { #20190901
+	if (time()-$tidspkt>120) { #20190901
 		print "<BODY onload=\"javascript:alert('Timeout - reducer linjeantal')\">";
 		break;
 	}
@@ -864,7 +865,7 @@ function genbestil($vare_id, $antal) {
 		$lev_varenr=$r['lev_varenr'];
 		$pris=$r['kostpris']*1;
 		$ordredate=date("Y-m-d");
-		$qtxt="select id, sum from ordrer where konto_id = $lev_id and status < 1 and ordredate = '$ordredate'";
+		$qtxt="select id, sum from ordrer where konto_id = $lev_id and art = 'KO' and status < 1 and ordredate = '$ordredate'";
 		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			$sum=$r['sum']*1;
 			$ordre_id=$r['id'];

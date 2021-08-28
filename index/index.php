@@ -4,24 +4,21 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------index/index.php-----------lap 3.8.9------2020-02-17---
-// LICENS
+// -----------index/index.php-----------lap 3.9.5------2020-10-20---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
 // Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
@@ -30,6 +27,7 @@
 // 20190815 PHR added redirect option for systems moved to another server. Links defined in redirect.php
 // 20200205 PHR fixed cookie saving.
 // 20200217 PHR Added '!isset($_POST['fejltxt'])' to avoid endless loop if wrong password
+// 20201020 PHR Added reading from alert.txt if exists. 
 
 $regnskab=''; $brugernavn=''; $kode='';
 $css="../css/login.css";
@@ -112,8 +110,7 @@ print "<!--[if lt IE 9]>
 		<script src=\"http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE9.js\"></script>
 		<![endif]-->\n";
 print "<meta http-equiv=\"content-type\" content=\"text/html; charset=$charset\"></head>\n";
-if (isset($mastername)&&$mastername) $host="$mastername";
-elseif (strpos($_SERVER['PHP_SELF'],"beta")) $host="!!! BETA !!!";
+if (strpos($_SERVER['PHP_SELF'],"beta")) $host="!!! BETA !!!";
 elseif (!file_exists("../sager/sager.php")) $host="SALDI";
 if (file_exists("bg.php")) include ("bg.php");
 else $style='';
@@ -124,12 +121,14 @@ print "			<div class=\"loginBox\">\n";
 print "				<div class=\"loginForm\">\n";
 print "					<form name=\"login1\" METHOD=\"POST\" ACTION=\"index.php\" onsubmit=\"return handleLogin(this);\">\n";
 print "						<input type=\"hidden\" name=\"vent\" value=\"$vent\">\n";
+if (!$fejltxt && file_exists('alert.txt')) $fejltxt=file_get_contents('alert.txt'); 
 if ($fejltxt) {
 	print "<label style=\"text-align:center;color:red;\">$fejltxt</label>\n";
 	print "<label><br></label>\n";
 	print "<label><hr></label>\n";
 	print "<label><br></label>\n";
 }
+
 print "						<label for=\"Regnskab\">Regnskab:</label>\n";
 print "						<input class=\"textinput\" type=\"text\" id=\"regnskab\" name=\"regnskab\" value=\"$regnskab\" tabindex=\"1\">\n";
 print "						<label for=\"login\">Brugernavn:</label>\n";
@@ -145,8 +144,8 @@ print "								<a class=\"forgotpass\" href=\"glemt_kode.php\" tabindex=\"5\">Gl
 print "							</div><!-- end of flleft -->\n";
 print "							<input class=\"button blue flright\" type=\"submit\" value=\"Login\" alt=\"Login\" title=\"Login\" tabindex=\"6\">\n";
 print "							<div class=\"clearfix\"></div>\n";
-print "						</div><!-- end of loginAction -->\n";
-if (isset($mastername) && strtolower($mastername)=='rotary') {
+print "						</div><!-- end of loginAction -->\n";        
+if (strtolower($sqdb)=='rotary') {
 	print "<label style=\"text-align:center;font-size:12px;\">".findtekst(325,$sprog_id)."</label>\n";
 }
 

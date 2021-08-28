@@ -4,30 +4,29 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/findBoxSale/findBoxSaleFunc.php --- lap 3.8.9----2020.03.05-------
-// LICENS
+// --- debitor/pos_ordre_includes/exitFunc/status.php --- lap 3.9.9----2021.01.03-------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2020 saldi.dk aps
+// Copyright (c) 2019-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190510 LN Get data from grupper depending on the $status
 // 20200305	PHR added db_escape_string and set $f_vatAccount=0 if no Vat.
+// 20201214	PHR Now inserted into pos_betalinger even if sum & payment = 0
+// 20210103	PHR Correcdet last edit to 'sum+moms & payment = 0' (moms is vat)
 
 	$x=0;
 	if ($status<3) {
@@ -187,7 +186,7 @@
 				$saldo=$saldo+$r['amount'];
 			}
 			$betaling2=$saldo;
-			if ($indbetaling) {
+			if ($indbetaling && is_numeric($indbetaling)) {
 			$modtaget2=$saldo-$indbetaling;
 			$sum=$indbetaling;
 			$moms='0';
@@ -256,7 +255,8 @@
 	$qtxt="update ordrer set levdate = '$dd',fakturadate = '$dd',sum='$sum', moms='$moms', betalt='$betalt',status='2',felt_1='$betaling',felt_2='$modtaget',felt_3='$betaling2',felt_4='$modtaget2',felt_5='$kasse',tidspkt='$tidspkt',projekt='$projekt',ref='$brugernavn' where id='$id'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	setcookie("saldi_bet",'',time()-3600);
-	if (is_numeric($modtaget) && $modtaget) {
+	$ms=afrund($sum+$moms,3);
+	if (is_numeric($modtaget) && ($modtaget || ($modtaget == 0 && $ms == 0))) {
 		if ($betaling == 'Cash' || $betaling == 'Cash on amount') $betaling='Kontant';
 		$qtxt="select id  from pos_betalinger where ordre_id='$id'and betalingstype ='!'";
 		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
@@ -267,7 +267,6 @@
 			$qtxt.="('$id','$betaling','$modtaget','$betvaluta','$betvalkurs')";
 		}
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-	}
 	if (!$indbetaling) {
 				$svar=levering($id,'on','','');
 				if ($svar != 'OK') return ($svar);
@@ -278,7 +277,7 @@
 			if ($svar != 'OK') return ($svar);			
 		}
 	}
-
+}
 
 ?>
 

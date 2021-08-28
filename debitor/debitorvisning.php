@@ -1,32 +1,29 @@
 <?php
-//                         ___   _   _   __  _
-//                        / __| / \ | | |  \| |
-//                        \__ \/ _ \| |_| | | |
-//                        |___/_/ \_|___|__/|_|
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------debitor/debitorvisning.php--------lap 3.6.6--2016-06-06-----
-// LICENS
+// -----------debitor/debitorvisning.php--------lap 3.9.2--2020-06-23-----
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2016.06.06 Tilføjet mulighed for at skjule lukkede debitorer Søg box11 / skjul_lukkede
-
+// 2020.06.23	PHR - various changes related to 'kommission' 
 	
 @session_start();
 $s_id=session_id();
@@ -73,7 +70,8 @@ if (isset($_POST) && $_POST) {
 				($box2)?$box2.=chr(9).$cat_id[$x]:$box2=$cat_id[$x];
 			}
 		}
-		db_modify("update grupper set box1='$box1',box2='$box2',box11='$box11',kode = '$valg' where art = 'DLV' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+		$qtxt = "update grupper set box1='$box1',box2='$box2',box11='$box11',kode = '$valg' where art = 'DLV' and kodenr = '$bruger_id'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	} elseif ($sektion=='4') {
 		$vis_feltantal=if_isset($_POST['vis_feltantal']);
 		$vis_linjeantal=if_isset($_POST['vis_linjeantal']);
@@ -100,7 +98,9 @@ if (isset($_POST) && $_POST) {
 			$box8=$box8.chr(9).$select[$x];
 		}
 		
-		db_modify("update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8' where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+		$qtxt = "update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8' ";
+		$qtxt.= "where art = 'DLV' and kode='$valg' and kodenr = '$bruger_id'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
 }
 
@@ -135,7 +135,6 @@ global $valg;
 global $sort;
 global $title;
 global $felter;	
-global $feltantal;	
 	
 print "<td width=\"10%\" align=center><div class=\"top_bund\"><a href=debitor.php?valg=$valg&sort=$sort accesskey=L>Luk</a></div></td>
 			<td width=\"80%\" align=center><div class=\"top_bund\">$title</a></div></td>
@@ -158,7 +157,8 @@ global $vis_feltantal;
 global $select;
 global $bruger_id;
 
-$r = db_fetch_array(db_select("select box3,box4,box5,box6,box7,box8 from grupper where art = 'DLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
+	$qtxt="select box3,box4,box5,box6,box7,box8 from grupper where art = 'DLV' and kode ='$valg' and kodenr = '$bruger_id'";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $vis_felt=explode(chr(9),$r['box3']);
 $feltbredde=explode(chr(9),$r['box4']);
 $justering=explode(chr(9),$r['box5']);
@@ -167,16 +167,13 @@ $vis_linjeantal=$r['box7'];
 $vis_feltantal=count($vis_felt)-1;
 $select=explode(chr(9),$r['box8']);
 
-#print "<tr><td width=100%>"; #<table border=1><tbody>"; #tabel 1.2.1 ->
-#print "</tbody><table></td>"; # <- tabel 1.2.1
-#print "<td width=50%><table border=1><tbody>"; # tabel 1.2.2 ->
-
 print "<form name=sektion_2 action=debitorvisning.php?sort=$sort&side=$side&sektion=2 method=post>";
-print "<tr width=\"500px\"><td>Antal felter p&aring; ".$valg."oversigten</td><td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
-print "<tr><td>Antal linjer p&aring; ".$valg."oversigten</td><td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td>";
+	print "<tr width=\"500px\"><td>Antal felter p&aring; ".$valg."oversigten</td>";
+	print "<td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
+	print "<tr><td>Antal linjer p&aring; ".$valg."oversigten</td>";
+	print "<td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td>";
 print "<td><input type=submit value=\"OK\" name=\"submit\"></td></tr>\n";
 print "</form>";
-# print "</tbody><table>print"; # <- tabel 1.2.2
 
 }
 
@@ -276,12 +273,15 @@ function sektion_4() {
 	print "<tr><td>Antal linjer p&aring; ".$valg."oversigten</td><td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td><tr>";
 	print "<tr><td colspan=\"5\"><hr></td><tr>";
 
-	$felter=array("firmanavn","addr1","addr2","postnr","bynavn","land","kontakt","tlf","fax","email","web","bank_navn","bank_reg","bank_konto","notes","rabat","momskonto","kreditmax","betalingsbet","betalingsdage","kontonr","cvrnr","ean","institution","art","gruppe","kontoansvarlig","oprettet","kontaktet","kontaktes","bank_fi","swift","erh","mailfakt","pbs","pbs_nr","pbs_date","felt_1","felt_2","felt_3","felt_4","felt_5","vis_lev_addr","kontotype","fornavn","efternavn","lev_firmanavn","lev_fornavn","lev_efternavn","lev_addr1","lev_addr2","lev_postnr","lev_bynavn","lev_land","lev_kontakt","lev_tlf","lev_email","lukket","status");
+	$felter=array("firmanavn","addr1","addr2","postnr","bynavn","land","kontakt","tlf","fax","email","web","bank_navn","bank_reg","bank_konto","notes","rabat","momskonto","kreditmax","betalingsbet","betalingsdage","kontonr","cvrnr","ean","institution","art","gruppe","kontoansvarlig","oprettet","kontaktet","kontaktes","bank_fi","swift","erh","mailfakt","pbs","pbs_nr","pbs_date","felt_1","felt_2","felt_3","felt_4","felt_5","vis_lev_addr","kontotype","fornavn","efternavn","lev_firmanavn","lev_fornavn","lev_efternavn","lev_addr1","lev_addr2","lev_postnr","lev_bynavn","lev_land","lev_kontakt","lev_tlf","lev_email","lukket","status","invoiced");
+	$fieldNames=array(findtekst(360,$sprog_id),"addr1","addr2","postnr","bynavn","land","kontakt","tlf","fax","email","web","bank_navn", "bank_reg","bank_konto","notes","rabat","momskonto","kreditmax","betalingsbet","betalingsdage","kontonr","cvrnr","ean", "institution","art","gruppe","kontoansvarlig","oprettet","kontaktet","kontaktes","bank_fi","swift","erh","mailfakt","pbs", "pbs_nr","pbs_date","felt_1","felt_2","felt_3","felt_4","felt_5","vis_lev_addr","kontotype","fornavn","efternavn","lev_firmanavn", "lev_fornavn","lev_efternavn","lev_addr1","lev_addr2","lev_postnr","lev_bynavn","lev_land","lev_kontakt","lev_tlf","lev_email", "lukket","status",findtekst(875,$sprog_id));
 
-	sort($felter);
-	$feltantal=count($felter);
+#	sort($felter);
+#			for ($y=0;$y<count($felter);$y++) {
+#			 print "$felter[$y]<br>";
+#		}
+
 	print "<tr><td colspan=\"5\">V&aelig;lg hvilke felter der skal v&aelig;re synlige p&aring; oversigten.</td></tr>";
-
 	print "<tr><td colspan=\"5\">Kontonr. kan ikke frav&aelig;lges.</td></tr>";
 	print "<tr><td colspan=\"5\"><hr></td></tr>";
 	print "<tr><td colspan=\"1\"><b>Felt</b></td><td align=\"center\"><b>Valgfri overskrift</b></td><td align=\"center\"><b>Feltbredde</b></td><td align=\"center\"><b>Justering</b></td><td align=\"center\" title=\"Angiver om feltets v&aelig;rdi skal kunne v&aelig;lges fra en liste\"><b>Valgbar</b></td></tr>";
@@ -301,12 +301,14 @@ function sektion_4() {
 	for ($x=1;$x<=$vis_feltantal;$x++) {
 	if (!$feltnavn[$x]) $feltnavn[$x]=$vis_felt[$x];
 		print "<tr><td colspan=\"1\"><SELECT NAME=vis_felt[$x]>";
-		print "<option>$vis_felt[$x]</option>";
-		for ($y=0;$y<$feltantal;$y++) {
-			if ($felter[$y]!=$vis_felt[$x]) print "<option>$felter[$y]</option>";
+		for ($y=0;$y<count($felter);$y++) {
+			if ($felter[$y]==$vis_felt[$x]) print "<option value='$felter[$y]'>$fieldNames[$y]</option>";
+		}
+		for ($y=0;$y<count($felter);$y++) {
+			if ($felter[$y]!=$vis_felt[$x]) print "<option value='$felter[$y]'>$fieldNames[$y]</option>";
 		}
 		print "</SELECT></td>";
-		print "<td align=\"center\"><input name=feltnavn[$x] size=20 value=$feltnavn[$x]></td>";
+		print "<td align=\"center\"><input name=feltnavn[$x] size=20 value='$feltnavn[$x]'></td>";
 		print "<td align=\"center\"><input name=feltbredde[$x] size=2 style=\"text-align:right\" value=$feltbredde[$x]></td>";
 		print "<td align=\"center\"><SELECT NAME=justering[$x]>";
 		if ($justering[$x]) print "<option value=\"$justering[$x]\">$justering[$x]</option>";

@@ -61,7 +61,7 @@ if ($menu=='T') {
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
 	print "<td width=\"10%\" $top_bund><a href=$returside accesskey=L>Luk</a></td>";
 	print "<td width=\"80%\" $top_bund>Varerapport - forside</td>";
-	print "<td width=\"10%\" $top_bund></td></tr>";
+	print "<td width=\"10%\" $top_bund><a href='../temp/$db/minmax$bruger_id.csv'>csv</a></td></tr>";
 	print "</tbody></table></td></tr>"; #B slut
 	print "</tr><tr><td height=\"99%\" \"width=100%\" align=\"center\" valign=\"middle\">";
 }
@@ -128,10 +128,13 @@ while ($r = db_fetch_array($q)) {
 	}
 }
 $bgc=$bgcolor2;
+$fp=fopen("../temp/$db/minmax$bruger_id.csv",'w');
 print "<table border=\"0\" cellspacing=\"2\" cellpadding=\"0\" align=\"center\"><tbody>";
 print "<tr bgcolor='$bgc'><td>Afd</td><td>Varenr</td><td>Beskrivelse</td><td width='80px'>Beholdning</td>";
 print "<td width='80px' align='center'>Min</td><td width='80px' align='center'>Max</td>";
 print "<td width='80px' align='center'>Køb</td><tr>";
+fwrite($fp,"Afd;Varenr;Beskrivelse;Beholdning;Min;Max;".utf8_decode('Køb')."\n");
+
 for ($a=0;$a<count($vGr);$a++) {
 	if (in_array($vGr[$a],$itemGrp)) {
 		for ($b=0;$b<count($itemId);$b++) {
@@ -142,19 +145,27 @@ for ($a=0;$a<count($vGr);$a++) {
 #if ($ItemId[$b]=1746 && $stockNo[$d]=='3') echo __line__." 1746 $stockNo[$d] -> $stock[$d] ($b)<br>";
 				if ($stk[$c]==$stockNo[$d] && $itemId[$b]==$stockItemId[$d]) $stocksum+=$stock[$d];
 #if ($ItemId[$b]=1746) echo "$itemId[$b]==$stockItemId[$d] && $stockNo[$d]==$stk[$c] && $itemMin[$b]>0 && $itemMax[$b]>0 && $itemGrp[$b]==$vGr[$a] && $itemMin[$b]+1<$stock[$d]<br>";
-				if ($itemId[$b]==$stockItemId[$d] && $stockNo[$d]==$stk[$c] && $itemMin[$b]>0 && $itemMax[$b]>0 && $itemGrp[$b]==$vGr[$a] && $itemMin[$b]+1 >= $stock[$d]) {
+					$min=$itemMin[$b];
+					if ($db=='bizsys_49') $min++;
+					if ($itemId[$b]==$stockItemId[$d] && $stockNo[$d]==$stk[$c] && $itemMin[$b]>0 && $itemMax[$b]>0 
+					&& $itemGrp[$b]==$vGr[$a] && $min >= $stock[$d]) {
 					if (!isset($stock[$d])) $stock[$d]=0;
 					($bgc==$bgcolor)?$bgc=$bgcolor2:$bgc=$bgcolor;
 					print "<tr bgcolor='$bgc'>";
-					print "<td>$stkDescription[$c]</td><td>$itemNo[$b]</td><td>$itemDescription[$b]</td><td align='right'>". dkdecimal($stock[$d]) ."</td>";
-					print "<td align='right'>". dkdecimal($itemMin[$b]) ."</td><td align='right'>". dkdecimal($itemMax[$b]) ."</td>";
-					print "<td align='right'>". dkdecimal($itemMax[$b]-$stock[$d]) ." </td></tr>";
+						print "<td>$stkDescription[$c]</td><td>$itemNo[$b]</td><td>$itemDescription[$b]</td>";
+						fwrite($fp,"$stkDescription[$c];".utf8_decode($itemNo[$b]).";".utf8_decode($itemDescription[$b]).";");
+						print "<td align='right'>". dkdecimal($stock[$d]) ."</td><td align='right'>". dkdecimal($itemMin[$b]) ."</td>";
+						fwrite($fp,dkdecimal($stock[$d]) .";". dkdecimal($itemMin[$b]) .";");
+						print "<td align='right'>". dkdecimal($itemMax[$b]) ."</td><td align='right'>". dkdecimal($itemMax[$b]-$stock[$d]) ." </td>";
+						fwrite($fp,dkdecimal($itemMax[$b]) .";". dkdecimal($itemMax[$b]-$stock[$d]) ."\n");
+						print "</tr>\n";
 				}
 				}
 			}
 		}
 	}
 }
+fclose ($fp);
 print "</tbody></table></td></tr>";
 ?>
 </html>

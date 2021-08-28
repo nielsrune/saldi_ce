@@ -79,63 +79,64 @@ print "</tr>\n";
 	if ($vis == 'alle') $vis = ''; 
 	else $vis="and oprettet_af = '".$brugernavn."'";
 	$tidspkt=date("U");
-	$query = db_select("select * from betalingsliste where bogfort = '-' $vis order by $sort $rf");
-	while ($row = db_fetch_array($query)){
-		$liste="liste".$row['id'];
+	$qtxt="select * from betalingsliste where bogfort = '-' $vis order by $sort $rf";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)){
+		$liste="liste".$r['id'];
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
-			print "<td><a href=\"betalinger.php?tjek=$row[id]&liste_id=$row[id]&returside=betalingsliste.php\">$row[id]</a></td>";
+		if (($tidspkt-($r['tidspkt'])>3600)||($r['hvem']==$brugernavn)) {
+			print "<td><a href=\"betalinger.php?tjek=$r[id]&liste_id=$r[id]&returside=betalingsliste.php\">$r[id]</a></td>";
 		}
-		else print "<td><span title= 'liste er l&aring;st af $row[hvem]'>$row[id]</span></td>";
-		$listedato=dkdato($row['listedate']);
+		else print "<td><span title= 'liste er l&aring;st af $r[hvem]'>$r[id]</span></td>";
+		$listedato=dkdato($r['listedate']);
 		print "<td>$listedato<br></td>";
-		print "<td>".htmlentities(stripslashes($row['oprettet_af']))."<br></td>";
-		print "<td>".htmlentities(stripslashes($row['listenote']))."<br></td>";
-		print "<td align = center>$row[bogfort]<br></td>";
+		print "<td>".htmlentities(stripslashes($r['oprettet_af']))."<br></td>";
+		print "<td>".htmlentities(stripslashes($r['listenote']))."<br></td>";
+		print "<td align = center>$r[bogfort]<br></td>";
 		print "<td></td></tr>";
 	}
 	print "<tr><td colspan=6><hr></td></tr>";
-	$query = db_select("select * from betalingsliste where bogfort = '!' $vis order by $sort $rf");
-	while ($row = db_fetch_array($query)) {
-		$liste="liste".$row[id];
+	$q = db_select("select * from betalingsliste where bogfort = '!' $vis order by $sort $rf",__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		$liste="liste".$r[id];
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn)) {
-			print "<td><a href=\"betalinger.php?liste_id=$row[id]&returside=betalingsliste.php\">$row[id]</a></td>";
+		if (($tidspkt-($r['tidspkt'])>3600)||($r[hvem]==$brugernavn)) {
+			print "<td><a href=\"betalinger.php?liste_id=$r[id]&returside=betalingsliste.php\">$r[id]</a></td>";
 		}
-		else print "<td><span title= 'liste er l&aring;st af $row[hvem]'>$row[id]</span></td>";
+		else print "<td><span title= 'liste er l&aring;st af $r[hvem]'>$r[id]</span></td>";
 #		print "<tr>";
-#		print "<td> $row[id]<br></td>";
-		$listedato=dkdato($row[listedate]);
+#		print "<td> $r[id]<br></td>";
+		$listedato=dkdato($r['listedate']);
 		print "<td>$listedato<br></td>";
-                print "<td>".htmlentities(stripslashes($row['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
-                print "<td>".htmlentities(stripslashes($row['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
-		print "<td align = center>$row[bogfort]<br></td>";
+                print "<td>".htmlentities(stripslashes($r['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
+                print "<td>".htmlentities(stripslashes($r['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
+		print "<td align = center>$r[bogfort]<br></td>";
 		print "</tr>";
 	}
-	if ($row)print "<tr><td colspan=6><hr></td></tr>";
-	$query = db_select("select * from betalingsliste where bogfort = 'V' $vis order by $sort $rf");
-	while ($row = db_fetch_array($query)){
-		$liste="liste".$row['id'];
+	if ($r)print "<tr><td colspan=6><hr></td></tr>";
+	$q = db_select("select * from betalingsliste where bogfort = 'V' $vis order by $sort $rf",__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)){
+		$liste="liste".$r['id'];
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		print "<td><a href=\"betalinger.php?liste_id=$row[id]&returside=betalingsliste.php'\">$row[id]</a></td>";
-#		print "<td><a href=kasseliste.php?liste_id=$row[id]&returside=betalingsliste.php>$row[id]</a><br></td>";
-		$listedato=dkdato($row['listedate']);
+		print "<td><a href=\"betalinger.php?liste_id=$r[id]&returside=betalingsliste.php'\">$r[id]</a></td>";
+#		print "<td><a href=kasseliste.php?liste_id=$r[id]&returside=betalingsliste.php>$r[id]</a><br></td>";
+		$listedato=dkdato($r['listedate']);
 		print "<td>$listedato<br></td>";
-                print "<td>".htmlentities(stripslashes($row['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
-                print "<td>".htmlentities(stripslashes($row['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
+                print "<td>".htmlentities(stripslashes($r['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
+                print "<td>".htmlentities(stripslashes($r['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
 ## Da der ikke blev sat bogfringsdato foer ver. 0.23 skal det saettes hak ved lister bogfrt fr denne version...
-		if ($row['bogforingsdate']){
-			$bogforingsdato=dkdato($row['bogforingsdate']);
+		if ($r['bogforingsdate']){
+			$bogforingsdato=dkdato($r['bogforingsdate']);
 			print "<td align = center>$bogforingsdato<br></td>";
 		}
-		else {print "<td align = center>$row[bogfort]<br></td>";}
-		print "<td>$row[bogfort_af]<br></td>";
+		else {print "<td align = center>$r[bogfort]<br></td>";}
+		print "<td>$r[bogfort_af]<br></td>";
 
 		print "</tr>";
 	}

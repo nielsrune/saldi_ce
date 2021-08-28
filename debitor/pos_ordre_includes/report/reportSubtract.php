@@ -4,39 +4,37 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/report/reportSubtract.php ---------- lap 3.7.4----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/report/reportSubtract.php --- lap 4.0.0 --- 2021.03.07 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2019-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // LN 20190306 Subtract current report from previous reports
+// 20210307 PHR set varuous functions to return zero as calling functions når just count for 1 day.
 
 function subtractItemGroupData($type, $dataArray) {
     foreach ($dataArray as &$index) {
         foreach($index as $subkey => &$value) {
-            if ($subkey == "description") {
+			if (isset($value) && $subkey == "description") {
                 $description = $value;
-            } elseif ($subkey == "count") {
+			} elseif (isset($description) && $subkey == "count") {
                 $count = makeTotalCount($type, $description)['count'];
                 $value = $value - $count;
-            } elseif ($subkey == "sellPrice") {
+			} elseif (isset($description) && $subkey == "sellPrice") {
                 $total = makeTotalCount($type, $description)['total'];
                 $value = $value - $total;
             }
@@ -45,29 +43,32 @@ function subtractItemGroupData($type, $dataArray) {
     return $dataArray;
 }
 
-function makeTotalCount($type, $description)
-{
+function makeTotalCount($type, $description) {
     $total = 0;
     $count = 0;
-    $reportQueryCount = db_select("select SUM(count) from report where type='$type' and description = '$description'", $queryVar);
-    $reportQueryTotal = db_select("select SUM(total) from report where type='$type' and description = '$description'", $queryVar);
+	/*
+	$qtxt = " select SUM(count) from report where type='$type' and description = '$description'";
+	$qtxt.= "and date >= '2019-01-01'";
+	$reportQueryCount = db_select($qtxt, __FILE__ . " linje " . __LINE__);
+	$qtxt = "select SUM(total) from report where type='$type' and description = '$description'";
+	$qtxt.= " and date >= '2019-01-01'";
+	$reportQueryTotal = db_select($qtxt, __FILE__ . " linje " . __LINE__);
     if ($report = db_fetch_array($reportQueryCount)) {
         $count = $report['sum'];
     }
     if ($report = db_fetch_array($reportQueryTotal)) {
         $total = $report['sum'];
     }
+	*/
     return ['count' => $count, 'total' => $total];
 }
 
-function subtractTurnover($totalTurnover, $vat)
-{
-    if ($vat == true) {
-      $oldTurnover = db_fetch_array(db_select("select SUM(total) from report where type='Turnover with vat'", $queryVar))['sum'];
-    } else {
-      $oldTurnover = db_fetch_array(db_select("select SUM(total) from report where type='Turnover without vat'", $queryVar))['sum'];
-    }
-    $newTurnover = $totalTurnover - $oldTurnover;
+function subtractTurnover($totalTurnover, $vat) {
+	if ($vat == true) $qtxt = "select SUM(total) from report where type='Turnover with vat'";
+	else $qtxt = "select SUM(total) from report where type='Turnover without vat'";
+	$qtxt.= " and date >= '2021-01-01'";
+	($r=db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__)))?$oldTurnover = $r['sum']:$oldTurnover=0;
+	$newTurnover = $totalTurnover;# - $oldTurnover; " 20210307 Removed OldTurnover
     return $newTurnover;
 }
 
@@ -87,12 +88,14 @@ function subtractData($type, $dataArray) {
     return $dataArray;
 }
 
-function makeTotal($type, $description)
-{
-    $reportQueryTotal = db_select("select SUM(total) from report where type='$type' and description='$description'", $queryVar);
+function makeTotal($type, $description) {
+	$qtxt = "select SUM(total) from report where type='$type' and description='$description'";
+#	$qtxt.= "and date >= '$date'";
+	$reportQueryTotal = db_select($qtxt, __FILE__ . " linje " . __LINE__);
     if ($report = db_fetch_array($reportQueryTotal)) {
         $total = $report['sum'];
     }
+		$total=0; #20210307
     return $total;
 }
 
@@ -113,19 +116,23 @@ function subtractReceiptData($type, $dataArray) {
     return $dataArray;
 }
 
-function makeTotalReceipt($type, $field)
-{
+function makeTotalReceipt($type, $field) {
     if ($field == "total") {
-        $reportQueryTotal = db_select("select SUM(total) from report where type='$type'", $queryVar);
+			$qtxt = "select SUM(total) from report where type='$type'";
+#			$qtxt.= "and date = '$date'";
+			$reportQueryTotal = db_select($qtxt, __FILE__ . " linje " . __LINE__);
         if ($report = db_fetch_array($reportQueryTotal)) {
             $returnValue = $report['sum'];
         }
     } elseif ($field == "count") {
-        $reportQueryCount = db_select("select SUM(count) from report where type='$type'", $queryVar);
+				$qtxt = "select SUM(count) from report where type='$type'";
+#			$qtxt.= "and date = '$date'";
+        $reportQueryCount = db_select($qtxt, __FILE__ . " linje " . __LINE__);
         if ($report = db_fetch_array($reportQueryCount)) {
             $returnValue = $report['sum'];
         }
     }
+    $returnValue = 0; #20210307
     return $returnValue;
 }
 

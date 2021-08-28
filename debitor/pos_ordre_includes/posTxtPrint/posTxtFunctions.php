@@ -4,40 +4,35 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/posTxtPrint/varHandle.php ---------- lap 3.7.4----2019.05.08-------
-// LICENS
+// -- debitor/pos_ordre_includes/posTxtPrint/posTxtFunctions.php -- lap 3.7.4 -- 2020.06.24--
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2003-2020 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
-// 06.05.2019 LN Get data from ordrelinjer and adresser
+// 20190506 LN Get data from ordrelinjer and adresser
+// 20200624 PHR function getProductInfo - $tfvare[$fv]*=1;
 
-function getAdressVar()
-{
-	global $firmanavn;
-	global $addr1;
-	global $addr2;
-	global $postnr;
+function getAdressVar() {
+	global $addr1,$addr2;
 	global $bynavn;
+	global $country,$cvrnr;
+	global $firmanavn;
+	global $postnr;
 	global $tlf;
-	global $cvrnr;
-	global $country;
 	
 	$r=db_fetch_array(db_select("select * from adresser where art = 'S'",__FILE__ . " linje " . __LINE__));
 	$firmanavn=$r['firmanavn'];
@@ -50,8 +45,9 @@ function getAdressVar()
 	$country=$r['land'];
 }
 
-function setAmountTxt($country)
-{
+function setAmountTxt($country) {
+	global $charset;
+	
     if ($country == 'Switzerland') { #LN 20190212 To make the correct receipt according to the country
         $belob="beträge";
     } else if ($country == 'Norway') {
@@ -60,14 +56,13 @@ function setAmountTxt($country)
         $belob = "beløb";
     }
     $ToCharset = "cp865";
-    $FromCharset = getFromCharset();
-    $convert = new ConvertCharset();
+    $FromCharset = $charset;
+#    $convert = new ConvertCharset();
     $belob = iconv($FromCharset, $ToCharset,$belob);
     return $belob;
 }
 
-function setReceiptAsCopied($orderQuery, $type, $id)
-{
+function setReceiptAsCopied($orderQuery, $type, $id) {
     if (isset($orderQuery['copied']) && $type == "standard") {
         if ($orderQuery['copied'] == 't') {	 	
             $doNotPrint = "copied";
@@ -85,22 +80,20 @@ function setReceiptAsCopied($orderQuery, $type, $id)
 }
 
 
-function useCorrectCharset()
-{
+function useCorrectCharset() {
     global $firmanavn;
     global $addr1;
     global $addr2;
     global $bynavn;
     global $tlf;
-    global $cvrnr;
+    global $charset,$cvrnr;
     global $kundenavn;
     global $kundeaddr1;
     global $kundeby;
     global $ref;
     
 	$ToCharset = "cp865";
-	$FromCharset = getFromCharset();
-	$convert = new ConvertCharset();
+	$FromCharset = $charset;
     
 	if ($firmanavn) $firmanavn = iconv($FromCharset, $ToCharset,$firmanavn);
 	if ($addr1)     $addr1     = iconv($FromCharset, $ToCharset,$addr1);
@@ -114,8 +107,8 @@ function useCorrectCharset()
 	if ($ref)        $ref        = iconv($FromCharset, $ToCharset,$ref);
 }
 
-function getFromCharset()
-{
+/*
+function getFromCharset() {
     global $db_encode;
 	if ($db_encode=="UTF8") {
         $FromCharset = "UTF-8";
@@ -125,26 +118,30 @@ function getFromCharset()
     }
     return $FromCharset;
 }
+*/
 
-
-function getProductInfo($tfvare)
-{
+function getProductInfo($tfvare) {
     global $beskrivelse;
     global $dkkpris;
     global $antal;
     global $f_momssats;
 
+	$tfvare[$fv]*=1;
+	if (!$tfvare[$fv]) return;
     $qtxt="select varenr,beskrivelse,salgspris,gruppe from varer where id = '$tfvare[$fv]'";
     $r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-    $r2 = db_fetch_array(db_select("select box4, box7 from grupper where art = 'VG' and kodenr = '$r1[gruppe]'",__FILE__ . " linje " . __LINE__));
+	$qtxt="select box4, box7 from grupper where art = 'VG' and kodenr = '$r1[gruppe]'";
+	$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
     $f_bogfkto=$r2['box4'];
     $f_momsfri=$r2['box7'];
     $tmp=afrund($antal[$x]*$r1['salgspris'],2);
     $sum+=$tmp;
     if (!$f_momsfri){
-        $r2 = db_fetch_array(db_select("select moms from kontoplan where kontonr = '$f_bogfkto' and regnskabsaar = '$regnaar'",__FILE__ . " linje " . __LINE__));
+		$qtxt = "select moms from kontoplan where kontonr = '$f_bogfkto' and regnskabsaar = '$regnaar'";
+		$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
         $kodenr=substr($r2['moms'],1);
-        $r2 = db_fetch_array(db_select("select box2 from grupper where kodenr = '$kodenr' and art = 'SM'",__FILE__ . " linje " . __LINE__));
+		$qtxt="select box2 from grupper where kodenr = '$kodenr' and art = 'SM'";
+		$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
         $f_momssats=$r2['box2']*1;
         $incl_moms+=afrund($tmp+$tmp*$f_momssats/100,2);
         $moms+=$tmp*$f_momssats/100;

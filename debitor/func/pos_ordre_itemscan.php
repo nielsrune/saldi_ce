@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------- debitor/func/pos_ordre_itemscan.php ---- lap 3.7.5 -- 2019.02.15 --
-// LICENS
+// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.2 -- 2021.05.03 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2014-2021 saldi.dk aps
 // ----------------------------------------------------------------------------
 //
 // 2014.05.08 - Indsat diverse til bordhåndtering, bruger nr fra ordrer til bordnummer (PHR - Danosoft) Søg 20140508 eller $bordnr 
@@ -43,29 +40,36 @@
 // 2019-01-11 - PHR Decimalfejl i $udtages.   
 // 2019-01-23 - LN	(pos_txt_print) Udtræk af momssatser fra de enkelte varelinjer til bruge for detaljeret bon. 20190123
 // 2019-02-15 - CA  The function varescan (itemscan in English) created as an independent file.
+// 2020.06.03	- PHR Added scan for 'mylabel' barcodes
+// 2020.06.14	- PHR Added scan for new barcode from 'mylabel'
+// 2020.11.14 PHR Enhanged 'tilfravalg' add/remove to food items, (fx. extra bacon or no tomatoes in burger) $tilfravalgNy
+// 2021.01.27 PHR Some minor design changes
+// 2021.05.03 PHR - Qty now red if stock below minimum stock 20210503
 
 function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_ny) {
 	print "\n<!-- Function varescan (start)-->\n";
-	global $afd_navn;
-	global $afslut;
-	global $brugernavn;
-	global $fokus;
-	global $ifs;
-	global $kontonr;
-	global $betalingsbet;
+	global $afd_navn,$afslut;
+	global $betalingsbet,$betvaluta,$bordnr,$brugernavn;
 	global $difkto;
-	global $bordnr;  #20140508
-	global $kundedisplay;
+	global $fokus;
+	global $voucherNumber;
+	global $ifs;
+	global $kontonr,$kundedisplay;
 	global $lagerantal,$lagernavn,$lagernr;
+	global $moms;
 	global $pris;
 	global $status,$sum;
-	global $varenr_ny;
-	global $vis_saet;
-	global $vatrate;
-	global $gavekortnummer;
+	global $tilfravalgNy,$tracelog;
+	global $varenr_ny,$vatrate,$vis_saet;
+			
+	$betaling2=$konto_id=$myAc=$myDe=$myPr=$vare_id=NULL;
+	$pris[0]=0;
+	($fokus == 'textNew')?$textNew = 1:$textNew = 0;
 		
-	$konto_id=NULL;
-	$vare_id=NULL;
+	while (substr($varenr_ny,-1) == chr(92)) { #removes '\' if last character 20200814
+		$l=strlen($varenr_ny)-1;
+		$varenr_ny=substr($varenr_ny,0,$l);
+	}
 	
 	for ($l=0;$l<count($lagernr);$l++){
 		if ($lager_ny==$lagernr[$l] && strlen($lagernavn[$l])==1) $lager_ny=$lagernavn[$l];
@@ -79,6 +83,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		$addr1=$r['addr1'];
 		$post_by=$r['postnr']." ".$r['bynavn'];
 		$status=$r['status'];
+#cho __file__." ".__line__." S $status.<br>";		
 		$kundeordnr=$r['kundeordnr'];
 		$betalingsbet=$r['betalingsbet'];
 		$bordnr=$r['nr'];
@@ -93,20 +98,15 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				$r2=db_fetch_array(db_select("select logtime from transaktioner where ordre_id = '$id'",__FILE__ . " linje " . __LINE__));
 				$tidspkt=substr($r2['logtime'],0,5);
 				$tmp=$r['fakturadate']." ".$tidspkt;
-#cho "update ordrer set tidspkt = '$tmp' where id = '$id'<br>\n";
 				db_modify("update ordrer set tidspkt = '$tmp' where id = '$id'",__FILE__ . " linje " . __LINE__);
 			}
 		} else $ref=$brugernavn;
 		if ($bordnr || $bordnr=='0') { #20150415
 			$r = db_fetch_array(db_select("select box2,box3,box4,box7,box10 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
 			($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=NULL;
-			$bordnavn=$bord[$bordnr];
+			($bord)?$bordnavn=$bord[$bordnr]:$bordnavn='';
 		}
 		if ($status >= 3) {
-#			$betaling=$r['felt_1'];
-#			$modtaget=$r['felt_2'];
-#			$betaling2=$r['felt_3'];
-#			$modtaget2=$r['felt_4'];
 			$x=0;
 			$q=db_select("select * from pos_betalinger where ordre_id = '$id' order by id",__FILE__ . " linje " . __LINE__);
 			while($r=db_fetch_array($q)) {
@@ -172,19 +172,95 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				$prisIkode=1;
 			}
 		}	
+		if (strlen($varenr_ny)==12 && ctype_xdigit(substr($varenr_ny,-6)) && is_numeric(substr($varenr_ny,0,6))) {
+			$qtxt = "select * from mylabel where barcode='$varenr_ny' and price = '". hexdec(substr($varenr_ny,-6))/100 ."' ";
+			$qtxt.= "and id='". substr($varenr_ny,0,6)*1 ."'";
+			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				$myAc=$r['account_id'];
+				$myPr=$r['price'];
+				$myDe=$r['description'];
+				$myCo=$r['condition'];
+				$qtxt="select kontonr from adresser where id='$myAc'";
+			}	else {
+				$qtxt = "select * from mylabel where id='". substr($varenr_ny,0,6)*1 ."'";
+				if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+					$myAc=$r['account_id'];
+					$myPr=$r['price'];
+					$myDe=$r['description'];
+					$myCo=$r['condition'];
+					$qtxt="select kontonr from adresser where id='$myAc'";
+					alert('Stregkode ændret, kontroller label');	
+				} else $qtxt=NULL;
+			} 
+			if ($qtxt) {
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				($myCo=='new')?$vnr="kn___$r[kontonr]":$vnr="kb___$r[kontonr]";
+				$qtxt="select varenr,kostpris from varer where varenr like '$vnr'";
+				if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+					$varenr_ny=$r['varenr'];
+					$pris[0]=$myPr;
+					$beskrivelse[0]=$myDe;
+				} else $myAc=$myDe=$myPr=NULL;
+			} 
+		}
+/*
+		if (strpos($varenr_ny,'x')) { #20200603 Fjernes januar 21.
+			list ($a,$b)=explode('x',$varenr_ny,2);
+			if (is_numeric($a) && is_numeric($b)) $qtxt="select * from mylabel where id = '$b'";
+			else $qtxt=NULL;
+			if ($qtxt && $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				$myAc=$r['account_id'];
+				$myPr=$r['price'];
+				$myDe=$r['description'];
+				$qtxt="select kontonr from adresser where id='$myAc'";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				$qtxt="select varenr,kostpris from varer where id='$a' and varenr like '_____$r[kontonr]'";
+				if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+					$varenr_ny=$r['varenr'];
+					$pris[0]=$myPr;
+					$beskrivelse[0]=$myDe;
+				} else $myAc=$myDe=$myPr=NULL;
+			}
+			$qtxt=NULL;
+		}
+*/		
+		if ((substr($varenr_ny,0,2) == 'kb' || substr($varenr_ny,0,2) == 'kn') && is_numeric(substr($varenr_ny,5,4))) {
+			$qtxt = "select salgspris,kostpris from varer where varenr = '$varenr_ny'";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			if (!$r['salgspris'] && $r['kostpris'] > 0 && $r['kostpris'] < 1) {
+				$qtxt = "select id from adresser where art = 'D' and kontonr = '". substr($varenr_ny,5,4) ."'";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				if (!$r['id']) alert("Varenr $varenr_ny er ikke tilknyttet en kunde"); 
+			}
+		}
+		$s=0;
+		$qtxt = "select kodenr from grupper where art = 'VG' and box8 = 'on'";
+		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array($q)) {
+			$stockGrp[$s]=$r['kodenr'];
+			$s++;
+		}
 		if ($prisIkode) $vnr=$tmp;
 		# <- 20140703 + else foran if herunder.
 		elseif ($vare_id) $qtxt="select * from varer where id='$vare_id'";
 		else {
+			$qtxt = "select * from varer where lower(stregkode) = '$varenr_low' or upper(stregkode) = '$varenr_up' ";
+			$qtxt.= "or stregkode LIKE '$varenr_ny' limit 1";
+			if (!$r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__))) {
 			$qtxt="select * from varer where lower(varenr) = '$varenr_low' or upper(varenr) = '$varenr_up' or varenr LIKE '$varenr_ny' ";
 			$qtxt.="or lower(stregkode) = '$varenr_low' or upper(stregkode) = '$varenr_up' or stregkode LIKE '$varenr_ny'";
 			if (strlen($varenr_ny)==12 && is_numeric($varenr_ny)) $qtxt.=" or stregkode='0$varenr_ny'";
 		}
-		if ($r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__))) {
+		}
+		if ($qtxt && $r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__))) {
 #		  $varenr_ny=db_escape_string($r['varenr']);
+			$beholdning[0] = $r['beholdning'];
+			$min_lager[0]  = $r['min_lager'];
+			$itemGroup[0]  = $r['gruppe'];
 			$lukket[0]=$r['lukket'];
-			$beskrivelse[0]=$r['beskrivelse'];
 			$kostpris[0]=$r['kostpris'];
+			if ($myDe) $beskrivelse[0]=$myDe;
+			else $beskrivelse[0]=$r['beskrivelse'];
 			if ($prisIkode) {
 				$pris[0]=find_pris($varenr_ny)*1;
 				$r2 = db_fetch_array(db_select("select box6, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'",__FILE__ . " linje " . __LINE__));
@@ -192,7 +268,8 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				if ($r2['momsfri']) $kostpris[0]=$pris[0]*$kostpris[0];
 				else $kostpris[0]=$pris[0]*100/(100+$momssats)*$kostpris[0];
 				$varenr_ny=$vnr;
-			} else $pris[0]=find_pris($r['varenr'])*1;
+			} elseif ($myPr) $pris[0]=$myPr;
+			else $pris[0]=find_pris($r['varenr'])*1;
 			if ($pris[0]) {
 				$pris[0]=dkdecimal($pris[0],2);
 			}
@@ -204,7 +281,9 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 			$txt="$varenr_ny tilhører en variant som er tilknyttet en slettet vare. Varianten slettes";
 			return ($txt);
 		} else {
-			return ("fejl".chr(9)."".chr(9)."Varenr: $varenr_ny eksisterer ikke");
+		vareopslag('PO',"",'beskrivelse', $id,"","$ref","*$varenr_ny*");
+			exit;
+#			return ("fejl".chr(9)."".chr(9)."Varenr: $varenr_ny eksisterer ikke");
 		}
 		if ($lukket[0]) {
 			alert("$varenr[0] $beskrivelse[0] er udgået!");
@@ -213,7 +292,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 			$varianter=explode(chr(9),$variant_type);
 			for ($y=0;$y<count($varianter);$y++) {
 				$r1=db_fetch_array(db_select("select variant_typer.beskrivelse as vt_besk,varianter.beskrivelse as var_besk from variant_typer,varianter where variant_typer.id = '$varianter[$y]' and variant_typer.variant_id=varianter.id",__FILE__ . " linje " . __LINE__));
-				$beskrivelse[0].=", ".$r1['var_besk'].":".$r1['vt_besk'];
+				$beskrivelse[0].=", ".$r1['vt_besk']; #20200830
 			}
 		}
 	} else $fokus="varenr_ny";
@@ -238,7 +317,8 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 	if ($status < 3) {
 		if(isset($_GET['ret']) && is_numeric($_GET['ret']) && !$antal_ny) {
 			$ret=$_GET['ret']*1;
-			$qtxt="select varenr,variant_id,antal,lager,beskrivelse,pris,kostpris,momssats,momsfri,rabat,leveret from ordrelinjer where id = '$ret'";
+			$qtxt = "select varenr,variant_id,antal,lager,beskrivelse,pris,kostpris,momssats,momsfri,rabat,leveret,tilfravalg ";
+			$qtxt.= "from ordrelinjer where id = '$ret'";
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$varenr_ny=$r['varenr'];
 			$lager_ny=$r['lager'];
@@ -246,6 +326,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 			$rabat_old=dkdecimal($r['rabat'],2);
 			$beskrivelse[0]=$r['beskrivelse'];
 			$leveret[0]=$r['leveret'];
+			$tilfravalgNy=$r['tilfravalg'];
 			$fokus="antal_ny";
 			if ($r['momsfri'] && $r['momssats']==0) $pris[0]=dkdecimal($r['pris'],2);
 			else $pris[0]=dkdecimal($r['pris']+$r['pris']*$r['momssats']/100,2);
@@ -267,6 +348,12 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 #			$beskrivelse[0]=''; Må ikke aktiveres!
 			$leveret[0]=0;
 		}
+		$bgColor = 'white';
+		$qtyTitle = '';
+		if (in_array($itemGroup[0],$stockGrp) && $beholdning[0] < $min_lager[0]) { #20210503
+			$bgColor ='red';
+			$qtyTitle = "Obs!! Beholdning (". dkdecimal($beholdning[0],0) .") mindre end ". dkdecimal($min_lager[0],0);
+		}	elseif ($beholdning[0]) $qtyTitle = "Beholdning: ". dkdecimal($beholdning[0],0);
 		print "<input type=\"hidden\" name = \"fokus\" value=\"$fokus\">\n";
 		print "<input type=\"hidden\" name = \"pre_bordnr\" value=\"$bordnr\">\n";  #20140508
 		#print "<input type=\"hidden\" name = \"vare_id\" value=\"$vare_id[0]\">\n";
@@ -276,12 +363,15 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		print "<input type=\"hidden\" name = \"antal\" value=\"$antal_old\">\n";
 		print "<input type=\"hidden\" name = \"lager\" value=\"$lager_ny\">\n";
 		if ($fokus=='pris_ny') print "<input type=\"hidden\" name = \"pris\" value=\"$pris_old\">\n";
+		if ($textNew) print "<input type=\"hidden\" name = \"itemText\" value=\"$beskrivelse[0]\">\n";
 		print "<tr><td width=\"30px\">";
 		print "<input class=\"inputbox\" type=\"text\" style=\"width:120px;font-size:$ifs;\" name = \"varenr_ny\" value=\"$varenr_ny\">";
 		print "</td>\n"; 	
 		if ($varenr_ny) {
 			if (!$antal_old && $antal_old!='0') $antal_old='1,00'; #20140814 
-			print "<td width=\"7px\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:40px\" name=\"antal_ny\" placeholder=\"$antal_old\" value=\"$antal_ny\"></td>";
+			print "<td width=\"7px\" title = '$qtyTitle'>";
+			print "<input class=\"inputbox\" type=\"text\" style=\"background-color:$bgColor;text-align:right;font-size:$ifs;width:40px\" ";
+			print "name=\"antal_ny\" placeholder=\"$antal_old\" value=\"$antal_ny\"></td>";
 			if ($lagerantal>1) {
 				for ($l=0;$l<count($lagernr);$l++){
 					if ($lagernr[$l]==$lager_ny && strlen($lagernavn[$l])==1) $lager_ny=$lagernavn[$l]; 
@@ -290,8 +380,9 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 			}
 			if ($antal_ny) {
 				# Slår op om varen er et gavekort
-				if ( er_gavekort($varenr_ny) ) {	# 20181202
-					$fokus="pris_ny";		# 20190215
+				/*
+				if ($varenr_ny && isVoucher($varenr_ny)) {	# 20181202
+					$x="pris_ny";		# 20190215
 					print "<td >Gavekortnr: ";
 					print "<input class=\"inputbox\" type=\"text\" style=\"background:orange;  text-align:right;font-size:$ifs;width:120px\" name=\"gavekortnummer\" value=\"".nytgavekortnummer($gavekortnummer)."\" /></td>\n"; # 20190215 > felt
 					print "<input type=hidden name=\"pris_old\" value=\"$pris_old\">\n" ; #20140702
@@ -299,13 +390,22 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 					print "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:60px\" name = \"pris_ny\"  placeholder=\"$pris_old\" >";
 					print "</td>\n";
 				} else {
-					print "<td>".$beskrivelse[0]."</td>\n";
-					print "<input type=hidden name=\"pris_old\" value=\"$pris_old\">\n" ; #20140702
-					print "<td align=\"right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[0],2)."\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:60px\" name = \"pris_ny\"  placeholder=\"$pris_old\" value=\"\"></td>\n";
-				}
+				*/
+				if ($textNew) {
+					print "<td align=\"right\" title='Skriv ny varebeskrivelse'>";
+					print "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:80px\" ";
+					print "name=\"textNew\" placeholder=\"$beskrivelse[0]\" value=\"\"></td>\n";
+					exit;
+				} else print "<td>".$beskrivelse[0]."</td>\n";
+				$txt = "<input type=hidden name=\"pris_old\" value=\"$pris_old\">\n" ; #20140702
+				$txt.= "<td align=\"right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[0],2)."\">";
+				$txt.= "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:60px\" ";
+				$txt.= "name = \"pris_ny\"  placeholder=\"$pris_old\" value=\"\"></td>\n";
+				print $txt;
 			} else {
 				print "<td>".$beskrivelse[0]."</td>\n";
 				print "<input type=hidden name=\"pris_ny\" value=\"$pris[0]\" />\n";
+				print "<input type=hidden name=\"tilfravalgNy\" value=\"$tilfravalgNy\" />\n";
 				print "<td align=\"right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[0],2)."\">$pris[0]</td>\n";
 			}
 			if ($pris_ny && $fokus=="rabat_ny") {
@@ -327,8 +427,8 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		}
 		print "</tr>\n";
 	}
-
-	list($sum,$rest,$afrundet,$kostsum)=explode(chr(32),vis_pos_linjer($id,$momssats,$status,$pris[0]));
+	if ($tracelog) fwrite ($tracelog, __file__." ".__line__." Calls vis_pos_linjer($id,$momssats,$status,$pris[0],1))\n");
+	list($sum,$rest,$afrundet,$kostsum)=explode(chr(32),vis_pos_linjer($id,$momssats,$status,$pris[0],1));
 	if ($konto_id && $kreditmax != 0 && $sum+$moms > $kreditmax - $saldo && $status < '3') {
 		$ny_saldo=$saldo+$sum+$moms;
 		$txt = "Kreditmax: ".dkdecimal($kreditmax,2)."<br>Gl. saldo :  ".dkdecimal($saldo,2)."<br>Ny saldo :  ".dkdecimal($ny_saldo,2);
@@ -336,7 +436,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		alert("$txt");
 	}
 	print "<input type=\"hidden\" name = \"sum\" value = \"$sum\" />\n";
-	setRoundUpText($afrundet);
+	setRoundUpText($afrundet, $difkto, $rest, $betvaluta, $afrundet);
 	if ($sum || !$konto_id) {
 		if (!$afrundet) $afrundet=$sum;
 		if ($afslut || $status>=3) {

@@ -4,26 +4,23 @@
 //                        \__ \/ _ \| |_| | | |
 //                        |___/_/ \_|___|__/|_|
 //
-// ----------finans/bankimport.php------------patch 3.8.1------2019.09.17---
-// LICENS
+// ----------finans/bankimport.php------------patch 3.9.3------2020.08.20---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.11.10 Indsat mulighed for valutavalg ved import - søg: valuta
@@ -50,6 +47,8 @@
 // 2018.03.14 den udlignede de nyeste istedet for de ældste 20180318
 // 2019.09.11 PHR Added 'DK3DSF' at SparNord Ny 20190911
 // 2019.09.17 PHR Added 'DK3DSF' at DanskeBank Ny 20190917
+// 2020.08.20 PHR Added recognition of outgoing payments from Cultura Sparebank, Norway 20200820
+// 2020.11.07 PHR Added recognition of customer account # when importing bank 20201107
 
 
 ini_set("auto_detect_line_endings", true);
@@ -536,7 +535,13 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 					} elseif (strlen($beskrivelse)==30 && (substr($beskrivelse,0,5)=='DKSSL' || substr($beskrivelse,0,6)=='DK3DSF') && is_numeric(substr($beskrivelse,6,4)) && is_numeric(substr($beskrivelse,11,7)) && is_numeric(substr($beskrivelse,19,11))) { # SparNord Ny 20160909 
 						$tmp=$amount-3;
 						$betalings_id="%".substr($beskrivelse,21,11);
-						$qtxt="select fakturanr,kontonr,sum,moms from ordrer where betalings_id LIKE '$betalings_id' and sum >= '$tmp' and sum <='$amount'";
+						$qtxt = "select fakturanr,kontonr,sum,moms from ordrer where betalings_id LIKE '$betalings_id' ";
+						$qtxt.= "and sum+moms >= '$tmp' and sum+moms <='$amount'";
+					} elseif (substr($beskrivelse,12,3)=='ha_' && is_numeric(substr($beskrivelse,15,5))) { # BetalingsID Jyske Bank 
+						$tmp=$amount-3;
+						$betalings_id=substr($beskrivelse,12,8);
+						$qtxt = "select fakturanr,kontonr,sum,moms from ordrer where betalings_id = '$betalings_id' ";
+						$qtxt.= "and sum+moms >= '$tmp' and sum+moms <='$amount'";
 					} elseif (strlen($beskrivelse)==22 && (substr($beskrivelse,0,5)=='DKSSL' || substr($beskrivelse,0,6)=='DK3DSF') && is_numeric(substr($beskrivelse,6,4)) && is_numeric(substr($beskrivelse,11,7)) && is_numeric(substr($beskrivelse,19,11))) { # DanskeBank Ny 20161101 
 						$tmp=$amount-3;
 						$ordrenr=substr($beskrivelse,-4);
@@ -561,34 +566,38 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 							$kredit='0';
 							$k_type='';
 						}
-#cho "$faktura | $kortgebyr | $fakturasum | $kredit | $k_type<br>";
 					} else {
 						$kredit='0';
 						$faktura='';
 						$k_type='';
 					}
+					$kortgebyr=afrund($kortgebyr,2);
 					if ($kortgebyr) {
 						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta,afd)";
 						$qtxt.="  values ";
 						$qtxt.="('$bilag','$transdate','$beskrivelse','F','$kontonr','F','0','$faktura','$amount','$kladde_id','$valuta_kode','$afd')";
+#cho "$qtxt<br>";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta,afd)";
 						$qtxt.="  values ";
 						$qtxt.="('$bilag','$transdate','$beskrivelse','F','0','$k_type','$kredit','$faktura','$fakturasum','$kladde_id','$valuta_kode','$afd')";
+#cho "$qtxt<br>";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta,afd)";
 						$qtxt.="  values ";
 						$qtxt.="('$bilag','$transdate','$beskrivelse','F','0','F','$gebyrkonto','$faktura','$kortgebyr','$kladde_id','$valuta_kode','$afd')";
+#cho "$qtxt<br>";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					} else {
 						$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta,afd)";
 						$qtxt.="  values ";
 						$qtxt.="('$bilag','$transdate','$beskrivelse','F','$kontonr','$k_type','$kredit','$faktura','$amount','$kladde_id','$valuta_kode','$afd')";
+#cho "$qtxt<br>";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					}
-#cho $qtxt."<br>";
 					$bilag++;
 				} elseif ($amount<0) {
+#cho substr($beskrivelse,0,4) ." | ". substr($beskrivelse,5,4) ."<br>";
 						$dtype='F';
 						$debet=0;
 					$amount=$amount*-1;
@@ -598,21 +607,46 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 						$faktura=$r['fakturanr'];
 						$debet=$r['kontonr']*1;
 						$d_type='D';
+					} elseif (substr($beskrivelse,0,4)=='Afr:' && is_numeric(substr($beskrivelse,5,4))) { #20201107
+						$d_type='D';
+						$debet=substr($beskrivelse,5,4);
 					} elseif (substr($beskrivelse,0,4)=='Afr:' && substr($beskrivelse,-8,1)=='-' && substr($beskrivelse,-5,1)=='-') { #20170608
 						list($tmp,$debet,$tmp)=explode(" ",$beskrivelse);
 						$d_type='D';
-#					} else {
-#						$dtype='F';
-#						$debet=0;
+					} elseif (substr($beskrivelse,0,12)=='Girobetaling' && is_numeric(substr($beskrivelse,13,11))) { #20200820
+						$bank=substr($beskrivelse,13,11);
+						$d_type='D';
+						$qtxt="select kontonr from adresser where bank_konto = '$bank'";
+						if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+							$debet=$r['kontonr'];
+						}
+					} elseif (strpos($beskrivelse,'+')) {
+						$beskrivelse=str_replace('%C3%A6','æ',$beskrivelse);
+						$beskrivelse=str_replace('%C3%B8','ø',$beskrivelse);
+						$beskrivelse=str_replace('%C3%A5','å',$beskrivelse);
+						$beskrivelse=str_replace('+',' ',$beskrivelse);
+						$qtxt="select kontonr from adresser where firmanavn='$beskrivelse' and art = 'D'";
+						$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+						$c=0;
+						while ($r=db_fetch_array($q)) {
+							$debet=$r['kontonr'];
+							$c++;
+						}
+						($c == 1)?$d_type='D':$debet = 0;	
 					}
-					db_modify("insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,amount,kladde_id,valuta,afd) values ('$bilag','$transdate','$beskrivelse','$d_type','$debet','F','$kontonr','$amount','$kladde_id','$valuta_kode','$afd')",__FILE__ . " linje " . __LINE__);
+					$qtxt = "insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,amount,kladde_id,valuta,afd)";
+					$qtxt.= " values "; 
+					$qtxt.= "('$bilag','$transdate','$beskrivelse','$d_type','$debet','F',";
+					$qtxt.= "'$kontonr','$amount','$kladde_id','$valuta_kode','$afd')";
+#cho "$qtxt<br>";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					$bilag++; #20170630 Flyttet fra over db_mod...
 				}
 			}
 		}
 	}	
-	fclose($fp);
 #xit;				
+	fclose($fp);
 	unlink($filnavn); # sletter filen.
 	unlink($filnavn."2"); # sletter filen.
 #xit;

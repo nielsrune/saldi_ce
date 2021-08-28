@@ -5,25 +5,22 @@
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
 // ---- debitor/pos_ordre_includes/helperMethods/helperFuncII.php ---- lap 3.8.9----2020.02.11-------
-// LICENS
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2020 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190312 LN Make various helper functions for the pos_ordre and the report files
@@ -37,6 +34,9 @@ function getVatArray($linjeantal, $dkkpris, $vatArray) {
 		$vatPercentage = $vatArray[$x];
 		$vat = $price / 100 * $vatPercentage; 
 		$vatRate[$vatPercentage]['percentage'] = truncate_number($vatPercentage);
+		if (!isset($vatRate[$vatPercentage]['base']))  $vatRate[$vatPercentage]['base']  = 0; 
+		if (!isset($vatRate[$vatPercentage]['vat']))   $vatRate[$vatPercentage]['vat']   = 0; 
+		if (!isset($vatRate[$vatPercentage]['total'])) $vatRate[$vatPercentage]['total'] = 0; 
 		$vatRate[$vatPercentage]['base'] += $price - $vat;
 		$vatRate[$vatPercentage]['vat'] += $vat;
 		$vatRate[$vatPercentage]['total'] += truncate_number($price); 
@@ -45,10 +45,11 @@ function getVatArray($linjeantal, $dkkpris, $vatArray) {
 	return $vatRate;
 }
 
-function makeOrderIdArray($kasse) {
-	$orderQuery = db_select("select ordrenr from ordrer where felt_5 = '$kasse'", __FILE__ . "linje" . __LINE__);
+function makeOrderIdArray($kasse,$date) {	
+	$qtxt = "select id from ordrer where felt_5 = '$kasse' and fakturadate = '$date'"; 
+	$orderQuery = db_select($qtxt, __FILE__ . "linje" . __LINE__);
 	while ($order = db_fetch_array($orderQuery)) {
-		$ordreIdArr[] = $order['ordrenr'];
+		$ordreIdArr[] = $order['id'];
 	}
 	ksort($ordreIdArr);
 	return $ordreIdArr;

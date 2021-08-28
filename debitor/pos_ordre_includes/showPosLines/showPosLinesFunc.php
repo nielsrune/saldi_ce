@@ -4,45 +4,47 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php ---------- lap 3.7.7----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php --- lap 4.0.0 --- 2021.03.10 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
-// LN 20190508 Move function vis_pos_linjer here
+// 20190508 LN Move function vis_pos_linjer here
+// 20201114	PHR Enhanged 'tilfravalg' add/remove to food items, (fx. extra bacon or no tomatoes in burger) $tilfravalgNy
+// 20210127 PHR Some minor design changes 
+// 20210310 PHR Some error corections in minor design changes 
 
-function vis_pos_linjer($id,$momssats,$status,$pris_ny) {
+#Called from pos_ordre.php & pos_ordre_itemscan.php
+function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
+
 	print "\n<!-- Function vis_pos_linjer (start)-->\n";
 	global $afd,$afd_lager,$afd_navn,$afslut;
 	global $bgcolor,$bgcolor5,$bordnr,$brugernavn,$betvaluta,$betvalkurs,$betvalsum;
 	global $del_bord,$difkto,$db_id;
 	global $fokus;
 	global $ifs;
-	global $koekken,$kundedisplay;
-	global $lagerantal,$lagernavn,$lagernr;
+	global $kasse,$koekken,$kundedisplay;
+	global $lager_ny,$lagerantal,$lagernavn,$lagernr;
 	global $regnaar;
 	global $status,$svnr;
-	global $varenr_ny,$vis_saet;
-	global $varelinjer;
+	global $tilfravalgNy;
+	global $varelinjer,$varenr_ny,$vis_saet;
 
-	$afd*=1;
+	if (!is_numeric($afd)) $afd = 0;
 	$nettosum=0;
 	$rvnr=NULL;
 	$samlet_rabat=0;
@@ -95,38 +97,43 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny) {
 				exit;
 			}
 		}
-	} elseif(isset($_GET['del_bord']))$del_bord=$_get['del_bord'];
+	} elseif(isset($_GET['del_bord']))$del_bord=$_GET['del_bord'];
 	$stil=find_stil('knap',1,NULL);
 
 	if ($fokus=='modtaget' || $fokus=='modtaget2') $class=NULL;
 	else $class="class=\"vindue\"";
+#	if ($show) {
 	print "</tbody></table></td></tr>\n";
 	print "<tr><td id=\"varelin\" style=\"width:100%; height:80%\" valign=\"top\">";
 	print "<div $class><table width=\"100%\" border=\"0\"><tbody>\n";
-
+#	}
 	include("productLines.php"); #20190510
 
 	if ($vis_saet && $samlet_rabatpct && $samlet_pris)  {
 		$diff=afrund($samlet_pris-$sum,3); #20170721
 		if($diff || $samlet_rabatpct) {
-			opret_ordrelinje($id,$rvid,$rvnr,1,'',$diff,20,100,'PO','','','0','','','','','0',$lager_ny,__LINE__);
+     	opret_ordrelinje($id,$rvid,$rvnr,1,'',$diff,20,100,'PO','','','0','','','','','0','','',$lager_ny,__LINE__);
 			$r=db_fetch_array(db_select("select id from ordrelinjer where ordre_id = '$id' and varenr = 'R'",__FILE__ . " linje " . __LINE__));
 			$vist_rabat=$samlet_pris-$bruttosaetsum."|".$samlet_pris;
 			db_modify("update ordrelinjer set lev_varenr='$vist_rabat' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
 		}
 	}
-	if($r=db_fetch_array(db_select("select * from ordrelinjer where ordre_id = '$id' and varenr = 'R'",__FILE__ . " linje " . __LINE__)));
+	$qtxt = "select * from ordrelinjer where ordre_id = '$id' and varenr = 'R'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 	$sum+=$r['pris'];
 	list($lev_vnr)=explode("|",$r['lev_varenr']);
+		if ($show) {
 	print "<tr><td></td><td></td><td></td><td></td><td align=right><td></tr>";
 	print "<tr><td></td><td></td><td>$r[beskrivelse]</td><td></td><td align=right>".dkdecimal($lev_vnr,2)."<td></tr>";
+		}
+	}
 	if (!$id) {
 		global $kasse;
 		global $bord;
 		if ($afd_navn) {
 			print "<tr><td height=\"40%\" colspan=\"4\" align=\"center\" valign=\"middle\">";
 			print "<b><div style=\"font-size:25mm;color:$bgcolor5;\">$kasse</div></b><br>";
-			print "<b><div style=\"font-size:15mm;color:$bgcolor5;\">$afd_navn</div></b></td></tr>\n";
+			print "<b><div style=\"font-size:25mm;color:$bgcolor5;\">$afd_navn</div></b></td></tr>\n";
 		} else {
 			print "<tr><td height=\"40%\" colspan=\"4\" align=\"center\" valign=\"middle\"><b>";
 			print "<div style=\"font-size:25mm;color:$bgcolor5;\">Kasse $kasse</div></b></td></tr>\n";
@@ -142,12 +149,12 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny) {
 	if ($rvnr && abs($sum*0.8-$nettosum)<0.02) $nettosum=$sum*0.8;
 	$d_b=$nettosum-$kostsum;
 	($nettosum)?$dg=100-$kostsum*100/$nettosum:$dg=0;
-	print "<tr><td colspan=\"6\"><hr></td></tr>\n";
+	if ($show) print "<tr><td colspan=\"6\"><hr></td></tr>\n";
 	$sum=afrund($sum,2);
 	$dd=date("Y-m-d");
 
 
-	include("sum.php"); #20190510
+	if ($show) include("sum.php"); #20190510
 
 	$x=0;
 	$a=array();
@@ -163,7 +170,7 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny) {
 		$x++;
 	}
 	$rest=afrund($rest,2);
-	if ($rest!=$sum) {
+	if ($rest!=$sum && $show) {
 		if ($status < '3') print "<tr><td colspan=\"4\"><b>Heraf betalt</b></td></tr>\n";
 		for ($x=0;$x<count($b);$x++) {
 			if (is_numeric($b[$x])) {

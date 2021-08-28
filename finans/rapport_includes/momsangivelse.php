@@ -4,27 +4,27 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ finans/rapport_includes/momsangivelse.php -------- lap 3.7.8 --- 2019-03-24 ---
-// LICENS
+// --- finans/rapport_includes/momsangivelse.php --- lap 4.0.0 --- 2021-01-03 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk ApS
 // ----------------------------------------------------------------------
+// 20210107 PHR Corrected error in 'deferred financial year'.
+// 20210301 PHR php 7x issues
+
 
 function momsangivelse ($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev)
 {
@@ -73,7 +73,10 @@ function momsangivelse ($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 	$slutaar=$row['box4']*1;
 	$slutdato=31;
 
-	##
+	if ($aar_fra < $aar_til) { #20210107
+		if ($maaned_til > $slutmaaned ) $aar_til = $aar_fra;
+		elseif ($maaned_fra < $startmaaned ) $aar_fra = $aar_til;
+	}
 	$regnaarstart= $startaar. "-" . $startmaaned . "-" . '01';
 
 	if ($maaned_fra) $startmaaned=$maaned_fra;
@@ -238,8 +241,9 @@ if ($menu=='T') {
 				print "<td>$kontonr[$x] </td>";
 				$tmp = kontobemaerkning($kontobeskrivelse[$x]);
 				print "<td $tmp colspan=3>$kontobeskrivelse[$x] </td>";
-				$row = db_fetch_array($query = db_select("select art from grupper where box1='$kontonr[$x]' and art<>'MR'",__FILE__ . " linje " . __LINE__));		
-				if (($row['art']=='SM')||($row['art']=='YM')||($row['art']=='EM')) {
+				$qtxt= "select art from grupper where box1='$kontonr[$x]' and art<>'MR'";
+				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				if (isset ($r['art']) && ($r['art']=='SM' || $r['art']=='YM' || $r['art']=='EM')) {
 					print "<td>&nbsp;</td>";
 					$tmp=dkdecimal($aarsum[$x]*-1,2);
 				} else $tmp=dkdecimal($aarsum[$x],2);

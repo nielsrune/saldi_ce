@@ -641,7 +641,7 @@ function output ($menu_id,$rows,$cols,$radius,$width,$height,$fontsize,$bgcolor2
 				text-align:center;
 				vertical-align:middle;
 				font-size:".$fontsize."px; 
-				border: 1px solid #$bgcolor2;
+				border: 1px solid $bgcolor2;
 				white-space: normal;
 				background-color:#$b;
 			";

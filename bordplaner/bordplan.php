@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- bordplaner/bordplan.php ---------- lap 3.8.1----2019.07.11-------
-// LICENS
+// ------------- bordplaner/bordplan.php ---------- lap 3.9.9----2021.02.13-------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2012-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2014.11.11 Bordplan bruges nu også selvom der ikke er individuel bordplan
 // 2015.01.10 Bord sætttes kun som optaget hvis der er et bordnr.
@@ -65,8 +62,7 @@ while ($r=db_fetch_array($q)) {
 	}
 	$bnr[$y]=$bordnr;
 	if (is_numeric($r['nr'])) {
-		$r2=db_fetch_array(db_select("select id from ordrelinjer where ordre_id='$r[id]' limit 1",__FILE__ . " linje " . __LINE__));
-		if ($r2['id']) {
+		if ($r2=db_fetch_array(db_select("select id from ordrelinjer where ordre_id='$r[id]' limit 1",__FILE__ . " linje " . __LINE__))) {
 		$optaget[$x]=$r['nr'];
 		$x++;
 	} 

@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------includes/rapportfunc.php ----- lap 3.8.9 ---- 2020.01.09 ---------------------------
-// LICENS
+// --- includes/rapportfunc.php --- lap 4.0.2 --- 2021.04.22 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-//
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2020 saldi.dk aps
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+// 
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+// 
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
+// 
+// Copyright (c) 2003 - 2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 2012.11.06 Kontrol for aktivt regnskabsaar v. bogføring af rykker.Søg 20121106
@@ -52,6 +49,7 @@
 // 2019.11.07	PHR - function 'kontoprint' Added email option. Search 20191107
 // 2020.02.03 PHR - function 'vis_aabne_poster. "where udlignet = '0'" must not be used if todate is prior to actual date ; #20200103
 // 2020.01.09 PHR - function 'bogfor_nu' Returns if allready accounted - 20200109
+// 2021.04.22 PHR - Sum now rounded - look in 'debitor/ny_rykker.php' 20210422 
 
 function openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $kontoart) {
 ?>
@@ -736,14 +734,15 @@ function bogfor_nu($id) {
 
 		$qtxt = "select id from openpost where konto_id = '$konto_id' and faktnr = '$fakturanr' and refnr = '$id' and amount = '$sum' ";
 		$qtxt.= "and beskrivelse = '$beskrivelse' and udlignet = '0' and transdate = '$transdate' and kladde_id = '0'";
-		if (db_fetch_array(db_select($qtxt))) { #20200109
+		if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { #20200109
 			return($id);
 			exit;
 		}
 		if ($sum) {
-			$qtxt = "insert into openpost (konto_id, konto_nr, faktnr, refnr, amount, beskrivelse, udlignet, transdate, kladde_id,valuta,valutakurs)";
-			$qtxt.= " values ";
-			$qtxt.= "('$konto_id', '$kontonr', '$fakturanr', '$id','$sum', '$beskrivelse', '0', '$transdate', '0','DKK','100')";
+			$qtxt = "insert into openpost "; 
+			$qtxt.= " (konto_id, konto_nr, faktnr, refnr, amount, beskrivelse, udlignet, transdate, kladde_id,valuta,valutakurs)";
+			$qtxt.= " values "; #20210422 - Addad afrund in next line
+			$qtxt.= "('$konto_id', '$kontonr', '$fakturanr', '$id','". afrund($sum,2) ."', '$beskrivelse', '0', '$transdate', '0','DKK','100')";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		$r = db_fetch_array(db_select("select gruppe from adresser where id='$konto_id'",__FILE__ . " linje " . __LINE__));

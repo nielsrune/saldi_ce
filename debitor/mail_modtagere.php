@@ -47,11 +47,28 @@ $mailtekst=if_isset($_POST['mailtekst']);
 $send_mails=if_isset($_POST['send_mails']);
 $testmail=if_isset($_POST['testmail']);
 
+if ($mailtekst) {
+	$qtxt = "select id from settings where var_name = 'mailtext' and var_grp = 'paylist' and user_id='0'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	if ($r['id']) $qtxt = "update settings set var_value = '". db_escape_string($mailtekst) ."' where id =  '$r[id]'";
+	else {
+		$qtxt = "insert into settings (var_name, var_grp, var_value, user_id, var_description) ";
+		$qtxt.= " values ";
+		$qtxt.= "('mailtext','paylist','". db_escape_string($mailtekst) ."','0',";
+		$qtxt.= "'text for mails to commission customers when transferring from paylist')";
+	}	
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+}
+
 ini_set("include_path", ".:../phpmailer");
 require("class.phpmailer.php");
 
+$qtxt = "select count(bilag_id) as bilag_id from betalinger where liste_id='$liste_id' and bilag_id != 0";
+$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+if ($r['bilag_id']) {
 $x=0;
-$qtxt="select betalinger.modt_navn,betalinger.betalingsdato,betalinger.belob,kassekladde.kredit,kassekladde.beskrivelse from betalinger,kassekladde ";
+	$qtxt = "select betalinger.modt_navn,betalinger.betalingsdato,betalinger.belob,";
+	$qtxt.= "kassekladde.kredit,kassekladde.beskrivelse from betalinger,kassekladde ";
 $qtxt.="where betalinger.liste_id='$liste_id' and kassekladde.id = betalinger.bilag_id ";
 $q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r= db_fetch_array($q)){
@@ -69,7 +86,6 @@ list($tmp,$slut[$x])=explode(" - ",$r['beskrivelse']);
 	$qtxt.="(ordrer.art='PO') and ordrer.fakturadate >= '$start[$x]' and ordrer.fakturadate <= '$slut[$x]' and ";
 	$qtxt.="ordrelinjer.ordre_id = ordrer.id and ordrelinjer.varenr like '%$kontonr[$x]' and ordrelinjer.fast_db > '0'";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-if ($kontonr==1030) echo "$qtxt<br>";	
 	$antal[$x]=$r2['antal']*1;
 	$qtxt="select id,firmanavn,email from adresser where kontonr='$kontonr[$x]' and art='D'	";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -77,7 +93,27 @@ if ($kontonr==1030) echo "$qtxt<br>";
 	$email[$x]=$r2['email'];
 	$x++;
 }
+} else {
+	$x=0;
+	$qtxt = "select egen_ref,modt_navn,betalingsdato,belob ";
+	$qtxt.= "from betalinger where betalinger.liste_id='$liste_id'";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r= db_fetch_array($q)){
+		list($a,$b) = explode('-',$r['egen_ref'],2);
+		$kontonr[$x] = trim(str_replace('Afr:','',$a));
+		$belob[$x]=$r['belob'];
+		$qtxt="select id,firmanavn,email from adresser where kontonr='$kontonr[$x]' and art='D'	";
+		$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$modt_navn[$x]=$r2['firmanavn'];
+		$email[$x]=$r2['email'];
+		$x++;
+	}
+
+
+}
+	
 $mailantal=$x;
+
 if ($testmail) {
 	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 	echo "sender til $r[email]<br>";
@@ -109,7 +145,7 @@ if ($send_mails) {
 
 if (!$emne) $emne="Afregning";
 if (!$mailtekst) {
-	$r=db_fetch_array(db_select("select * from adresser where art='S'"));
+	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 	$mailtekst='Kære $navn (Konto: $kontonr)'. "\n".'Du har i peroden $start til $slut opnået et tilgodehavende på kr. $sum'."\n";
 	$mailtekst.='I perioden er der solgt i alt $antal varer fra din stand'."\n\n";
 	$mailtekst.="Beløbet vil blive overført til din konto en af de nærmeste dage\n\n";
@@ -146,7 +182,7 @@ for ($x=0;$x<$mailantal;$x++) {
 	$eksempel=str_replace("\n","<br>",$eksempel);
 	print "<tr><td>$eksempel</td></tr>";
 	print "<tr><td><hr></td></tr>";
-#	if ($x>2) break 1;
+	if ($x>2) break 1;
 }
 
 print "</tbody></table>";
