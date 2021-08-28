@@ -27,22 +27,25 @@
 // ----------------------------------------------------------------------
 //
 // 06.05.2019 LN Get data from pos_betalinger and update ordrer 
-
+	$betalt = 0;
+	$amount = array();
 	$q=db_select("select * from pos_betalinger where ordre_id = '$id' order by id",__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
 		$betalingstype[$x]=$r['betalingstype'];
-		$amount[$x]=$r['amount']*1;
+		$amount[$x]=$r['amount'];
 		$valuta[$x]=$r['valuta'];
 		$valutakurs[$x]=$r['valutakurs']*1;
 		if (!$valuta) $valuta='DKK';
 		if (!$valutakurs) $valutakurs=100;
 		if ($valuta[$x]!='DKK') $fremmedvaluta=1;
+		$betalt+=$amount[$x];
 		$x++;
 	}
 	for ($x=0;$x<count($amount);$x++) {
-		if ($x==0) db_modify("update ordrer set felt_1='$betalingstype[$x]',felt_2='$amount[$x]' where id='$id'",__FILE__ . " linje " . __LINE__);
-		elseif ($x==1) db_modify("update ordrer set felt_3='$betalingstype[$x]',felt_4='$amount[$x]' where id='$id'",__FILE__ . " linje " . __LINE__);
-		$betalt+=$amount[$x];
+		$qtxt = NULL;
+		if ($x==0) $qtxt = "update ordrer set felt_1='$betalingstype[$x]',felt_2='$amount[$x]' where id='$id'"; 
+		elseif ($x==1) $qtxt = "update ordrer set felt_3='$betalingstype[$x]',felt_4='$amount[$x]' where id='$id'";
+		if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$dkkamount[$x]=dkdecimal($amount[$x],2);
 		while(strlen($dkkamount[$x])<9) $dkkamount[$x]=" ".$dkkamount[$x];
 		$valutaamount[$x]=dkdecimal($amount[$x]*100/$valutakurs[$x],2);

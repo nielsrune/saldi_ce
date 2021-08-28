@@ -1,24 +1,21 @@
 <?php
-// ---------------includes/var2str.php---lap 3.5.0------2015-01-31----
-// LICENS
+// --- includes/var2str.php --- lap 4.0.0 --- 2021-02-15 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2004-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2012-11-21 Indsat mulighed for at undlade dato foran måned 
 // 2013-01-20 Rettet fejl i ovenstående - søg 20130120
@@ -27,12 +24,13 @@
 // 2015.01.31 Ændret samtlige elsif(substr.. til  if(substr.. da datovariabler ikke fungerede
 // 2015.08.30 Serienumre findes nu i serienummertabellen.
 // 2015.09.02 Nu kan 2. del også være en dag og ikke kun $ultimo. 20150902
+// 2021.02.15 PHR - Some cleanup
 
 if (!function_exists('var2str')) {
 	function var2str($beskrivelse,$id,$posnr,$varenr,$dkantal,$enhed,$dkpris,$dkprocent,$serienr,$varemomssats,$rabat) {
 		$id*=1;
-		if ($serienr) {
 			$ny_snr='';
+		if ($serienr) {
 			$qtxt="select serienr.serienr from serienr,ordrelinjer where ordrelinjer.ordre_id='$id' and ordrelinjer.posnr='$posnr' and (serienr.kobslinje_id=ordrelinjer.id or serienr.salgslinje_id=ordrelinjer.id) order by serienr.serienr";
 			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while($r=db_fetch_array($q)){

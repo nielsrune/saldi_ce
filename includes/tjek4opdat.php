@@ -118,6 +118,18 @@ if (!function_exists('tjek4opdat')) {
 					opdat_3_8($b,$c);
 					$b=9;$c=0;
 				}
+				if ($b==9) { #20190606
+					if (!function_exists('opdat_3_9')) include("../includes/opdat_3.9.php");
+					opdat_3_9($a,$b,$c);
+					$a=4;$b=0;$c=0;
+				}
+			}
+			if ($a==4) {
+				if ($b==0) {	
+					include("../includes/opdat_4.0.php");
+					opdat_4_0($a,$b,$c);
+					$b=1;$c=0;
+				}
 			}
 		}
 	}

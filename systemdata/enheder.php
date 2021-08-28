@@ -1,22 +1,29 @@
 <?php
-// ----------------systemdata/enheder.php---------lap 2.0.7--2009-05-15---------
-// LICENS
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// --- systemdata/enheder.php --- lap 3.9.9 --- 2021-02-11 ---
+// LICENSE
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Copyright (c) 2004-2009 DANOSOFT ApS
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
+//
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2019.02.25 MSC - Rettet topmenu design til og isset fejl
+// 2021.02.11 PHR	- Some cleanup
 
 	@session_start();
 	$s_id=session_id();
@@ -69,25 +76,24 @@
 		$enh_betegnelse=$_POST['enh_betegnelse'];
 		$enh_beskrivelse=$_POST['enh_beskrivelse'];
 
-		$enh_betegnelse[0]=trim($enh_betegnelse[0]);
-		$enh_beskrivelse[$enh_id]=trim(if_isset($enh_beskrivelse[$enh_id]));
-		$enh_beskrivelse[0]=trim($enh_beskrivelse[0]);
 		
-		if ($enh_betegnelse[0]){
-			$query = db_select("select id from enheder where betegnelse = '$enh_betegnelse[0]'");
+		if (isset($enh_betegnelse[0]) && $enh_betegnelse[0]) {
+			$query = db_select("select id from enheder where betegnelse = '$enh_betegnelse[0]'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
-			if ($row[id]){
+			if ($row['id']){
 				echo "<big><b>Der findes allerede en enhed med betegnelsen: $enh_betegnelse[0]</b></big><br><br>";
 			}
 			else{
-				db_modify("insert into enheder (betegnelse, beskrivelse) values ('$enh_betegnelse[0]', '$enh_beskrivelse[0]')");
+				$qtxt = "insert into enheder (betegnelse, beskrivelse) values ('$enh_betegnelse[0]', '$enh_beskrivelse[0]')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 		}
 		elseif ($enh_id > 0 && $enh_betegnelse[$enh_id] && $enh_betegnelse[$enh_id] != "-"){
-			db_modify("update enheder set betegnelse = '$enh_betegnelse[$enh_id]', beskrivelse = '$enh_beskrivelse[$enh_id]' where id = '$enh_id'");
+			$qtxt = "update enheder set betegnelse = '$enh_betegnelse[$enh_id]', beskrivelse = '$enh_beskrivelse[$enh_id]' where id = '$enh_id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		elseif ($enh_id > 0 && $enh_betegnelse[$enh_id] == "-"){
-			db_modify("delete from enheder where id = '$enh_id'");
+			db_modify("delete from enheder where id = '$enh_id'",__FILE__ . " linje " . __LINE__);
 		}
 	}
 
@@ -99,20 +105,24 @@
 		$mat_beskrivelse[0]=trim($mat_beskrivelse[0]);
 		$mat_beskrivelse[$mat_id]=trim(if_isset($mat_beskrivelse[$mat_id]));
  
-#		$mat_densitet[0]=+$mat_densitet[0]; Remmet 150606 - kan ikke lige gennemskue, hvorfor de har vaeret her!! ??
-#		$mat_densitet[$mat_id]=+$mat_densitet[$mat_id];
 		if (($mat_beskrivelse[0])&&($mat_densitet[0])){
 			$mat_densitet[0]=usdecimal($mat_densitet[0]);
-			$query = db_select("select id from materialer where beskrivelse = '$mat_beskrivelse[0]'");
-			$row = db_fetch_array($query);
-			if ($row[id]) echo "<big><b>Der findes allerede et materiale med beskrivelsen: '$mat_beskrivelse[0]'</b></big><br><br>";
-			else 	db_modify("insert into materialer (beskrivelse, densitet) values ('$mat_beskrivelse[0]', '$mat_densitet[0]')");
+			$q = db_select("select id from materialer where beskrivelse = '$mat_beskrivelse[0]'",__FILE__ . " linje " . __LINE__);
+			if ($r = db_fetch_array($q)) {
+			 echo "<big><b>Der findes allerede et materiale med beskrivelsen: '$mat_beskrivelse[0]'</b></big><br><br>";
+			} else {
+				$qtxt="insert into materialer (beskrivelse, densitet) values ('$mat_beskrivelse[0]', '$mat_densitet[0]')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			}
 		}
-		elseif (($mat_id > 0)&&($mat_beskrivelse[$mat_id])){
+		elseif ($mat_id > 0 && $mat_beskrivelse[$mat_id]) {
 			$mat_densitet[$mat_id]=usdecimal($mat_densitet[$mat_id]);
-			db_modify("update materialer set beskrivelse = '$mat_beskrivelse[$mat_id]', densitet = '$mat_densitet[$mat_id]' where id = '$mat_id'");
+			$qtxt = "update materialer set beskrivelse = '$mat_beskrivelse[$mat_id]', densitet = '$mat_densitet[$mat_id]' where id = '$mat_id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
-		elseif (($mat_id > 0)&&(!$mat_beskrivelse[$mat_id])) db_modify("delete from materialer where id = '$mat_id'");
+		elseif ($mat_id > 0 && !$mat_beskrivelse[$mat_id]) {
+			db_modify("delete from materialer where id = '$mat_id'",__FILE__ . " linje " . __LINE__);
+		}
 	}
 /*
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
@@ -142,7 +152,7 @@
 	while ($row = db_fetch_array($query))
 	{
 		$x++;
-		$mat_id[$x]=$row[id];
+		$mat_id[$x]=$row['id'];
 		$mat_beskrivelse[$x]=$row['beskrivelse'];
 		$mat_densitet[$x]=dkdecimal($row['densitet']);
 	}
@@ -164,7 +174,7 @@
 
 	if ($enh_ret_id)
 	{
-		$query = db_select("select * from enheder where id = $enh_ret_id");
+		$query = db_select("select * from enheder where id = $enh_ret_id",__FILE__ . " linje " . __LINE__);
 		$row = db_fetch_array($query);
 		$enh_betegnelse[$enh_ret_id]=$row['betegnelse'];
 		$enh_beskrivelse[$enh_ret_id]=$row['beskrivelse'];
@@ -181,14 +191,14 @@
 
 
 	print "<tr><td align=center valign=top class='tableHeader'> Materiale</td><td align=center valign=top class='tableHeader'> Densitet</td></tr>";
-	for ($x=1; $x<=$max_antal; $x++)
-	{
-		if ($mat_id[$x]) {print "<tr><td> $mat_beskrivelse[$x]</td><td><a href=enheder.php?mat_id=$mat_id[$x]> $mat_densitet[$x]</a></td></tr>";}
-		else {print "<tr><td><br></td></tr>";}
+	for ($x=1; $x<=$max_antal; $x++) {
+		if (isset($mat_id[$x])) {
+			print "<tr><td> $mat_beskrivelse[$x]</td><td><a href=enheder.php?mat_id=$mat_id[$x]> $mat_densitet[$x]</a></td></tr>";
+		} else print "<tr><td><br></td></tr>";
 	}
 	if ($mat_ret_id)
 	{
-		$query = db_select("select * from materialer where id = $mat_ret_id");
+		$query = db_select("select * from materialer where id = $mat_ret_id",__FILE__ . " linje " . __LINE__);
 		$row = db_fetch_array($query);
 		$mat_beskrivelse[$mat_ret_id]=$row['beskrivelse'];
 		$mat_densitet[$mat_ret_id]=dkdecimal($row['densitet']);

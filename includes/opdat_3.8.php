@@ -49,7 +49,8 @@ function opdat_3_8($under_nr, $lap_nr){
 		if ($db!=$sqdb){
 			$qtxt="UPDATE grupper set box1='$nextver' where art = 'VE'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			db_modify("CREATE TABLE returnings (id serial NOT NULL, price numeric(15,3), kasse integer, PRIMARY KEY (id))", __FILE__ . "linje" . __LINE__);
+			$qtxt="CREATE TABLE returnings (id serial NOT NULL, price numeric(15,3), kasse integer, PRIMARY KEY (id))";
+			db_modify($qtxt, __FILE__ . "linje" . __LINE__);
 			db_modify("ALTER TABLE proforma ALTER COLUMN price type numeric(15,3)", __FILE__ . "linje" . __LINE__);
 			db_modify("ALTER TABLE deleted_order  ALTER COLUMN price type numeric(15,3)", __FILE__ . "linje" . __LINE__);
 			db_modify("ALTER TABLE corrections ALTER COLUMN price type numeric(15,3)", __FILE__ . "linje" . __LINE__);
@@ -267,7 +268,26 @@ function opdat_3_8($under_nr, $lap_nr){
 		$qtxt="UPDATE regnskab set version = '$nextver' where db = '$db'";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
-
+	$nextver='3.9.0';
+	include("../includes/connect.php");
+	$r=db_fetch_array(db_select("select * from regnskab where id='1'",__FILE__ . " linje " . __LINE__));
+	$tmp=$r['version'];
+	if ($tmp<$nextver) {
+		$qtxt="UPDATE regnskab set version = '$nextver' where id = '1'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+	include("../includes/online.php");
+	if ($db!=$sqdb){
+		$qtxt="ALTER TABLE adresser ADD mysale varchar(2)";
+		db_modify($qtxt, __FILE__ . "linje" . __LINE__);
+		$qtxt="ALTER TABLE varer ADD specialtype varchar(10)";
+		db_modify($qtxt, __FILE__ . "linje" . __LINE__);
+		$qtxt="UPDATE grupper set box1='$nextver' where art = 'VE'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+	include("../includes/connect.php");
+	$qtxt="UPDATE regnskab set version = '$nextver' where db = '$db'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 }
 
 ?>

@@ -4,29 +4,27 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------includes/top100.php-------lap 2.7.4------2019-02-05---
-/// LICENS
+// ----------includes/top100.php-------lap 2.9.7------2020-11-21---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
-//
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20170201	PHR Fjernet fejltekst i bunden.
 // 20190205 PHR $sum=dkdecimal(!isset ($r['totalsum'])) ændret til $sum=if_isset ($r['totalsum']); 
+// 20201121 PHR added valutakurs 
 
 @session_start();
 $s_id=session_id();
@@ -98,9 +96,9 @@ if ($ret) {
 	print "</form>";
 } else {
 	$x=0;
-	print "<tr><td>Nr.</td><td>Kontonr.</td><td>Firmanavn</td><td align=right>Oms&aelig;tning</td><tr>\n";
+	print "<tr><td>Nr.</td><td>Kontonr.</td><td>Firmanavn</td><td align=right>Oms&aelig;tning DKK</td><tr>\n";
 	print "<tr><td colspan=4><hr></td></tr>\n";
-	$q = db_select("select konto_id, sum(sum) as totalsum from ordrer where (art='DO' or art= 'DK') and fakturadate>='$from' and fakturadate<='$to' group by konto_id order by sum(sum) desc",__FILE__ . " linje " . __LINE__);
+	$q = db_select("select konto_id, sum(sum*valutakurs/100) as totalsum from ordrer where (art='DO' or art= 'DK') and fakturadate>='$from' and fakturadate<='$to' and status >= '3' group by konto_id order by sum(sum*valutakurs/100) desc limit 100",__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		$x++;
 		if ($x<=100) {

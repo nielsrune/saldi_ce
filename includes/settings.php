@@ -40,7 +40,7 @@ if (!isset($sprog_id)) $sprog_id="1";
 
 $convert="$exec_path/convert";
 $pdf2ps="$exec_path/pdf2ps";
-if (!$timezone) $timezone='Europe/Copenhagen';
+if (!isset($timezone) || !$timezone) $timezone='Europe/Copenhagen';
 if (phpversion()>="5") date_default_timezone_set($timezone);
 
 if (!isset($header)) $header=NULL;

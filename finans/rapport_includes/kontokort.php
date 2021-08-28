@@ -4,29 +4,31 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ finans/rapport_includes/kontokort.php -------- lap 3.8.2 --- 2019-09-24 ---
-// LICENS
+// --- finans/rapport_includes/kontokort.php --- lap 4.0.0 --- 2021-03-02 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 20190924 PHR Added option 'Poster uden afd". when "afdelinger" is used. $afd='0' 
+// 20210107 PHR Corrected error in 'deferred financial year'.
+// 20210125 PHR added csv option.
+// 20210211 PHR some cleanup
+// 20210301 PHR error in csv.
+
 
 
 function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev) {
@@ -34,6 +36,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	global $afd_navn,$ansatte,$ansatte_id;
 	global $bgcolor,$bgcolor4,$bgcolor5;
 	global $connection,$csv;
+	global $db;
 	global $md,$menu;
 	global $prj_navn_fra,$prj_navn_til;
 	global $top_bund;
@@ -73,7 +76,10 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	$slutaar=$row['box4']*1;
 	$slutdato=31;
 
-	##
+	if ($aar_fra < $aar_til) { #20210107
+		if ($maaned_til > $slutmaaned ) $aar_til = $aar_fra;
+		elseif ($maaned_fra < $startmaaned ) $aar_fra = $aar_til;
+	}
 	$regnaarstart= $startaar. "-" . $startmaaned . "-" . '01';
 	
 	($startaar >= '2015')?$aut_lager='on':$aut_lager=NULL;
@@ -136,7 +142,8 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	$regnslut = $slutaar . "-" . $slutmaaned . "-" . $slutdato;
 
 #	print "  <a accesskey=L href=\"rapport.php?rapportart=Kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&dato_til=$slutdato&maaned_til=$mt&konto_fra=$konto_fra&konto_til=$konto_til&afd=$afd\">Luk</a><br><br>";
-	if ($csv) $csvfil=fopen("../temp/$db/$rapportart.csv","w");
+	$csvfile="../temp/$db/rapport.csv";
+	$csv=fopen($csvfile,"w");
 	if ($menu=='T') {
 		$leftbutton="<a class='button red small' title=\"Klik her for at komme til forsiden af rapporter\" href=\"rapport.php?rapportart=kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&aar_fra=$aar_fra&dato_til=$slutdato&maaned_til=$mt&aar_til=$aar_til&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&ansat_til=$ansat_til&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev\" accesskey=\"L\">Luk</a>";
 		$rightbutton="";
@@ -157,22 +164,22 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 		print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
 		print "<td width=\"10%\" $top_bund><a accesskey=L href=\"rapport.php?rapportart=kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&aar_fra=$aar_fra&dato_til=$slutdato&maaned_til=$mt&aar_til=$aar_til&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&ansat_til=$ansat_til&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev\">Luk</a></td>";
 		print "<td width=\"80%\" $top_bund> Rapport - kontokort </td>";
-		print "<td width=\"10%\" $top_bund><br></td>";
+		print "<td width=\"10%\" $top_bund><a href='$csvfile'>csv</a></td>";
 		print "</tbody></table>"; #B slut
 		print "</td></tr>";
 		($simulering)?$tmp="Simuleret kontokort":$tmp="Kontokort";
 		print "<tr><td colspan=\"4\"><big><big><big>  $tmp</span></big></big></big></td>";
-	if ($csv) fwrite($csvfil,"$tmp;");
+#		fwrite($csv,"$tmp;");
 	}
 	print "<td colspan=6 align=right><table style=\"text-align: left; width: 100%;\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\"><tbody><tr>";
 	print "<td colspan=0 width=20%>Regnskabs&aring;r</span></td>";
 	print "<td colspan=6>$regnaar.</span></td></tr>";
-	if ($csv) fwrite($csvfil,"Regnskabsår $regnaar\n");
+	if ($csv) fwrite($csv,";;". utf8_decode("Regnskabsår") ."$regnaar\n");
 	print "<tr><td colspan=0 width=20%>Periode</span></td>";
 	## Finder start og slut paa regnskabsaar
 	if ($startdato < 10) $startdato="0".$startdato*1;	
 	print "<td colspan=6>Fra ".$startdato.". $mf<br />Til ".$slutdato.". $mt</span></td></tr>";
-	if ($csv) fwrite($csvfil,"Fra ".$startdato.". $mf\nTil ".$slutdato.". $mt\n");
+	if ($csv) fwrite($csv,";;Fra ".$startdato.". $mf\nTil ".$slutdato.". $mt\n");
 	if ($ansat_fra) {
 		if (!$ansat_til || $ansat_fra==$ansat_til) print "<tr><td>Medarbejder</span></td><td>$ansatte</span></td></tr>";
 		else print "<tr><td>Medarbejdere</span></td><td>$ansatte</span></td></tr>";
@@ -290,14 +297,18 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	$kontosum=0;
 	$founddate=false;
 	print "<tr><td colspan=6><hr></td></tr>";
-	print "<tr><td width=\"100px\">Dato</td><td width=\"60px\">Bilag</td><td>Tekst</td><td width=\"100px\" align=\"right\">Debet</td><td width=\"100px\" align=\"right\">Kredit</td><td width=\"100px\" align=\"right\">Saldo</td></tr>";
-	
+	print "<tr><td width=\"100px\">Dato</td><td width=\"60px\">Bilag</td><td>Tekst</td><td width=\"100px\" align=\"right\">Debet</td>";
+	print "<td width=\"100px\" align=\"right\">Kredit</td><td width=\"100px\" align=\"right\">Saldo</td></tr>";
+	fwrite($csv, "\"Dato\";\"Bilag\";\"Tekst\";\"Debet\";\"Kredit\";\"Saldo\"\n");
 	for ($x=0;$x<count($kontonr);$x++){
 		$linjebg=$bgcolor5;
 		if (in_array($kontonr[$x],$ktonr)||$primo[$x]){
 			print "<tr><td colspan=6><hr></td></tr>";
+			fwrite($csv, "-----------\n");
 			print "<tr bgcolor=\"$bgcolor5\"><td></td><td></td><td colspan=4>$kontonr[$x] : $kontobeskrivelse[$x] : $kontomoms[$x]</tr>";
+			fwrite($csv, ";;$kontonr[$x] : ".utf8_decode($kontobeskrivelse[$x])." : $kontomoms[$x]\n");
 			print "<tr><td colspan=6><hr></td></tr>";
+			fwrite($csv, "-----------\n");
 			$kontosum=$primo[$x];
 			$query = db_select("select debet, kredit from transaktioner where kontonr=$kontonr[$x] and transdate>='$regnaarstart' and transdate<'$regnstart' $dim order by transdate,bilag,id",__FILE__ . " linje " . __LINE__);
 			while ($row = db_fetch_array($query)){
@@ -311,6 +322,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 			else $tmp=$kontosum;
 			#if (!$dim) #20180226 
 			print "<tr bgcolor=\"$linjebg\"><td></td><td></td><td>  Primosaldo </td><td></td><td></td><td align=right>".dkdecimal($tmp,2)."</td></tr>";
+			fwrite($csv, ";;Primosaldo;;;" .dkdecimal($tmp,2). "\n");
 			$print=1;
 			$tr=0;
 			$transdate=array();
@@ -587,8 +599,10 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 				if ($transdate[$tr] && ($debet[$tr] || $kredit[$tr])) {
 					($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 					print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." </td>";
+					fwrite($csv, dkdato($transdate[$tr]).";");
 					($kladde_id[$tr])?$js="onclick=\"window.open('kassekladde.php?kladde_id=$kladde_id[$tr]&visipop=on')\"":$js=NULL;
 					print "<td title='Kladde: $kladde_id[$tr]' $js>$bilag[$tr]</td><td>$kontonr[$x] : $beskrivelse[$tr] </td>";
+					fwrite($csv, "$bilag[$tr];$kontonr[$x] : ". utf8_decode($beskrivelse[$tr]) .";");
 					if ($kontovaluta[$x]) {
 						if ($transvaluta[$tr]=='-1') $tmp=0;
 						else $tmp=$debet[$tr]*100/$transkurs[$tr];
@@ -598,6 +612,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 						$title=NULL;
 					}
 					print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td>";
+					fwrite($csv, dkdecimal($tmp,2).";");
 					if ($kontovaluta[$x]) {
 						if ($transvaluta[$tr]=='-1') $tmp=0;
 						else $tmp=$kredit[$tr]*100/$transkurs[$tr];
@@ -607,6 +622,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 						$title=NULL;
 					}
 					print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td>";
+					fwrite($csv, dkdecimal($tmp,2).";");
 					$kontosum=$kontosum+afrund($debet[$tr],2)-afrund($kredit[$tr],2);
 					if ($kontovaluta[$x]) {
 						$tmp=$kontosum*100/$transkurs[$tr];
@@ -616,6 +632,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 						$title=NULL;
 					}
 					print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td></tr>";
+					fwrite($csv, dkdecimal($tmp,2)."\n");
 				} 
 /*
 				if (in_array($kontonr[$x],$sim_kontonr) && ($transdate[$tr]!=$transdate[$tr+1])) {
@@ -639,6 +656,7 @@ function kontokort($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato
 	}
 	print "<tr><td colspan=6><hr></td></tr>";
 	print "</tbody></table>";
+	fclose ($csv);
 } # endfunc kontokort
 #################################################################################################
 ?>

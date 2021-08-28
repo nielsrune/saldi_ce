@@ -4,31 +4,34 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------------finans/autoudlign.php------------lap 3.7.0--------2017.06.07----------
-// LICENS
+// -----------------finans/autoudlign.php------------lap 3.9.5--------2020.11.07----------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20170607 PHR genkender nu også kontonr. Søg 20170707
 // 2018.12.20 MSC - Rettet isset fejl og rettet topmenu design til
 // 2019.03.12 MSC - Rettet db argument fejl og isset fejl
 // 2019.03.13 PHR - Rettet db argument fejl 
+// 2020.07.10 PHR - Added recognition af payment ID ($betalings_id) 
+// 2020.08.20 PHR - Added recognition of outgoing payments from Cultura Sparebank, Norway 20200820
+// 2020.09.11 PHR - Added query without Payment ID if no marching order found. 20200911 
+// 2020.09.14 PHR - Added search for account if 'afr:' in text
+// 2020.11.07 PHR - Added controle for duplicates when displaying matching openposts 'distinct(openpost.id)'
+
 
 @session_start();
 $s_id=session_id();
@@ -113,16 +116,32 @@ print "<tr><td colspan=\"4\"	><hr></td></tr>";
 # -> 2009.05.04
 $min=$amount-0.005; 
 $max=$amount+0.005;
-$qtxt="select openpost.id,openpost.konto_nr,openpost.faktnr,openpost.transdate,openpost.amount,adresser.firmanavn,adresser.art";
+
+
+$qtxt = "select distinct(openpost.id),openpost.konto_nr,openpost.faktnr,openpost.transdate,openpost.amount,adresser.firmanavn,";
+$qtxt.= "adresser.art,adresser.bank_reg,adresser.bank_konto,ordrer.betalings_id";
+$qtxt.= " from openpost,adresser,ordrer ";
+$qtxt.= "where adresser.id=openpost.konto_id ";
+$qtxt.= "and openpost.amount >= '$min' and openpost.amount <= '$max' and openpost.udlignet='0' ";
+$qtxt.= "and ordrer.konto_id=openpost.konto_id and ordrer.fakturanr=openpost.faktnr ";
+$qtxt.= "order by adresser.firmanavn";
+if (!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { #20200911
+	$qtxt = "select openpost.id,openpost.konto_nr,openpost.faktnr,openpost.transdate,openpost.amount,adresser.firmanavn,adresser.art,";
+	$qtxt.= "adresser.bank_reg,adresser.bank_konto";
 $qtxt.=" from openpost,adresser ";
-$qtxt.="where adresser.id=openpost.konto_id and openpost.amount >= '$min' and openpost.amount <= '$max' and openpost.udlignet='0' ";
+	$qtxt.= "where adresser.id=openpost.konto_id ";
+	$qtxt.= "and openpost.amount >= '$min' and openpost.amount <= '$max' and openpost.udlignet='0' ";
 $qtxt.="order by adresser.firmanavn";
+}
 $q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 # <- 2009.05.04
 $x=0;
 while ($r = db_fetch_array($q)){
-	if (!in_array($r['faktnr'],$brugt)) {
-	$x++;
+	$a=$r['amount'];
+	$u=$r['udlignet']*1;
+#		echo "!$u && ($min < 0 && $a >= $min && $a <= $max || $min > 0 && $a <= $min && $a >= $max)<br>";
+#	if (!$u && ($min < 0 && $a >= $min && $a <= $max || $min > 0 && $a <= $min && $a >= $max) ){
+			if (($r['faktnr'] && !in_array($r['faktnr'],$brugt)) || !$r['faktnr']) {
 	if (!$er_afmaerket && in_array($r['faktnr'],$kontrol)) {
 		$afmaerk='checked';
 		$er_afmaerket=1;
@@ -133,14 +152,42 @@ while ($r = db_fetch_array($q)){
 			if (is_numeric(substr($beskrivelse,$z,1))) $tmp.=substr($beskrivelse,$z,1);
 			else $tmp='';
 			if ($tmp && $tmp==$r['faktnr']) $afmaerk='checked';
+					elseif ($tmp && $tmp==$r['betalings_id']) $afmaerk='checked'; #20170707
 			elseif ($tmp && $tmp==$r['konto_nr']) $afmaerk='checked'; #20170707
 		}
 	}
-#	$r2=db_fetch_array(db_select("select firmanavn,kontonr,art from adresser where id = $r[konto_id]"));
 	($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-	print "<tr bgcolor=\"$linjebg\"><td>$r[transdate]</td><td>$r[konto_nr] - $r[firmanavn]</td><td align=right>$r[faktnr]</td>
-	<td><input type=radio name=udlign value=\"$r[konto_nr]:-:$r[art]:-:$r[faktnr]\" title='' $afmaerk></td>
-</tr>";
+			print "<tr bgcolor=\"$linjebg\">";
+			print "<td>$r[transdate]</td>";
+			print "<td>$r[konto_nr] - $r[firmanavn]</td>";
+			print "<td align=right>$r[faktnr]</td>";
+			print "<td align=right>$r[betalings_id]</td>";
+			print "<td><input type=radio name=udlign value=\"$r[konto_nr]:-:$r[art]:-:$r[faktnr]\" title='' $afmaerk></td>";
+			print "</tr>";
+			$x++;
+		}
+}
+if ($x==0) { #20200820
+	$qtxt = "select * from adresser where bank_konto != '' order by firmanavn";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)){
+		$bank=trim($r['bank_reg'].$r['bank_konto']);
+		if ($bank && strpos($beskrivelse,$bank) && !$x) {
+			$x++;
+			if (!$er_afmaerket) {
+					$afmaerk='checked';
+					$er_afmaerket=1;
+			} else {
+				$afmaerk='';
+			}
+			($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
+			print "<tr bgcolor=\"$linjebg\">";
+			print "<td>$r[kontonr] - $r[firmanavn]</td>";
+			print "<td align=right>$bank</td>";
+			print "<td><input type=radio name=udlign value=\"$r[kontonr]:-:$r[art]:-:\" title='' $afmaerk></td>";
+			print "</tr>";
+			$tmp=$bank;
+		}
 }
 }
 	if ($x==0) print "<meta http-equiv=\"refresh\" content=\"0;URL=autoudlign.php?kladde_id=$kladde_id&id=$id\">";

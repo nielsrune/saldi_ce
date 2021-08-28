@@ -31,6 +31,7 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 
 $rediger=if_isset($_GET['rediger']);
+$showClosed = if_isset($_GET['showClosed']);
 $beregn=if_isset($_GET['beregn']);
 $sort=if_isset($_GET['sort']);
 $sort2=if_isset($_GET['sort2']);
@@ -43,7 +44,7 @@ if ($db != $sqdb) {
 	exit;
 }
 if (isset($_POST['submit'])) {
-	$rediger="1";
+	$rediger="on";
 	$db_antal=if_isset($_POST['db_antal']);
 	$id=if_isset($_POST['id']);
 	$gl_brugerantal=if_isset($_POST['gl_brugerantal']);
@@ -75,20 +76,29 @@ if (isset($_POST['submit'])) {
 				$gl_betalt_til[$x]!=$betalt_til[$x] ||
 				$gl_logintekst[$x]!=$logintekst[$x]
 			 ){
-			if ($saldiregnskab) $modify="update regnskab set brugerantal='$brugerantal[$x]',posteringer='$posteringer[$x]',lukket='$lukket[$x]',lukkes='$lukkes[$x]',betalt_til='$betalt_til[$x]',logintekst='$logintekst[$x]' where id = '$id[$x]'";
-			else $modify="update regnskab set	brugerantal='$brugerantal[$x]',posteringer='$posteringer[$x]',lukket='$lukket[$x]'where id = '$id[$x]'";
-			if ($id[$x]) db_modify($modify,__FILE__ . " linje " . __LINE__);
+			if ($saldiregnskab) $qtxt="update regnskab set brugerantal='$brugerantal[$x]',posteringer='$posteringer[$x]',lukket='$lukket[$x]',lukkes='$lukkes[$x]',betalt_til='$betalt_til[$x]',logintekst='$logintekst[$x]' where id = '$id[$x]'";
+			else $qtxt="update regnskab set	brugerantal='$brugerantal[$x]',posteringer='$posteringer[$x]',lukket='$lukket[$x]'where id = '$id[$x]'";
+			if ($id[$x]) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
+} else { # 2020090 can be removed  
+	$qtxt="update regnskab set lukket='' where lukket is NULL";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 }
+
 
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\" height=\"25\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 print "<td width=\"10%\" $top_bund><a href=../index/admin_menu.php accesskey=L>Luk</a></td>";
 print "<td width=\"80%\" $top_bund align=\"center\">Vis regnskaber</td>";
-if ($rediger) print "<td width=\"10%\" $top_bund align = \"right\"><a href=vis_regnskaber.php accesskey=F>Vis	</a></td>";
-else print "<td width=\"10%\" $top_bund align = \"right\"><a href=vis_regnskaber.php?rediger=yes accesskey=R>Rediger</a></td>";
+print "<td width=\"5%\" $top_bund align = \"center\">";
+if ($showClosed) print "<a href='vis_regnskaber.php?sort=$sort&rediger=$rediger'>Skjul Luk </a>";
+else print "<a href='vis_regnskaber.php?sort=$sort&rediger=$rediger&showClosed=on'>Vis Luk </a>";
+print "</td><td $top_bund align = \"center\">";
+if ($rediger) print "<a href='vis_regnskaber.php?sort=$sort&showClosed=$showClosed' > Lås</a>";
+else print "<a href='vis_regnskaber.php?sort=$sort&showClosed=$showClosed&rediger=on' accesskey=R> Ret</a>";
+print "</td>";
 print "</tbody></table>";
 print "</td></tr>";
 print "<td align = center valign = center>";
@@ -110,17 +120,19 @@ if ($sort==$sort2) {
 	$order="order by $sort,$sort2";
 	$desc='';
 }
-print "<tr><td><b><a href=vis_regnskaber.php?sort=id&sort2=$sort&desc=$desc&rediger=$rediger>id</a></b></td>
-	<td><b><a href=vis_regnskaber.php?sort=regnskab&sort2=$sort&desc=$desc&rediger=$rediger>Regnskab</a></b></td>
-	<td><a href=vis_regnskaber.php?sort=brugerantal&sort2=$sort&desc=$desc&rediger=$rediger>brugerantal</a></td>
-	<td><a href=vis_regnskaber.php?sort=posteringer&sort2=$sort&desc=$desc&rediger=$rediger>Posteringer</a></td>
-	<td><a href=vis_regnskaber.php?sort=posteret&sort2=$sort&desc=$desc&rediger=$rediger>Posteret</a></td>
-	<td><a href=vis_regnskaber.php?sort=sidst&sort2=$sort&desc=$desc&rediger=$rediger>Sidst</a></td>
-	<td><a href=vis_regnskaber.php?sort=lukket&sort2=$sort&desc=$desc&rediger=$rediger>Lukket</a></td>";
+
+print "<tr><td><b><a href=vis_regnskaber.php?sort=id&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>id</a></b></td>
+	<td><b><a href=vis_regnskaber.php?sort=regnskab&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Regnskab</a></b></td>
+	<td><a href=vis_regnskaber.php?sort=brugerantal&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>brugerantal</a></td>
+	<td><a href=vis_regnskaber.php?sort=posteringer&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Posteringer</a></td>
+	<td><a href=vis_regnskaber.php?sort=posteret&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Posteret</a></td>
+	<td><a href=vis_regnskaber.php?sort=sidst&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Sidst</a></td>";
+	
+if ($showClosed) print "<td><a href=vis_regnskaber.php?sort=lukket&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Lukket</a></td>";
 if ($saldiregnskab) {
-	print "<td><a href=vis_regnskaber.php?sort=lukkes&sort2=$sort&desc=$desc&rediger=$rediger>Lukkes</a></td>
-		<td><a href=vis_regnskaber.php?sort=betalt_til&sort2=$sort&desc=$desc&rediger=$rediger>Betalt til</a></td>
-		<td><a href=vis_regnskaber.php?sort=logintekst&sort2=$sort&desc=$desc&rediger=$rediger>Logintekst</a></td>";
+	print "<td><a href=vis_regnskaber.php?sort=lukkes&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Lukkes</a></td>
+		<td><a href=vis_regnskaber.php?sort=betalt_til&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Betalt til</a></td>
+		<td><a href=vis_regnskaber.php?sort=logintekst&sort2=$sort&desc=$desc&rediger=$rediger&showClosed=$showClosed>Logintekst</a></td>";
 }
 print "</tr>";
 
@@ -129,7 +141,10 @@ $r = db_fetch_array($q);
 list($admin,$oprette,$slette,$tmp)=explode(",",$r['rettigheder'],4);
 $adgang_til=explode(",",$tmp);
 $x=0;
-$q=db_select("select * from regnskab where db != '$sqdb' $order",__FILE__ . " linje " . __LINE__);
+$qtxt = "select * from regnskab where db != '$sqdb'";
+if (!$showClosed) $qtxt.= " and lukket != 'on'"; 
+$qtxt.= " $order";
+$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
 	if ($admin || in_array($r['id'],$adgang_til)) {
 		$x++;
@@ -151,21 +166,42 @@ while ($r=db_fetch_array($q)) {
 }
 $antal=$x;
 if ($beregn) {
+	system("psql --username=postgres -l > ../temp/dbliste.txt");
+	$dbs=file("../temp/dbliste.txt");
+	unlink("../temp/dbliste.txt");
+	$l=0;
+	for ($i=0;$i<count($dbs);$i++) {
+		if (strpos($dbs[$i],"|") && strpos($dbs[$i],"_")) {
+			list($tmp1,$tmp2)=explode("|",$dbs[$i],2);
+			if (strpos($tmp1,"_")) {
+				$dbliste[$l]=trim($tmp1);
+				$l++;
+			}
+		}
+	}
 	$y=date("Y")-1;
 	$m=date("m");
 	$d=date("d");
 	$dd=$y."-".$m."-".$d;
 	for ($x=1;$x<=$antal;$x++) {
+		if (in_array($db_navn[$x],$dbliste)) {
 		db_connect ("$sqhost", "$squser", "$sqpass", "$db_navn[$x]", __FILE__ . " linje " . __LINE__);
-#		db_connect ("host=$sqhost dbname=$db_navn user=$squser password=$sqpass");
+			$qtxt="select * from pg_tables where tablename='transaktioner'";
+			if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 		$r=db_fetch_array(db_select("select count(id) as transantal from transaktioner where logdate >= '$dd'",__FILE__ . " linje " . __LINE__));
 		$posteringer[$x]=$r['transantal']*1;
 		if ($r=db_fetch_array(db_select("select max(logdate) as logdate from transaktioner",__FILE__ . " linje " . __LINE__))) {
-#echo "Logdate ".$r['logdate']."<br>";
 			$sidst[$x]=strtotime($r['logdate']);
-		} #else 
+				} 
+				if ($r=db_fetch_array(db_select("select * from batch_salg order by id desc limit 1",__FILE__ . " linje " . __LINE__))) {
+					if ($r['modtime']) {
+						if (strtotime($r['modtime']) > $sidst[$x]) $sidst[$x]=strtotime($r['modtime']);
+					}
 	}
 	include("../includes/connect.php");
+			} else $sidst[$x]=NULL;
+		} else $sidst[$x]=NULL;
+	}
 }
 if ($rediger)	print "<form name=regnskaber action=vis_regnskaber.php method=post>";
 for ($x=1;$x<=$antal;$x++) {
@@ -183,7 +219,7 @@ for ($x=1;$x<=$antal;$x++) {
 			print "<td align=\"right\">$posteret[$x]</td>";
 			print "<td align=\"right\">".date("d-m-Y",$sidst[$x])."</td>";
 			if ($lukket[$x]) $lukket[$x]="checked";
-			print "<td align=center><input type=checkbox name=lukket[$x] $lukket[$x]></td>";
+			if ($showClosed) print "<td align=center><input type=checkbox name=lukket[$x] $lukket[$x]></td>";
 			if ($saldiregnskab) {
 				print "<td><input type=text size='8' style=\"text-align:right\" name=\"lukkes[$x]\" value=\"$lukkes[$x]\"</td>";
 				print "<td><input type=text size='8' style=\"text-align:right\" name=\"betalt_til[$x]\" value=\"$betalt_til[$x]\"</td>";

@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// // ---------------------includes/online.php----lap 3.8.9---2020-03-08---
-// LICENS
+// // ---------------------includes/online.php----lap 3.9.5---2020-09-30---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2020 saldi.dk ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2012.09.05 $ansat_navn bliver nu sat her. Søg 20120905
 // 2013.01.20 $sag_rettigheder bliver nu sat her. Søg 20130120
@@ -41,7 +38,8 @@
 // 2019.07.04 RG (Rune Grysbæk) Mysqli implementation 
 // 2019.08.21 PHR Check if account is closed ($lukket). 
 // 2020.02.25 PHR Some corrections regarding MySQLi;
-
+// 2020.09.28 PHR Added '$db_id &&' to avoid error if no db_id when calling labelprint.php from mylabel.php 20200928 
+// 2020.09.30 PHR Added  'order by logtime desc limit 1' to 'select * from online'
 
 if (isset($_COOKIE['timezone'])) { #20190110
 	$timezone=$_COOKIE['timezone'];
@@ -79,7 +77,6 @@ if (isset($_COOKIE['timezone'])) { #20190110
 		($r['var_value'])?$zip=$r['var_value']:$zip=NULL;
 	}
 }
-ini_set('display_errors',0);
 if (!isset($meta_returside)) $meta_returside=NULL;
 $db_skriv_id=NULL; #bruges til at forhindre at skrivninger til masterbasen logges i de enkelte regnskaber.
 if (!isset($modulnr))$modulnr=NULL;
@@ -90,7 +87,7 @@ $ip=substr($ip,0,10);
 $sag_rettigheder=NULL;
 #if ($title!="kreditorexport"){
 $unixtime=date("U");
-	$query = db_select("select * from online where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
+	$query = db_select("select * from online where session_id = '$s_id' order by logtime desc limit 1",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
 		$dbuser = trim($row['dbuser']);
 		$db	= trim($row['db']);
@@ -115,7 +112,8 @@ $unixtime=date("U");
 		}
 	}
 #}
-
+if (substr($db,0,7) == ' develop') ini_set('display_errors',1);
+else ini_set('display_errors',0);
 
 $labelprint=0;
 if($sqdb=='udvikling') $labelprint=1;
@@ -148,7 +146,7 @@ if ($row = db_fetch_array(db_select("select * from regnskab where db = '$db'",__
 	$lukket=$row['lukket'];
 }
 
-if ($db && $sqdb && $db!=$sqdb) {
+if ($db_id && $db && $sqdb && $db!=$sqdb) { #20200928
 	if (!isset($nextver)) { # 20150104
 			if ($version>$db_ver) { 
 			if ($db_type=='mysql') {

@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/boxCountMethods/boxCount.php ---------- lap 3.8.9----2020.02.02-------
-// LICENS
+// - debitor/pos_ordre_includes/boxCountMethods/boxCount.php - lap 3.9.5 - 2020.09.25 -
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// Copyright (c) 2004-2020 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // LN 20190215 Make function to count the box when submitting
@@ -34,7 +31,8 @@
 // 20200202	PHR	function specifyAmount. Added $db as global, kr_200 to logfile and fclose $log(); 
 // 20200202	PHR	function cashCountResult. Added $db as global, specification of $log, fopen $log, and fclose $log(); 
 // 20200202	PHR	function cashCountResult. Added $db and $kasse as globals, specification of $log, fopen $log, and fclose $log(); 
-
+// 20200925 PHR Added button [Kasse] to make it possible to open drawer.
+// 20210517 PHR Outcommented setting '$ny_kortsum' to '$kortsum' and made 'card diff' red. (whish from Havemøbelland)
 
 function setSpecifiedCashText() 
 { 
@@ -57,15 +55,16 @@ function setSpecifiedCashText()
 
 function setCashCountText() 
 {
+		echo "<!-- setCashCountText() -->";
     $country = db_fetch_array(db_select("select land from adresser where art = 'S'",__FILE__ . " linje " . __LINE__))['land'];
     if ($country == "Switzerland") {
         return ["portfolio" => "Morgen portfolio", "newPortfolio" => "Neues morgen portfolio", "dayApproach" => "Heutiger Ansatz", 
                 "expInv" => "Erwartetes inventar", "countInv" => "Gezähltes inventar", "diff" => "Unterschied", "fromBox" => "Aus der Box genommen", "currency" => "SFR", "calculate" => "Berechnen", "cancel" => "Rückgängig", "printLast" => "Zuletzt drucken",
-                "accept" => "Genehmigen"];
+                "accept" => "Genehmigen","drawer" => "Schublade"];
     } else {
         return ["portfolio" => "Morgenbeholdning", "newPortfolio" => "Ny Morgenbeholdning", "dayApproach" => "Dagens tilgang", 
                 "expInv" => "Forventet beholdning", "countInv" => "Optalt beholdning", "diff" => "Difference", "fromBox" => "Udtages fra kasse", "currency" => "DKK", "calculate" => "Beregn", "cancel" => "Fortryd", "printLast" => "Udskriv sidste",
-                "accept" => "Godkend"];
+                "accept" => "Godkend","drawer" => "Skuffe"];
     }
 }
 
@@ -128,7 +127,22 @@ function specifyAmount($omsatning, $kassediff, $optalt, $db, $kasse, $log, $ifs,
 
 
 function cashCountResult($pfnavn, $kasse, $id, $byttepenge, $ny_morgen, $tilgang, $forventet, $optalt, $kassediff, $color, $mellemkonto, $udtages) {
-	global $db;
+	echo "<!-- ". __file__ ." cashCountResult -->\n";
+	global $bruger_id,$db;
+
+	$qtxt="select box3 from grupper where art = 'POS' and kodenr='2'";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
+	$x=$kasse-1;
+	$tmp=explode(chr(9),$r['box3']);
+	$printserver=trim($tmp[$x]);
+	if (!$printserver)$printserver='localhost';
+	if ($printserver=='box' || $printserver=='saldibox') {
+		$filnavn="http://saldi.dk/kasse/".$_SERVER['REMOTE_ADDR'].".ip";
+		if ($fp=fopen($filnavn,'r')) {
+			$printserver=trim(fgets($fp));
+			fclose ($fp);
+		}
+	}
 
 	$logfil="../temp/".$db."/kasseopg".str_replace("-","",$kasse).".log";
 	$log=fopen("$logfil","a");
@@ -136,6 +150,7 @@ function cashCountResult($pfnavn, $kasse, $id, $byttepenge, $ny_morgen, $tilgang
 	$txtArray = setCashCountText();
     
 	$calc = $txtArray['calculate'];
+	$drawer = $txtArray['drawer'];
 	$cancel = $txtArray['cancel'];
 	$printLast = $txtArray['printLast'];
 	$portfolio = $txtArray['portfolio'];
@@ -148,8 +163,16 @@ function cashCountResult($pfnavn, $kasse, $id, $byttepenge, $ny_morgen, $tilgang
 	$curr = $txtArray['currency'];
     
 	print "<tr><td align=\"center\" colspan=\"3\">";
-	print "<input type=\"submit\" name=\"optael\" value=\"$calc\">&nbsp;<input type=\"submit\" name=\"optael\" value=\"$cancel\"></td></tr>\n";
-	if (file_exists("$pfnavn")) print "<tr><td align=\"center\" colspan=\"3\"><a href=pos_ordre.php?id=$id&kasse=$kasse&udskriv_kasseopg=$pfnavn><input type=\"button\" name=\"optael\" value=\"$printLast\"></a></td></tr>\n";
+	print "<span onclick='window.open(\"http://$printserver/saldiprint.php?skuffe=1\")'>";
+	print "<button type='button' style='width:100px'>$drawer</button></span>&nbsp;";
+	print "<input type='submit' style='width:100px' name='optael' value=\"$calc\">&nbsp;";
+	print "<input type='submit' style='width:100px' name='optael' value=\"$cancel\">";
+	print "</td></tr>\n";
+	if (file_exists("$pfnavn")) {
+		print "<tr><td align=\"center\" colspan=\"3\">";
+		print "<a href=pos_ordre.php?id=$id&kasse=$kasse&udskriv_kasseopg=$pfnavn>";
+		print "<input type=\"button\" name=\"optael\" value=\"$printLast\"></a></td></tr>\n";
+	}
 	print "<tr><td colspan=\"2\"><b>$portfolio</b></td><td align=\"right\"><b>".dkdecimal($byttepenge,2)."</b> $curr</td></tr>\n";
 	print "<tr><td colspan=\"2\"><b>$dayApproach</b></td><td align=\"right\"><b>".dkdecimal($tilgang,2)."</b> $curr</td></tr>\n";
 	print "<tr><td colspan=\"2\"><b>$expInv</b></td><td align=\"right\"><b>".dkdecimal($forventet,2)."</b> $curr</td></tr>\n";
@@ -188,7 +211,8 @@ function cashCountResult($pfnavn, $kasse, $id, $byttepenge, $ny_morgen, $tilgang
 }
 
 function setCreditCards($kontkonto, $kortnavn, $change_cardvalue, $kortsum, $ny_kortsum, $ifs, $kortdiff, $omsatning, $log, $id) {
-	global $db,$kasse;
+	global $db,$kasse,$reportNumber;
+	echo "<!-- ". __file__ ." setCreditCards -->\n";
 	
 	$logfil="../temp/".$db."/kasseopg".str_replace("-","",$kasse).".log";
 	$log=fopen("$logfil","a");
@@ -199,7 +223,7 @@ function setCreditCards($kontkonto, $kortnavn, $change_cardvalue, $kortsum, $ny_
 		if ($change_cardvalue) {
 			print "<tr><td colspan=\"2\"><b>$kortnavn[$x]</b>(".dkdecimal($kortsum[$x],2).")</td><td align=\"right\">"; 
 			print "<input type='text' style=\"width:100;text-align:right;font-size:$ifs;\" ";
-			if (!$ny_kortsum[$x] && $ny_kortsum[$x]!='0') $ny_kortsum[$x]=dkdecimal($kortsum[$x],2);
+			#if (!$ny_kortsum[$x] && $ny_kortsum[$x]!='0') $ny_kortsum[$x]=dkdecimal($kortsum[$x],2); #20210517
 			print "name='ny_kortsum[$x]' value='$ny_kortsum[$x]'> $curr</td>";
 		} else {
 		print "<tr><td colspan=\"2\"><b>$kortnavn[$x]</b></td><td align=\"right\">"; 
@@ -209,14 +233,16 @@ function setCreditCards($kontkonto, $kortnavn, $change_cardvalue, $kortsum, $ny_
 		fwrite($log,"$kortnavn[$x]($kortsum[$x]) $ny_kortsum[$x]\n");
 	}
 	if ($kortdiff) {
-		print "<tr><td colspan=\"2\"><b>Difference på kort</b></td><td align=\"right\"><b>".dkdecimal($kortdiff,2)."</b> $curr</td></tr>"; 
+		print "<tr><td colspan=\"2\"><span style='color:red;'><b>Difference på kort</b></span></td>"; #20210517
+		print "<td align=\"right\" ><span style='color:red;'><b>".dkdecimal($kortdiff,2)."</b> $curr</span></td></tr>"; 
 	}
 	$txt = setSpecifiedCashText()['turnover'];
 	print "<tr><td colspan=\"2\"><b>$txt</b><input type='hidden' name='card_total' value='".array_sum($kortsum)."'</td>";
 	print "<td align=\"right\"><b>".dkdecimal($omsatning,2)."</b> $curr</td></tr>\n";
 	fwrite($log,"Dagens omsætning $omsatning\n");
 	if (isset($_SESSION['boxZreport']) && $_SESSION['boxZreport'] == true) {
-		print "<td><input $disabled style=\"font-size: 20px; border-radius: 12px; position: relative; left: 80px; top: 10px;\" ";
+		print "<td><input type = 'hidden' name='reportNumber' value='$reportNumber'>";
+		print "<input $disabled style=\"font-size: 20px; border-radius: 12px; position: relative; left: 80px; top: 10px;\" ";
 		print "type=\"submit\" name=\"zRapport\" value=\"Z-Rapport\" onclick=\"javascript:return\"></td>";
 		unset($_SESSION['boxZreport']);
 	}

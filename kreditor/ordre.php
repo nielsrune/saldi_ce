@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------kreditor/ordre.php----------lap 3.7.1-----2018.03.05----
-// LICENS
+// -------------kreditor/ordre.php----------lap 3.9.4-----2020.10.21----
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2018 saldi.dk aps
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.08.14 søg 20120814
@@ -40,6 +37,10 @@
 // 2015.04.15	Omvbet på ordrelinje forsvandt ved gem # 201504015
 // 2017.05.05 Mange småforbedringer samt tilføjelse af afdeling og lager.
 // 2018.03.05 htmlentities foran beskrivelse og varenr. 20180305 
+// 2020.04.07 PHR Added labelprint. Search $labelprint
+// 2020.08.27 PHR Added protection against delete if items recieved. 20200827
+// 2020.10.02	PHR Orderline will no be created if no id.
+// 2020.10.21 changed from '=substr($fokus,4)' to '=0' as $focus is 'varenr'?;
 
 @session_start();
 $s_id=session_id();
@@ -101,9 +102,10 @@ if ($tjek=$_GET['tjek'])	{
 
 $r=db_fetch_array(db_SELECT("select box4 from grupper where art = 'DIV' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 $hurtigfakt=$r['box4'];
-
 $r=db_fetch_array(db_SELECT("select box9 from grupper where art = 'DIV' and kodenr = '3'",__FILE__ . " linje " . __LINE__));
 $negativt_lager=$r['box9'];
+$r=db_fetch_array(db_select("select box1 from grupper where art = 'LABEL'",__FILE__ . " linje " . __LINE__));
+$labelprint=$r['box1'];
 
 $id=$_GET['id'];
 $vis=$_GET['vis'];
@@ -116,7 +118,7 @@ if (($kontakt=$_GET['kontakt'])&&($id)) db_modify("update ordrer set kontakt='$k
 
 if ($_GET['vare_id']) {
 	$vare_id[0]=db_escape_string($_GET['vare_id']);
-	$linjenr=substr($fokus,4);
+	$linjenr=0; # 20201021 changed from substr($fokus,4)*1;
 	if ($id) {
 		$query = db_select("select konto_id, kontonr, status,omvbet from ordrer where id = $id",__FILE__ . " linje " . __LINE__);
 		$row = db_fetch_array($query);
@@ -169,7 +171,7 @@ if ($_GET['vare_id']) {
 		}
 	}
 
-	if ($linjenr==0) {
+	if ($linjenr=='0' && $konto_id) { # 20201002
 		if ($serienr[0]) $antal[0]=afrund($antal[0],0);
 		if ($vare_id[0]) {
 			if ($r1 = db_fetch_array(db_select("select gruppe from varer where id = '$vare_id[0]'",__FILE__ . " linje " . __LINE__))) {
@@ -286,13 +288,19 @@ if ($_GET['vare_id']) {
 			}
 		}
 
-		transaktion("begin");
 
 		 if (strstr($submit,'Slet'))	{
+			$qtxt="select id from batch_kob where ordre_id='$id' limit 1";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { #20200827
+				alert ('der ér modtaget varer på denne ordre, slet afbrudt');
+			} else {	
 				db_modify("delete from ordrelinjer where ordre_id=$id",__FILE__ . " linje " . __LINE__);
 			db_modify("delete from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=ordreliste.php\">";
 		}
+		}
+
+		transaktion("begin");
 
 		for ($x=0; $x<=$linjeantal;$x++) {
 			$y="posn".$x;
@@ -343,7 +351,7 @@ if ($_GET['vare_id']) {
 		if ($id) {
 			$query = db_select("select status from ordrer where id = $id",__FILE__ . " linje " . __LINE__);
 			if ($row = db_fetch_array($query)) {
-				if ($row[status]!=$status) {
+				if ($row['status']!=$status) {
 					print "Hmmm -a $row[status] - b $status har du brugt browserens tilbageknap?";
 					print "<meta http-equiv=\"refresh\" content=\"0;URL=ordreliste.php?id=$id\">";
 					exit;
@@ -371,7 +379,7 @@ if ($_GET['vare_id']) {
 		if (($kontonr)&&(!$firmanavn)) {
 			$query = db_select("select * from adresser where kontonr = '$kontonr' and art = 'K'",__FILE__ . " linje " . __LINE__);
 			if ($row = db_fetch_array($query)) {
-				$konto_id=$row[id];
+				$konto_id=$row['id'];
 				$firmanavn=db_escape_string($row['firmanavn']);
 				$addr1=db_escape_string($row['addr1']);
 				$addr2=db_escape_string($row['addr2']);
@@ -406,7 +414,7 @@ if ($_GET['vare_id']) {
 #					print "<meta http-equiv=\"refresh\" content=\"0;URL=ordreliste.php?id=$id\">";
 #					exit;
 #				}
-			} else print "<BODY onLoad=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
+			} elseif ($konto_id) print "<BODY onLoad=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
 		}
 		if (!$id&&!$konto_id&&!$firmanavn&&$varenr[0]) {
 
@@ -442,7 +450,7 @@ if ($_GET['vare_id']) {
 			$qtxt.=" values ";
 			$qtxt.="($ordrenr,$konto_id,'$kontonr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$land','$kontakt','$lev_navn','$lev_addr1',";
 			$qtxt.="'$lev_addr2','$lev_postnr','$lev_bynavn','$lev_kontakt','$betalingsdage','$betalingsbet','$cvrnr','$notes','$art','$ordredate',";
-			$qtxt.="'$momssats',$status,'$ref','$afd','$lager','$sum','$lev_adr','$brugernavn','$tidspkt','$valuta','$kred_ord_id','$omlev')";
+			$qtxt.="'$momssats',$status,'$brugernavn','$afd','$lager','$sum','$lev_adr','$brugernavn','$tidspkt','$valuta','$kred_ord_id','$omlev')";
 			$qtxt.="";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$q = db_select("select id from ordrer where kontonr='$kontonr' and ordredate='$ordredate' order by id desc",__FILE__ . " linje " . __LINE__);
@@ -882,11 +890,11 @@ if ($_GET['vare_id']) {
 function ordreside($id) {
 
 	global $art;
-	global $bogfor;
+	global $bogfor,$brugernavn;
 	global $fokus;
-	global $submit;
-	global $brugernavn;
+	global $labelprint;
 	global $returside;
+	global $submit;
 
 	$r=db_fetch_array(db_SELECT("select box4 from grupper where art = 'DIV' and kodenr = '3'",__FILE__ . " linje " . __LINE__));
 	$hurtigfakt=$r['box4'];
@@ -1029,7 +1037,7 @@ function ordreside($id) {
 		print "<input type=\"hidden\" name=\"lev_adr\" value=\"$lev_adr\">";
 		print "<input type=\"hidden\" name=\"valuta\" value=\"$valuta\">";
 
-		print "<table cellpadding=\"1\" cellspacing=\"5\" border=\"1\" valign = \"top\"><tbody>";
+		print "<table cellpadding='0' cellspacing='0' bordercolor='#ffffff' border='1' valign = 'top'><tbody>";
 		$ordre_id=$id;
 		print "<tr><td width=33%><table cellpadding=0 cellspacing=0 border=0 width=100%>";
 		print "<tr><td width=100><b>Kontonr</td><td width=100>$kontonr</td></tr>\n";
@@ -1061,7 +1069,8 @@ function ordreside($id) {
 		print "<tr><td>Att.:</td><td colspan=2>$lev_kontakt</td></tr>\n";
 #		print "<tr><td>$lev_adr</td></tr>\n";
 		print "</td></tr></tbody></table></td>";
-		print "</td></tr><tr><td align=center colspan=3><table cellpadding=1 cellspacing=0 border=1 width=100%><tbody>";
+		print "</td></tr><tr><td align='center' colspan='3'>";
+		print "<table cellpadding='0' cellspacing='0' bordercolor='#ffffff' border='1' width='100%'><tbody>";
 		print "<tr><td colspan=7></td></tr><tr>";
 #		print "<td align=center><b>pos</td><td align=center><b>varenr</td><td align=center><b>ant.</td><td align=center><b>enhed</td><td align=center><b>beskrivelse</td><td align=center><b>pris</td><td align=center><b>%</td><td align=center><b>ialt</td><td align=center><b>solgt</td>";
 		print "<td align=center title='Position (ordrelinjenummer)'><b>Pos.</td><td align=center><b>Varenr.</td><td align=center><b>Antal</td><td align=center><b>Enhed</td><td align=center><b>Beskrivelse</td><td align=center><b>Pris</td><td align=center title='Rabat i procent'><b>%</td><td align=center><b>I alt</td>";
@@ -1155,6 +1164,14 @@ function ordreside($id) {
 				$r=db_fetch_array(db_select("select beskrivelse from grupper where art = 'PROJ' and kodenr='$projekt[$x]'",__FILE__ . " linje " . __LINE__));
 				print "<td align=right title='$r[projekt]'>$projekt[$x]</td>";
 			}
+			if ($labelprint) {
+				if ($varenr[$x]) {
+					$txt = "<a href=\"../lager/labelprint.php?id=$vare_id[$x]&beskrivelse=".urlencode($beskrivelse[$x]);
+					$txt.= "&stregkode=".urlencode($varenr[$x])."&pris=$salgspris[$x]&enhed=$enhed[$x]\" target=\"blank\">";
+					$txt.= "<img src=\"../ikoner/print.png\" style=\"border: 0px solid;\"></a>";
+				} else $txt=NULL;
+				print "<td>$txt</td>";
+			}
 			if ($box9[$x]=='on') {
 				if ($art=='KK') $solgt[$x]=$solgt[$x]*-1;
 				if ($serienr[$x]) print "<td onClick=\"serienummer($linje_id[$x])\" align=right><u>$solgt[$x]</u></td>";
@@ -1174,7 +1191,7 @@ function ordreside($id) {
 		$sum=dkdecimal($sum,2);
 		$moms=dkdecimal($moms,2);
 		print "<tr><td colspan=8></td></tr>\n";
-		print "<tr><td colspan=8><table border=\"1\" cellspacing=\"0\" cellpadding=\"0\" width=100%><tbody>";
+		print "<tr><td colspan=8><table border='1' bordercolor='#ffffff' cellspacing='0' cellpadding='0' width='100%'><tbody>";
 		print "<tr>";
 		print "<td align=center>Ordresum</td><td align=center>$sum</td>";
 		print "<td align=center>Moms</td><td align=center>$moms</td>";
@@ -1189,10 +1206,10 @@ function ordreside($id) {
 		}
 	}
 	else { // Aabne ordrer herunder **************************************************
-		print "<table cellpadding=\"1\" cellspacing=\"5\" border=\"1\" valign = \"top\" width = 100><tbody>";
+		print "<table cellpadding='1' cellspacing='0' bordercolor='#ffffff' border='1' valign = 'top' width = '100'><tbody>";
 		$ordre_id=$row['id'];
 
-		print "<tr><td width=33%><table cellpadding=0 cellspacing=0 border=0 width=100>";
+		print "<tr><td width=33%><table cellpadding='0' cellspacing='0' border='0' width='100'>";
 		print "<tr><td witdh=200>Kontonr.</td><td colspan=2>";
 		if (trim($kontonr)) {print "<input class=\"inputbox\" readonly=readonly size=25 name=kontonr onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontonr\"></td></tr>\n";}
 		else {print "<input class=\"inputbox\" type=text size=25 name=kontonr onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontonr\" onchange=\"javascript:docChange = true;\"></td></tr>\n";}
@@ -1203,10 +1220,10 @@ function ordreside($id) {
 		print "<tr><td>Land</td><td colspan=2><input class=\"inputbox\" type=text size=25 name=land value=\"$land\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
 		print "<tr><td>Att.:</td><td colspan=2><input class=\"inputbox\" type=text size=25 name=kontakt onfocus=\"document.forms[0].fokus.value=this.name;\" value=\"$kontakt\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
 		print "</tbody></table></td>";
-		print "<td width=\"330px\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\">";
+		print "<td width='330px'><table cellpadding='0' cellspacing='0' border='0' width='100%'>";
 		if (!$id) {
-			print "<tr><td colspan=\"4\" width=\"100%\" align=\"center\" valign=\"top\"><span title=\"Klik her for at importere en elektronisk faktura af typen oioubl\"><a href=ublimport.php>Importer OIOUBL faktura</a></span></td></tr>";
-			print "<tr><td colspan=\"4\" width=\"100%\"><hr width=\"90%\"></td></tr>";
+			print "<tr><td colspan='4' width='100%' align='center' valign='top'><span title='Klik her for at importere en elektronisk faktura af typen oioubl'><a href=ublimport.php>Importer OIOUBL faktura</a></span></td></tr>";
+			print "<tr><td colspan='4' width='100%'><hr width='90%'></td></tr>";
 		}
 		print "<tr><td>CVR-nr.</td><td><input class=\"inputbox\" type=\"text\" style=\"width:110px;\" name=cvrnr value=\"$cvrnr\" onchange=\"javascript:docChange = true;\"></td>";
 		$dkmomssats=dkdecimal($momssats,2);
@@ -1493,12 +1510,27 @@ function ordreside($id) {
 					print "<td>($dk_tidl_lev[$x])</td>";
 				}
 			}
-			if (($status>0)&&($serienr[$x])){print "<td onClick=\"serienummer($linje_id[$x])\"><input type=button value=\"Serienr.\" name=\"vis_snr$x\" onchange=\"javascript:docChange = true;\"></td>";}
-			if ($antal[$x]<0 && $art!='KK' && $box9[$x]=='on') {print "<td align=center onClick=\"batch($linje_id[$x])\"><span title= 'V&aelig;lg fra k&oslash;bsordre'><img alt=\"K&oslash;bsordre\" src=../ikoner/serienr.png></td></td>";}
-
-#print "<BODY onClick=\"JavaScript:window.open('batch.php?linje_id=$linje_id', '', 'statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
-#cho "OL2 $omlev<br>";
-		if ($omlev) print "<td valign=\"top\"><input class=\"inputbox\" type=\"checkbox\" style=\"background: none repeat scroll 0 0 #e4e4ee\" name=\"omvbet[$x]\" onchange=\"javascript:docChange = true;\" $omvbet[$x]></td>\n";
+			if ($labelprint) {
+				if ($varenr[$x]) {
+					$txt = "<a href=\"../lager/labelprint.php?id=$vare_id[$x]&beskrivelse=".urlencode($beskrivelse[$x]);
+					$txt.= "&stregkode=".urlencode($varenr[$x])."&pris=$salgspris[$x]&enhed=$enhed[$x]\" target=\"blank\">";
+					$txt.= "<img src=\"../ikoner/print.png\" style=\"border: 0px solid;\"></a>";
+				} else $txt=NULL;
+				print "<td>$txt</td>";
+			}
+			if (($status>0)&&($serienr[$x])) {
+				$txt = "<input type=button value=\"Serienr.\" name=\"vis_snr$x\" onchange=\"javascript:docChange = true;\">";
+				print "<td onClick=\"serienummer($linje_id[$x])\">$txt</td>";
+			}
+			if ($antal[$x]<0 && $art!='KK' && $box9[$x]=='on') {
+				$txt = "<span title= 'V&aelig;lg fra k&oslash;bsordre'><img alt=\"K&oslash;bsordre\" src=../ikoner/serienr.png>";
+				print "<td align=center onClick=\"batch($linje_id[$x])\">$txt</td>";
+			}
+			if ($omlev) {
+				$txt = "<input class=\"inputbox\" type=\"checkbox\" style=\"background: none repeat scroll 0 0 #e4e4ee\" ";
+				$txt.= "name=\"omvbet[$x]\" onchange=\"javascript:docChange = true;\" $omvbet[$x]>";
+				print "<td valign=\"top\">$txt</td>\n";
+			}
 		print "</tr>\n";
 		}
 		print "<tr>";
@@ -1535,7 +1567,7 @@ function ordreside($id) {
 		$ialt=$sum+$moms;
 #		$sum=dkdecimal($sum,2);
 #		$moms=dkdecimal($moms,2);
-		print "<tr><td colspan=9><table border=\"1\" cellspacing=\"0\" cellpadding=\"0\" width=100%><tbody>";
+		print "<tr><td colspan='9'><table border='1' bordercolor='#ffffff' cellspacing='0' cellpadding='0' width='100%'><tbody>";
 		print "<tr>";
 		print "<td align=center>Ordresum</td><td align=center>".dkdecimal($sum,2)."</td>";
 		print "<td align=center>Moms</td><td align=center>".dkdecimal($moms,2)."</td>";
@@ -1544,11 +1576,11 @@ function ordreside($id) {
 		print "</tbody></table></td></tr>\n";
 		print "<input type=\"hidden\" name=\"fokus\">";
 		print "<tr><td align=center colspan=8>";
-		print "<table width=100% border=\"0\" cellspacing=\"0\" cellpadding=\"1\"><tbody><tr>";
-		print "<td align=center><input type=submit accesskey=\"g\" value=\"&nbsp;&nbsp;Gem&nbsp;&nbsp;\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";
-		print "<td align=center><input type=submit accesskey=\"o\" value=\"Opslag\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";
+		print "<table width='100%' border='0' cellspacing='0' cellpadding='1'><tbody><tr>";
+		print "<td align='center'><input type='submit' accesskey='g' value='&nbsp;&nbsp;Gem&nbsp;&nbsp;' name='submit' onclick='javascript:docChange = false;'></td>";
+		print "<td align='center'><input type=submit accesskey='o' value='Opslag' name='submit' onclick='javascript:docChange = false;'></td>";
 		if (($status==1)&&($bogfor==1)) {
-			if ($art=='KK') {print "<td align=center><input type=submit accesskey=\"m\" value=\"Return&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";}
+			if ($art=='KK') {print "<td align='center'><input type='submit' accesskey='m' value='Return&eacute;r' name='submit' onclick='javascript:docChange = false;'></td>";}
 			else {print "<td align=center><input type=submit accesskey=\"m\" value=\"Modtag\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";}
 		}
 		elseif ($status > 1 && $bogfor==1){print "<td align=center><input type=submit accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";}
@@ -1711,7 +1743,7 @@ function vareopslag($sort, $fokus, $id, $vis, $ref, $find,$lager) {
 			$prisliste[$listeantal]=$r['id'];
 			$listenavn[$listeantal]=$r['beskrivelse'];
 		}
-		print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"100%\" valign = \"top\"><tbody><tr>";
+		print "<table cellpadding='1' cellspacing='1' border='0' width='100%' valign='top'><tbody><tr>";
 		if ($listeantal) {
 			print "<form name=\"prisliste\" action=\"../includes/prislister.php?start=0&ordre_id=$id&fokus=$fokus\" method=\"post\">";
 			print "<td><select name=prisliste>";
@@ -1904,7 +1936,7 @@ function indset_konto($id, $konto_id) {
 		} elseif (substr($row['box1'],0,1)=='Y') { 
 			$momssats='0.00';
 		}
-	} else print "<BODY onLoad=\"javascript:alert('Kreditor ikke tilknyttet en kreditorgruppe')\">";
+	} elseif ($konto_id) print "<BODY onLoad=\"javascript:alert('Kreditor er ikke tilknyttet en kreditorgruppe')\">";
 	$momssats=$momssats*1;
 	if ((!$id)&&($firmanavn)) {
 		$ordredate=date("Y-m-d");

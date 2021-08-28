@@ -5,26 +5,23 @@ ob_start(); //Starter output buffering
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------finans/kassekladde.php------lap 3.8.0---2019.08.30------
-// LICENS
+// --- finans/kassekladde.php --- lap 3.9.9 --- 2021.02.11 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 2012.08.09 søg 20120809 V. openpostopslag viser både kreditorer og debitorer hvis de har samme kontonr - rettet 
@@ -65,6 +62,7 @@ ob_start(); //Starter output buffering
 // 2019.06.25 PHR	- +x after annex no. added twice the number wanted. 20190625
 // 2019.08.30 PHR - function 'kopier til ny'. d_type & k_type was not switched when using 'Vend fortegn'. 
 // 2019.11.24 PHR - function 'kopier til ny'. d_type & k_type was, by mistake, multiplied by 1.
+// 2021.02.11 PHR - Some cleanup
 
 @session_start();
 $s_id=session_id();
@@ -201,9 +199,11 @@ if($_GET) {
 	$find=if_isset($_GET['find']);
 	$beskrivelse[$x]=trim($beskrivelse[$x]);
 	$d_type[$x]=trim($d_type[$x]);
-	$debet[$x]=trim($debet[$x])*1;
+	$debet[$x]=trim($debet[$x]);
+	if (!is_numeric($debet[$x])) $debet[$x] = 0;
 	$k_type[$x]=trim($k_type[$x]);
-	$kredit[$x]=trim($kredit[$x])*1;
+	$kredit[$x]=trim($kredit[$x]);
+	if (!is_numeric($kredit[$x])) $kredit[$x] = 0;
 	$faktura[$x]=trim($faktura[$x]);
 	$belob[$x]=trim($belob[$x]);
 
@@ -1183,8 +1183,8 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 		if ($vis_ansat) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"meda$x\" $de_fok value =\"$ansat[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		if ($vis_projekt) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"proj$x\" $de_fok value =\"$projekt[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		if ($vis_valuta) print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px;\" name=\"valu$x\" $de_fok value =\"$valuta[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
-		if (!isset ($k_type[$y])) $k_type=NULL;
-		if (!isset ($d_type[$y])) $d_type=NULL;
+		if (!isset ($k_type[$y])) $k_type[$y]=NULL;
+		if (!isset ($d_type[$y])) $d_type[$y]=NULL;
 		if ($k_type[$y]=='K' || $d_type[$y]=='D') {
 		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=\"forf$x\" $de_fok value =\"$forfaldsdato[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";
 		print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:75px;\" name=\"b_id$x\" $de_fok value =\"$betal_id[$x]\" onchange=\"javascript:docChange = true;\"></td>\n";

@@ -46,8 +46,8 @@ if (!function_exists('udvaelg')){
 				$tmp=number_format($tmp1,3,',','').":".number_format($tmp2,3,',','');
 			}
 		}
-		list ($tmp1, $tmp2)=explode(":", $tmp);
 		if (strstr($tmp,':') && ($art!='TID' && $art!='TEXT')){
+			list ($tmp1, $tmp2)=explode(":", $tmp,2);
 			if ($art=="DATO"){
 				$tmp1=usdate($tmp1);
 				$tmp2=usdate($tmp2);

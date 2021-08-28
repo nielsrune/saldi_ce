@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------systemdata/formularkort-------- lap 3.9.0 -- 2020-03-12 --
+// -------systemdata/formularkort-------- lap 3.9.9 -- 2021-02-11 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------------
 
 // 2012.09.06 Tilføjet mulighed for at vise momssats på ordrelinjer.
@@ -42,6 +42,7 @@
 // 2019.02.25 MSC - Rettet topmenu design til
 // 2019.11.06 PHR Added $formular_netWeight & $formular_grossWeight
 // 2019.12.22 PHR Added $konto_valuta  and changed 'adresser_' to 'konto_' in 'Kontoudtog'
+// 2021.02.11 PHR Some cleanup
 
 @session_start();
 $s_id=session_id();
@@ -120,7 +121,8 @@ if (isset($_POST) && $_POST) {
 	
 	#tjekker om sprog_id er sat og hvis ikke, oprettes sprog_id
 	if ($formularsprog && $formularsprog!='Dansk') {
-		if ($r=db_fetch_array($q=db_select("select kodenr from grupper where art = 'VSPR' and box1='$formularsprog'",__FILE__ . " linje " . __LINE__))) {
+		$qtxt = "select kodenr from grupper where art = 'VSPR' and box1='$formularsprog'";
+		if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			$sprog_id=$r['kodenr'];
 		} else {
 			$r=db_fetch_array($q=db_select("select max(kodenr) as kodenr from grupper where art = 'VSPR' ",__FILE__ . " linje " . __LINE__));
@@ -135,7 +137,9 @@ if (isset($_POST) && $_POST) {
 		$query=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($row=db_fetch_array($query)){
 			db_modify("update formularer set xa=$row[xa]+$hojre, ya=$row[ya]+$op where id=$row[id]",__FILE__ . " linje " . __LINE__);
-			if ($row[yb]) db_modify("update formularer set xb=$row[xb]+$hojre, yb=$row[yb]+$op where id=$row[id]",__FILE__ . " linje " . __LINE__);
+			if ($row['yb']) {
+				db_modify("update formularer set xb=$row[xb]+$hojre, yb=$row[yb]+$op where id=$row[id]",__FILE__ . " linje " . __LINE__);
+			}
 		}
 		if ($op<0) {
 			$op=$op*-1;
@@ -154,10 +158,13 @@ if (isset($_POST) && $_POST) {
 		$tmp=strtoupper($gebyr);
 		if ($r1=db_fetch_array(db_select("select id,varenr from varer where upper(varenr) = '$tmp'",__FILE__ . " linje " . __LINE__))) { 
 			$gebyr=$r1['varenr'];
-			if ($r2=db_fetch_array(db_select("select id from formularer where beskrivelse ='GEBYR' and formular='$form_nr' and art=2 and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__))) {
+			$qtxt = "select id from formularer where beskrivelse ='GEBYR' and formular='$form_nr' and art=2 and sprog='$formularsprog'";
+			if ($r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				db_modify("update formularer set xb='$r1[id]' where id = $r2[id]",__FILE__ . " linje " . __LINE__);
 			}	else {
-					db_modify("insert into formularer (beskrivelse, formular, art, xb, sprog) values ('GEBYR', '$form_nr', '2', '$r1[id]', '$formularsprog')",__FILE__ . " linje " . __LINE__);
+				$qtxt = "insert into formularer (beskrivelse, formular, art, xb, sprog) values ";
+				$qtxt.= "('GEBYR', '$form_nr', '2', '$r1[id]', '$formularsprog')";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 		} else print "<BODY onLoad=\"javascript:alert('Varenummeret $gebyr findes ikke i varelisten')\">";
 	} elseif (($submit=='Opdater')&&($form_nr>=6)&&($form_nr<=8)&&($art_nr==2)&&(!$gebyr)) db_modify("delete from formularer where beskrivelse = 'GEBYR' and formular='$form_nr' and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__); #20140902
@@ -166,10 +173,13 @@ if (isset($_POST) && $_POST) {
 		$rentesats=usdecimal($rentesats);
 		if ($r1=db_fetch_array(db_select("select id, varenr from varer where upper(varenr) = '$tmp'",__FILE__ . " linje " . __LINE__))) { 
 			$rentevnr=$r['varenr'];
-			if ($r2=db_fetch_array(db_select("select id from formularer where beskrivelse ='GEBYR' and formular='$form_nr' and art=2 and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__))) {
+			$qtxt = "select id from formularer where beskrivelse ='GEBYR' and formular='$form_nr' and art=2 and sprog='$formularsprog'";
+			if ($r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				db_modify("update formularer set yb='$r1[id]', str='$rentesats' where id = $r2[id]",__FILE__ . " linje " . __LINE__);
 			}	else {
-					db_modify("insert into formularer (beskrivelse, formular, art, yb, str, sprog) values ('GEBYR', '$form_nr', '2', '$r1[id]', '$rentesats', '$formularsprog')",__FILE__ . " linje " . __LINE__);
+					$qtxt = "insert into formularer (beskrivelse, formular, art, yb, str, sprog) values ";
+					$qtxt.= "('GEBYR', '$form_nr', '2', '$r1[id]', '$rentesats', '$formularsprog')";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 		} else print "<BODY onLoad=\"javascript:alert('Varenummeret $gebyr findes ikke i varelisten')\">";
 	} elseif (($submit=='Opdater')&&($form_nr==6)&&($art_nr==2)&&(!$gebyr)) {
@@ -180,15 +190,22 @@ if (isset($_POST) && $_POST) {
 		transaktion('begin');
 		for ($x=0; $x<=$linjeantal; $x++) {
 			if (!isset($id[$x])) $id[$x]=0;
-			if (!isset($xa[$x])) $xa[$x]=0; if (!isset($xb[$x])) $xb[$x]=0;
-			if (!isset($ya[$x])) $ya[$x]=0; if (!isset($yb[$x])) $yb[$x]=0;
+			if (!isset($xa[$x])    || !$xa[$x])    $xa[$x]    = 0;
+			if (!isset($ya[$x])    || !$ya[$x])    $ya[$x]    = 0;
+			if (!isset($xb[$x])    || !$xb[$x])    $xb[$x]    = 0;
+			if (!isset($yb[$x])    || !$yb[$x])    $yb[$x]    = 0;
+			if (!isset($str[$x])   || !$str[$x])   $str[$x]   = 0;
+			if (!isset($color[$x]) || !$color[$x]) $color[$x] = 0;
+			if (!isset($fed[$x])   || !$fed[$x])   $fed[$x]   = NULL;
+			if (!isset($kursiv[$x])|| !$kursiv[$x])$kursiv[$x]= NULL;
 			if (!isset($beskrivelse[$x])) $beskrivelse[$x]=NULL;
-			if (!isset($fed[$x])) $fed[$x]=NULL; if (!isset($kursiv[$x])) $kursiv[$x]=NULL;
-			if (!isset($str[$x])) $str[$x]=0; if (!isset($color[$x])) $color[$x]=0;
-			if ((trim($xa[$x])=='-')&&($id[$x])&&($beskrivelse[$x]!='LOGO')) {db_modify("delete from formularer where id =$id[$x] and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__);}
-			else {
+			if ((trim($xa[$x])=='-')&&($id[$x])&&($beskrivelse[$x]!='LOGO')) {
+				db_modify("delete from formularer where id =$id[$x] and sprog='$formularsprog'",__FILE__ . " linje " . __LINE__);
+			} else {
 				if ($beskrivelse[$x]=='LOGO' && !$id[$x] && $xa[$x] && $ya[$x]) {
-					db_modify("insert into formularer (beskrivelse,formular,art,xa,ya,sprog) values ('$beskrivelse[$x]',$form_nr,$art_nr,$xa[$x],$ya[$x],'$formularsprog')",__FILE__ . " linje " . __LINE__);
+					$qtxt = "insert into formularer (beskrivelse,formular,art,xa,ya,sprog) values ";
+					$qtxt.= "('$beskrivelse[$x]',$form_nr,$art_nr,$xa[$x],$ya[$x],'$formularsprog')";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 				if ($art==5 && $xa[$x]==2) {
 					$beskrivelse[$x]=str_replace("\n","<br>",$beskrivelse[$x]); 
@@ -197,6 +214,7 @@ if (isset($_POST) && $_POST) {
 				if (isset($ny_beskrivelse[$x]) && $ny_beskrivelse[$x]) {
 					$beskrivelse[$x]=trim($beskrivelse[$x]." $".$ny_beskrivelse[$x].";");
 				}
+
 				$xa[$x]=str_replace(",",".",$xa[$x])*1; $ya[$x]=str_replace(",",".",$ya[$x])*1; 
 				$xb[$x]=str_replace(",",".",$xb[$x])*1; $yb[$x]=str_replace(",",".",$yb[$x])*1; 
 				$str[$x]=$str[$x]*1; $color[$x]=$color[$x]*1;
@@ -204,8 +222,13 @@ if (isset($_POST) && $_POST) {
 					if ($xa[$x]>0) {
 						if (($art!='1') && ($str[$x]<=1)) $str[$x]=10;
 						if (!$justering[$x]) $justering[$x]='V';
-						db_modify("insert into formularer (beskrivelse, formular, art, xa, ya, xb, yb, str, color, font, fed, kursiv, side, justering, sprog) values ('$beskrivelse[$x]', $form_nr, $art_nr, $xa[$x], $ya[$x], $xb[$x], $yb[$x], $str[$x], $color[$x], '$form_font[$x]', '$fed[$x]', '$kursiv[$x]', '$side[$x]', '$justering[$x]', '$formularsprog')",__FILE__ . " linje " . __LINE__);
-					} elseif (substr($ny_beskrivelse[$x],0,10)=="kopier_alt") {
+						$qtxt = "insert into formularer ";
+						$qtxt.= "(beskrivelse, formular, art, xa, ya, xb, yb, str, color, font, fed, kursiv, side, justering, sprog) ";
+						$qtxt.= "values ";
+						$qtxt.= "('$beskrivelse[$x]', $form_nr, $art_nr, $xa[$x], $ya[$x], $xb[$x], $yb[$x], $str[$x], $color[$x], ";
+						$qtxt.= "'$form_font[$x]', '$fed[$x]', '$kursiv[$x]', '$side[$x]', '$justering[$x]', '$formularsprog')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					} elseif (isset($ny_beskrivelse[$x]) && substr($ny_beskrivelse[$x],0,10)=="kopier_alt") {
 						list($a,$b)=explode('|',$ny_beskrivelse[$x]);
 						kopier_alt($form_nr,$art_nr,$formularsprog,$b);
 					}
@@ -225,11 +248,12 @@ if (isset($_POST) && $_POST) {
 					}	
 					if (!isset($justering[$x])) $justering[$x]='V';
 					if (!isset($form_font[$x])) $form_font[$x]='';
+					if (!isset($side[$x]))      $side[$x]='0';
 					$beskrivelse[$x] = str_replace('$formular_bruttovægt','$formular_grossWeight',$beskrivelse[$x]);
 					$beskrivelse[$x] = str_replace('$formular_nettovægt','$formular_netWeight',$beskrivelse[$x]);
-					$qtxt = "update formularer set beskrivelse='$beskrivelse[$x]',xa=$xa[$x],ya=$ya[$x],xb=$xb[$x],yb=$yb[$x],str=$str[$x],";
-					$qtxt.= "color=$color[$x],font='$form_font[$x]',fed='$fed[$x]',kursiv='$kursiv[$x]',side='$side[$x]',justering='$justering[$x]'";
-					$qtxt.= " where id = $id[$x]";
+					$qtxt = "update formularer set beskrivelse='$beskrivelse[$x]',xa=$xa[$x],ya=$ya[$x],xb=$xb[$x],yb=$yb[$x],";
+					$qtxt.= "str=$str[$x],color=$color[$x],font='$form_font[$x]',fed='$fed[$x]',kursiv='$kursiv[$x]',";
+					$qtxt.= "side='$side[$x]',justering='$justering[$x]' where id = $id[$x]";
 					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 			} 
@@ -306,11 +330,11 @@ print "<option value=\"5:Mail tekst\">Mail tekst</option>\n";
 print "</SELECT></td>\n";
 print "<td>&nbsp;Sprog</td>\n";
 print "<td><SELECT class=\"inputbox\" NAME=\"sprog\">\n";
-if (!trim($formularsprog)) $formularsprog="Dansk";
-print "<option value=\"".stripslashes($formularsprog)."\">".stripslashes($formularsprog)."</option>\n";
+if (!isset($formularsprog) || !$formularsprog) $formularsprog="Dansk";
+print "<option value=\"". $formularsprog ."\">". $formularsprog ."</option>\n";
 $q=db_select("select distinct sprog from formularer order by sprog",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
-	if ($formularsprog!=$r['sprog']) print "<option value=\"".stripslashes($r['sprog'])."\">".stripslashes($r['sprog'])."</option>\n";
+	if ($formularsprog!=$r['sprog']) print "<option value=\"". $r['sprog'] ."\">". $r['sprog'] ."</option>\n";
 }
 	print "</SELECT></td>\n";
 print "<td><input class='button gray medium' type=\"submit\" accesskey=\"v\" value=\"V&aelig;lg\" name=\"formularvalg\"></td></tr>\n";
@@ -721,6 +745,8 @@ $x=0;
 		if ($form_nr==9) {
 			print "<option>leveres</option>\n";
 			print "<option>lokation</option>\n";
+			print "<option>lev_antal</option>\n";
+			print "<option>lev_rest</option>\n";
 			print "<option>Fri tekst</option>\n";
 		} 
 	} elseif ($form_nr==11) {

@@ -60,13 +60,14 @@ else {
 }
 if (isset($_POST['dato']) && $_POST['dato']) {
 	$dato=$_POST['dato'];
-	$varegruppe=trim($_POST['varegruppe']);
-	$lagervalg=trim($_POST['lagervalg']);
+	$varegruppe = $_POST['varegruppe'];
+	$lagervalg  = $_POST['lagervalg'];
+	$zStock     = $_POST['zStock'];
 	setcookie("saldi_lagerstatus", $varegruppe);
 } elseif (isset($_GET['dato']) && $_GET['dato']) {
 	$dato=$_GET['dato'];
-	$varegruppe=trim($_GET['varegruppe']);
-	$lagervalg=trim($_GET['lagervalg']);
+	$varegruppe = $_GET['varegruppe'];
+	$lagervalg  = $_GET['lagervalg'];
 	# setcookie("saldi_lagerstatus", $varegruppe);
 } elseif (!$varegruppe)  {
 	$dato=date("d-m-Y");
@@ -110,14 +111,25 @@ if ($a) {
 		$qtxt="select varer.id,varer.varenr,varer.enhed,varer.beskrivelse,varer.salgspris,varer.kostpris,varer.varianter,varer.gruppe,";
 		$qtxt.="lagerstatus.beholdning ";
 		$qtxt.="from varer,lagerstatus where varer.gruppe='$a' and lagerstatus.vare_id=varer.id and lagerstatus.lager='$lagervalg' ";
+		if (!$zStock) $qtxt.= "and lagerstatus.beholdning != '0' ";
 		$qtxt.="order by varer.varenr";
-	} else $qtxt = "select * from varer where gruppe='$a' order by varenr";
+	} else {
+	   $qtxt = "select * from varer where gruppe='$a' ";
+	   if (!$zStock) $qtxt.= "and beholdning != '0' ";
+	    $qtxt.= "order by varenr";
+	}
 } else {
 	if ($lagervalg) {
 		$qtxt="select varer.id,varer.varenr,varer.enhed,varer.beskrivelse,varer.salgspris,varer.kostpris,varer.varianter,varer.gruppe,";
 		$qtxt.="lagerstatus.beholdning ";
-		$qtxt.="from varer,lagerstatus where lagerstatus.vare_id=varer.id and lagerstatus.lager='$lagervalg' order by varer.varenr";
-	} else $qtxt = "select * from varer order by varenr";
+		$qtxt.= "from varer,lagerstatus where lagerstatus.vare_id=varer.id and lagerstatus.lager='$lagervalg' ";
+		if (!$zStock) $qtxt.= "and lagerstatus.beholdning != '0' ";
+		$qtxt.= " order by varer.varenr";
+	} else {
+	    $qtxt = "select * from varer ";
+	    if (!$zStock) $qtxt.= "where beholdning != '0' ";
+	    $qtxt.= "order by varenr";
+	}
 }
 $q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r2=db_fetch_array($q2)){
@@ -157,12 +169,14 @@ if (count($lager)) {
 print " Varegruppe: <select class=\"inputbox\" name=\"varegruppe\">";
 if ($varegruppe) print "<option>$varegruppe</option>";
 if ($varegruppe!="0:Alle") print "<option>0:Alle</option>";
-$query = db_select("select * from grupper where art = 'VG' order by kodenr",__FILE__ . " linje " . __LINE__);
-while ($row = db_fetch_array($query)){
+$q = db_select("select * from grupper where art = 'VG' order by kodenr",__FILE__ . " linje " . __LINE__);
+while ($row = db_fetch_array($q)){
 	if ($varegruppe!=$row['kodenr'].":".$row['beskrivelse']) {print "<option>$row[kodenr]:$row[beskrivelse]</option>";}
 }
 print "</select>";
-print "Dato:<input class=\"inputbox\" type=\"text\" name=\"dato\" value=\"$dato\" size=\"10\"></td>";
+print "Dato:<input class=\"inputbox\" type=\"text\" name=\"dato\" value=\"$dato\" size=\"10\">";
+($zStock)?$zStock="checked='checked'":$zStock=NULL;
+print " <span title='Medtag varer, hvor beholdningen er 0'>0 lager:<input type=\"checkbox\" name=\"zStock\" $zStock></span></td>";
 print "<td  colspan=6 align=right><input type=submit value=OK></form></td></tr>";
 print "<tr><td colspan=9><hr></td></tr>";
 print "<tr><td width=8%>Varenr.</td><td width=5%>Enhed</td><td width=48%>Beskrivelse</td>
@@ -186,11 +200,11 @@ for($x=1; $x<=$vareantal; $x++) {
 	$qtxt="select sum(antal) as antal from batch_kob where vare_id=$vare_id[$x]";
 	if ($lagervalg) $qtxt.=" and lager='$lagervalg'";
 	if ($date!=$dd) $qtxt.=" and kobsdate <= '$date'";
-#if ($vare_id[$x]==454) #cho "$qtxt<br>";		
+if ($vare_id[$x]==434) echo "$qtxt<br>";		
 	$r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 #if ($vare_id[$x]==454) 	#cho $r1['antal']."<br>";
 	$batch_k_antal[$x]=$r1['antal'];
-#if ($vare_id[$x]==454) #cho "Bk $batch_k_antal[$x]<br>";		
+if ($vare_id[$x]==434) echo "Bk $batch_k_antal[$x]<br>";		
 	$batch_t_antal[$x]=$r1['antal'];
 	$qtxt="select sum(antal) as antal from batch_salg where vare_id=$vare_id[$x]";
 	if ($lagervalg) $qtxt.=" and lager='$lagervalg'";
@@ -199,7 +213,7 @@ for($x=1; $x<=$vareantal; $x++) {
 	$batch_s_antal[$x]=$r1['antal'];
 #if ($vare_id[$x]==454) #cho "Bs $batch_s_antal[$x]<br>";		
 	$batch_t_antal[$x]-=$r1['antal'];
-#if ($vare_id[$x]==454) #cho "Bk $batch_k_antal[$x] Bs $batch_s_antal[$x] Bt $batch_t_antal[$x]<br>";		
+if ($vare_id[$x]==434) echo "Bk $batch_k_antal[$x] Bs $batch_s_antal[$x] Bt $batch_t_antal[$x]<br>";		
 /*
 	if ($vare_id[$x]==454) #cho "Bt $batch_t_antal[$x]<br>";		
 	$qtxt="select * from batch_kob where vare_id=$vare_id[$x]"; #20140128

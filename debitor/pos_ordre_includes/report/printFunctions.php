@@ -66,8 +66,7 @@ function printHeadline($fp, $firmanavn, $cvrnr, $orgNr, $date, $uniqueShopId, $t
     fwrite($fp,"$boxNr \n");
 }
 
-function printProductDescription($fp, $groupArray)
-{
+function printProductDescription($fp, $groupArray) {
     $fiveSpace = fiveSpace();
     fwrite($fp, "Varegruppe beskrivelse $fiveSpace Antal $fiveSpace Totalt \n");
     $temp = 1;

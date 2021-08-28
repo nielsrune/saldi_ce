@@ -6,26 +6,23 @@ $s_id=session_id();
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------------kreditor/bogfor.php-------lap 3.5.6----2017-04-04--
-// LICENS
+// -------------------kreditor/bogfor.php-------lap 3.9.2----2020-06-21--
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2020 Saldi.dk ApS
 // -------------------------------------------------------------------------
 //
 // 2013.11.08 Fejl v. fifo og varetilgang på varekøb.Søg #20131108
@@ -36,6 +33,7 @@ $s_id=session_id();
 // 2015.04.22 Hvis samme vare købes til forskellige priser blev kostpris sat til sidste pris. Ændret så den nu sættes til snitprisen. Søg snitpris.
 // 2017.04.04	PHR - Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170404
 // 2017.10.26	PHR Udkommenteret 4 linjer da lagerførte varer fra udland blev bogført på varekøb DK
+// 2020.06.21 PHR adresser.invoiced is updated when order is invoiced.  
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -332,8 +330,11 @@ echo "update vare_lev set kostpris='$dkpris[$x]' where vare_id='$vare_id[$x]' an
 		$row = db_fetch_array($query = db_select("select box2 from grupper where art = 'RB'",__FILE__ . " linje " . __LINE__));
 		if ($modtagelse==1) $modtagelse = $row['box2']*1;
 		if ($modtagelse<1) $modtagelse=1;
-		
-		db_modify("update ordrer set status=3, fakturadate='$levdate', modtagelse = '$modtagelse', valuta = '$valuta', valutakurs = '$valutakurs' where id=$id",__FILE__ . " linje " . __LINE__);
+		$qtxt = "update ordrer set status=3, fakturadate='$levdate', modtagelse = '$modtagelse', ";
+		$qtxt.= "valuta = '$valuta', valutakurs = '$valutakurs' where id=$id";	
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$qtxt = "update adresser set invoiced='$levdate' where id=$konto_id";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$r = db_fetch_array(db_select("select box5 from grupper where art='DIV' and kodenr='3'",__FILE__ . " linje " . __LINE__));
 	if (strstr($r['box5'],';')) list($tmp,$straksbogfor)=explode(';',$r['box5']); # 20170404
 		else $straksbogfor=$r['box5'];

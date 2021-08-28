@@ -4,29 +4,27 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/findBoxSale/findBoxSaleFunc.php ---------- lap 3.7.7----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/exitFunc/exit.php --- lap 3.9.9 --- 2021.01.25---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // LN 20190510 Move function find_bon here
+// 20210125 PHR Varouis changes related to voucer.
 
 
 function afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn) {
@@ -37,13 +35,32 @@ print "\n<!-- Function afslut (start)-->\n";
 	global $db;
 	global $indbetaling; #20160902
 	global $kasse;
+	global $momssats;
 	global $pobelob;
 	global $regnaar,$retur;
+	global $tracelog;
 
 	list($modtaget,$valmodt,$betvaluta,$betvalkurs)=explode(chr(9),posvaluta($modtaget));
 
-// Indsat til Claus ---->
+	if ($id && $betaling) {
+		include('../debitor/pos_ordre_includes/voucherFunc/voucherPay.php');
+#cho __FILE__ ." ".__LINE__."<br>";
+		voucherPay($id, $betaling, $modtaget);
+	if (!isset($_COOKIE['giftcard']) || $_COOKIE['giftcard'] == true) {
+#cho __line__." Giftcard true<br>";		
+		$sum = betaling($id, $momssats, $betaling, $betaling2, $modtaget, $modtaget2, $kasse);
+#cho __line__." Sum $sum<br>";		
+	} else {
+#cho __line__." Giftcard not true<br>";		
+		setcookie('giftcard', '', time()-3600);
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
+		exit(0);
+	}
+	}
 	
+#cho __LINE__."<br>";	
+// Indsat til Claus ---->
+/*	
 	$qtxt="select box5 from grupper where art = 'POS' and kodenr='1'";
 	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$korttyper=explode(chr(9),$r['box5']);
@@ -54,9 +71,9 @@ print "\n<!-- Function afslut (start)-->\n";
 		if ($korttyper[$x] == $betaling && $gavekort[$x]) {
 		}
 	}
-	
+*/	
 // <----	sualC lit tasnI 
-	
+#cho __LINE__."<br>";	
 	$r = db_fetch_array(db_select("select sum,moms,konto_id from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__));
 	$sum=$r['sum'];
 	$moms=$r['moms'];
@@ -70,6 +87,7 @@ print "\n<!-- Function afslut (start)-->\n";
 	$a=pos_afrund($sum+$moms,'','');
 	$b=pos_afrund($tmp,'','');
 	$diff=afrund($a-$b,2);
+#cho __FILE__." ".__LINE__."<br>";	
 	if (!$indbetaling && $diff > 0) { #20160902
 		delbetal($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn,$betvaluta,$betvalkurs);
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id&betaling=ukendt\">\n";
@@ -82,7 +100,7 @@ print "\n<!-- Function afslut (start)-->\n";
 	}
 	$tmp=array();
 	$betalingskort=array();
-	
+#cho __FILE__." ".__LINE__." $godkendt | $kortnavn<br>";	
 	if ($godkendt!='OK') { #20131205
 		$r = db_fetch_array(db_select("select box3,box4,box5,box6 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
 		$x=$kasse-1;
@@ -146,7 +164,9 @@ print "\n<!-- Function afslut (start)-->\n";
 			}
 		}
 	} elseif ($kortnavn) { #20140129
-		$r = db_fetch_array(db_select("select box3,box4,box5,box6 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
+		$qtxt = "select box3,box4,box5,box6 from grupper where art = 'POS' and kodenr='2'";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
+		
 		$x=$kasse-1;
 		$tmp=explode(chr(9),$r['box3']);
 		$printserver=trim($tmp[$x]);
@@ -178,8 +198,7 @@ print "\n<!-- Function afslut (start)-->\n";
 	if (!$projekt) {
 		$qtxt="select box9 from grupper where art='POSBUT' and (box7 > box8) and ((box7>'$tid' and box8>'$tid') or (box7<'$tid' and box8<'$tid'))";
 		if ($afd) $qtxt.=" and (box12='$afd' or box12='') order by box12 desc limit 1";
-		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-		$projekt=$r['box9'];
+		($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$projekt=$r['box9']:$projekt='';
 	}
 	$hurtigfakt='on';
 	$moms=0;
@@ -190,12 +209,21 @@ print "\n<!-- Function afslut (start)-->\n";
 	$konto_id=$r['konto_id'];
 	$betalingsbet=$r['betalingsbet'];
 
-    include("status.php"); #20190510
+	#cho	 __FILE__." ".__LINE__." settlePOS<br>";	
+#xit;
+
+	include("settlePOS.php"); #20190510
 	
 	if ($svar=='OK') { #20150213
 		transaktion("commit");
+		$qtxt = "select id from grupper where art = 'POS' and kodenr = '1' and box10 = 'on'";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			if ($tracelog) fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
+			pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling);
+		}
 	}
 	if (db_fetch_array(db_select("select id from grupper where art = 'POS' and kodenr = '1' and box10='on'",__FILE__ . " linje " . __LINE__))) {
+		if ($tracelog) fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
 		pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling);
 	 } elseif (!$konto_id)  {#20160211
 		$url="://".$_SERVER['SERVER_NAME'].=$_SERVER['PHP_SELF'];
@@ -213,7 +241,6 @@ print "\n<!-- Function afslut (start)-->\n";
 			} 
 		}
 		if ($printserver=='box' || !$printserver) $printserver=$_COOKIE['saldi_printserver'];
-$bon.=gavekortbon(); 	# 20181029
 
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/saldiprint.php?&url=$url&bruger_id=$bruger_id&bon=&bonantal=1&id=$id&skuffe=1&returside=$returside&logo=\">\n";
 		exit;

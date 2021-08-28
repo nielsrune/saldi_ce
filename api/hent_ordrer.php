@@ -1,15 +1,20 @@
 <?php
-// ------------- api/hent_ordrer.php ---------- lap 3.5.6----2015.06.08-------
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// ------------- api/hent_ordrer.php ---------- lap 3.7.0----2017.11.16-------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
 // modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// dog under iagttagelse af følgende:
+// som er udgivet af "The Free Software Foundation", enten i version 2
+// af denne licens eller en senere version, efter eget valg.
+// Fra og med version 3.2.2 dog under iagttagelse af følgende:
 // 
 // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
 //
 // Dette program er udgivet med haab om at det vil vaere til gavn,
 // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
@@ -18,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2017 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 @session_start();
@@ -60,8 +65,11 @@ $hvem='internet';
 $dg=52;
 $art='DO';
 $gruppe=1;
-
+$fp=fopen("../temp/$db/shop.log","a");
+fwrite($fp,$prefix."->".$nye_ordrer."\n");
 $ordreliste=explode(',',$nye_ordrer);
+for ($x=0;$x<count($ordreliste);$x++) fwrite($fp,$prefix."/".$ordreliste[$x]."\n");
+fclose($fp);
 $lockfil="../api/$db.lock";
 $x=0;
 if (file_exists($lockfil)) {
@@ -83,15 +91,20 @@ $fp=fopen($lockfil,"w");
 fwrite($fp,date("U"));
 fclose($fp);
 	for ($x=0;$x<count($ordreliste);$x++) {
-	transaktion('begin');
+#	transaktion('begin');
+	$fp=fopen("../temp/$db/shop.log","a");
 	$ordre_id[$x]=overfoer_data($shopurl,$ordreliste[$x]);
 	if ($shop_fakt && $ordre_id[$x]) {
+	fwrite($fp2,"overfører $ordre_id[$x]\n");
+	fclose($fp);
+	transaktion('begin');
 		fakturer_ordre($ordre_id[$x]);
+	transaktion('commit');
 	}
 	if ($ordre_id[$x]) {
 		#echo "OID ".$ordre_id[$x]."<br>";
 	}
-	transaktion('commit');
+#	transaktion('commit');
 	$q=db_select("select * from ordrelinjer where varenr='Levering' and pris ='0.000' and ordre_id='$ordre_id[$x]'",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		if (substr($r['beskrivelse'],0,3)=='FRI') {
@@ -104,14 +117,14 @@ fclose($fp);
 #	break 1;
 }
 unlink($lockfil);
-unlink($filnavn);
+#unlink($filnavn);
 $alerttxt=count($ordreliste)." ordrer importeret fra shop";
 if ($shopurl && $opdat_status=='1') {
 #cho "opdaterer";
 #	print "<meta http-equiv=\"refresh\" content=\"0;URL=$shopurl&prefix=$prefix&ordreliste=$nye_ordrer&status=2\">";
 }
-print "<body onload=\"window.close();\">";
-// #xit;
+print "<body onload=\"javascript:window.close();\">";
+exit;
 
 function overfoer_data($shopurl,$shop_ordre_id){
 	global $afd;
@@ -128,27 +141,33 @@ function overfoer_data($shopurl,$shop_ordre_id){
 	global $ref;
 
 	$filnavn=trim($shopurl)."/".$prefix."_".trim($shop_ordre_id);
-#cho "$filnavn<br>";
-	$betalingsbet='Netto';
-	$betalingsdage=8;
+#cho __line__." $filnavn<br>";
+	$betalingsbet='Kontant';
+	$betalingsdage=0;
 	if (!$fp=fopen($filnavn,'r')) {
 		system("cd ../temp/$db\nwget --no-check-certificate $filnavn");
 		$tmparray=explode("/",$filnavn);
 		$tmp=$tmparray[count($tmparray)-1];
 		$filnavn="../temp/$db/$tmp";
-	$fp=fopen($filnavn,'r');
-echo "F $filnavn<br>";
-exit;
+		if ($fp=fopen($filnavn,'r')) {
+			$fp2=fopen("../temp/$db/shop.log","a");
+			fwrite($fp2,"Kan ikke åbne $filnavn\n"); 
+			fclose($fp2);
+			print "<body onload=\"javascript:alert('Kan ikke hente ordre $filnavn fra shop');\">";
 	}
+	}
+	$fp2=fopen("../temp/$db/shop.log","a");
+	fwrite($fp2,$prefix."_".trim($shop_ordre_id)."\n"); 
 	$x=0;
 	$y=0;
 	$ordresum=0;
 	while($linje=fgets($fp)) {
-#cho $linje."<br>";		
+#cho __line__." $linje<br>";
+		fwrite($fp2,$linje."\n"); 
 		if ($encoding!='UTF-8') $linje=utf8_encode($linje);
 		$linje=db_escape_string($linje);
 		if ($x==0) {
-			list($date,$ordre_fornavn,$ordre_efternavn,$ordre_email,$ordresum,$forsendelse,$vaegt,$valuta,$betaling)=explode(chr(9),$linje);
+			list($date,$ordre_fornavn,$ordre_efternavn,$ordre_email,$ordresum,$forsendelse,$vaegt,$valuta,$betaling,$korttype)=explode(chr(9),$linje);
 		} elseif ($x==1) {
 			list($shop_konto_id,$firmanavn,$fornavn,$efternavn,$adresse,$postnr,$bynavn,$land,$tlf,$cvrnr,$email)=explode(chr(9),$linje);
 			} elseif ($x==2) {
@@ -159,7 +178,9 @@ exit;
 		}
 		$x++;
 	}
+#cho __line__."<br>";	
 	fclose($fp);
+	fclose($fp2);
 	$shop_konto_id*=1;
 	$firmanavn=trim($firmanavn);
 	$fornavn=trim($fornavn);
@@ -179,29 +200,44 @@ exit;
 	$num_tlf=str_replace("+","",$tlf)*1;
 	$valuta='DKK';
 	$valutakurs='100';
-#cho "$shop_konto_id -> $firmanavn -> $fornavn -> $efternavn -> $adresse -> $postnr -> $bynavn -> $land -> ";
+	$lev_firmanavn=trim($lev_firmanavn);
+	$lev_fornavn=trim($lev_fornavn);
+	$lev_efternavn=trim($lev_efternavn);
+	$lev_adresse=trim($lev_adresse);
+	$lev_postnr=trim($lev_postnr);
+	$lev_bynavn=trim($lev_bynavn);
+	$lev_land=trim($lev_land);
+	$lev_tlf=trim($lev_tlf);
+	$lev_cvrnr=trim($lev_cvrnr);
+	$lev_email=trim($lev_email);
+	if (!$lev_firmanavn) $lev_firmanavn=$fornavn." ".$efternavn;
+	if ($lev_postnr && !$lev_bynavn) $lev_bynavn=bynavn($lev_postnr);
+	$lev_tlf=str_replace(" ","",$lev_tlf);
+#echo "$shop_konto_id -> $firmanavn -> $fornavn -> $efternavn -> $adresse -> $postnr -> $bynavn -> $land -> $korttype<br>";
 #cho "$tlf -> $cvrnr -> $email -> $fornavn -> $efternavn -> $ordre_email -> $firmanavn<br>";
-#xit;
 	if ($tlf || $email) {
 		$fortsaet='OK';
 	} else {
 		return(0);
 		exit;
 	} 
-	if ($r=db_fetch_array(db_select("select saldi_id from shop_ordrer where shop_id='$shop_ordre_id'",__FILE__ . " linje " . __LINE__))) {
+	$qtxt="select saldi_id from shop_ordrer where shop_id='$shop_ordre_id'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+		#print "<body onload=\"javascript:alert('Shop ordre $shop_ordre_id refererer til ordre ID $r[saldi_id]');window.close();\">";
 		return(0);
 		exit;
 	}
-	
+#cho __line__."<br>";	
 	$r=db_fetch_array (db_select("select saldi_id from shop_adresser where shop_id='$shop_konto_id'",__FILE__ . " linje " . __LINE__));
 	$saldi_id=$r['saldi_id'];
 	$qtxt="select id from shop_ordrer where shop_id='$shop_ordre_id'";
+#cho __line__." $qtxt<br>";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	if ($r['id']) {
+		
 		return;
 		exit;
 	}
-	#transaktion("begin");
 		if (!$saldi_id) {
 		if ($tlf || $num_tlf) {
 			$qtxt="select id,kontonr from adresser where art = 'D' and ";
@@ -257,16 +293,45 @@ exit;
 		if ($r=db_fetch_array(db_modify($qtxt,__FILE__ . " linje " . __LINE__))) $valutakurs=$r['box2']*1;
 		else $valutakurs=100;
 	}
-	$qtxt="insert into ordrer(ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,email,art,projekt,momssats,betalingsbet,betalingsdage,status,ordredate,valuta,valutakurs,afd,ref,hvem,felt_5) values ('$ordrenr','$saldi_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($adresse)."','".db_escape_string($addr2)."','".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($email)."','$art','$projektnr','$momssats','$betalingsbet','$betalingsdage','0','$date','$valuta','$valutakurs','$afd','$ref','$hvem','$kasse')";
-#cho $qtxt."<br>";
+	$r = db_fetch_array(db_select("select box5 from grupper where art = 'POS' and kodenr='1'",__FILE__ . " linje " . __LINE__));
+	$korttyper=explode(chr(9),$r['box5']);
+	$betalingskort=explode(chr(9),$r['box5']);
+	$lower_kort=explode(chr(9),strtolower($r['box5']));
+	$div_kort_kto=trim($r['box6']);
+	$korttype=trim(strtolower($korttype));
+	if (in_array(strtolower($korttype),$lower_kort)) {
+		for ($k=0;$k<count($lower_kort);$k++) {
+			if ($korttype==$lower_kort[$k]) $korttype=$betalingskort[$k];
+		}
+	} else {
+		$korttype='Betalingskort';
+	}
+	
+	$qtxt="insert into ordrer ";
+	$qtxt.="(ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,email,art,projekt,momssats,betalingsbet,betalingsdage,status,";
+	$qtxt.="ordredate,valuta,valutakurs,afd,ref,hvem,felt_5,lev_navn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,felt_1,felt_2,felt_3,felt_4)";
+	$qtxt.=" values ";
+	$qtxt.="('$ordrenr','$saldi_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($adresse)."','',";
+	$qtxt.="'".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($email)."','$art','$projektnr',";
+	$qtxt.="'$momssats','$betalingsbet','$betalingsdage','0','$date','$valuta','$valutakurs','$afd','$ref','$hvem','$kasse',";
+	$qtxt.="'".db_escape_string($lev_firmanavn)."','".db_escape_string($lev_adresse)."','','".db_escape_string($lev_postnr)."',";
+	$qtxt.="'".db_escape_string($lev_bynavn)."','$korttype','$betaling','Kontant','0')";
+#	fwrite ($fp,__line__." $qtxt\n");#cho $qtxt."<br>";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$r=db_fetch_array(db_select("select max(id) as id from ordrer where kontonr='$kontonr'",__FILE__ . " linje " . __LINE__));
 	$ordre_id=$r['id'];
+#	fwrite ($fp,__line__." $ordre_id\n");#cho $qtxt."<br>";
 	db_modify("insert into shop_ordrer(saldi_id,shop_id)values('$ordre_id','$shop_ordre_id')",__FILE__ . " linje " . __LINE__);  
 	$posnr=0;
 	for ($x=0;$x<count($shop_vare_id);$x++) {
+		$r=db_fetch_array(db_select("select id from varer where varenr='$varenr[$x]' or stregkode='$varenr[$x]'",__FILE__ . " linje " . __LINE__));
+		$s_v_id=$r['id'];
 		$r=db_fetch_array (db_select("select saldi_id from shop_varer where shop_id='$shop_vare_id[$x]'",__FILE__ . " linje " . __LINE__));
 		$vare_id[$x]=$r['saldi_id'];
+		if ($vare_id[$x] && $s_v_id && $vare_id[$x] != $s_v_id) {
+			db_modify("update shop_varer set saldi_id = $s_v_id",__FILE__ . " linje " . __LINE__);
+			$vare_id[$x]=$s_v_id;
+		}
 		if ($vare_id[$x]) {
 			$r=db_fetch_array (db_select("select varenr,samlevare from varer where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__));
 			$samlevare[$x]=$r['samlevare'];
@@ -279,11 +344,13 @@ exit;
 				$vare_id[$x]=$r['id'];
 				$samlevare[$x]=$r['samlevare'];
 			}	
+/*
 			if (!$vare_id[$x]) {
 				$r=db_fetch_array(db_select("select id,samlevare from varer where beskrivelse='$beskrivelse[$x]'",__FILE__ . " linje " . __LINE__));
 				$vare_id[$x]=$r['id'];
 				$samlevare[$x]=$r['samlevare'];
 			}	
+*/			
 			if (!$vare_id[$x] && $varenr[$x] && $beskrivelse) {
 				$kostpris[$x]=$pris[$x]-$pris[$x]/100*$dg;
 				db_modify("insert into varer(varenr,beskrivelse,salgspris,kostpris,gruppe)values('$varenr[$x]','$beskrivelse[$x] (INDSAT FRA SHOP)','$pris[$x]','$kostpris[$x]','1')",__FILE__ . " linje " . __LINE__);
@@ -302,6 +369,7 @@ exit;
 		} else opret_ordrelinje($ordre_id,$vare_id[$x],$varenr[$x],$antal[$x],$beskrivelse[$x],$pris[$x],0,100,'DO','',$posnr,'0','','','','0');
 		$ordresum+=$pris[$x]*$antal[$x];
 	}
+	$ordresum*=1;
 	$momssum=$ordresum/4;
 	$qtxt="update ordrer set sum='$ordresum',moms='$momssum' where id='$ordre_id'";
 #cho $qtxt."	<br>";
@@ -312,24 +380,37 @@ exit;
 function fakturer_ordre($saldi_id){
 	global $art;
 
-echo __line__;
-exit; 
-	#transaktion('begin');	
+	$qtxt="select * from ordrelinjer where ordre_id='$saldi_id'";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	$linjesum=0;
+	while ($r=db_fetch_array($q)) {
+		$linjesum+=$r['antal']*$r['pris']-($r['antal']*$r['pris']*$r['rabat']/100);
+	}
+	$qtxt="select sum from ordrer where id='$saldi_id'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$ordresum=$r['sum'];
+#	if ($ordresum !=$linjesum) {
+#		print "<body onload=\"javascript:alert('$svar');window.close();\">";
+#		exit;
+#	}
+	$shop_id=$r['shop_id'];
 	$qtxt="select shop_id from shop_ordrer where saldi_id='$saldi_id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$shop_id=$r['shop_id'];
-	$qtxt="update ordrer set levdate=ordredate,fakturadate=ordredate,betalingsbet='Kreditkort',betalingsdage='0',ref='Internet',kundeordnr='$shop_id' where id='$saldi_id'";
+	$r=db_fetch_array(db_select("select * from ordrer where id = '$saldi_id'",__FILE__ . " linje " . __LINE__));
+	$betalt=$r['sum']+$r['moms'];
+	$korttype=$r['felt_1'];
+	$qtxt="update ordrer set levdate=ordredate,fakturadate=ordredate,betalingsbet='Kreditkort',betalingsdage='0',ref='Internet',";
+	$qtxt.="kundeordnr='$shop_id',felt_2='$betalt' where id='$saldi_id'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
 	$qtxt="update ordrelinjer set leveres = antal where ordre_id='$saldi_id'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
 	#cho "bogfører $ordre_id<br>";
-	$svar=levering($saldi_id);
-	if ($svar=='OK') $svar=bogfor($saldi_id);
+	$svar=levering($saldi_id,'on');
+	if ($svar=='OK') $svar=bogfor($saldi_id,'on');
 	#cho "bogført $svar<br>";
-	$r=db_fetch_array(db_select("select * from ordrer where id = '$saldi_id'",__FILE__ . " linje " . __LINE__));
-	$betalt=$r['sum']+$r['moms'];
 #cho "insert into pos_betalinger(ordre_id,betalingstype,amount) values ('$saldi_id','betalingskort','$betalt')<br>";
-	db_modify("insert into pos_betalinger(ordre_id,betalingstype,amount) values ('$saldi_id','Betalingskort','$betalt')",__FILE__ . " linje " . __LINE__);
+	db_modify("insert into pos_betalinger(ordre_id,betalingstype,amount) values ('$saldi_id','$korttype','$betalt')",__FILE__ . " linje " . __LINE__);
 	if ($svar=='OK') return("$saldi_id"); 
 	else print "<body onload=\"javascript:alert('$svar');window.close();\">";
 }

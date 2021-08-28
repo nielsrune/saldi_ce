@@ -1,24 +1,21 @@
 <?php
-// ----------includes/bilag.php------------patch 3.6.2-----2016.01.16-----------
-// LICENS
+// --- includes/bilag.php --- patch 3.9.9 ---2021.02.08 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2016 DANOSOFT ApS
+// Copyright (c) 2010-2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2014.01.12 Tilføjet ordre som kilde.
 // 2014.01.22 Rettet if til elseif dat man ellers kommer tilbage til historik ved opslag fra kassekladde. Søg 2014.01.22
@@ -27,7 +24,7 @@
 // 2015.01.05 Ganger bilag med 1 for at sikre at der er en værdi til indsættelse - 20150105
 // 2015.04.23 Indsat break ved upload fejlet, så bilag ikke sættes i tabel.
 // 2016.01.16 ændret mkdir mv osv fra systemkommandoer til PHP kommandoer
-
+// 2021.02.08 PHR Corrected error handling
 
 @session_start();
 $s_id=session_id();
@@ -43,8 +40,8 @@ print "<div align=\"center\">";
 if(($_GET)||($_POST)) {
 
 	$funktion=if_isset($_GET['funktion']);
-	if ($_GET['kilde_id']) {
-		$kilde_id=if_isset($_GET['kilde_id']);
+	if (isset($_GET['kilde_id'])) {
+		$kilde_id = $_GET['kilde_id'];
 		$kilde=if_isset($_GET['kilde']);
 		$bilag_id=if_isset($_GET['bilag_id']);
 		$bilag=if_isset($_GET['bilag']);
@@ -53,7 +50,7 @@ if(($_GET)||($_POST)) {
 		$vis=if_isset($_GET['vis']);
 		$filnavn=if_isset($_GET['filnavn']);
 	} 
-	if ($_POST['kilde_id']) {
+	if (isset($_POST['kilde_id'])) {
 		$submit=$_POST['submit'];
 		$kilde_id=$_POST['kilde_id'];
 		$kilde=$_POST['kilde'];
@@ -70,6 +67,12 @@ if(($_GET)||($_POST)) {
 
 	if (file_exists("../owncloud")) $nfs_mappe='owncloud';
 	elseif (file_exists("../bilag")) $nfs_mappe='bilag';
+	else {
+		$alerttxt = "Mappe til bilag ikke fundet";
+		alert ($alerttxt);
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">";
+		exit;
+	}
 	
 	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=$tmp accesskey=L>Luk</a></td>";
 	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$title $bilag</td>";
@@ -213,8 +216,9 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 			system ("mv '$fra' '$til'\n");
 			if (file_exists("../".$nfs_mappe."/".$db."/".$mappe."/".$undermappe."/".$bilagfilnavn)) $tjek='ok';
 			else {
-				print "<BODY onLoad=\"javascript:alert('indl&aelig;sning af $filnavn fejlet')\">";
-				break 1;
+				$alerttxt = "indlæsning af $filnavn fejlet";
+				print "<BODY onLoad=\"javascript:alert($alerttxt)\">";
+				return;
 			}
 			if ($dh = opendir("../".$nfs_mappe."/".$db."/pulje/")) {
 				$slettet=0;	

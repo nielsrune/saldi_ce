@@ -1,25 +1,22 @@
 <?php
 
-// ----------------- systemdata/syssetup.php ------- lap 3.8.9 -- 2020-03-08 --
-// LICENS
+// --- systemdata/syssetup.php --- lap 3.9.9 -- 2020-05-12 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2020 saldi.dk ApS
+// Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20132127 Indsat kontrol for at kodenr er numerisk på momskoder.
@@ -40,6 +37,8 @@
 // 2019.02.25 MSC - Rettet topmenu design
 // 2020.03.08 PHR	Added Mysqli
 // 2020.03.08 PHR Removed 'Lagertilgang', 'Lagertræk' & 'Lagerregulering' from 'Varegrupper' 
+// 2020.05.12 PHR	Removed $box5 from 3. instance of skriv_formtabel in 'varegrupper'
+// 2020.05.12 PHR	Different changes for changes 30300308 to look nice in Firefox
 
 @session_start();
 $s_id=session_id();
@@ -490,14 +489,15 @@ elseif($valg=='lagre'){
 	$y=skriv_formtabel('LG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'2',"-",'2',"-",'2','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 }
 elseif($valg=='varer'){
-	if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) 
 	$t6="Hvis varegruppen er omfattet af omvendt betalingspligt afmærkes dette felt";
 	$q = db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box4='on'",__FILE__ . " linje " . __LINE__);
 	if (db_fetch_array($q)){
 		print "<tr><td></td><td colspan=10 align=\"center\"><b>Varegrupper</td></tr><tr><td colspan=13><hr></td></tr>\n";
 		print "<tr>";
-		print "<td align=\"center\"></td><td></td><td></td><td align=\"center\">Lager-</td><td align=\"center\">Lager-</td>";
-		print "<td align=\"center\">K&oslash;b</td><td align=\"center\">Salg</td><td align=\"center\">Lager-</td>";
+		print "<td align=\"center\"></td><td></td><td></td>";
+		if ($stockIO) print "<td align=\"center\">Lager-</td><td align=\"center\">Lager-</td>";
+		print "<td align=\"center\">K&oslash;b</td><td align=\"center\">Salg</td>";
+		#<td align=\"center\">Lager-</td>";
 		print "<td title=\"$t6\" align=\"center\">Omvendt-</td><td align=\"center\">Moms-</td><td align=\"center\">Lager-</td><td align=\"center\">Opera-</td>\n";
 		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>K&oslash;b</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>Salg</td>\n";
@@ -505,14 +505,15 @@ elseif($valg=='varer'){
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>Salg uden</td></tr>\n";
 		print "<tr><td></td><td>Nr.</td><td align=\"center\">Beskrivelse</td>";
 		if ($stockIO) print "<td align=\"center\">tilgang</td><td align=\"center\">tr&aelig;k</td>";
-		print "<td align=\"center\">k&oslash;b</td><td align=\"center\">salg</td><td align=\"center\">regulering</td>
-			<td  title=\"$t6\" align=\"center\">betaling</td><td align=\"center\">fri</td><td align=\"center\">f&oslash;rt</td><td align=\"center\">tion</td>\n";
+		print "<td align=\"center\">k&oslash;b</td><td align=\"center\">salg</td>"; 
+		#<td align=\"center\">regulering</td>
+		print "<td  title=\"$t6\" align=\"center\">betaling</td><td align=\"center\">fri</td><td align=\"center\">f&oslash;rt</td><td align=\"center\">tion</td>\n";
 		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>i EU</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>til EU</td>\n";
 		print "<td title='Kontonummer for en af Varek&oslash;b uden for EU, Ydelsesk&oslash;b uden for EU eller Vare- og ydelsesk&oslash;b uden for EU.'>for EU</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>for EU</td></tr>\n";
 		if ($stockIO) {
-		$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4',$box5,'4',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box10,'checkbox','-','2',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
+		$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box10,'checkbox','-','2',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
 	} else {
 			$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,'-','','-','',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box10,'checkbox','-','2',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
 		}
@@ -539,7 +540,7 @@ elseif($valg=='varer'){
 		print "<td title='Kontonummer for en af Varek&oslash; uden for EU, Ydelsesk&oslash; uden for EU eller Vare- og ydelsesk&oslash; uden for EU.'>for EU</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>for EU</td></tr>\n";
 		if ($stockIO) {
-		$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4',$box5,'4',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box9,'checkbox',$box10,'checkbox',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
+			$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box9,'checkbox',$box10,'checkbox',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
 		} else {
 			$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,'-','','-','',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box9,'checkbox',$box10,'checkbox',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
 		}
@@ -657,13 +658,6 @@ function kontotjek ($konto) {
 #cho "KONTO_ID $konto_id<br>";		
 if (!$konto_id=$r['id']){
 			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!'); # 20141212A
-#			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'info', 'td', 'boks2', 'tv'); # 20141121
-#			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'fejl', 'td', 'boks3', 'th'); # 20141121
-#			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'popop', 0, 'boks4', 'bv'); # 20141121
-#			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'info', 'td', 'boks2'); # 20141121
-#			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'fejl', 'td', 'boks3'); # 20141121
-#		 	print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'popop', 0, 'boks4'); # 20141121
-#			print tekstboks('Kontonr: '.$konto.' kan ikke anvendes!', 'advarsel', 0, 'boks5', 'bh'); # 20141121
 			$fejl=1;
 #			print "<BODY onLoad=\"javascript:alert('Kontonr: $konto kan ikke anvendes!!')\">";
 		} else #cho "ID $r[id]<br>";

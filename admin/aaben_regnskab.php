@@ -90,6 +90,7 @@ if (!$regnskabsaar) {
 	db_modify("update online set regnskabsaar='$regnskabsaar' where session_id='$s_id'",__FILE__ . " linje " . __LINE__);
 	include("../includes/online.php");
 }
+echo __line__."<br>";
 $qtxt="select box1 from grupper where art = 'VE'";
 $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $dbver=$r['box1'];

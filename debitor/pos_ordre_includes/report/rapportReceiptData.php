@@ -4,32 +4,30 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/report/rapportReceiptData.php ---------- lap 3.7.4----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/report/rapportReceiptData.php --- lap 4.0.0 --- 2021.03.07 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2019-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // LN 20190312 Make functions that handles all data that deals with the receipts
+// 20210307 PHR Added $date to allmost all functions as it was countion all orders from day zero
 
-function receiptCount($kasse) {
-    $idArray = makeOrderIdArray($kasse);
+function receiptCount($kasse,$date) {
+	$idArray = makeOrderIdArray($kasse,$date);
     $receipts = db_select("select * from pos_betalinger where amount>'0'", __FILE__ . " linje " . __LINE__);
     $receiptArray['count'] = 0;
     while($receipt = db_fetch_array($receipts)) {
@@ -37,16 +35,16 @@ function receiptCount($kasse) {
         $price = abs($price);
         if (in_array($receipt['ordre_id'], $idArray) ) {
             $receiptArray['count']++;
-            $receiptArray['totalPrice'] += $price;
+			(isset($receiptArray['totalPrice']))?$receiptArray['totalPrice'] += $price : $receiptArray['totalPrice'] = $price;
         }
     }
     $receiptArray = subtractReceiptData("Receipt", $receiptArray);
     return $receiptArray;
 }
 
-function copiedReceipts($kasse)
+function copiedReceipts($kasse,$date)
 {
-    $orders = db_select("select * from ordrer where felt_5='$kasse'", __FILE__ . " linje " . __LINE__);
+    $orders = db_select("select * from ordrer where felt_5='$kasse' and fakturadate = '$date'", __FILE__ . " linje " . __LINE__);
     $copiedArray['count'] = 0;
     $copiedArray['totalPrice'] = 0;
     while($order = db_fetch_array($orders)) {
@@ -77,10 +75,12 @@ function returnedReceipts($kasse)
     return $returnedArray;
 }
 
-function ordersWithDiscount($kasse)
+function ordersWithDiscount($kasse,$date)
 {
-    $idArray = makeOrderIdArray($kasse);
-    $ordrelines = db_select("select * from ordrelinjer where rabat>'0'", __FILE__ . "linje" . __LINE__);
+    $idArray = makeOrderIdArray($kasse,$date);
+    $qtxt = "select ordrelinjer.* from ordrelinjer,ordrer where ";
+    $qtxt.= "rabat>'0' and ordrer.id = ordrelinjer.ordre_id and ordrer.fakturadate = '$date'";
+    $ordrelines = db_select($qtxt, __FILE__ . " linje " . __LINE__);
     $discountArray['count'] = 0;
     $discountArray['totalPrice'] = 0;
     while ($order = db_fetch_array($ordrelines)) {
@@ -139,9 +139,9 @@ function priceCorrectionOrders($kasse)
     return $priceCorrectionArray;
 }
 
-function saleWithoutVat($kasse)
+function saleWithoutVat($kasse,$date)
 {
-    $idArray = makeOrderIdArray($kasse);
+    $idArray = makeOrderIdArray($kasse,$date);
     $orderQuery = db_select("select * from ordrelinjer", __FILE__ . " linje " . __LINE__);
     $saleWithoutVatArray['count'] = 0;
     $saleWithoutVatArray['totalPrice'] = 0;

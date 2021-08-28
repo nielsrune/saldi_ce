@@ -1,24 +1,26 @@
 <?php
-// ---------systemdata/kontokort.php-----lap 3.6.2----2016-01-29 --------
-// LICENS
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// --- systemdata/kontokort.php --- lap 3.6.2 --- 2021-02-11 ---
+// LICENSE
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003 - 2020 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 2013.02.10 Break ændret til break 1
@@ -26,6 +28,7 @@
 // 20160129	Valutakode og kurs blev ikke sat ved oprettelse af ny driftskonti.
 // 2019.02.20 MSC - Rettet isset fejl og topmenu design
 // 2019.02.21 MSC - Rettet isset fejl
+// 2021.02.11 PHR - Some cleanup
 
 @session_start();
 $s_id=session_id();
@@ -51,7 +54,7 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/genberegn.php");
 
-$kontotype=NULL; # ellers hentes typen fra connect.php  
+$genvej=$kontotype=NULL; # ellers hentes typen fra connect.php  
 
 if (!isset ($_POST['gem'])) $_POST['gem'] = NULL;
 if (!isset ($forrige)) $forrige = 0;
@@ -317,18 +320,18 @@ if ($kontotype=='Sum') {
 if (($kontotype=='Drift')||($kontotype=='Status')) {
 	$x=0;
 	$alfabet=array("A","B","C","E","F","G","H","I","J","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"); 
-	$tmp=array();
-	$query = db_select("select genvej from kontoplan where regnskabsaar='$regnaar' order by genvej",__FILE__ . " linje " . __LINE__);
-	while ($row = db_fetch_array($query)) {
+	$shortCut=array();
+	$q = db_select("select genvej from kontoplan where regnskabsaar='$regnaar' order by genvej",__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
 		$x++;
-		$tmp[$x]=$row['genvej'];
+		$shortCut[$x]=$r['genvej'];
 	}
 	print "<tr><td><font face=\"Helvetica, Arial, sans-serif\">Genvej</td><td><br></td>";
 	print "<td><SELECT NAME=genvej>";
 	print "<option>$genvej</option>\n";
 	if ($genvej) print "<option></option>\n";
-	for ($x=0; $x<25; $x++) {
-		if (!in_array($alfabet[$x], $tmp)) print "<option>$alfabet[$x]</option>\n";
+	for ($x=0; $x<count($alfabet); $x++) {
+		if (!in_array($alfabet[$x], $shortCut)) print "<option>$alfabet[$x]</option>\n";
 	}
 	print "</SELECT></td>";
 	if ($kontotype=='Status') {
@@ -350,7 +353,7 @@ if (($kontotype=='Drift')||($kontotype=='Status')) {
 			if ($valuta!=$valuta_kode[$x])print "<option value='$valuta_kode[$x]'>$valuta_kode[$x] : $valuta_navn[$x]</option>"; 
 		}
 		print "</select></td></tr>";
-	} else print "<input type=\"hidden\" name=\"$valuta_kode[$x]\" value='DKK'>"; 
+	} else print "<input type=\"hidden\" name=\"ny_valuta\" value='DKK'>"; 
 }
 if ($kontotype=='Drift'||$kontotype=='Status') print "<tr><td colspan=\"2\">Saldo</td><td>$valuta: ".dkdecimal($saldo*100/$valutakurs)."</td><tr>";
 if ($lukket=='on') $lukket="checked";

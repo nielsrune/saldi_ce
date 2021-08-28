@@ -28,7 +28,7 @@
 //
 // 07.05.2019 LN Get data from ordrer
 
-	$r=db_fetch_array(db_select("select * from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__));
+	if ($r=db_fetch_array(db_select("select * from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__))) {
 	$konto_id=$r['konto_id'];
 	$kontonr=$r['kontonr'];
 	$kundenavn=$r['firmanavn'];
@@ -55,6 +55,6 @@
 	$bordnr=$r['nr']*1;  #20140508
 	$status=$r['status'];
 	$temp = $r['id'];	
-
+	}
 ?>
 

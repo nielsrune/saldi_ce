@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------systemdata/brugere.php------------- lap 3.7.9 -- 2019-04-15 --
-// LICENS
+// --------------systemdata/brugere.php------------- lap 3.9.3 -- 2020-07-09 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20150327 CA  Topmenudesign tilføjet                             søg 20150327
 // 20161104	PHR	Ændret kryptering af adgangskode
@@ -32,6 +29,7 @@
 // 2019.02.25 MSC - Rettet topmenu design
 // 2019.03.21 PHR Added 'read only' attribut at 'varekort'
 // 2019.04.15 PHR	Corrected an error in module order printet on screen, resulting in wrong rights to certain modules
+// 2020.07.09 PHR Various changes in variable names and user deletion.
 
 @session_start();
 $s_id=session_id();
@@ -40,7 +38,7 @@ $modulnr=1;
 $title="Brugere";
 $css="../css/standard.css";
 
-$ansat_id=$rights=$roRights=array();
+$employeeId=$rights=$roRights=array();
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -66,18 +64,19 @@ if ($menu=='T') {  # 20150327 start
 	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>"; 
 }  # 20150327 stop
 
+$addUser=if_isset($_POST['addUser']);
+$deleteUser=if_isset($_POST['deleteUser']);
+$id=if_isset($_POST['id']);
+$updateUser=if_isset($_POST['updateUser']);
 $ret_id=if_isset($_GET['ret_id']);
 $slet_id=if_isset($_GET['slet_id']);
-
-if (isset($_POST['submit'])) {
-	$submit=if_isset($_POST['submit']);
-	$id=if_isset($_POST['id']);
+if ($addUser || $updateUser) {
 	$tmp=if_isset($_POST['random']);
 	$brugernavn=trim(if_isset($_POST[$tmp]));
 	$kode=trim(if_isset($_POST['kode']));
 	$kode2=trim(if_isset($_POST['kode2']));
 	$medarbejder=trim(if_isset($_POST['medarbejder']));
-	$ansat_id=if_isset($_POST['ansat_id']);
+	$employeeId=if_isset($_POST['employeeId']);
 	$rights=$_POST['rights'];
 	$roRights=$_POST['roRights'];
 	$rettigheder=NULL;
@@ -96,8 +95,8 @@ if (isset($_POST['submit'])) {
 			$ret_id=$id;
 	}
 	$tmp=substr($medarbejder,0,1);
-	$ansat_id[0]=$ansat_id[0]*1;
-	if ((strstr($submit,'Tilf'))&&($brugernavn)) {
+	$employeeId[0]=$employeeId[0]*1;
+	if ($addUser && $brugernavn) {
 		$query = db_select("select id from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__);
 		if ($row = db_fetch_array($query)) {
 			$alerttext="Der findes allerede en bruger med brugenavn: $brugernavn!";
@@ -105,23 +104,30 @@ if (isset($_POST['submit'])) {
 #			print "<tr><td align=center>Der findes allerede en bruger med brugenavn: $brugernavn!</td></tr>";
 		}	else {
 			if (!$regnaar) $regnaar=1;
-			db_modify("insert into brugere (brugernavn,kode,rettigheder,regnskabsaar,ansat_id) values ('$brugernavn','$kode','$rettigheder','$regnaar',$ansat_id[0])",__FILE__ . " linje " . __LINE__);
-			$r=db_fetch_array(db_select("select id from brugere where brugernavn = '$brugernavn' and kode = '$kode'",__FILE__ . " linje " . __LINE__));
+			$qtxt = "insert into brugere (brugernavn,kode,rettigheder,regnskabsaar,ansat_id) ";
+			$qtxt.= "values ('$brugernavn','$kode','$rettigheder','$regnaar',$employeeId[0])";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			$qtxt="select id from brugere where brugernavn = '$brugernavn' and kode = '$kode'";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$id=$r['id'];
 		}
 	}
-	if ($id && $kode) {
+	if ($id && $kode && $brugernavn) {
 		if (strstr($kode,'**********')) {
-			db_modify("update brugere set brugernavn='$brugernavn', rettigheder='$rettigheder', ansat_id=$ansat_id[0] where id=$id",__FILE__ . " linje " . __LINE__);
+			db_modify("update brugere set brugernavn='$brugernavn', rettigheder='$rettigheder', ansat_id=$employeeId[0] where id=$id",__FILE__ . " linje " . __LINE__);
 		} else {
 			$kode=saldikrypt($id,$kode);
-		db_modify("update brugere set brugernavn='$brugernavn', kode='$kode', rettigheder='$rettigheder', ansat_id=$ansat_id[0] where id=$id",__FILE__ . " linje " . __LINE__);
+			db_modify("update brugere set brugernavn='$brugernavn', kode='$kode', rettigheder='$rettigheder', ansat_id=$employeeId[0] where id=$id",__FILE__ . " linje " . __LINE__);
 	}
 	}
-	elseif (($id)&&(!$kode)) {
-		if ($ansat_id[0]) db_modify("update ansatte set lukket='on', slutdate='".date("Y-m-d")."' where id = '$ansat_id[0]'",__FILE__ . " linje " . __LINE__);
-		db_modify("delete from brugere where id = $id",__FILE__ . " linje " . __LINE__);
+} elseif (($deleteUser)) {
+	$qtxt="select ansat_id from brugere where id ='$id'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	if ($r['ansat_id']) { 
+		$qtxt="update ansatte set lukket='on', slutdate='".date("Y-m-d")."' where id = '$r[ansat_id]'";
+		db_modify($qtxt,__FiLE__ . " linje " . __LINE__);
 	}
+	db_modify("delete from brugere where id = $id",__FILE__ . " linje " . __LINE__);
 }
 
 print "<tr><td valign = 'top'>";
@@ -157,7 +163,9 @@ while ($row = db_fetch_array($query)) {
 		if ($row['ansat_id']) {
 			$r2 = db_fetch_array(db_select("select initialer from ansatte where id = $row[ansat_id]",__FILE__ . " linje " . __LINE__));
 		}	else {$r2['initialer']='';}
-		print "<tr><td> $r2[initialer]&nbsp;</td><td><a href=brugere.php?ret_id=$row[id]> $row[brugernavn]</a></td>";
+		print "<tr><td> $r2[initialer]&nbsp;</td><td><a href=brugere.php?ret_id=$row[id]>";
+		($row['brugernavn'])?print $row['brugernavn']:print '?';
+		print "</a></td>";
 		for ($y=0; $y<=15; $y++) {
 			($colbg!=$bgcolor)?$colbg=$bgcolor:$colbg=$bgcolor5;
 			if ((substr($row['rettigheder'],$y,1)==2)) $color='yellow';
@@ -171,6 +179,7 @@ while ($row = db_fetch_array($query)) {
 if ($ret_id) {
 	$query = db_select("select * from brugere where id = $ret_id",__FILE__ . " linje " . __LINE__);
 	$row = db_fetch_array($query);
+	$userName=$row['brugernavn'];
 	print "<tr><td></td>";
 	print "<input type=hidden name=id value=$row[id]>";
 	$tmp="navn".rand(100,999);				#For at undgaa at browseren "husker" et forkert brugernavn.
@@ -197,25 +206,25 @@ if ($ret_id) {
 	print "<tr><td>Gentag kode</td><td><input class=\"inputbox\" type=password size=20 name=kode2 value='********************'></td></tr>";
 	$x=0;
 	if ($r2 = db_fetch_array(db_select("select id from adresser where art = 'S'",__FILE__ . " linje " . __LINE__))) {
-		$ansat_id=array();
+		$employeeId=array();
 		$q2 = db_select("select * from ansatte where konto_id = $r2[id]  and lukket!='on' order by initialer",__FILE__ . " linje " . __LINE__);
 		while ($r2 = db_fetch_array($q2)) {
 			$x++;
-			$ansat_id[$x]=$r2['id'];
-			$ansat_initialer[$x]=$r2['initialer'];
-			if ($ansat_id[$x]==$row['ansat_id']) {
-				$ansat_id[0]=$ansat_id[$x];
-				$ansat_initialer[0]=$ansat_initialer[$x];
+			$employeeId[$x]=$r2['id'];
+			$employeeInitials[$x]=$r2['initialer'];
+			if ($employeeId[$x]==$row['ansat_id']) {
+				$employeeId[0]=$employeeId[$x];
+				$employeeInitials[0]=$employeeInitials[$x];
 			}		 
-#			print "<input type = hidden name=ansat_id[$x] value=$ansat_id[$x]>";
+#			print "<input type = hidden name=employeeId[$x] value=$employeeId[$x]>";
 		}
 	}
 	$ansat_antal=$x;
 	print "<tr><td> Medarbejder</td>";
-	print "<td><SELECT NAME=ansat_id[0]>";
-	print "<option value=\"$ansat_id[0]\">$ansat_initialer[0]</option>";
+	print "<td><SELECT NAME=employeeId[0]>";
+	print "<option value=\"$employeeId[0]\">$employeeInitials[0]</option>";
 	for ($x=1; $x<=$ansat_antal; $x++) { 
-		print "<option value=\"$ansat_id[$x]\">$ansat_initialer[$x]</option>";
+		print "<option value=\"$employeeId[$x]\">$employeeInitials[$x]</option>";
 	} 
 	if ($medarbejder) print "<option></option>";
 	print "</SELECT></td></tr>";
@@ -227,7 +236,9 @@ if ($ret_id) {
 	} else {
 		$class = "class='inputbox'";
 	}
-	print "<td colspan=12 align = center><input $class type=submit value=\"Opdat&eacute;r\" name=\"submit\"></td>";
+	print "<td colspan='12' align = 'center'>";
+	print "<input style='width:100px;background-color:44ff44;' type=submit value=\"Opdat&eacute;r\" name=\"updateUser\">&nbsp;";
+	print "<input style='width:100px;background-color:ff4444;' type=submit value=\"Slet\" name=\"deleteUser\" onclick=\"confirm('Slet $userName?')\"></td>";
 } else {
 	$tmp="navn".rand(100,999);				#For at undgaa at browseren "husker" et forkert brugernavn.
 	print "<input type=hidden name=random value = $tmp>";
@@ -252,7 +263,8 @@ if ($ret_id) {
 	print "</tbody></table></td></tr>";
 	print "<tr><td><br></td></tr>";
 	print "<tr><td><br></td></tr>";
-	print "<td colspan=12 align = center><input class='button green medium' type=submit value=\"Tilf&oslash;j\" name=\"submit\"></td>";
+	print "<td colspan=12 align = center>";
+	print "<input style='width:200px;background-color:#aaaaff;' type=submit value=\"Tilf&oslash;j\" name=\"addUser\"></td>";
 }
 print "</tr>";
 # print "</tbody></table></td></tr>";

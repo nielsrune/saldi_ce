@@ -137,7 +137,7 @@ function overfoer_data($filnavn,$lager,$charset) {
 	elseif ($splitter=='Komma') $splitter=',';
 	elseif ($splitter=='Tabulator') $splitter=chr(9);
 
-	transaktion('begin');
+#	transaktion('begin');
 
 	$l=0;
 	$q=db_select("select id,vare_id from lagerstatus where lager='$lager' order by vare_id",__FILE__ . " linje " . __LINE__);
@@ -213,7 +213,8 @@ function overfoer_data($filnavn,$lager,$charset) {
 						$qtxt="update lagerstatus set lok1='$lokation' where id=$lok_id";
 						$upd++;
 					} elseif ($lokation) {
-						$qtxt="insert into lagerstatus(vare_id,beholdning,lager,lok1) values ('$vare_id','0','$lager','$lokation')";
+						$qtxt = "insert into lagerstatus(vare_id,beholdning,lager,lok1) values ";
+						$qtxt.= "('$vare_id','0','$lager','". db_db_escape_string( $lokation) ."')";
 						$imp++;
 					}
 					#cho "$qtxt<br>";
@@ -224,7 +225,7 @@ function overfoer_data($filnavn,$lager,$charset) {
 		}
 		fclose($fp);
 	}
-	transaktion('commit');
+#	transaktion('commit');
 	print "<tr><td align='center'>$upd lokationer opdateret i lager $lager</td></tr>";
 	print "<tr><td align='center'>$imp lokationer oprettet i lager $lager</td></tr>";
 	print "</tbody></table>";

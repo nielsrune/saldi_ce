@@ -1,0 +1,49 @@
+$cols=5;
+$rows=13;
+$txtlen=25px;
+<top>
+<style>
+#main {
+width:         210mm;
+height:        290 mm;
+overflow:      hidden;
+margin-top:    6mm;
+margin-bottom: 0mm;
+margin-left:   4mm;
+margin-right:  0mm;
+}
+
+p {
+width:         38.0mm;
+display:       inline-block;
+height:        21.15mm;
+padding-bottom:0px;
+margin-top:    0mm;
+margin-bottom: 0mm;
+margin-right:  0mm;
+margin-left:   1mm;
+font-size:     12px;
+white-space:   nowrap;
+overflow:      hidden;
+}
+
+img {
+width:         95%;
+height:        5mm;
+margin-left:   -4px
+}
+</style>	
+
+<div id='main'>
+</top>
+
+<p width:       90%;>
+$varenr / $varemrk<br>
+$minbeskrivelse<br>
+Pris $minpris<br>
+<img src='$img'><br>
+</p>
+
+<bottom>
+</div>
+/bottom;

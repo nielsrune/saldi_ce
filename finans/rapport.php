@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ finans/rapport.php --------------- lap 3.8.2 --- 2019-09-24 ---
-// LICENS
+// --- finans/rapport.php --- lap 3.9.9 --- 2021-01-10 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 20120927 Hvis budgettal indsat og konto lukket blev konto alligevel vist under budget
@@ -50,7 +47,7 @@
 // 2019.02.20 PHR tilføjet " || ($kontotype[$x] == 'Z' && $x==$kontoantal) " Da balancekonto ellers ikke vises hvis sum=0 - 20190220
 // 2019.04.12 PHR Moved functions to 'rapport_includes' and added 'Resultat/Sidste år' 
 // 20190924 PHR Added option 'Poster uden afd". when "afdelinger" is used. $afd='0' 
-
+// 20210110 PHR some minor changes related til 'deferred financial year'
 
 $title="Finansrapport";
 @session_start();
@@ -142,7 +139,7 @@ if ($_POST){
 	}
 	$delprojekt=if_isset($_POST['delprojekt']);
 	if ($projekt_til) $delprojekt=NULL;	 
-	else {
+	elseif ($delprojekt) {
 		$find=0; #20130919 +næste 5 linjer
 		for ($a=0;$a<count($delprojekt);$a++) {
 			if ($delprojekt[$a]) $find=1;
@@ -196,6 +193,7 @@ if ($_POST){
 	if ($konto_til) list ($konto_til, $beskrivelse) = explode(":", $konto_til);
 	$regnaar=if_isset($_POST['regnaar']);
 	if ($regnaar && !is_numeric($regnaar)) list ($regnaar, $beskrivelse)= explode("-", $regnaar);
+	
 } else {
 	$rapportart=if_isset($_GET['rapportart']);
 	$dato_fra=if_isset($_GET['dato_fra']);
@@ -233,14 +231,22 @@ elseif ($rapportart){
 	} else $submit=str2low($rapportart);
 }
 
-if ($maaned_fra && (!$aar_fra||!$aar_til)) {
-	list ($aar_fra, $maaned_fra) = explode(" ", $maaned_fra);
-	list ($aar_til, $maaned_til) = explode(" ", $maaned_til);
+#if ($maaned_fra && (!$aar_fra||!$aar_til)) {
+#	list ($aar_fra, $maaned_fra) = explode(" ", $maaned_fra);
+#	list ($aar_til, $maaned_til) = explode(" ", $maaned_til);
+#}
+if (!$aar_fra || !$aar_til) {
+	$qtxt="select box2,box4 from grupper where art='RA' and kodenr='$regnaar'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$aar_fra=$r['box2'];
+	$aar_til=$r['box4'];
 }
+
 include("rapport_includes/$submit.php");
 $submit($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev);
 #################################################################################################
 function kontobemaerkning ( $l_kontonavn ) {
+	global $sprog_id;
 	$retur=NULL;
 	if (strstr( $l_kontonavn, "RESULTAT")) {
 		$retur = "title=\"Negativt resultat betyder overskud. Positivt resultat betyder underskud.\"";
@@ -251,6 +257,7 @@ function kontobemaerkning ( $l_kontonavn ) {
 }
 
 function momsrubrik($rubrik_konto, $rubrik_navn, $regnaar, $regnstart, $regnslut) {
+	global $sprog_id;
 		print "<tr><td>".$rubrik_konto."</td><td colspan='3'>".$rubrik_navn."</td>";
 		if ( $rubrik_konto ) {
 			$q = db_select("select * from kontoplan where regnskabsaar='$regnaar' and kontonr=$rubrik_konto",__FILE__ . " linje " . __LINE__);
@@ -271,6 +278,7 @@ function momsrubrik($rubrik_konto, $rubrik_navn, $regnaar, $regnstart, $regnslut
 
 # Funktionen ændret fra kvartal til måned. 20140729 start afsnit 2 
 function listeangivelser ($regnaar, $rapportart, $option_type) {
+	global $sprog_id;
 
 	$qtxt="select box1, box2, box3, box4 from grupper where art = 'RA' and kodenr = '$regnaar' order by box2, box1 desc";
 	$x=0;
@@ -279,9 +287,9 @@ function listeangivelser ($regnaar, $rapportart, $option_type) {
 	$liste_aar[$x]=($row['box2']*1);
 	$liste_md[$x]=($row['box1']*1);
 	$liste_rapportart[$x] = "Listeangivelse ".$liste_md[$x].". måned ".$liste_aar[$x];
-	if ( $liste_md[$x] < 10 ) $liste_md[$x] = "0".$liste_md[$x];
+	if (isset($liste_md[$x]) && $liste_md[$x] < 10) $liste_md[$x] = "0".$liste_md[$x];
 	$liste_aarmd[$x] = $liste_aar[$x].$liste_md[$x];
-	$kvartal_aarmd[$x] = ($kvartal_aar[$x].$row['box1'])*1+2;
+	if (isset($kvartal_aar[$x])) $kvartal_aarmd[$x] = ($kvartal_aar[$x].$row['box1'])*1+2;
 	$slut_aarmd = ($row['box4'].$row['box3'])*1;
 while ( $liste_aarmd[$x] < $slut_aarmd ) {
 		$x++;

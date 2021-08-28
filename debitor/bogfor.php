@@ -56,11 +56,6 @@ if ($id && $id>0) {
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/ordre.php?id=$id\">";
 		exit;
 	} else {
-		$r=db_fetch_array(db_select("select * from ordrer where id = $id",__FILE__ . " linje " . __LINE__));
-		if ($r['felt_1'] && $r['felt_3'] && is_numeric($r['felt_2']) && is_numeric($r['felt_4'])){
-			if ($r['felt_2']*1 != 0) db_modify("insert into pos_betalinger(ordre_id,betalingstype,amount) values ('$id','$r[felt_1]','$r[felt_2]')",__FILE__ . " linje " . __LINE__);
-			if ($r['felt_4']*1 != 0) db_modify("insert into pos_betalinger(ordre_id,betalingstype,amount) values ('$id','$r[felt_3]','$r[felt_4]')",__FILE__ . " linje " . __LINE__);
-		}
 		transaktion('commit');
 	}
 #xit;	

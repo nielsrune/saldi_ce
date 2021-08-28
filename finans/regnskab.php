@@ -369,7 +369,7 @@ for ($x=1; $x<=$kontoantal; $x++){
 		$y='';
 		print "</tr>";
 	}
-	if ($row['kontotype']=='H') {$linjebg='#ffffff'; $color='#ffffff';}
+	if (isset($row['kontotype']) && $row['kontotype']=='H') {$linjebg='#ffffff'; $color='#ffffff';}
 }
 if ($menu=='T') print "</div>";	
 ####################################################################################################

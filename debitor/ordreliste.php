@@ -87,11 +87,12 @@ $konto_id=$kontonumre=NULL;
 $lev_datoer=$linjebg=NULL; 
 $ny_sort=NULL;
 $ordreantal=$ordredatoer=$ordrenumre=NULL;
-$readonly=$ref=NULL;
+$readonly=$ref[0]=NULL;
 $shop_ordre_id=$summer=NULL;
 $totalkost=$tr_title=NULL; 
 $uncheck_all=$understreg=NULL;
-$vis_projekt=$vis_ret_next=NULL;
+$vis_projekt=$vis_ret_next=$who=NULL;
+$tidspkt=$timestamp=0;
 $find=array(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
 include("../includes/connect.php");
@@ -392,7 +393,7 @@ $tmp=db_escape_string($tmp);
 db_modify("update grupper set box9='$tmp' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 
 for ($x=0;$x<$vis_feltantal;$x++) {
-	if (!isset($feltbredde[$x])) $feltbredde[$x]=100;
+	if (!isset($feltbredde[$x]) || !$feltbredde[$x]) $feltbredde[$x]=100;
 	if ($feltbredde[$x]<=10) $feltbredde[$x]*=10;
 #	if (!$feltbredde[$x]) $feltbredde[$x]=100;
 	if (!isset($find[$x]) || $find[$x]=="-") $find[$x]=NULL;
@@ -588,6 +589,8 @@ while ($row=db_fetch_array($query)) {
 		$nextfakt=$row['nextfakt'];
 		$sum_m_moms=$row['sum']+$row['moms'];
 		$moms=$row['moms'];
+		($row['tidspkt'])? $timestamp = $row['tidspkt'] : $timestamp = 0;
+		$who = $row['hvem'];
 		$id=$row['id'];
 		if ($valg=='faktura') {
 			$udlignet=0;
@@ -611,7 +614,7 @@ while ($row=db_fetch_array($query)) {
 				}
 			}
 		$href="ordre.php?tjek=$id&id=$id&returside=ordreliste.php";
-		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn || $row['hvem']=='')) {
+		if (($tidspkt-($timestamp)>3600)||($who==$brugernavn || $who=='')) {
 			if ($popup) {
 					$javascript="onClick=\"javascript:$ordre=window.open('$href','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
 				$understreg='<span style="text-decoration: underline;">';
@@ -775,8 +778,9 @@ while ($row=db_fetch_array($query)) {
 			}
 			print "</td>"; 
 		}
+		if (!isset($checked[$id])) $checked[$id]=NULL;
 		if ($uncheck_all) $checked[$id]=NULL;
-		elseif ((isset($checked[$id]) && $checked[$id]=='on') || $check_all) $checked[$id]='checked';
+		elseif ($checked[$id]=='on' || $check_all) $checked[$id]='checked';
 
 		if ($valg=='faktura' || ($valg=='ordrer' && $nextfakt)) {
 			$vis_ret_next=1;
@@ -792,14 +796,19 @@ while ($row=db_fetch_array($query)) {
 		print "</tr>\n";
 	}# endif ($lnr>=$start && $lnr<$slut)
 }# endwhile
-
+if (!$l && $udvaelg) {
+	$colspan=$vis_feltantal+2;
+	print "<tr><td align='center' colspan='$colspan'>";
+ 	print "<b><big>Ingen ordrer matcher de angivne søgekriterier<big></b>";
+	print "<td></tr>";
+}
 $colspan=$vis_feltantal+2;
 if ($valg) {		
 	if ($vis_projekt) $colspan++;
 	if ($check_all) {
-		print "<tr><td align=right colspan=$colspan><input class='button gray medium' type=\"submit\" style=\"width:100px\"; name=\"uncheck\" value=\"".findtekst(90,$sprog_id)."\">";
+		print "<tr><td align='right' colspan='$colspan'><input class='button gray medium' type=\"submit\" style=\"width:100px\"; name=\"uncheck\" value=\"".findtekst(90,$sprog_id)."\">";
 	} else {
-		print "<tr><td align=right colspan=$colspan><input class='button gray medium' type=\"submit\" style=\"width:100px\"; name=\"check\" value=\"".findtekst(89,$sprog_id)."\">";
+		print "<tr><td align='right' colspan='$colspan'><input class='button gray medium' type=\"submit\" style=\"width:100px\"; name=\"check\" value=\"".findtekst(89,$sprog_id)."\">";
 	}
 #	print "<tr><td align=right colspan=$colspan><input type=\"submit\" style=\"width:100px\"; name=\"opdat\" value=\"Opdater\">";
 	print "	</td></tr>\n";
@@ -914,9 +923,9 @@ if ($r['box1'] && $ialt!="0,00") {
 		print "<tr><td colspan=\"2\"><span title='Klik her for at importere en csv fil'><a href=csv2ordre.php target=\"_blank\">CSV import</a></span></td><td colspan=\"".($colspan-3)."\" align=right><span title='Klik her for at fakturere alle ordrer p&aring; listen'><a href=massefakt.php?valg=$valg onClick=\"return MasseFakt('$tekst')\">Faktur&eacute;r&nbsp;alt</a></span></td></tr>";} else print "<tr><td colspan=\"3\"><span title='Klik her for at importere en csv fil'><a href=csv2ordre.php target=\"_blank\">CSV import</a></span></td></tr>";
 }	
 #cho "select box4 from grupper where art='API'<br>";
-$r=db_fetch_array(db_select("select box4 from grupper where art='API'",__FILE__ . " linje " . __LINE__));
+
+if ($r=db_fetch_array(db_select("select box4 from grupper where art='API' and box4 != ''",__FILE__ . " linje " . __LINE__))) {
 $api_fil=trim($r['box4']);
-if ($api_fil) {
 	if (file_exists("../temp/$db/shoptidspkt.txt")) {
 		$fp=fopen("../temp/$db/shoptidspkt.txt","r");
 		$tidspkt=fgets($fp);

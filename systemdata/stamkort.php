@@ -167,9 +167,10 @@ print "<tr><td>Bank</td><td><input class=\"inputbox\" type=\"text\" style='width
 print "<tr><td>Email dataansvarlig</td><td><input class=\"inputbox\" type=\"text\" style='width:200;' name=\"kontakt\" value=\"$kontakt\"></td></tr>";
 #cho $_SERVER["SERVER_NAME"]."<br>";
 if (in_array($_SERVER["SERVER_NAME"],$saldinames)) {
-	if (substr($db,0,6)=='bizsys' || substr($db,0,7)=='grillbar') {
-		$href='https://bizsys.dk/wp-content/uploads/2018/05/Bizsys-databehandleraftale.pdf';
-	} else $href='http://saldi.dk/dok/saldi_gdpr_20180525.pdf';
+#	if (substr($db,0,6)=='bizsys' || substr($db,0,7)=='grillbar') {
+#		$href='https://bizsys.dk/wp-content/uploads/2018/05/Bizsys-databehandleraftale.pdf';
+#	} else 
+	$href='http://saldi.dk/dok/saldi_gdpr_20180525.pdf';
 	print "<tr><td>Databehandleraftale</td><td><a href=\"$href\" target=\"blank\"><button type='button' style='width:200px;'>Databehandleraftale</button></a></td></tr>";
 }
 print "</tbody></table>\n"; # 20150331
@@ -212,10 +213,10 @@ if ($id) {
 			
 	$taeller=0;
 	while ($taeller < 1) {
-		if ($vis_lukket!="checked") {
-			$q = db_select("select * from ansatte where konto_id = '$id' and lukket != 'on' order by posnr",__FILE__ . " linje " . __LINE__);
-		} elseif  ($vis_lukket=="checked") $q = db_select("select * from ansatte where konto_id = '$id' and lukket = 'on' order by posnr",__FILE__ . " linje " . __LINE__);
 		$x=0;
+		if ($vis_lukket) $qtxt="select * from ansatte where konto_id = '$id' and lukket != 'on' order by posnr";
+		else $qtxt="select * from ansatte where konto_id = '$id' and (lukket != 'on' or lukket is NULL) order by posnr";
+		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r = db_fetch_array($q)) {
 			$x++;
 #		if ($x > 0) {print "<tr><td><br></td><td><br></td>";}

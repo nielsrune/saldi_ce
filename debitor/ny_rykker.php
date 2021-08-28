@@ -4,34 +4,31 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------------------debitor/ny_rykker.php-----lap 3.6.7--2017.03.03-------
-// LICENS
+// --- debitor/ny_rykker.php --- lap 4.0.2 --- 2021.5.07 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003 - 2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
-
 // 2012.11.05 - Fejl ved renteberegning af posteringer uden forfaldadato. Søg 20121105 
 // 2014.06.28 - Valuta og valutakurs indsættes nu ved oprettesle af ny rykker. Søg 20140628 
 // 2014.07.07 - Hvis ingen valuta sættes til DKK, hvis ingen kurs sættes til sættes til 100. Søg 20140707 
 // 2014.11.06 - Indsat db_escape_string foran div variabler hvor de indsættes i tabeller.
 // 2017.03.03 - PHR Tilføjet felt_5 til insert into ordrer aht inkasso. 
-
+// 2021.04.22 - PHR currency now included in reminder  
+// 2021.05.07 - PHR Added dec limit 1 to query as it took the oldest currency and not the newest. 2021057 
 // --------------------- Bekrivelse ------------------------
 // Ved generering af en rykker oprettes en ordre med art = R1. Hver ordre der indgår i rykkeren oprettes som en ordrelinje
 // hvor feltet enhed indeholder id fra openpost tabellen og serienr indeholder forfaldsdatoen,.Beskrivelse indeholde beskrivelse.
@@ -272,14 +269,17 @@ for ($i=0; $i<=$konto_antal; $i++) {
 			}
 ##########################################################################################################################		
 		} else {
-			$r = db_fetch_array(db_select("select * from ordrer where id = '$rykker_id[$i]'",__FILE__ . " linje " . __LINE__));
+			$qtxt = "select * from ordrer where id = '$rykker_id[$i]'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$rykkernr=substr($r['art'],-1);
 			$rentesum=$r['sum'];
 			$valuta=$r['valuta'];
 			$fakturadate=$r['fakturadate'];
 			$rykkernr++;
 			if ($valuta && $valuta!='DKK') { #20140707
-				if ($r2= db_fetch_array(db_select("select valuta.kurs from valuta, grupper where grupper.art='VK' and grupper.box1='$valuta' and valuta.gruppe=grupper.kodenr::INT and valuta.valdate <= '$rykkerdate' order by valuta.valdate",__FILE__ . " linje " . __LINE__))) {
+				$qtxt = "select valuta.kurs from valuta, grupper where grupper.art='VK' and grupper.box1='$valuta' and ";
+				$qtxt.= "valuta.gruppe=grupper.kodenr::INT and valuta.valdate <= '$rykkerdate' order by valuta.valdate desc limit 1"; # 20210507
+				if ($r2= db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 					$valutakurs=$r2['kurs'];
 				} else {
 					$tmp = dkdato($ordredate);
@@ -291,35 +291,58 @@ for ($i=0; $i<=$konto_antal; $i++) {
 			}
 			if ($rykkernr<=3) {
 				$art="R".$rykkernr;
-				$r1=db_fetch_array(db_select("select * from adresser where id ='$r[konto_id]'",__FILE__ . " linje " . __LINE__));
+				$qtxt = "select * from adresser where id ='$r[konto_id]'";
+				$r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$r_fakturanr=$r['ordrenr']."-".$rykkernr;
-					db_modify("insert into ordrer (ordrenr, konto_id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, betalingsdage, betalingsbet, cvrnr, ean, institution, notes, art, ordredate, levdate, fakturadate, momssats, hvem, tidspkt, ref,status,valuta,valutakurs,fakturanr,email,betalt,kontakt,mail_fakt) 
-					values ('$r[ordrenr]', '$r[konto_id]', '$r1[kontonr]', '".db_escape_string($r1['firmanavn'])."', '".db_escape_string($r1['addr1'])."', '".db_escape_string($r1['addr2'])."', '".db_escape_string($r1['postnr'])."', '".db_escape_string($r1['bynavn'])."', '".db_escape_string($r1['land'])."', '$ffdage3', 'Netto', '".db_escape_string($r1['cvrnr'])."', '".db_escape_string($r1['ean'])."', '".db_escape_string($r1['institution'])."', '".db_escape_string($r1['notes'])."', '$art', '$rykkerdate', '$rykkerdate', '$rykkerdate', '0', '$brugernavn', '$tidspkt', '".db_escape_string($r['ref'])."', '2','$valuta', '$valutakurs','$r_fakturanr','".db_escape_string($r['email'])."','-','".db_escape_string($r['kontakt'])."','$r[mail_fakt]')",__FILE__ . " linje " . __LINE__);
-				$r= db_fetch_array(db_select("select id from ordrer where ordrenr ='$r[ordrenr]' and art = '$art' and fakturanr = '$r_fakturanr' and betalt != 'on'",__FILE__ . " linje " . __LINE__)); #Henter ordrelinjer fra basisrykker.
+				$qtxt = "insert into ordrer (ordrenr, konto_id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land, betalingsdage, ";
+				$qtxt.= "betalingsbet, cvrnr, ean, institution, notes, art, ordredate, levdate, fakturadate, momssats, hvem, tidspkt, ";
+				$qtxt.= "ref,status,valuta,valutakurs,fakturanr,email,betalt,kontakt,mail_fakt) values ";
+				$qtxt.= "('$r[ordrenr]', '$r[konto_id]', '$r1[kontonr]', '".db_escape_string($r1['firmanavn'])."', ";
+				$qtxt.= "'".db_escape_string($r1['addr1'])."', '".db_escape_string($r1['addr2'])."', '".db_escape_string($r1['postnr'])."',";
+				$qtxt.= "'".db_escape_string($r1['bynavn'])."', '".db_escape_string($r1['land'])."', '$ffdage3', 'Netto', ";
+				$qtxt.= "'".db_escape_string($r1['cvrnr'])."', '".db_escape_string($r1['ean'])."', '".db_escape_string($r1['institution'])."',";
+				$qtxt.= "'".db_escape_string($r1['notes'])."', '$art', '$rykkerdate', '$rykkerdate', '$rykkerdate', '0', '$brugernavn', ";
+				$qtxt.= "'$tidspkt', '".db_escape_string($r['ref'])."', '2','$valuta', '$valutakurs','$r_fakturanr',";
+				$qtxt.= "'".db_escape_string($r['email'])."','-','".db_escape_string($r['kontakt'])."','$r[mail_fakt]')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				$qtxt =	"select id from ordrer where ordrenr ='$r[ordrenr]' and art = '$art' and fakturanr = '$r_fakturanr' and betalt != 'on'";
+				$r= db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); #Henter ordrelinjer fra basisrykker.
 				$ny_rykker_id[$i]=$r['id'];
 				$pos=0;
-				$q2 = db_select("select * from ordrelinjer where ordre_id = '$rykker_id[$i]' order by posnr",__FILE__ . " linje " . __LINE__);
+				$qtxt = "select * from ordrelinjer where ordre_id = '$rykker_id[$i]' order by posnr";
+				$q2 = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				while ($r2=db_fetch_array($q2)) { #og indsætter dem i den nye rykker
 					if (!$r2['vare_id'] && $r2['enhed']) {
 						$pos++;
-						db_modify("insert into ordrelinjer (posnr,enhed, ordre_id, serienr, beskrivelse) values ('$pos','$r2[enhed]', '$ny_rykker_id[$i]', '$r2[serienr]', '$r2[beskrivelse]')",__FILE__ . " linje " . __LINE__);
-						$r3=db_fetch_array(db_select("select amount from openpost where id = '$r2[enhed]'",__FILE__ . " linje " . __LINE__));
+						$qtxt = "insert into ordrelinjer (posnr,enhed, ordre_id, serienr, beskrivelse) values ";
+						$qtxt.= "('$pos','$r2[enhed]', '$ny_rykker_id[$i]', '$r2[serienr]', '$r2[beskrivelse]')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+						$qtxt = "select amount from openpost where id = '$r2[enhed]'";
+						$r3=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 						$rentesum=$rentesum+$r3['amount'];
 					}
 				}
-				$r2=db_fetch_array(db_select("select * from ordrer where id = '$rykker_id[$i]'",__FILE__ . " linje " . __LINE__));
+				$qtxt = "select * from ordrer where id = '$rykker_id[$i]'";
+				$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				if ($r2['sum'])	{ # Henter gebyrinformation fra basisrykker.
-				$r3=db_fetch_array(db_select("select sum(pris) AS sum from ordrelinjer where ordre_id = '$rykker_id[$i]' and vare_id > 0",__FILE__ . " linje " . __LINE__));
-				if ($r3['sum'] != $r2['sum']) {
-					$tmp = $r3['sum']*1;
-					db_modify("update ordrer set sum = '$tmp' where id = '$rykker_id[$i]'",__FILE__ . " linje " . __LINE__);
+					$qtxt = "select sum(pris) as sum from ordrelinjer where ordre_id = '$rykker_id[$i]' and vare_id > 0";
+					if ($r3=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)) && $r3['sum'] && $r3['sum'] != $r2['sum']) {
+						$tmp = $r3['sum'];
+						if ($r3['valutakurs'] && $r3['valutakurs'] != 100) $tmp*=$r3['valutakurs']/100; # 20210422
+						$qtxt = "update ordrer set sum = '". afrund($tmp,2) ."' where id = '$rykker_id[$i]'";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					$r2['sum'] = $tmp;
 				}		
-					$r4=db_fetch_array(db_select("select * from openpost where refnr = '$rykker_id[$i]' and konto_id='$r2[konto_id]' and amount='$r2[sum]'",__FILE__ . " linje " . __LINE__));
+						if ($r2['valutakurs'] && $r2['valutakurs'] != 100) $r2['sum']*=$r2['valutakurs']/100; #20210422
+					$qtxt = "select * from openpost where refnr = '$rykker_id[$i]' and konto_id='$r2[konto_id]' and ";
+					$qtxt.= "amount = ". afrund($r2['sum'],2);
+#					$qtxt.= "amount > $r2[sum]-0.01 and amount < $r2[sum]+0.01";
+					$r4=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 					# Og indsætter disse i den nye rykker.
 					$pos++;
-					db_modify("insert into ordrelinjer (posnr,enhed, ordre_id, serienr, beskrivelse) values ('$pos','$r4[id]', '$ny_rykker_id[$i]','$r2[fakturadate]', '".db_escape_string($r4['beskrivelse'])."')",__FILE__ . " linje " . __LINE__);
-#					}
+					$qtxt = "insert into ordrelinjer (posnr,enhed, ordre_id, serienr, beskrivelse) values ";
+					$qtxt.= "('$pos','$r4[id]', '$ny_rykker_id[$i]','$r2[fakturadate]', '".db_escape_string($r4['beskrivelse'])."')";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 				$formular=$rykkernr+5; # fordi rykker 1 har formular nr. 6, rykekr 2 nr. 7 osv.
 				# Og tilføjer rykkergebyr
@@ -327,25 +350,33 @@ for ($i=0; $i<=$konto_antal; $i++) {
 				elseif ($rykkernr==3 && $rentesats_3) $renteamount[$x] = find_rente($rentesats_3,$fakturadate,$rentesum);
 				else $renteamount[$x]=0;
 				if ($renteamount[$x]) {
-					$q3 = db_select ("select * from varer where id IN (select yb from formularer where beskrivelse='GEBYR' and formular='$formular')",__FILE__ . " linje " . __LINE__);
+					$qtxt = "select * from varer where id IN (select yb from formularer where beskrivelse='GEBYR' and formular='$formular')";
+					$q3 = db_select ($qtxt,__FILE__ . " linje " . __LINE__);
 					if ($r3 = db_fetch_array($q3)) {
 						$beskrivelse=db_escape_string($r3['beskrivelse']);				
 						$dd=date("Y-m-d");
 						$pos++;
-						db_modify("insert into ordrelinjer (posnr,ordre_id,vare_id,varenr,serienr,beskrivelse,antal,pris) values ($pos,'$ny_rykker_id[$i]','$r3[id]','$r3[varenr]', '$dd', '$beskrivelse','1','$renteamount[$x]')",__FILE__ . " linje " . __LINE__);
+						$qtxt = "insert into ordrelinjer (posnr,ordre_id,vare_id,varenr,serienr,beskrivelse,antal,pris) values ";
+						$qtxt = "($pos,'$ny_rykker_id[$i]','$r3[id]','$r3[varenr]', '$dd', '$beskrivelse','1','$renteamount[$x]')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 						$sum=$sum+$renteamount[$x];
 					}
 				}
-				$q2 = db_select ("select * from varer where id IN (select xb from formularer where beskrivelse='GEBYR' and formular='$formular')",__FILE__ . " linje " . __LINE__);
+				$qtxt = "select * from varer where id IN (select xb from formularer where beskrivelse='GEBYR' and formular='$formular')";
+				$q2 = db_select ($qtxt,__FILE__ . " linje " . __LINE__);
 				if ($r2 = db_fetch_array($q2)) {				
 					$gebyr=$r2['salgspris'];
 					$sum=$sum+$gebyr;
 					if ($valutakurs) {
-						$gebyr=$gebyr*100/$valutakurs;r>
-						$sum=$sum*100/$valutakurs;
+						$gebyr=afrund($gebyr*100/$valutakurs,2);
+						$sum=afrund($sum*100/$valutakurs,2);
 					}	
-					db_modify("insert into ordrelinjer (ordre_id, varenr, vare_id, beskrivelse, antal, pris, serienr) values ('$ny_rykker_id[$i]', '".db_escape_string($r2['varenr'])."', '$r2[id]', '".db_escape_string($r2['beskrivelse'])."', '1', '$gebyr' , '$rykkerdate')",__FILE__ . " linje " . __LINE__);
-					db_modify("update ordrer set sum='$sum' where id=$rykker_id[$i]",__FILE__ . " linje " . __LINE__);
+					$qtxt = "insert into ordrelinjer (ordre_id, varenr, vare_id, beskrivelse, antal, pris, serienr) values ";
+					$qtxt.= "('$ny_rykker_id[$i]', '".db_escape_string($r2['varenr'])."', '$r2[id]', ";
+					$qtxt.= "'".db_escape_string($r2['beskrivelse'])."', '1', '$gebyr' , '$rykkerdate')";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					$qtxt = "update ordrer set sum='$sum' where id=$rykker_id[$i]";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 			} else {
 				if ($topniveau) $topniveau=$topniveau.", "; 
@@ -354,6 +385,7 @@ for ($i=0; $i<=$konto_antal; $i++) {
 		}
 	}
 }	 
+#	xit;
 if ($topniveau) print "<BODY onLoad=\"javascript:alert('Topniveau nået for rykkere med l&oslash;benr $topniveau')\">";
 print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
 

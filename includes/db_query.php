@@ -210,7 +210,6 @@ if (!function_exists('db_select')) {
 				$linje=trim(fgets($fp));
 				fclose($fp);
 			}
-			echo __file__." ".__line__." $errtxt<br>";
 			list($tmp,$tmp2)=explode("\n",$errtxt);
 			$tmp.="_".date("h:i");
 			if ($linje != $tmp) {

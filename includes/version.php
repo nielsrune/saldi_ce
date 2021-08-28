@@ -1,4 +1,4 @@
 <?php 
-	$version = "3.8.9";
-	$copyright= "2003-2020 Saldi.dk ApS";
+	$version   = "4.0.1";
+	$copyright = "2003-2021 Saldi.dk ApS - Tel. +45 4690 2208";
 ?>

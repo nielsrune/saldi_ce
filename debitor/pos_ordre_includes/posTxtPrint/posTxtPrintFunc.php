@@ -4,67 +4,57 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------- debitor/pos_ordre_includes/posTxtPrint/postTxtPrintFunc.php ---- lap 3.7.4----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/posTxtPrint/postTxtPrintFunc.php --- lap 4.0.0 --- 2021.02.26 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
-// 
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Copyright (c) 2004-2019 saldi.dk aps
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
+//
+// Copyright (c) 2019-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190508 LN Move pos_txt_print function to this seperate file
+// 20210226 PHR Added $reportNumber
 
 include("pos_ordre_includes/posTxtPrint/posTxtFunctions.php"); #20190506
-
 function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling, $type = "standard") {
+
 	if (!$id && $type == "standard") {
 		return('No ID');
 	}
-	global $db;
-	global $db_id;
-	global $brugernavn;
-	global $bruger_id;
+	global $addr1,$addr2;
+	global $bordnr,$bordnavn,$brugernavn,$bruger_id,$bynavn;
+	global $charset,$country,$cvrnr;
+	global $db,$db_encode,$db_id,$difkto;
+	global $f_momssats,$firmanavn;
+	global $kasse;
 	global $momssats;
-	global $db_encode;
-	global $printserver;
-	global $difkto;
-	global $bordnavn;
-	global $regnaar;
+	global $postnr,$printserver;
+	global $ref,$regnaar,$reportNumber;
+	global $tlf,$tracelog;
 
-	global $firmanavn;
-	global $addr1;
-	global $addr2;
-	global $postnr;
-	global $bynavn;
-	global $tlf;
-	global $cvrnr;
-	global $country;
-
-	global $f_momssats;
+	if ($tracelog) fwrite ($tracelog, "Printing\n");
 
 	$samlet_pris=0;
+	if (!$reportNumber) {
+		$qtxt="select max(report_number) as repno from report";
+		($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$reportNumber=$r['repno']:$reportNumber=0;
 
-	#	$udskriv_bon=1;
- 	include("../includes/ConvertCharset.class.php");
+	}
 
     $ToCharset = "cp865";
-	$FromCharset = getFromCharset();
-	$convert = new ConvertCharset();
-
+	$FromCharset = $charset;
+#	$convert = new ConvertCharset();
 	if($type == "xRapport" || $type == "zRapport") {
 		$pfnavn = "../temp/".$db."/". "report" . $bruger_id. ".txt";
 	} else {
@@ -80,17 +70,17 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 	$betalt=0;
 	$fremmedvaluta=0;
 
-    include("pos_ordre_includes/posTxtPrint/posPayments.php"); #20190507
+	#cho "Kalder pos_ordre_includes/posTxtPrint/posPayments.php<br>";
 
-
+	include("pos_ordre_includes/posTxtPrint/posPayments.php"); #20190507
     include("pos_ordre_includes/posTxtPrint/ordrerData.php"); #20190506
 
 	if (getCountry() == "Norway") {
 		$doNotPrint = setReceiptAsCopied($r, $type, $id);
 	}
 
-	if (!$tid) $tid=date("H:i");
-	if (!$betaling) $betaling="Betalt";
+	if (!isset($tid) || !$tid) $tid=date("H:i");
+	if (!isset($betaling) || !$betaling) $betaling="Betalt";
 	if ($ref) {
 		if ($r=db_fetch_array(db_select("select ansat_id from brugere where brugernavn = '$ref'",__FILE__ . " linje " . __LINE__))) {
 			$ansat_id=$r['ansat_id']*1;
@@ -102,9 +92,11 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 
 	if ($bordnr || $bordnr=='0') { #20150415
 		$r = db_fetch_array(db_select("select box2,box3,box4,box7,box10 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__));
-		($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=NULL;
-		$bordnavn=$bord[$bordnr];
+		($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=array();
+		if (is_numeric($bordnr)) {
+#			$bordnavn=$bord[$bordnr];
 		setcookie("saldi_bordnr",$bordnr,time()+60*60*24*30);
+	}
 	}
 	if (!$bordnr) $bordnr=$_COOKIE['saldi_bordnr'];
 	if (!$kasse) $kasse=find_kasse($kasse);
@@ -128,7 +120,8 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 	$linjeantal=$x;
 	if ($rvnr) {
 		$x++;
-		if($r=db_fetch_array(db_select("select * from ordrelinjer where ordre_id = '$id' and varenr = 'R'",__FILE__ . " linje " . __LINE__)));
+		$qtxt = "select * from ordrelinjer where ordre_id = '$id' and varenr = 'R'";
+		if($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)));
 		$antal[$x]="   ";
 		list($pris,$samlet_pris)=explode("|",$r['lev_varenr'],2);
 		$dkkpris[$x]=" ".dkdecimal($pris,2);
@@ -139,7 +132,7 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 	}
 	$temp = find_kassesalg($kasse, 0,'DKK');
 	$omsatning=$temp[1] + $temp[7];
-	$reportArray = setupReport($type, $kasse); #Make report if that was the case
+	$reportArray = setupReport($type, $kasse,$reportNumber); #Make report if that was the case
   $uniqueShopId = getUniqueBoxId($kasse);
 	$vatRate = getVatArray($linjeantal, $dkkpris, $vatArray);
 	include("pos_ordre_includes/posTxtPrint/setTextVar.php"); #20190507

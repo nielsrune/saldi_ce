@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------/admin/opret.php-----patch 3.8.9 ------ 2020-02-28 --------
-// LICENS
+// ------------/admin/opret.php-----patch 4.0.0 ------ 2021-04-01 --------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2020 saldi.dk aps
+// Copyright (c) 2003-2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 
 // 2013.05.14 Slutmd blev sat til 1 ved oprettelse af regnskabsår
@@ -71,6 +68,18 @@
 // 2019.11.25	PHR changed id from serial/autoincrement til integer in table drawer, corrections, price_corrections (3.8.7)
 // 2019.12.17	PHR Added field modtime at adresser,batch_kob,batch_salg & varer and modtime update trigger (3.8.8)
 // 2020.02.28	PHR Added ',0"' to function call formularimport. 
+// 2020.05.06 PHR Added tabel mylabel. 
+// 2020.06.22 PHR Added tabel labeltemplate. 
+// 2020.09.29 PHR Added tabel stocklog. 
+// 2020.11.14 PHR Added field netweightunit,grossweightunit,address_id to table varer (3.9.6)
+// 2020.11.14 PHR Added field netweight,grossweight,phone to table ordrer (3.9.6)
+// 2020.11.24 PHR Added tabel rental & rentalperiod (3.9.7)
+// 2020.11.29 PHR Added column lastprint to mylabel (3.9.8)
+// 2021.01.08 PHR Added tables voucher & voucheruse (3.9.9)
+// 2021.02.23 PHR Added table rentalitems and column consignmentid to table ordrer (4.0.0)
+// 2021.04.01 PHR Added colunm shop_status and shop_id to table ordrer  (4.0.1)
+// 2021.04.01 PHR Added colunm rental_id to table ordrelinjer  (4.0.1)
+
 
 @session_start();
 $s_id=session_id();
@@ -238,18 +247,19 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 */	
 	transaktion("begin");
 #	db_modify("CREATE SEQUENCE id START 1 INCREMENT 1 MAXVALUE 9223372036854775807 MINVALUE 1 CACHE 1",__FILE__ . " linje " . __LINE__);
-
 	######## Adresser ##########
 	$qtxt="CREATE TABLE adresser ";
-	$qtxt.="(id serial NOT NULL,firmanavn text,addr1 text,addr2 text,postnr text,bynavn text,land text,kontakt text,tlf text,fax text,";
-	$qtxt.="email text,web text,bank_navn text,bank_reg text,bank_konto text,bank_fi text,erh text,swift text,notes text,rabat numeric(15,3),";
-	$qtxt.="momskonto integer,kreditmax numeric(15,3),betalingsbet text,betalingsdage integer DEFAULT 0,kontonr text,cvrnr text,ean text,";
-	$qtxt.="institution text,art varchar(2),gruppe integer,rabatgruppe integer,kontoansvarlig integer,oprettet date,kontaktet date,";
+	$qtxt.= "(id serial NOT NULL,firmanavn varchar(90),addr1 varchar(60),addr2 varchar(60),postnr varchar(10),bynavn varchar(60),";
+	$qtxt.= "land varchar(60),kontakt varchar(60),tlf varchar(15),fax varchar(15),email varchar(60),web varchar(60),";
+	$qtxt.= "bank_navn varchar(60),bank_reg varchar(15),bank_konto varchar(15),bank_fi varchar(15),erh varchar(15),swift varchar(15),";
+	$qtxt.= "notes text,rabat numeric(15,3),momskonto integer,kreditmax numeric(15,3),betalingsbet varchar(15),";
+	$qtxt.= "betalingsdage integer DEFAULT 0,kontonr numeric(15,0),cvrnr varchar(15),ean varchar(15),institution varchar(15),";
+	$qtxt.= "art varchar(2),gruppe integer,rabatgruppe integer,kontoansvarlig integer,oprettet date,kontaktet date,";
 	$qtxt.="kontaktes date,pbs varchar(2),pbs_nr text,pbs_date date,mailfakt varchar(2),udskriv_til varchar(10),felt_1 text,felt_2 text,";
-	$qtxt.="felt_3 text,felt_4 text,felt_5 text,vis_lev_addr varchar(2),kontotype text,fornavn text,efternavn text,lev_firmanavn text,";
-	$qtxt.="lev_fornavn text,lev_efternavn text,lev_addr1 text,lev_addr2 text,lev_postnr text,lev_bynavn text,lev_land text,";
-	$qtxt.="lev_kontakt text,lev_tlf text,lev_email text,status text,lukket varchar(2),kategori text,saldo numeric(15,3),";
-	$qtxt.="PRIMARY KEY (id))";
+	$qtxt.= "felt_3 text,felt_4 text,felt_5 text,vis_lev_addr varchar(2),kontotype varchar(15),fornavn varchar(60),";
+	$qtxt.= "efternavn varchar(60),lev_firmanavn varchar(90),lev_fornavn varchar(60),lev_efternavn varchar(60),lev_addr1 varchar(60),"; $qtxt.= "lev_addr2 varchar(60),lev_postnr varchar(15),lev_bynavn varchar(60),lev_land varchar(60),lev_kontakt varchar(60),";
+	$qtxt.= "lev_tlf varchar(15),lev_email varchar(60),status varchar(15),lukket varchar(2),kategori varchar(15),saldo numeric(15,3),";
+	$qtxt.= "invoiced date,mysale varchar(2),PRIMARY KEY (id))";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE ansatte (id serial NOT NULL,konto_id integer,navn text,addr1 text,addr2 text,postnr text,bynavn text,tlf text,fax text,mobil text,privattlf text,initialer text,email text,notes text,cprnr text,posnr integer,afd integer,provision numeric(15,3),nummer integer,loen numeric(15,3),hold integer,lukket varchar(2),bank text,startdate date,slutdate date,gruppe numeric(15,3),extraloen numeric(15,3),trainee text,password text,overtid numeric(1,0),sag_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE  crm (id serial NOT NULL,konto_id int,kontakt_id int,ansat_id int,notat text,notedate date,spor text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
@@ -261,41 +271,50 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 	db_modify("CREATE TABLE kladdeliste (id serial NOT NULL,kladdedate date,bogforingsdate date,kladdenote text,bogfort varchar(2),oprettet_af text,bogfort_af text,hvem text,tidspkt text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE kontoplan (id serial NOT NULL,kontonr numeric(15,0),beskrivelse text,kontotype varchar(1),moms text,fra_kto numeric(15,0),til_kto numeric(15,0),lukket varchar(2),primo numeric(15,3),saldo numeric(15,3),regnskabsaar integer,genvej varchar(2),overfor_til numeric(15,0),anvendelse text,modkonto numeric(15,0),valuta integer,valutakurs numeric(15,4),PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE kontokort (id serial NOT NULL,ref_id integer,faktnr integer,refnr integer,beskrivelse text,kredit numeric(15,0),debet numeric(15,0),transdate date,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	$qtxt = "CREATE TABLE ordrer (id serial NOT NULL,konto_id integer,firmanavn text,addr1 text,addr2 text,postnr text,bynavn text,land text, ";
-	$qtxt.= "kontakt text,email text,mail_fakt varchar(2),udskriv_til varchar(10),kundeordnr text,lev_navn text,lev_addr1 text,lev_addr2 text, ";
-	$qtxt.= "lev_postnr text,lev_bynavn text,lev_kontakt text,ean text,institution text,betalingsbet text,betalingsdage integer,kontonr text, ";
-	$qtxt.= "cvrnr text,art varchar(2),valuta text,valutakurs numeric(15,3),sprog text,projekt text,ordredate date,levdate date, ";
-	$qtxt.= "fakturadate date,notes text,ordrenr integer,sum numeric(15,3),momssats numeric(15,3),status integer,ref text,fakturanr text, ";
-	$qtxt.= "modtagelse integer,kred_ord_id integer,lev_adr text,kostpris numeric(15,3),moms numeric(15,3),hvem text,tidspkt text, ";
-	$qtxt.= "betalt varchar(12),nextfakt date,pbs varchar(2),mail varchar(2),mail_cc text,mail_bcc text,mail_subj text,mail_text text, ";
-	$qtxt.= "felt_1 text,felt_2 text,felt_3 text,felt_4 text,felt_5 text,vis_lev_addr varchar(2),restordre numeric(2,0), betalings_id text, ";
-	$qtxt.= "sag_id integer,tilbudnr numeric(15,0),datotid text,nr numeric(15,0),returside text,sagsnr numeric(15,0),dokument text, ";
-	$qtxt.= "procenttillag numeric(15,3),mail_bilag varchar(2),omvbet varchar(2),afd integer,lager integer,kontakt_tlf text,copied boolean, ";
-	$qtxt.= "PRIMARY KEY (id))";
+	$qtxt = "CREATE TABLE ordrer (id serial NOT NULL,konto_id integer,firmanavn text,addr1 text,addr2 text,postnr text,bynavn text,";
+	$qtxt.= "land text,kontakt text,email text,mail_fakt varchar(2),udskriv_til varchar(10),kundeordnr text,lev_navn text,";
+	$qtxt.= "lev_addr1 text,lev_addr2 text,lev_postnr text,lev_bynavn text,lev_kontakt text,ean text,institution text,";
+	$qtxt.= "betalingsbet text,betalingsdage integer,kontonr text,cvrnr text,art varchar(2),valuta text,valutakurs numeric(15,3),";
+	$qtxt.= "sprog text,projekt text,ordredate date,levdate date,fakturadate date,notes text,ordrenr integer,sum numeric(15,3),";
+	$qtxt.= "momssats numeric(15,3),status integer,ref text,fakturanr text,modtagelse integer,kred_ord_id integer,lev_adr text,";
+	$qtxt.= "kostpris numeric(15,3),moms numeric(15,3),hvem text,tidspkt text,betalt varchar(12),nextfakt date,pbs varchar(2),";
+	$qtxt.= "mail varchar(2),mail_cc text,mail_bcc text,mail_subj text,mail_text text,felt_1 text,felt_2 text,felt_3 text,";
+	$qtxt.= "felt_4 text,felt_5 text,vis_lev_addr varchar(2),restordre numeric(2,0), betalings_id text,sag_id integer,"; 
+	$qtxt.= "tilbudnr numeric(15,0),datotid text,nr numeric(15,0),returside text,sagsnr numeric(15,0),dokument text, ";
+	$qtxt.= "procenttillag numeric(15,3),mail_bilag varchar(2),omvbet varchar(2),afd integer,lager integer,kontakt_tlf text,";
+	$qtxt.= "copied boolean,phone varchar(15),report_number int default 0,settletime numeric(15,0)  default '0',consignmentid varchar(25),";
+	$qtxt.= "shop_status int,shop_id int, PRIMARY KEY (id))";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "CREATE TABLE ordrelinjer ";
 	$qtxt.= "(id serial NOT NULL,varenr text,beskrivelse text,enhed text,posnr integer,pris numeric(15,3),vat_price numeric(15,3),";
 	$qtxt.= "rabat numeric(15,3),lev_varenr text,ordre_id integer,serienr text,vare_id integer,antal numeric(15,3),leveres numeric(15,3),";
 	$qtxt.= "leveret numeric(15,3),bogf_konto integer,oprettet_af text,bogfort_af text,hvem text,tidspkt text,kred_linje_id integer,";
 	$qtxt.= "momsfri varchar(2),momssats numeric(15,3),vat_account numeric(15,0),kostpris numeric(15,3),samlevare varchar(2),projekt text,";
-	$qtxt.= "m_rabat numeric(15,3),rabatgruppe integer,folgevare integer,kdo varchar(2),rabatart varchar(10),variant_id text,procent numeric(15,3),";
-	$qtxt.= "omvbet varchar(2),saet integer,fast_db numeric(15,3),afd integer,lager integer,tilfravalg text,PRIMARY KEY (id))";
+	$qtxt.= "m_rabat numeric(15,3),rabatgruppe integer,folgevare integer,kdo varchar(2),rabatart varchar(10),variant_id text,";
+	$qtxt.= "procent numeric(15,3),omvbet varchar(2),saet integer,fast_db numeric(15,3),afd integer,lager integer,tilfravalg text,";
+	$qtxt.= "rental_id int,PRIMARY KEY (id))";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE ordretekster (id serial NOT NULL,tekst text,sort numeric(15,0),PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE openpost (id serial NOT NULL,konto_id integer,konto_nr text,faktnr text,amount numeric(15,3),refnr integer,beskrivelse text,udlignet varchar(2),transdate date,uxtid text,kladde_id integer,bilag_id integer,udlign_id integer,udlign_date date,valuta text,projekt text,valutakurs numeric(15,3),forfaldsdate date,betal_id text,betalings_id text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE transaktioner (id serial NOT NULL,kontonr numeric(15,0),bilag numeric(15,0),transdate date,logtime time,beskrivelse text,debet numeric(15,3),kredit numeric(15,3),faktura text,kladde_id integer,projekt text,ansat numeric(15,0),logdate date,afd integer,ordre_id integer,valuta text,valutakurs numeric(15,3),moms numeric(15,3),adresser_id int4,kasse_nr numeric(15,0),land varchar(3),PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE transaktioner (id serial NOT NULL,kontonr numeric(15,0),bilag numeric(15,0),transdate date,logtime time,";
+	$qtxt.= "beskrivelse text,debet numeric(15,3),kredit numeric(15,3),faktura text,kladde_id integer,projekt text,ansat numeric(15,0),";
+	$qtxt.= "logdate date,afd integer,ordre_id integer,valuta text,valutakurs numeric(15,3),moms numeric(15,3),adresser_id int4,";
+	$qtxt.= "kasse_nr numeric(15,0),land varchar(3),report_number int default 0,PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE simulering (id serial NOT NULL,kontonr numeric(15,0),bilag numeric(15,0),transdate date,beskrivelse text,debet numeric(15,3),kredit numeric(15,3),faktura text,kladde_id int4,projekt text,ansat numeric(15,0),logdate date,logtime time,afd int4,ordre_id int4,valuta text,valutakurs numeric(15,3),moms numeric(15,3),adresser_id int4,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	$qtxt = "CREATE TABLE varer ";
-	$qtxt.= "(id serial NOT NULL,varenr text,stregkode text,beskrivelse text,enhed text,enhed2 text,indhold numeric(15,3),forhold numeric(15,3),";
-	$qtxt.= "gruppe text,salgspris numeric(15,3),vat_price numeric(15,3),kostpris numeric(15,3),provisionsfri varchar(2),notes text,";
-	$qtxt.= "lukket varchar(2),serienr text,beholdning numeric(15,3),samlevare varchar(2),delvare varchar(2),min_lager numeric(15,3),";
-	$qtxt.= "max_lager numeric(15,3), trademark text,location text,retail_price numeric(15,3),special_price numeric(15,3),";
-	$qtxt.= "campaign_cost numeric(15,3),tier_price numeric(15,3),open_colli_price numeric(15,3),colli numeric(15,3),outer_colli numeric(15,3),";
-	$qtxt.= "outer_colli_price numeric(15,3),special_from_date date,special_to_date date,special_from_time time,special_to_time time,";
-	$qtxt.= "komplementaer text,circulate integer,operation integer,prisgruppe integer,tilbudgruppe integer,rabatgruppe integer,dvrg integer,";
+	$qtxt.= "(id serial NOT NULL,varenr text,stregkode text,beskrivelse text,enhed text,enhed2 text,indhold numeric(15,3)";
+	$qtxt.= ",forhold numeric(15,3),gruppe text,salgspris numeric(15,3),vat_price numeric(15,3),kostpris numeric(15,3),";
+	$qtxt.= "provisionsfri varchar(2),notes text,lukket varchar(2),serienr text,beholdning numeric(15,3),samlevare varchar(2),";
+	$qtxt.= "delvare varchar(2),min_lager numeric(15,3),max_lager numeric(15,3), trademark text,location text,";
+	$qtxt.= "retail_price numeric(15,3),special_price numeric(15,3),campaign_cost numeric(15,3),tier_price numeric(15,3),";
+	$qtxt.= "open_colli_price numeric(15,3),colli numeric(15,3),outer_colli numeric(15,3),outer_colli_price numeric(15,3),";
+	$qtxt.= "special_from_date date,special_to_date date,special_from_time time,special_to_time time,komplementaer text,";
+	$qtxt.= "circulate integer,operation integer,prisgruppe integer,tilbudgruppe integer,rabatgruppe integer,dvrg integer,";
 	$qtxt.= "m_type varchar(10),m_rabat text,m_antal text,folgevare text,kategori text,varianter text,publiceret varchar(2),";
 	$qtxt.= "montage numeric(15,3),demontage numeric(15,3),fotonavn text,tilbudsdage text,provision integer,netweight numeric(15,3),";
-	$qtxt.= "grossweight numeric(15,3) ,PRIMARY KEY (id))";
+	$qtxt.= "netweightunit varchar(2),grossweight numeric(15,3),grossweightunit varchar(2),gavekort varchar(2),specialtype varchar(10),";
+	$qtxt.= "address_id int,length numeric(15,3),width numeric(15,3),height numeric(15,3),PRIMARY KEY (id))";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE lagerstatus (id serial NOT NULL,lager integer,vare_id integer,variant_id integer,beholdning numeric(15,3),lok1 text,lok2 text,lok3 text,lok4 text,lok5 text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE batch_kob (id serial NOT NULL,kobsdate date,fakturadate date,vare_id integer,variant_id integer,linje_id integer,ordre_id integer,pris numeric(15,3),antal numeric(15,3),rest numeric(15,3),lager integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
@@ -355,20 +374,57 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 	db_modify("CREATE TABLE shop_ordrer (id serial NOT NULL,saldi_id integer,shop_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE varianter (id serial NOT NULL,beskrivelse text,shop_id integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE variant_typer (id serial NOT NULL,variant_id integer,shop_id integer,beskrivelse text,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
-	db_modify("CREATE TABLE variant_varer (id serial NOT NULL,vare_id integer,variant_type text,variant_beholdning numeric(15,3),variant_stregkode text,lager integer,PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE variant_varer (id serial NOT NULL,vare_id integer,variant_type text,variant_beholdning numeric(15,3),";
+	$qtxt.= "variant_stregkode text,lager integer,variant_id int, variant_kostpris numeric(15,3),variant_salgspris numeric(15,3),";
+	$qtxt.= "variant_vejlpris numeric(15,3),PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	db_modify("CREATE TABLE varetilbud (id serial NOT NULL,vare_id integer,startdag numeric(15,0),slutdag numeric(15,0),starttid time,sluttid time,ugedag integer,salgspris numeric(15,2),kostpris numeric(15,2),PRIMARY KEY (id))",__FILE__ . " linje " . __LINE__);
 	$qtxt="CREATE TABLE misc_meta_data ";
 	$qtxt.="(id serial NOT NULL, meta_name text, meta_grp text, meta_no integer,";
 	$qtxt.=" meta_value text, meta_description text, user_id integer, PRIMARY KEY (id))";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-
 	db_modify("CREATE TABLE drawer (id integer, openings integer)", __FILE__ . "linje" . __LINE__);
-	db_modify("CREATE TABLE proforma (id serial NOT NULL, price numeric(15,3), count integer, PRIMARY KEY (id))", __FILE__ . "linje" . __LINE__);
+	$qtxt="CREATE TABLE proforma (id serial NOT NULL, price numeric(15,3), count integer, PRIMARY KEY (id))";	
+	db_modify($qtxt, __FILE__ . "linje" . __LINE__);
 	$qtxt="CREATE TABLE deleted_order (id serial NOT NULL, price numeric(15,3), kasse integer, ordre_id integer, PRIMARY KEY (id))";
 	db_modify($qtxt, __FILE__ . "linje" . __LINE__);
 	db_modify("CREATE TABLE corrections (id integer, price numeric(15,3), kasse integer)", __FILE__ . "linje" . __LINE__);
 	db_modify("CREATE TABLE report (id serial NOT NULL, date date, type text, description text, count integer, total numeric(15,3), report_number integer, PRIMARY KEY (id))", __FILE__ . "linje" . __LINE__);
 	db_modify("CREATE TABLE price_correction (id integer, price numeric(15,3), kasse integer)", __FILE__ . "linje" . __LINE__);
+	$qtxt = "CREATE TABLE mylabel (id serial NOT NULL, account_id integer, page numeric(5,0), row numeric(5,0), col numeric(5,0), ";
+	$qtxt.= "price numeric(15,3), description varchar (40), condition varchar(10), barcode varchar (20), hidden boolean, sold boolean, ";
+	$qtxt.= "lastprint varchar(15), PRIMARY KEY (id))";
+	db_modify($qtxt, __FILE__ . "linje" . __LINE__);
+	$qtxt = "CREATE TABLE labeltemplate (id serial NOT NULL, account_id integer, description varchar (40), ";
+	$qtxt.= "labeltext text, PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt="CREATE TABLE gavekort (id serial NOT NULL, gavekortnr numeric(15,0), PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt="CREATE TABLE gavekortbrug (id serial NOT NULL, gavekortid integer, saldo numeric(15,2), ordre_id integer, PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
+	$qtxt="CREATE TABLE queries (id serial NOT NULL, query text, query_descrpition text, user_id integer, PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE labels (id serial NOT NULL, account_id integer, labeltype varchar (10), labelname varchar (40), ";
+	$qtxt.= "labeltext text, PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE stocklog (id serial NOT NULL, item_id integer, username varchar (10), initials varchar (10), ";
+	$qtxt.= "correction numeric(15,3), reason text,logtime varchar (10), PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE rental (id serial NOT NULL,rt_item_id int, rt_name varchar(40), PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt ="CREATE TABLE rentalitems (id serial NOT NULL,rt_item_id int,item_id int, qty numeric(15,0), unit varchar(1) ";
+	$qtxt.="PRIMARY KEY (id))";
+	$qtxt = "CREATE TABLE rentalperiod (id serial NOT NULL, rt_id int, rt_cust_id int, rt_from numeric(15,0),";
+	$qtxt.= "rt_to numeric(15,0), PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE voucher (id serial NOT NULL, item_id int, barcode numeric(15,3), PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "CREATE TABLE voucheruse (id serial NOT NULL, voucher_id int, order_id int, amount numeric(15,3), "; 
+	$qtxt.= "vat numeric(15,3), PRIMARY KEY (id))";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
+	
+	
 	
 	if ($db_type=="mysql" || $db_type=="mysqli") {
 		db_modify("ALTER TABLE adresser ADD modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", __FILE__ . "linje" . __LINE__);

@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----systemdata/regnskabskort.php ---------------- lap 3.7.0 -- 2017-15-16 --
-// LICENS
+// ----systemdata/regnskabskort.php ---------------- lap 3.9.9 -- 2021-01-01 --
+// LICENSE
 //
-// // Dette program er fri software. Du kan gendistribuere det og / eller
-// // modificere det under betingelserne i GNU General Public License (GPL)
-// // som er udgivet af "The Free Software Foundation", enten i version 2
-// // af denne licens eller en senere version, efter eget valg.
-// // Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// // 
-// // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// // i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
-// //
-// // Dette program er udgivet med haab om at det vil vaere til gavn,
-// // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// // GNU General Public Licensen for flere detaljer.
-// //
-// // En dansk oversaettelse af licensen kan laeses her:
-// // http://www.saldi.dk/dok/GNU_GPL_v2.html
-// //
-// // Copyright (c) 2003-2017 saldi.dk ApS
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
+//
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2015-01-02 Tilrettet til dynamisk lagerværdi. Søg find_lagervaerdi
@@ -31,6 +28,7 @@
 // 20170516 Div oprydning samt tilføjelse af laas_lager Søg laas
 // 2019.02.21 MSC - Rettet topmenu design og isset fejl
 // 2019.02.25 MSC - Rettet topmenu design
+// 2021.01.01 PHR Various changes and cleanup. Accounting now alloewd by default.
 
 @session_start();
 $s_id=session_id();
@@ -83,8 +81,8 @@ if ($menu=='T') {
 		include("top.php");
 		print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
 print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody>"; ####################table 1a start.
-print "<tr><td align=center valign=top>";
-print "<table width=100% align=center border=0 cellspacing=4 cellpadding=0><tbody>\n"; ##############table 2b start
+		print "<tr><td align='center' valign=top>";
+		print "<table width=100% align='center' border=0 cellspacing=4 cellpadding=0><tbody>\n"; ##############table 2b start
 print "<tr>\n";
 	}
 
@@ -92,9 +90,9 @@ if ($menu=='T') { # 20150327 stare
 	
 } else {
 	$tekst=findtekst(154,$sprog_id);
-	print "<td width=\"10%\" align=center><div class=\"top_bund\"><a href=\"javascript:confirmClose('regnskabsaar.php','$tekst')\" accesskey=L>Luk</a></div></td>\n";
-	print "<td width=80% align=center><div class=\"top_bund\">Regnskabskort</div></td>\n";
-	print "<td width=\"10%\" align=center><div class=\"top_bund\">&nbsp;</div></td>\n";
+	print "<td width=\"10%\" align='center'><div class=\"top_bund\"><a href=\"javascript:confirmClose('regnskabsaar.php','$tekst')\" accesskey=L>Luk</a></div></td>\n";
+	print "<td width=80% align='center'><div class=\"top_bund\">Regnskabskort</div></td>\n";
+	print "<td width=\"10%\" align='center'><div class=\"top_bund\">&nbsp;</div></td>\n";
 } # 20150327 stop
 print "</tr>\n";
 print "</tbody></table>\n"; #####################################################table 2b slut.
@@ -297,7 +295,7 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	if (!$modt) $modt='1';
 	
 	print "<form name='aar_1' action='regnskabskort.php' method='post'>";
-	if ($id){print "<tr><td colspan=4 align = center><big><b>Ret 1. regnskabs&aring;r: $beskrivelse</big></td></tr>\n";}
+	if ($id) print "<tr><td colspan=4 align = center><big><b>Ret 1. regnskabs&aring;r: $beskrivelse</big></td></tr>\n";
 	else {
 		print "<tr><td colspan=4 align = center><big><b>Velkommen til som SALDI bruger</b></big><br />
 			Du skal f&oslash;rst oprette dit 1. regnskabs&aring;r, f&oslash;r du kan bruge systemet.<br /><br /> 
@@ -309,40 +307,43 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 			</td></tr>\n";
 		print "<tr><td colspan=4 align = center><big><b>Opret 1. regnskabs&aring;r: $beskrivelse</big></td></tr>\n";
 	}
-	print "<tr><td colspan=4 align=center><table width=100% border=0><tbody><tr>"; #########################table 4c start
-	print "<tr><td></td><td align=center>Start</td><td align=center>Start</td><td align=center>Slut</td><td align=center>Slut</td><td align=center>Bogf&oslash;ring</td></tr>\n";
-	print "<tr><td align=center>Beskrivelse</td><td align=center>m&aring;ned</td><td align=center>&aring;r</td><td align=center>m&aring;ned</td><td align=center>&aring;r</td><td align=center>tilladt</tr>\n";
-	print "<input type=hidden name=kodenr value=1><input type=hidden name=id value='$id'>\n";
-	print "<tr><td align=center><input type=text size=30 name=beskrivelse value=\"$beskrivelse\" onchange=\"javascript:docChange = true;\"></td>\n";
+	print "<tr><td colspan=4 align='center'><table width=100% border=0><tbody><tr>"; #########################table 4c start
+	print "<tr><td></td><td align='center'>Start</td><td align='center'>Start</td><td align='center'>Slut</td><td align='center'>Slut</td><td align='center'>Bogf&oslash;ring</td></tr>\n";
+	print "<tr><td align='center'>Beskrivelse</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>tilladt</tr>\n";
+	print "<input type=hidden name=kodenr value=1><input type=hidden name='id' value='$id'>\n";
+	print "<tr><td align='center'><input type=text size='30' name='beskrivelse' value=\"$beskrivelse\" onchange=\"javascript:docChange = true;\"></td>\n";
 	if ($laast) $type="readonly=readonly";
 	else $type="type=text";
-	print "<td align=center><input $type style=\"text-align:right\" size=2 name=startmd value=$startmd onchange=\"javascript:docChange = true;\"></td>\n";
-	print "<td align=center><input $type style=\"text-align:right\" size=4 name=startaar value=$startaar onchange=\"javascript:docChange = true;\"></td>\n";
-	print "<td align=center><input $type style=\"text-align:right\" size=2 name=slutmd value=$slutmd onchange=\"javascript:docChange = true;\"></td>\n";
-	print "<td align=center><input $type style=\"text-align:right\" size=4 name=slutaar value=$slutaar onchange=\"javascript:docChange = true;\"></td>\n";
-	if (strstr($aaben,'on')) {print "<td align=center><input type=checkbox name=aaben checked onchange=\"javascript:docChange = true;\"></td>\n";}
-	else {print "<td align=center><input type=checkbox name=aaben onchange=\"javascript:docChange = true;\"></td>\n";}
+	print "<td align='center'><input $type style='text-align:right' size='2' name=startmd value='$startmd' onchange=\"javascript:docChange = true;\"></td>\n";
+	print "<td align='center'><input $type style='text-align:right' size='4' name=startaar value='$startaar' onchange=\"javascript:docChange = true;\"></td>\n";
+	print "<td align='center'><input $type style='text-align:right' size='2' name=slutmd value='$slutmd' onchange=\"javascript:docChange = true;\"></td>\n";
+	print "<td align='center'><input $type style='text-align:right' size='4' name=slutaar value='$slutaar' onchange=\"javascript:docChange = true;\"></td>\n";
+	if (strstr($aaben,'on')) {
+		print "<td align='center'><input type='checkbox' name='aaben' checked onchange=\"javascript:docChange = true;\"></td>\n";
+	} else {
+		print "<td align='center'><input type='checkbox' name='aaben' onchange=\"javascript:docChange = true;\"></td>\n";
+	}
 	print "</tr>\n</tbody></table></td></tr>\n"; ###################################################table 4c slut
-	print "<tr><td colspan=4 width=100% align=center><table heigth=100% border=0><tbody>"; ###########################table 5c start
-	print "<td align=center valign=\"top\"><table heigth=100% border=1><tbody>\n";  #################################table 6d start	print "<tr><td align=center>1. faktnr</td><td align=center>1. modt. nr.</td><tr>";
+	print "<tr><td colspan=4 width=100% align='center'><table heigth=100% border=0><tbody>"; ###########################table 5c start
+	print "<td align='center' valign=\"top\"><table heigth=100% border=1><tbody>\n";  #################################table 6d start	print "<tr><td align='center'>1. faktnr</td><td align='center'>1. modt. nr.</td><tr>";
 	print "<tr>\n <td>1.&nbsp;fakturanummer</td>\n";
-	print " <td align=center><input type=text style=\"text-align:right\" size=4 name=fakt value=$fakt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
+	print " <td align='center'><input type=text style='text-align:right' size='4' name=fakt value=$fakt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
 	print "<tr>\n <td>1.&nbsp;modtagelsesnummer</td>\n";
-	print " <td align=center><input type=text style=\"text-align:right\" size=4 name=modt value=$modt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
+	print " <td align='center'><input type=text style='text-align:right' size='4' name=modt value=$modt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
 	print "</tbody></table></td>\n"; ##########################################################table 6d slut
 	print "<td><table border=1><tbody>"; ##############################################table 7d start
 	if ($no_faktbill) $no_faktbill="checked"; 
 	if ((!$no_faktbill)&&($faktbill)) $faktbill="checked"; 
 	if ($modtbill) $modtbill="checked";
-	print "<tr><td align=center>Undlad bilagsnummer til faktura</td><td align=center><input type=checkbox name=no_faktbill $no_faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
-	print "<tr><td align=center>Brug fakturanummer som bilagsnummer</td><td align=center><input type=checkbox name=faktbill $faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
-	print "<tr><td align=center>Brug modtagelsesnummer som bilagsnummer</td><td align=center><input type=checkbox name=modtbill $modtbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
+	print "<tr><td align='center'>Undlad bilagsnummer til faktura</td><td align='center'><input type='checkbox' name=no_faktbill $no_faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
+	print "<tr><td align='center'>Brug fakturanummer som bilagsnummer</td><td align='center'><input type='checkbox' name=faktbill $faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
+	print "<tr><td align='center'>Brug modtagelsesnummer som bilagsnummer</td><td align='center'><input type='checkbox' name=modtbill $modtbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
 	print "</tbody></table></td>\n"; ##########################################################table 7d slut
 	print "<td valign=\"top\"><table border=0><tbody>\n"; ##############################################table 8d start
 	print "<tr><td><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 	print "</tbody></table></td></tr>\n";#####################################################table8d slut
 	print "</td></tbody></table></td></tr>\n";#####################################################table5c slut
-	print "<tr><td colspan=2 align=center> Indtast primotal for 1. regnskabs&aring;r:</td><td align = center> Debet</td><td align = center> Kredit</td></tr>\n";
+	print "<tr><td colspan=2 align='center'> Indtast primotal for 1. regnskabs&aring;r:</td><td align = center> Debet</td><td align = center> Kredit</td></tr>\n";
 	$query = db_select("select id, kontonr, primo, beskrivelse from kontoplan where kontotype='S' and regnskabsaar='1' order by kontonr",__FILE__ . " linje " . __LINE__);
 	$y=0;
 	$debetsum=0;
@@ -362,17 +363,22 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		}
 		print "<td>$row[kontonr]</td>";
 		print "<td>$row[beskrivelse]</td>";
-		print "<td align=right><input type=text style=\"text-align:right\" size=10 name=debet[$y] value=$debet[$y] onchange=\"javascript:docChange = true;\"></td>";
-		print "<td align=right><input type=text style=\"text-align:right\" size=10 name=kredit[$y] value=$kredit[$y] onchange=\"javascript:docChange = true;\"></td></tr>\n";
+		print "<td align=right><input type=text style='text-align:right' size=10 name=debet[$y] value=$debet[$y] onchange=\"javascript:docChange = true;\"></td>";
+		print "<td align=right><input type=text style='text-align:right' size=10 name=kredit[$y] value=$kredit[$y] onchange=\"javascript:docChange = true;\"></td></tr>\n";
 	}
 	print "<td></td><td></td><td align=right>".dkdecimal($debetsum,2)."</td><td align=right>".dkdecimal($kreditsum,2)."</td></tr>\n";
 	if (abs($debetsum-$kreditsum)>0.009) {
 		print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";
 	}
 	
-#	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
+#	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align='center'><input type='checkbox' name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
-	print "<tr><td colspan='4' align='center'><input class='buttom green medium' type='submit' accesskey=\"g\" value=\"Gem/opdat&eacute;r\" style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<tr><td colspan='4' align='center'>";
+	print "<input class='buttom green medium' type='submit' accesskey=\"g\" value=\"Gem/opdat&eacute;r\" style=\"width:100px\" ";
+	print "name=\"submit\" onclick=\"javascript:docChange = false;\">";
+	print "&nbsp;&nbsp;<input class='button green medium' type=submit value=\"Slet år\" name=\"delete\"  style=\"width:100px\" ";
+	print "onclick=\"javascript:docChange = false;\">";
+	print "</td></tr>\n";
 	print "</form>";
 	exit;
 }
@@ -405,22 +411,25 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	$pre_regnslut = $pre_slutaar . "-" . $pre_slutmd . "-" . $pre_slutdato;
 
 	print "<form name=aar_1 action=regnskabskort.php method=post>";
-	if ($id){print "<tr><td colspan=5 align = center><big><b>Ret $kodenr. regnskabs&aring;r: $beskrivelse</td></tr>\n";}
-	else {print "<tr><td colspan=5 align = center><big><b>Opret $kodenr. regnskabs&aring;r: $beskrivelse</td></tr>\n";}
-	print "<tr><td colspan=5 align=center><table width=100% border=0><tbody><tr>"; ###########################table 8d start
-	print "<tr><td></td><td align=center>Start</td><td align=center>Start</td><td align=center>Slut</td><td align=center>Slut</td><td align=center>Bogf&oslash;ring</td></tr>\n";
-	print "<tr><td align=center>Beskrivelse</td><td align=center>m&aring;ned</td><td align=center>&aring;r</td><td align=center>m&aring;ned</td><td align=center>&aring;r</td><td align=center>tilladt</td></tr>\n";
+	if ($id) print "<tr><td colspan=5 align = center><big><b>Ret $kodenr. regnskabs&aring;r: $beskrivelse</td></tr>\n";
+	else {
+		print "<tr><td colspan=5 align = center><big><b>Opret $kodenr. regnskabs&aring;r: $beskrivelse</td></tr>\n";
+		$aaben='on';
+	}
+	print "<tr><td colspan=5 align='center'><table width=100% border=0><tbody><tr>"; ###########################table 8d start
+	print "<tr><td></td><td align='center'>Start</td><td align='center'>Start</td><td align='center'>Slut</td><td align='center'>Slut</td><td align='center'>Bogf&oslash;ring</td></tr>\n";
+	print "<tr><td align='center'>Beskrivelse</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>tilladt</td></tr>\n";
 	print "<tr><input type=hidden name=kodenr value=$kodenr><input type=hidden name=id value='$id'	>";
-	print "<td align=center><input type=text size=30 name=beskrivelse value=\"$beskrivelse\" onchange=\"javascript:docChange = true;\"></td>";
-	print "<td align=center><input readonly=readonly style=\"text-align:right\" size=2 name=startmd value=$startmd></td>";
-	print "<td align=center><input readonly=readonly style=\"text-align:right\" size=4 name=startaar value=$startaar></td>";
-	print "<td align=center><input type=text style=\"text-align:right\" size=2 name=slutmd value=$slutmd onchange=\"javascript:docChange = true;\"></td>";
-	print "<td align=center><input type=text style=\"text-align:right\" size=4 name=slutaar value=$slutaar onchange=\"javascript:docChange = true;\"></td>";
+	print "<td align='center'><input type=text size=30 name=beskrivelse value=\"$beskrivelse\" onchange=\"javascript:docChange = true;\"></td>";
+	print "<td align='center'><input readonly=readonly style='text-align:right' size='2' name=startmd value=$startmd></td>";
+	print "<td align='center'><input readonly=readonly style='text-align:right' size='4' name=startaar value=$startaar></td>";
+	print "<td align='center'><input type=text style='text-align:right' size='2' name=slutmd value=$slutmd onchange=\"javascript:docChange = true;\"></td>";
+	print "<td align='center'><input type=text style='text-align:right' size='4' name=slutaar value=$slutaar onchange=\"javascript:docChange = true;\"></td>";
 	(strstr($aaben,'on'))?$aaben='checked':$aaben=NULL;
 	if (!$id) $checked='checked';
-	print "<td align=center><input type=checkbox name=aaben $aaben onchange=\"javascript:docChange = true;\"></td>";
+	print "<td align='center'><input type='checkbox' name='aaben' $aaben onchange=\"javascript:docChange = true;\"></td>";
 	print "</tr>\n</tbody></table></td></tr>\n"; #####################################################table 8d slut
-	print "<tr><td colspan=2 align=center> Primotal for $kodenr. regnskabs&aring;r:</td><td align = center> saldo</td><td align = center> overf&oslash;r til</td><td align = center> ny primo</td></tr>\n";
+	print "<tr><td colspan=2 align='center'> Primotal for $kodenr. regnskabs&aring;r:</td><td align = center> saldo</td><td align = center> overf&oslash;r til</td><td align = center> ny primo</td></tr>\n";
 	$tmp=$kodenr;
 	$kontoantal=0;
 	while ($kontoantal<1&&$tmp>0){ #Hvis der ikke er oprettet konti for indevaerende regsskabsaar, hentes konti fra forrige.
@@ -492,14 +501,14 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		$saldosum=$resultat;
 		print "<td><br /></td>";
 		print "<td>Resultat</td>";
-		print "<input type=hidden name=kontonr[0] value=$sideskift>";
-		print "<td width=10 align=right><input type=hidden name=saldo[0] value=$resultat>".dkdecimal($resultat,2)."</td>";
+		print "<input type='hidden' name='kontonr[0]' value='$sideskift'>";
+		print "<td width='10' align='right'><input type=hidden name=saldo[0] value=$resultat>".dkdecimal($resultat,2)."</td>";
 		print "<td><SELECT NAME=overfor_til[0]>";
 		if (isset($r['overfor_til']) && $r['overfor_til']) print "<option>$r[overfor_til]</option>";  
 		print "<option>$kontonr[$y]</option>";
 		for ($x=1;$x<=$kontoantal;$x++) print "<option>$kontonr[$x]</option>";
 		print "</SELECT></td>";
-		print "<td width=10><br /></td></tr>\n";
+		print "<td width='10'><br /></td></tr>\n";
 		if (isset($ny_primo[$y])) $ny_sum+=$ny_primo[$y];
 	}
 #cho "select * from kontoplan where kontotype='S' and regnskabsaar='$pre_regnaar' order by kontonr<br>";
@@ -554,7 +563,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	}
 	print "<td></td><td></td><td align=right>".dkdecimal($saldosum,2)."</td><td></td><td align=right>".dkdecimal($ny_sum,2)."</td></tr>\n";
 	if ($debetsum-$kreditsum!=0) {print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";}
-#	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align=center><input type=checkbox name=primotal checked></td></tr>\n";
+#	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align='center'><input type='checkbox' name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
 	print "<tr><td colspan = 5 align = center><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
 	if ($aut_lager && date("Y-m-d")>$pre_regnslut) {

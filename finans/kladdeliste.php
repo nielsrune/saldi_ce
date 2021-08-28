@@ -1,26 +1,26 @@
 <?php
-// ---------finans/kladdeliste.php----------Patch 3.5.6---------2015.07.22------------
-// LICENS
+// --- finans/kladdeliste.php --- Patch 3.9.9 --- 2021.02.11 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2021 saldi.dk ApS
 // -----------------------------------------------------------------------------------
 // 20150722 PHR Vis alle/egne gemmes nu som cookie. 
+// 2018.12.20 MSC - Rettet ny kladde knap til Ny
+// 2019.01.30 MSC - Rettet topmenu design til
+// 2021.02.11 PHR - Some cleanup
 
 @session_start();
 $s_id=session_id();
@@ -33,6 +33,8 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 
+if (!isset ($_COOKIE['saldi_kladdeliste'])) $_COOKIE['saldi_kladdeliste'] = NULL;
+
 $sort=isset($_GET['sort'])? $_GET['sort']:Null;
 $rf=isset($_GET['rf'])? $_GET['rf']:Null;
 $vis=isset($_GET['vis'])? $_GET['vis']:Null;
@@ -41,11 +43,30 @@ print "<meta http-equiv=\"refresh\" content=\"150;URL=kladdeliste.php?sort=$sort
 if (isset($_GET['sort'])) {
 	$cookievalue="$sort;$rf;$vis";
 	setcookie("saldi_kladdeliste", $cookievalue, strtotime('+30 days'));
-} else list ($sort,$rf,$vis) = explode(";", $_COOKIE['saldi_kladdeliste']);
+} else list ($sort,$rf,$vis) = array_pad(explode(";", $_COOKIE['saldi_kladdeliste']), 3, null);
 if (!$sort) {
 	$sort = "id";
 	$rf = "desc";
 }
+if ($menu=='T') {
+			include_once '../includes/top_header.php';
+			include_once '../includes/top_menu.php';
+			print "<div id=\"header\"> 
+ 		   		<div class=\"headerbtnLft\"></div>
+  			  	<span class=\"headerTxt\">Kladdeliste</span>";     
+			print "<div class=\"headerbtnRght\"><a href=\"kassekladde.php?returside=kladdeliste.php\" class=\"button green small right\">Ny</a></div>";       
+			print "</div><!-- end of header -->
+				<div class=\"maincontentLargeHolder\">\n";
+			print  "<table class='dataTable2' border='0' cellspacing='1' width='75%'>";
+
+#	$leftbutton="<a title=\"Klik her for at komme til startsiden\" href=\"../index/menu.php\" accesskey=\"L\">LUK</a>";
+#	$rightbutton="<a href=\"#\">Ordremenu</a>\t";
+#	if ($valg!='ordrer') $rightbutton.="\t<a href='ordreliste.php?valg=ordrer&konto_id=$konto_id&returside=$returside'>&nbsp;Ordreliste&nbsp;</a>";
+#	if ($valg!='faktura') $rightbutton.="\t<a href='ordreliste.php?valg=faktura&konto_id=$konto_id&returside=$returside'>&nbsp;Fakturaliste&nbsp;</a>";
+#	$rightbutton.="\t<a href=\"../debitor/ordre.php?returside=../debitor/ordreliste.php?konto_id=$konto_id\">Ny ordre/faktura</a>";
+#	$rightbutton.="\t<a accesskey=V href=ordrevisning.php?valg=$valg>Visning</a>";
+#	include("../includes/topmenu.php");
+} else {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>
 		<tr><td height = \"25\" align=\"center\" valign=\"top\">
 		<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
@@ -56,7 +77,7 @@ print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" c
 if ($popup) print "<td width=\"10%\" title=\"Klik her for at oprette en ny kassekladde\" $top_bund onClick=\"javascript:kladde=window.open('kassekladde.php?returside=kladdeliste.php&tjek=-1','kladde','$jsvars');kladde.focus();\"><a href=kladdeliste.php?sort=$sort&rf=$rf&vis=$vis accesskey=N>Ny</a></td>";
 else print "<td width=\"10%\" title=\"Klik her for at oprette en ny kassekladde\" $top_bund><a href=kassekladde.php?returside=kladdeliste.php&tjek=-1 accesskey=N>Ny</a></td>";		
 print "</tbody></table></td></tr><tr><td valign=\"top\"><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign = \"top\">";
-
+}
 if ($vis=='alle') {print "<tr><td colspan=6 align=center><a href=kladdeliste.php?sort=$sort&rf=$rf>vis egne</a></td></tr>";}
 else {print "<tr><td colspan=6 align=center title='Klik her for at se alle kladder'><a href=kladdeliste.php?sort=$sort&rf=$rf&vis=alle>Vis alle</a></td></tr>";}
 if ((!isset($linjebg))||($linjebg!=$bgcolor)) {$linjebg=$bgcolor; $color='#000000';}
@@ -73,7 +94,7 @@ else {print "<td width = 70% title='Klik her for at sortere p&aring; bem&aelig;r
 if (($sort == 'bogforingsdate')&&(!$rf)) {print "<td align=center><b><a href=kladdeliste.php?sort=bogforingsdate&rf=desc&vis=$vis>Bogf&oslash;rt</a></b></td>\n";}
 else {print "<td align=center><b><a href=kladdeliste.php?sort=bogforingsdate&vis=$vis>Bogf&oslash;rt</a></b></td>\n";}
 if (($sort == 'bogfort_af')&&(!$rf)) {print "<td><b><a href=kladdeliste.php?sort=bogfort_af&rf=desc&vis=$vis>Af</a></b></td>\n";}
-else {print "<td title='Klik her for at sortere p&aring; \"bogf&oslash;rt af\"'><b><a href=kladdeliste.php?sort=bogfort_af&vis=$vis>af</a></b></td>\n";}
+else {print "<td title='Klik her for at sortere p&aring; \"bogf&oslash;rt af\"' align='center'><b><a href=kladdeliste.php?sort=bogfort_af&vis=$vis>af</a></b></td>\n";}
 print "</tr>\n";
 $tjek=0;
 #$sqhost = "localhost";
@@ -81,14 +102,17 @@ $tjek=0;
 	if ($vis == 'alle') $vis = ''; 
 	else $vis="and oprettet_af = '".$brugernavn."'";
 	$tidspkt=date("U");
-	$query = db_select("select * from kladdeliste where bogfort = '-' $vis order by $sort $rf",__FILE__ . " linje " . __LINE__);
+	$qtxt = "select * from kladdeliste where bogfort = '-' $vis order by $sort $rf";
+	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($row = db_fetch_array($query)) {
 		$tjek++;
 		$kladde="kladde".$row['id'];
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
+		if (strpos(' ',$row['tidspkt'])) list ($a,$b)=explode(" ",$row['tidspkt']);
+		else $b=$row['tidspkt'];
+		if ($tidspkt - trim($b) > 3600 || $row['hvem'] == $brugernavn) {
 			if ($popup) print "<td onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$kladde=window.open('kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 			else print "<td><a href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
 		}
@@ -182,6 +206,7 @@ $tjek=0;
 			print "<tr><td colspan=3 align=right>TIP 2: </td><td>Du kan se dine kollegers kladder ved at klikke p&aring; <u>Vis alle</u>.</td></tr>"; 
 		}
 	}
+if ($menu=='T') print "</div>";	
 ?>
 </tbody>
 </table>

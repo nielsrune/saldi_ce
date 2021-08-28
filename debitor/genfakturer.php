@@ -177,6 +177,7 @@ function genfakt($id,$org_nr,$fakt_dato,$opdat_pris,$opdat_text,$slet_gfdato,$re
 		$bynavn=db_escape_string($r['bynavn']);
 		$land=db_escape_string($r['land']);
 		$cvrnr=db_escape_string($r['cvrnr']);
+		$cvrnr=str_replace(' ','',$cvrnr);
 		if ($cvrnr && !is_numeric(substr($cvrnr,2))) {
 			$cvrnr='';
 			alert("fejl i CVR nr for $firmanavn\\rCVR nr fjernet"); 

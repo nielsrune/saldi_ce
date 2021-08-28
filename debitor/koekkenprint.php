@@ -337,7 +337,7 @@ for ($x=0;$x<count($linje_id);$x++) {
 		if (isset($_POST['bestil'])) {
 			$bestil=$_POST['bestil'];
 		}	else $bestil[$x]=$antal[$x]-$leveret[$x];
-		if (!$fokus) $fokus='bestil_0';
+		#if (!$fokus) $fokus='bestil_0';
 		$tmp="bestil_".$x;
 		if ($tmp==$fokus) {	
 			$tmp=$_POST[$tmp];

@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------debitor/kassespor.php-------------lap 3.7.4-----2019-04-04-----
-// LICENS
+// --- debitor/kassespor.php --- lap 4.0.0 --- 2021-03-05 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2008-2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20141119 PHR Tilføjet summer og bord
 // 20150305 PHR Tilføjet status.
@@ -34,9 +31,12 @@
 // 20170419	PHR Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170419
 // 20171004	PHR	Viser nu kun summer hvis der er saldo. Søg: if ($bet_sum[$z])
 // 20180615	PHR	Indsat mulighed for at rettet betalingsmetode på ikke bogførte bonnner. Søg '$ret_bet_id'
-// 2019.01.07 MSC Rettet topmenu design til
-// 2019.02.18 MSC - Rettet topmenu design
-// 2019.04.04 PHR If status field is empty it will now be set to '3:4' as it included orders with invoicedate and status less than 3 20190404  
+// 20190107 MSC Rettet topmenu design til
+// 20190218 MSC - Rettet topmenu design
+// 20190404 PHR If status field is empty it will now be set to '3:4' as it included orders with invoicedate and status less than 3
+// 20200624 PHR Added time as search posibility.
+// 20201024 PHR Added lokk to pos_ordre.
+// 20210305 PHR Added limit 10000 to query.
 
 ob_start();
 @session_start();
@@ -56,7 +56,7 @@ include("../includes/udvaelg.php");
 $status = if_isset($_GET['status']);
 $id = if_isset($_GET['id']);
 $fakturadatoer = if_isset($_GET['fakturadatoer']);
-$logtime = if_isset($_GET['logtime']);
+$logtimes = if_isset($_GET['logtimes']);
 $afdelinger= if_isset($_GET['afdelinger']);
 $sort = if_isset($_GET['sort']);
 $nysort = if_isset($_GET['nysort']);
@@ -81,34 +81,33 @@ if (!isset ($logtid)) $logtid = NULL;
 if ($submit= if_isset($_POST['submit'])){
 	$status = if_isset($_POST['status']);
 	$fakturadatoer = if_isset($_POST['fakturadatoer']);
-	$logtime = if_isset($_POST['logtime']);
+	$logtimes = if_isset($_POST['logtimes']);
 	$afdelinger=if_isset($_POST['afdelinger']);
 	$sort = if_isset($_POST['sort']);
 	$nysort = if_isset($_POST['nysort']);
-	$idnumre = trim(if_isset($_POST['idnumre']));
+	$idnumre = if_isset($_POST['idnumre']);
 	$kontonumre = if_isset($_POST['kontonumre']);
-	$fakturanumre = if_isset(trim($_POST['fakturanumre']));
+	$fakturanumre = if_isset($_POST['fakturanumre']);
 	$summer = if_isset($_POST['summer']);
-	$betalinger = if_isset(trim($_POST['betalinger']));
+	$betalinger = if_isset($_POST['betalinger']);
 	$betalinger2 = if_isset($_POST['betalinger2']);
 	$modtagelser = if_isset($_POST['modtagelser']);
 	$modtagelser2 = if_isset($_POST['modtagelser2']);
 	$kasser =  if_isset($_POST['kasser']);
 	$borde =  if_isset($_POST['borde']);
-	$refs =  if_isset(trim($_POST['refs']));
+	$refs =  if_isset($_POST['refs']);
 	$linjeantal = if_isset($_POST['linjeantal']);
 
-	$cookievalue="$sort;$nysort;$fakturadatoer;$logtime;$afdelinger;$sort;$nysort;$idnumre;$fakturanumre;$summer;$betalinger;$betalinger2;$modtagelser;$modtagelser2;$kasser;$refs;$linjeantal;$borde;$status";
+	$cookievalue="$sort;$nysort;$fakturadatoer;$logtimes;$afdelinger;$sort;$nysort;$idnumre;$fakturanumre;$summer;$betalinger;$betalinger2;$modtagelser;$modtagelser2;$kasser;$refs;$linjeantal;$borde;$status";
 	setcookie("saldi_kassespor", $cookievalue);
 } else {
-	list ($sort,$nysort,$fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$borde,$status) = array_pad(explode(";", $_COOKIE['saldi_kassespor']),19,NULL);
+	list ($sort,$nysort,$fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$borde,$status) = array_pad(explode(";", $_COOKIE['saldi_kassespor']),19,NULL);
 	$beskrivelse=str_replace("semikolon",";",$beskrivelse);
 	if (isset($_GET['sort'])) $sort = $_GET['sort'];
 	if (isset($_GET['nysort'])) $nysort = $_GET['nysort'];
 }
 ob_end_flush();  //Sender det "bufferede" output afsted...
-
-if (!$fakturadatoer&&!$logtime&&!$afdelinger&&!$sort&&!$nysort&&!$idnumre&&!$fakturanumre&&!$summer&&!$betalinger&&!$betalinger2&&!$modtagelser&&!$modtagelser2&&!$kasser&&!$refs&&!$borde) {
+if (!$fakturadatoer&&!$logtimes&&!$afdelinger&&!$sort&&!$nysort&&!$idnumre&&!$fakturanumre&&!$summer&&!$betalinger&&!$betalinger2&&!$modtagelser&&!$modtagelser2&&!$kasser&&!$refs&&!$borde) {
 	$r=db_fetch_array(db_select("select * from grupper where art = 'RA' and kodenr='$regnaar'",__FILE__ . " linje " . __LINE__));
 	$fakturadatoer="01".$r['box1'].substr($r['box2'],-2).":31".$r['box3'].substr($r['box4'],-2);
 }
@@ -127,7 +126,6 @@ $modulnr=2;
 if (!$sort) $sort = "tidspkt desc";
 elseif ($nysort==$sort) $sort=$sort." desc";
 elseif ($nysort) $sort=$nysort;
-
 $x=0;
 $bet_type=array();
 $q=db_select("select betalingstype from pos_betalinger group by betalingstype order by betalingstype",__FILE__ . " linje " . __LINE__);
@@ -206,7 +204,7 @@ if (!isset($kontoid)) $kontoid = NULL;
 
 print "<form name=bonliste action=kassespor.php method=post>";
 if (!$linjeantal) $linjeantal=50;
-$next=udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$sort,$start,'',$borde,$status);
+$next=udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$start,'',$borde,$status);
 if ($start>=$linjeantal) {
 	$tmp=$start-$linjeantal;
 	print "<td><a href='kassespor.php?sort=$sort&start=$tmp'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>\n";
@@ -265,8 +263,8 @@ if ($status=='') {
 print "</select></td>\n";
 print "<td align=center><span title= 'Angiv et id-nummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:60px;height:20px;font-size:12px\" name=\"idnumre\" value=\"$idnumre\"></td>\n";
 print "<td align=center><span title= 'Angiv en bondato eller angiv to adskilt af kolon (f.eks 010605:300605)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:110px;height:20px;font-size:12px\" name=\"fakturadatoer\" value=\"$fakturadatoer\"></td>\n";
-#print "<td align=center><span title= 'Angiv et tidspunkt  (f.eks 17:35)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:20px;font-size:12px\" name=\"logtid\" value=\"$logtid\"></td>\n";
-print "<td></td>\n";
+print "<td align=center><span title= 'Angiv et tidspunkt  (f.eks. 17.35) eller et interval f.eks. 17.00:18.00'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:20px;font-size:12px\" name=\"logtimes\" value=\"$logtimes\"></td>\n";
+#print "<td></td>\n";
 print "<td align=center><span title= 'Angiv et bonnummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:110px;height:20px;font-size:12px\" name=\"fakturanumre\" value=\"$fakturanumre\"></td>\n";
 print "<td align=center><span title= 'Angiv et kasse nr. eller angiv to adskilt af kolon (f.eks 3:4)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:20px;font-size:12px\" name=\"kasser\" value=\"$kasser\"</td>\n";
 print "<td align=center><span title= 'Vælg et bord'><select class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:20px;font-size:12px\" name=\"borde\">\n";
@@ -297,7 +295,7 @@ print "<td align=center><span title= 'Angiv et modtaget bel&oslash;b for betalin
 #print "<td><br></td>\n";
 print "<td></td><td><input class='button blue small' type=submit value=\"OK\" name=\"submit\"></td>\n";
 print "</form></tr>\n";
-udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$sort,$start,'skriv',$borde,$status);
+udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$start,'skriv',$borde,$status);
 
 print "<tr><td colspan=\"9\" align=\"right\"><b>".dkdecimal($omsaet,2)."</b></td><td colspan=\"2\" align=\"right\"><b>".dkdecimal($modtaget,2)."</b></td><td colspan=\"1\" align=\"right\"><b>".dkdecimal($retursum,2)."</b></td></tr>"; 
 
@@ -309,11 +307,10 @@ for ($z=0;$z<count($bet_type);$z++) {
 		print "<tr><td colspan=\"10\" align=\"right\"><b>Tilgang kasse</b></td><td align=\"right\"><b>".dkdecimal($bet_sum[$z]-$retursum,2)."</b></td></tr>"; 
 	}
 }
-
 ####################################################################################
 
-# $fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$sort,$start+50,''
-function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$sort,$start,$skriv,$borde,$status) {
+# $fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$sort,$start+50,''
+function udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$start,$skriv,$borde,$status) {
 
 	global $bgcolor;
 	global $bgcolor5;
@@ -329,6 +326,7 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 	$linjebg=NULL;
 	$y=0;
 
+	$sort=str_replace('+',' ',$sort);
 	if ($borde && count($bordnavn)) {
 		for ($x=0;$x<count($bordnavn);$x++) {
 			if ($bordnavn[$x]==$borde) {
@@ -348,7 +346,7 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 	if ($idnumre) $udvaelg=$udvaelg.udvaelg($idnumre, 'ordrer.id', 'NR');
 	if ($fakturanumre) $udvaelg=$udvaelg.udvaelg($fakturanumre, 'ordrer.fakturanr', 'NR');
 	if ($betalinger) $udvaelg=$udvaelg.udvaelg($betalinger, 'ordrer.felt_1', '');
-#	if ($betalinger2) $udvaelg=$udvaelg.udvaelg($betalinger2, 'ordrer.felt_3', '');
+	if ($logtimes) $udvaelg=$udvaelg.udvaelg($logtimes, 'ordrer.tidspkt', 'TIME');
 	if ($fakturadatoer) $udvaelg=$udvaelg.udvaelg($fakturadatoer, 'ordrer.fakturadate', 'DATO');
 	if ($modtagelser) $udvaelg=$udvaelg.udvaelg($modtagelser, 'ordrer.felt_2', 'TEXT');
 #	if ($modtagelser2) $udvaelg=$udvaelg.udvaelg($modtagelser2, 'ordrer.felt_4', 'TEXT');
@@ -364,8 +362,8 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 	else $udvaelg=$udvaelg." and";
 	$x=0;
 	$id=array();
-	if ($straksbogfor) $qtxt="select * from ordrer $udvaelg art = 'PO' order by $sort";
-	else $qtxt="select * from ordrer $udvaelg (art = 'PO' or art like 'D%') order by $sort";
+	if ($straksbogfor) $qtxt="select * from ordrer $udvaelg art = 'PO' order by $sort limit 10000";
+	else $qtxt="select * from ordrer $udvaelg (art = 'PO' or art like 'D%') order by $sort limit 10000";
 	$q = db_select("$qtxt",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$ordrestatus[$x]=$r['status'];
@@ -378,6 +376,7 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 		$ref[$x]=$r['ref'];
 		$sum[$x]=$r['sum'];
 		$moms[$x]=$r['moms'];
+		$art[$x]=$r['art'];
 		$dkksum[$x]=dkdecimal($sum[$x]+$moms[$x],2);
 		$x++;
 	}
@@ -414,9 +413,11 @@ function udskriv($fakturadatoer,$logtime,$afdelinger,$sort,$nysort,$idnumre,$fak
 					print "<tr bgcolor=\"$linjebg\">";
 					if (!isset($ordre_id[$y-1]) || $ordre_id[$y]!=$ordre_id[$y-1]) {
 					print "<td>$ordrestatus[$x]</td>";
-					print "<td align=right>$id[$x]</span><br></td>\n";
+						print "<td align=right><a href=";
+						if ($art[$x]=='PO') print "pos_";
+						print "ordre.php?id=$id[$x]&returside=kassespor.php>$id[$x]</a></span><br></td>\n";
 					print "<td align=right>$fakturadato[$x]<br></td>\n";
-					print "<td align=right>$tidspkt[$x]<br></td>\n";
+						print "<td align=right>". str_replace(":",".",$tidspkt[$x]) ."<br></td>\n";
 					print "<td align=right>$fakturanr[$x]<br></td>\n";
 					print "<td align=right>$kasse[$x]<br></td>\n";
 					print "<td align=right>".$bordnavn[$bord[$x]]."<br></td>\n";

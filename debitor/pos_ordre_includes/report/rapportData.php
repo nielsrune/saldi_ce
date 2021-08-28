@@ -4,81 +4,94 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/pos_ordre_includes/report/rapportData.php ---------- lap 3.7.4----2019.05.08-------
-// LICENS
+// --- debitor/pos_ordre_includes/report/rapportData.php --- lap 4.0.0 --- 2021.03.07 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 saldi.dk aps
+// Copyright (c) 2019-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // LN 20190312 Make functions that retrieve all type of payments and sold data to the report
+// 20210307 PHR Added $date to allmost all functions as it was countion all orders from day zero
 
-function productGroupDescription($kasse) { # LN 20190212 Make varegrupper for the xRapport
-    $idArray = makeOrderIdArray($kasse);
-    $query = db_select("select * from varer", $queryVar);
+function productGroupDescription($kasse,$date) { # LN 20190212 Make varegrupper for the xRapport
+	$idArray = makeOrderIdArray($kasse,$date);
+	$itemId = $groupArray = array();
+	$x=0;
+	$qtxt = "select distinct(vare_id) as vare_id from ordrer,ordrelinjer where "; #added 20210307
+	$qtxt.= "ordrer.fakturadate = '$date' and ordrelinjer.ordre_id = ordrer.id";
+	$q = db_select($qtxt, __FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		$itemId[$x] = $r['vare_id'];
+		$x++;
+	}
+	$query = db_select("select * from varer", __FILE__ . " linje " . __LINE__);
     while ($product = db_fetch_array($query)) {
+		if (in_array($product['id'],$itemId)) { #added 20210307
         $productGroup = $product['gruppe'];
         $productNumber = $product['varenr'];
         $productId = $product['id'];
-        $vat = db_fetch_array(db_select("select momssats from ordrelinjer where varenr = '$productNumber'", $queryVar))['momssats'];
-
-        $description = db_fetch_array(db_select("select beskrivelse from grupper where kodenr = '$productGroup' and art = 'VG'", $queryVar))['beskrivelse'];
+			$qtxt = "select ordrelinjer.momssats from ordrelinjer,ordrer where varenr = '$productNumber'";
+			$qtxt.= "and ordrer.id=ordrelinjer.ordre_id and ordrer.fakturadate = '$date'";
+#cho "$qtxt<br>";		
+			$vat = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))['momssats'];
+			$qtxt = "select beskrivelse from grupper where kodenr = '$productGroup' and art = 'VG'";
+#cho "$qtxt<br>";		
+			$description = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))['beskrivelse'];
 
         if (!empty($description)) {
-           $groupArray = setCountAndTotal($description, $productId, $productGroup, $groupArray, $idArray, $vat);
+				$groupArray = setCountAndTotal($description, $productId, $productGroup, $groupArray, $idArray, $vat,$date);
+			}
         }
     }
     $groupArray = subtractItemGroupData("Item group description", $groupArray);
     return $groupArray;
 }
 
-function setCountAndTotal($description, $productId, $productGroup, $groupArray, $idArray, $vat)
-{
+
+function setCountAndTotal($description, $productId, $productGroup, $groupArray, $idArray, $vat, $date) {
     $groupArray[$productGroup]['description'] = $description;
     $salesCount = 0;
     $salesPrice = 0;
-    if ($tempArr[$description] != 1) {
-        $salesQuery = db_select("select * from batch_salg where vare_id='$productId'", $queryVar);
+	$qtxt = "select * from batch_salg where vare_id='$productId' and fakturadate = '$date'";
+	$salesQuery = db_select($qtxt, __FILE__ . " linje " . __LINE__);
         while ($batchSale = db_fetch_array($salesQuery)) {
             if (in_array($batchSale['ordre_id'], $idArray)) {
                 $salesCount += $batchSale['antal'];
-                $salesPrice = $batchSale['pris'] * $salesCount;
+			$salesPrice += $batchSale['pris'] * $batchSale['antal'];
             }
         }
         $salesPrice = truncate_number(($salesPrice / (100)) * (100+$vat));
         $salesPrice = round($salesPrice/5) * 5;
         $groupArray[$productGroup]['count'] += ($salesCount > 0) ? $salesCount : 0;
         $groupArray[$productGroup]['sellPrice'] += $salesPrice;
-    }
-    $tempArr[$description] = 1;
     return $groupArray;
 }
 
 
-function paymentMethods($kasse) {
-    $payment;
-    $orderQuery = db_select("select * from ordrer where felt_5='$kasse'", $queryVar);
+function paymentMethods($kasse,$date) {
+	$payment='';
+	$paymentArray[$payment]=array();
     $total = 0;
+	$orderQuery = db_select("select * from ordrer where felt_5='$kasse' and fakturadate = '$date'", __FILE__ . " linje " . __LINE__);
     while ($order = db_fetch_array($orderQuery)) {
         $payment = $order['felt_1'];
         if ($payment != '') {
             $paymentArray[$payment]['payment'] = $payment;
-            $paymentArray[$payment]['price'] += $order['betalt'];
+			if (isset($paymentArray[$payment]['price'])) $paymentArray[$payment]['price'] += $order['betalt'];
+			else $paymentArray[$payment]['price'] = $order['betalt'];
             $total += $order['betalt'];
         }
     }
@@ -90,10 +103,12 @@ function paymentMethods($kasse) {
     return $paymentArray;
 }
 
-function vatPayments($kasse) {
+function vatPayments($kasse,$date) {
     $vat;
-    $idArray = makeOrderIdArray($kasse);
-    $ordrelines = db_select("select * from ordrelinjer", $queryVar);
+    $idArray = makeOrderIdArray($kasse,$date);
+#    $qtxt = "select * from ordrelinjer"; # made by LSN
+    $qtxt = "select ordrelinjer.* from ordrelinjer,ordrer where ordrer.id=ordrelinjer.ordre_id and ordrer.fakturadate =  '$date'";
+     $ordrelines = db_select($qtxt, __FILE__ . " linje " . __LINE__);
     $total = 0;
     while($order = db_fetch_array($ordrelines)) {
         $vat = $order['momssats'];
@@ -114,7 +129,7 @@ function vatPayments($kasse) {
 
 function drawCount($kasse)
 {
-    $drawer = db_select("select * from drawer where id='$kasse'", $queryVar);
+    $drawer = db_select("select * from drawer where id='$kasse'", __FILE__ . " linje " . __LINE__);
     $drawArray[$kasse]['kasse'] = $kasse;
     $drawArray[$kasse]['openings'] = 0;
     while($draw = db_fetch_array($drawer)) {
@@ -126,23 +141,27 @@ function drawCount($kasse)
     return $drawArray;
 }
 
-function calculateTurnover($kasse)
-{
-    $ordreQuery = db_select("select * from ordrer where felt_5 ='$kasse'", $queryVar);
+function calculateTurnover($kasse,$date) {
+		$turnover=$totalVat=0;
+		$qtxt = "select * from ordrer where felt_5 ='$kasse' and fakturadate = '$date'";
+    $ordreQuery = db_select($qtxt, __FILE__ . " linje " . __LINE__);
     while ($order = db_fetch_array($ordreQuery)) {
-      $tempOrdreId = $order['ordrenr'];
+      $tempOrdreId = $order['id'];
       $price = 0;
       $number = 0;
-      $orderLineQuery = db_select("select pris, antal, momssats from ordrelinjer where ordre_id='$tempOrdreId'", $queryVar);
+      $qtxt = "select pris, antal, rabat, momssats from ordrelinjer where ordre_id='$tempOrdreId'";
+      $orderLineQuery = db_select($qtxt, __FILE__ . " linje " . __LINE__);
       while ($orderLine = db_fetch_array($orderLineQuery)) {
-        $turnover += $orderLine['pris'] * $orderLine['antal'];
-        $totalVat += (($orderLine['pris'] * $orderLine['antal']) / 100 * $orderLine['momssats']);
-        $turnoverWithVat += ($batch['pris'] * $batch['antal']) + ($moms/100 * ($batch['pris'] * $batch['antal']));
+				$amount = $orderLine['pris'] * $orderLine['antal']-($orderLine['pris'] * $orderLine['antal'] * $orderLine['rabat'] / 100);
+        $turnover += $amount ;
+        $totalVat += ($amount * $orderLine['momssats']  / 100);
+#        $turnoverWithVat += ($batch['pris'] * $batch['antal']) + ($moms/100 * ($batch['pris'] * $batch['antal']));
       }
     }
     $turnoverWithVat = $turnover + $totalVat;
+#		return 	[$turnover,$turnoverWithVat];
     return ["turnoverWithoutVat" => subtractTurnover($turnover, false),
-            "turnoverWithVat" => subtractTurnover($turnoverWithVat, true)];
+            "turnoverWithVat" => subtractTurnover($turnoverWithVat, true)]; #reportSubtract.php
 }
 
 ?>
