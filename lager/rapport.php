@@ -4,7 +4,7 @@
 //               \__ \/ ^ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/rapport.php --- patch 3.9.9 --- 2021.01.09---
+// --- lager/rapport.php --- patch 4.0.6 --- 2022.03.21---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,42 +20,46 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
-// 2013.02.10 Break ændret til break 1
-// 2013.03.18 $modulnr ændret fra 12  til 15
-// 2013.08.27 Større omskrivning for bedre datovalg og detaljeringsgrad 
-// 2014.11.05 Større omskrivning
-// 2015.01.19 Kostpriser på varelinjer er forkert i ordrer < 010115 med anden valuta en DKK. 
+// 20130210 Break ændret til break 1
+// 20130318 $modulnr ændret fra 12  til 15
+// 20130827 Større omskrivning for bedre datovalg og detaljeringsgrad 
+// 20141105 Større omskrivning
+// 20150119 Kostpriser på varelinjer er forkert i ordrer < 010115 med anden valuta en DKK. 
 //		Derfor findes kostpriser med ordrefunc funktionen find_kostpris. Søg "/*find_kostpris*/" 
-// 2015.09.03 Lagerregulering kom ikke med ved tilgang. Tilføjet $bk_id & $bs_id samt ændret ordre_id til hhv. $k_ordre_id/$s_ordre_id & 
+// 20150903 Lagerregulering kom ikke med ved tilgang. Tilføjet $bk_id & $bs_id samt ændret ordre_id til hhv. $k_ordre_id/$s_ordre_id & 
 // antal til hhv. $k_antal/$s_antal. 
-// 2015.11.05 lagerreguleringer blev trukket fra i til-/afgang. Skal lægges til. #20151105  
-// 2015.11.06 Ikke lagerførte samlevarer (sæt) medtages nu ikke da disse er repræsenteret af de varer som indgår i sættet. #20151106  
-// 2015.12.10 Kostpriser blev altid trukket fra varekort - se også find_kostpriser i ordrefunc.php #21051210
-// 2016.02.01 # Flyttet db *-1 under sammentælling da sammentælling af db blev forkert ved negativt salg.
-// 2016.04.18 Tilføjet selection på afdeling. Søg $afd
-// 2016.04.18 Negatativ regulering blev vist uden fortegn. #20160418
-// 2016.08.04 Datofejl v visning af detaljeret regulering da $fakturadate blev nullet ved inden søgning efter både køb & salg
-// 2016.08.24	PHR $x erstattes af $f da $x blev brugt i 'for løkken' 20160824
-// 2016.08.26 PHR tilføjet $r[antal]*0 i "if" linje for at udelukke rabatter.
-// 2017.01.14 PHR Order by .... id rettet til Order by .... batch_salg.id da .id er 'ambiguous'
-// 2017.04.19 PHR Flyttet sammentælling af reguleringssum "en tuborg" ned da negativ regulering ikke kom med. 
-// 2017.05.02 PHR Sammentælling af reguleringssum viste hele beholdningen.
-// 2017.05.02 PHR Tilføjet selection på sælger. Søg $ref
-// 2017.08.01 PHR Tilføjet selection på leverandør. Søg $lev
+// 20151105 lagerreguleringer blev trukket fra i til-/afgang. Skal lægges til. #20151105  
+// 20151106 Ikke lagerførte samlevarer (sæt) medtages nu ikke da disse er repræsenteret af de varer som indgår i sættet. #20151106  
+// 20151210 Kostpriser blev altid trukket fra varekort - se også find_kostpriser i ordrefunc.php #21051210
+// 20160201 # Flyttet db *-1 under sammentælling da sammentælling af db blev forkert ved negativt salg.
+// 20160418 Tilføjet selection på afdeling. Søg $afd
+// 20160418 Negatativ regulering blev vist uden fortegn. #20160418
+// 20160804 Datofejl v visning af detaljeret regulering da $fakturadate blev nullet ved inden søgning efter både køb & salg
+// 20160824	PHR $x erstattes af $f da $x blev brugt i 'for løkken' 20160824
+// 20160826 PHR tilføjet $r[antal]*0 i "if" linje for at udelukke rabatter.
+// 20170114 PHR Order by .... id rettet til Order by .... batch_salg.id da .id er 'ambiguous'
+// 20170419 PHR Flyttet sammentælling af reguleringssum "en tuborg" ned da negativ regulering ikke kom med. 
+// 20170502 PHR Sammentælling af reguleringssum viste hele beholdningen.
+// 20170502 PHR Tilføjet selection på sælger. Søg $ref
+// 20170801 PHR Tilføjet selection på leverandør. Søg $lev
 // 2018.09.28 PHR Inddeling efter grupper når detajler er fravalgt.
-// 2018.10.03 PHR Fjernet "batch_kob.fakturadate>='$date_from' and " da beholdninger viste fejl. 20181003
-// 2019.01.18 MSC - Fjernet isset fejl
-// 2019.02.20 MSC - Rettet topmenu design
-// 2019.06.04 PHR - Added CSV and stock in 'kun salg'
-// 2019.08.30 PHR - Added 'afrund' to $t_s_pris to avoid division by almost zero which makes crazy numbers 20190830
-// 2019.10.31 PHR	- Minor design update look for '$trbg'
-// 2020.03.15 PHR - Added minmaxrepport (execlusive for bizsys_49)
-// 2020.04.08 PHR	- Added Vat to summary repport
-// 2020.10.24	PHR - Added 'ordered' to repport lagerbeh./værdi (stock/value)
-// 2020.10.24 PHR - Fixed CSV according to above
-// 2021.01.09 PHR - Inserted tab in sum in 'lagertal' & 'kun_salg'  
+// 20181003 PHR Fjernet "batch_kob.fakturadate>='$date_from' and " da beholdninger viste fejl. 20181003
+// 20190118 MSC - Fjernet isset fejl
+// 20190220 MSC - Rettet topmenu design
+// 20190604 PHR - Added CSV and stock in 'kun salg'
+// 20190830 PHR - Added 'afrund' to $t_s_pris to avoid division by almost zero which makes crazy numbers 20190830
+// 20191031 PHR	- Minor design update look for '$trbg'
+// 20200315 PHR - Added minmaxrepport (execlusive for bizsys_49)
+// 20200408 PHR	- Added Vat to summary repport
+// 20201024	PHR - Added 'ordered' to repport lagerbeh./værdi (stock/value)
+// 20201024 PHR - Fixed CSV according to above
+// 20210109 PHR - Inserted tab in sum in 'lagertal' & 'kun_salg' 
+// 20210402 LOE - Translated these texts to English  - 20210402
+// 20210406 LOE - Added sprog_id as global value to this function - 20210406
+// 20220320 PHR	- Inserted "if ($kun_salg)" in query to limit numbber of items
+// 20220321 PHR - Cost price now found from kostpriser if to_date != current date. 
 
 	@session_start();
 	$s_id=session_id();
@@ -72,6 +76,7 @@
 	include("../includes/forfaldsdag.php");
 	include("../includes/ordrefunc.php");
 #	include("../includes/db_query.php");
+$lagerstatus1=findtekst(992,$sprog_id); #20210402
 
 	if (!isset ($_GET['detaljer'])) $_GET['detaljer'] = NULL;
 	if (!isset ($_GET['kun_salg'])) $_GET['kun_salg'] = NULL;
@@ -80,6 +85,7 @@
 if ($popup) $returside="../includes/luk.php";
 else $returside="../index/menu.php";
 
+	$inventoryCount = if_isset($_POST['inventoryCount']);
 $lokMinMax=if_isset($_POST['lokMinMax']);
 if ($lokMinMax) {
 	$varegruppe = trim($_POST['varegruppe']);
@@ -119,13 +125,14 @@ if (isset($_POST['submit']) && $_POST['submit']) {
 	$lagertal = $_GET['lagertal'];
 	$submit=if_isset($_GET['submit']);
 }
+
 #$md[1]="januar"; $md[2]="februar"; $md[3]="marts"; $md[4]="april"; $md[5]="maj"; $md[6]="juni"; $md[7]="juli"; $md[8]="august"; $md[9]="september"; $md[10]="oktober"; $md[11]="november"; $md[12]="december";
 
 #if (strstr($varegruppe, "ben post")) {$varegruppe="openpost";}
 #cho "$date_from, $date_to, $varenr, $varenavn, $varegruppe,$detaljer<br>";
 if ($submit == 'ok') varegruppe ($date_from, $date_to, $varenr, $varenavn, $varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref); 
-elseif ($submit == 'lagerstatus') print print "<meta http-equiv=\"refresh\" content=\"0;URL=lagerstatus.php?varegruppe=$varegruppe\">";
-elseif (strpos($submit,'ageropt')) print print "<meta http-equiv=\"refresh\" content=\"0;URL=optalling.php?varegruppe=$varegruppe\">";
+elseif ($submit == "$lagerstatus1") print print "<meta http-equiv=\"refresh\" content=\"0;URL=lagerstatus.php?varegruppe=$varegruppe\">";
+elseif ($inventoryCount) print print "<meta http-equiv=\"refresh\" content=\"0;URL=optalling.php?varegruppe=$varegruppe\">";
 else 	forside ($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref);
 #cho "$submit($regnaar, $date_from, $date_to, $varenr, $varenavn, $varegruppe)";
 
@@ -136,6 +143,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	global $bgcolor,$bgcolor5,$brugernavn;
 	global $db,$jsvars,$md,$menu;
 	global $popup,$returside,$top_bund;
+	global $sprog_id; #20210406
 
 #	$regnaar=$regnaar*1; #fordi den er i tekstformat og skal vaere numerisk
 	($date_from)?$dato_fra=dkdato($date_from):$dato_fra="01-01-".date("Y");
@@ -182,8 +190,8 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\" align=\"center\"><tbody>"; #A
 	print "<tr><td width=100%>";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
-	print "<td width=\"10%\" $top_bund><a href=$returside accesskey=L>Luk</a></td>";
-	print "<td width=\"80%\" $top_bund>Varerapport - forside</td>";
+		print "<td width=\"10%\" $top_bund><a href=$returside accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
+		print "<td width=\"80%\" $top_bund>".findtekst(964,$sprog_id)."</td>";
 		print "<td width=\"10%\" $top_bund><a href='../utils/batch_salg_rabat.php?bogfor=0&md=8' target='blank'>|</a></td></tr>\n";
 		print "</tbody></table></td></tr>\n"; #B slut
 		print "</tr>\n<tr><td height=\"60%\" \"width=100%\" align=\"center\" valign=\"bottom\">";
@@ -259,9 +267,9 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	$trbg=$bgcolor;
 	print "<form name=rapport action=rapport.php method=post>";
 	print "<table  bgcolor='$bgcolor' class='dataTable2' cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
-	print "<tr><td align=\"center\" colspan=\"3\"><h3>Varerapport<br></h3></td></tr>\n";
+	print "<tr><td align=\"center\" colspan=\"3\"><h3>".findtekst(965,$sprog_id)."<br></h3></td></tr>\n";
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
-	print "<tr bgcolor='$trbg'><td>Varegruppe</td><td colspan=\"2\"><select class=\"inputbox\" name=\"varegruppe\" style=\"width:200px;\">";
+	print "<tr bgcolor='$trbg'><td>".findtekst(774,$sprog_id)."</td><td colspan=\"2\"><select class=\"inputbox\" name=\"varegruppe\" style=\"width:200px;\">";
 	for ($x=0;$x<count($vg_nr);$x++) {
 		if ($varegruppe == $vg_nr[$x]) print "<option value=$vg_nr[$x]>$vg_nr[$x] : $vg_navn[$x]</option>";
  	}
@@ -295,7 +303,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	}
 	if (count($ref_nr)>1) {
 		($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
-		print "<tr bgcolor='$trbg'><td> Sælger </td><td colspan=\"2\"><select class=\"inputbox\" name=\"ref\" style=\"width:200px;\">";
+		print "<tr bgcolor='$trbg'><td> ".findtekst(884,$sprog_id)."</td><td colspan=\"2\"><select class=\"inputbox\" name=\"ref\" style=\"width:200px;\">";
 		for ($x=0;$x<count($ref_nr);$x++) {
 			if ($ref == $ref_nr[$x]) print "<option value=$ref_nr[$x]>$ref_brugernavn[$x]</option>";
 		}
@@ -306,37 +314,38 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	}
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
 	print "<tr bgcolor='$trbg'>";
-	print "	<td> Periode</td>";
+	print "	<td>".findtekst(899,$sprog_id)."</td>";
 	print "	<td colspan=\"1\"><input class=\"inputbox\" style=\"width:97px;\" type=\"text\" name=\"dato_fra\" value=\"$dato_fra\"></td>";
 	print "	<td colspan=\"1\"><input class=\"inputbox\" style=\"width:97px;\" type=\"text\" name=\"dato_til\" value=\"$dato_til\"></td>";
 	print "	</tr>\n";
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
-	print "<tr bgcolor='$trbg'><td>Varenr</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenr\" value=\"$varenr\"></td></tr>\n";
+	print "<tr bgcolor='$trbg'><td>".findtekst(917,$sprog_id)."</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenr\" value=\"$varenr\"></td></tr>\n";
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
-	print "<tr bgcolor='$trbg'><td>Varenavn</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenavn\" value=\"$varenavn\"></td></tr>\n";
+	print "<tr bgcolor='$trbg'><td>".findtekst(967,$sprog_id)."</td><td colspan=\"2\"><input class=\"inputbox\" style=\"width:200px;\" name=\"varenavn\" value=\"$varenavn\"></td></tr>\n";
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
-	print "<tr bgcolor='$trbg'><td>Detaljeret</td><td colspan=\"2\"><input type=\"checkbox\" name=\"detaljer\" $detaljer></td></tr>\n";
+	print "<tr bgcolor='$trbg'><td>".findtekst(968,$sprog_id)."</td><td colspan=\"2\"><input type=\"checkbox\" name=\"detaljer\" $detaljer></td></tr>\n";
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
-	print "<tr bgcolor='$trbg'><td>Kun salg / DB</td><td colspan=\"2\"><input type=\"checkbox\" name=\"kun_salg\"$kun_salg></td></tr>\n";
+	print "<tr bgcolor='$trbg'><td>".findtekst(969,$sprog_id)."</td><td colspan=\"2\"><input type=\"checkbox\" name=\"kun_salg\"$kun_salg></td></tr>\n";
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
-	print "<tr bgcolor='$trbg'><td>Beregn lagerbeh./værdi</td><td colspan=\"2\"><input type=\"checkbox\" name=\"lagertal\" $lagertal></td></tr>\n";
+	print "<tr bgcolor='$trbg'><td>".findtekst(970,$sprog_id)."./værdi</td><td colspan=\"2\"><input type=\"checkbox\" name=\"lagertal\" $lagertal></td></tr>\n";
 	($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
 	print "<tr bgcolor='$trbg'><td colspan='3' align=center><input class='button green medium' type=submit value=\"  OK  \" name=\"submit\"></td></tr>\n";
 	print "</tbody></table>";
 	print "<tr><td ALIGN=\"center\" Valign=\"top\" height=39%><center><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>\n";
 	print "<tr><td><hr></td></tr>\n";
-	$txt = "<tr><td ALIGN=center><span title='Se lagerstatus p&aring; vilk&aring;rlig dato'>";
-	$txt.= "<input class='button blue medium' style='width:350px;' type='submit' value='Lagerstatus' name='submit'>";
-	$txt.= "</span></td></tr>\n";
+	$txt = "<tr><td ALIGN=center title='".findtekst(971,$sprog_id)."'>";
+	$txt.= "<input class='button blue medium' style='width:350px;' type='submit' value=\"".findtekst(992,$sprog_id)."\" name='submit'>";
+	$txt.= "</td></tr>\n";
 	print $txt;
-	$txt = "<tr><td ALIGN=center><span title='Beholdningsrapport med lokation samt min og max'>";
-	$txt.= "<input class='button gray medium' style=\"width:350px;\" type=submit value=\"Beholdningsrapport\" name=\"lokMinMax\">";
-	$txt.= "</span></td></tr>\n";
+	$txt = "<tr><td ALIGN=center title='".findtekst(972,$sprog_id)."'>";
+	$txt.= "<input class='button gray medium' style=\"width:350px;\" type=submit value=\"".findtekst(993,$sprog_id)."\" name=\"lokMinMax\">";
+	$txt.= "</td></tr>\n";
 	if ($db == 'bizsys_49') print $txt;
 	print "<tr><td><hr></td></tr>\n";
-	$txt = "<tr><td ALIGN=center><span title='Funktion til opt&aelig;lling og regulering af varelager'>"; 
-	$txt.=  "<input class='button gray medium' style=\"width:350px;\" type=submit value=\"Lageropt&aelig;lling\" name=\"submit\">";
-	$txt.=  "</span></td></tr>\n";
+	$txt = "<tr><td ALIGN=center title='".findtekst(973,$sprog_id)."'>"; 
+	$txt.= "<input class='button gray medium' style=\"width:350px;\" ";
+	$txt.= "type = 'submit' value='".findtekst(1956,$sprog_id)."' name='inventoryCount'>";
+	$txt.=  "</td></tr>\n";
 	print $txt;
 	print "</form>";
 	print "</tbody></table></center>\n";
@@ -354,6 +363,7 @@ function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,
 	global $md,$menu;
 	global $returside;
 	global $top_bund;
+	global $sprog_id; #20210406
 	
 	if ($detaljer) $cols=9;
 	elseif ($kun_salg) $cols=8;
@@ -381,7 +391,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 		include_once '../includes/top_menu.php';
 		include_once '../includes/top_header.php';
 		print "<div id=\"header\"> 
-		<div class=\"headerbtnLft\">$luk Luk</a></div>
+		<div class=\"headerbtnLft\">$luk ".findtekst(30,$sprog_id)."</a></div>
 		<span class=\"headerTxt\">Rapport | Varesalg | ".dkdato($date_from)." - ".dkdato($date_to); "</span>";     
 		print "<div class=\"headerbtnRght\"></div>";       
 		print "</div><!-- end of header -->
@@ -392,7 +402,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 
 	print "<tr><td colspan=\"$cols\" height=\"9\">";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tbody>"; #B
-	print "<td width=\"10%\" $top_bund>$luk Luk</a></td>";
+		print "<td width=\"10%\" $top_bund>$luk ".findtekst(30,$sprog_id)."</a></td>";
 	print "<td width=\"80%\" $top_bund>Rapport | varesalg | ".dkdato($date_from)." - ".dkdato($date_to);
 	}
 	if ($afd) {
@@ -495,6 +505,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 	$qtxt="select batch_salg.vare_id,batch_salg.pris,varer.gruppe,varer.beskrivelse from batch_salg,varer";
 	if ($afd || $ref) $qtxt.=",ordrer";
 	$qtxt.=" where batch_salg.fakturadate<='$date_to' and batch_salg.vare_id = varer.id";  # 20181003
+	if ($kun_salg) $qtxt.= "and batch_salg.fakturadate >= '$date_to' "; #20220320
 	if ($afd) $qtxt.=" and batch_salg.ordre_id = ordrer.id and ordrer.afd='$afd'";
 	if ($ref) $qtxt.=" and batch_salg.ordre_id = ordrer.id and (ordrer.ref='$ref_navn' or ordrer.ref='$ref_brugernavn')";
 	if ($lagertal) $qtxt.=" order by varer.gruppe,varer.beskrivelse";
@@ -565,34 +576,34 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 
 	if (!$detaljer) {
 		if ($kun_salg) {
-			print "<tr><td><b>Varenr.</b></td>
-			<td><b>Enhed</b></td>
-			<td><b>Beskrivelse</b></td>
-			<td align=\"right\"><b>Solgt</b></td>
-			<td align=\"right\"><b>Salgspris</b></td>
+			print "<tr><td><b>".findtekst(917,$sprog_id).".</b></td>
+			<td><b>".findtekst(945,$sprog_id)."</b></td>
+			<td><b>".findtekst(914,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(974,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(949,$sprog_id)."</b></td>
 			<td align=\"right\"><b>DB</b></td>
 			<td align=\"right\"><b>DG</b></td>
-			<td align=\"right\"><b>På lager</b></td>";
+			<td align=\"right\"><b>".findtekst(975,$sprog_id)."</b></td>"; #20210402
 			fwrite($csvfile, "Varenr;Enhed;Beskrivelse;Solgt;Salgspris;DB;DG;". utf8_decode('På lager') ."\r\n");
 		} else { 
-		print "<tr><td><b>Varenr.</b></td>
-				<td><b>Enhed</b></td>
-				<td><b>Beskrivelse</b></td>
-			<td align=\"right\"><b>Bestilt</b></td>
-				<td align=\"right\"><b>Købt</b></td>
-				<td align=\"right\"><b>K&oslash;bspris</b></td>
-				<td align=\"right\"><b>Solgt</b></td>
-				<td align=\"right\"><b>Salgspris</b></td>
-			<td align=\"right\"><b>+Moms</b></td>
-				<td align=\"right\"><b>Reguleret</b></td>
+			print "<tr><td><b>".findtekst(917,$sprog_id).".</b></td>
+			<td><b>".findtekst(945,$sprog_id)."</b></td>
+			<td><b>".findtekst(914,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(976,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(977,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(978,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(974,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(949,$sprog_id)."</b></td>
+			<td align=\"right\"><b>+".findtekst(770,$sprog_id)."</b></td>
+			<td align=\"right\"><b>".findtekst(979,$sprog_id)."</b></td>
 				<td align=\"right\"><b>DB</b></td>
 			<td align=\"right\"><b>DG</b></td>";
 			#<td align=\"right\"><b>K&oslash;bspris</b></td>";
 			fwrite($csvfile, "Varenr;Enhed;Beskrivelse;Bestilt;". utf8_decode('Købt') .";". utf8_decode('Købspris') .";"); 
 			fwrite($csvfile, "Solgt;Salgspris;". utf8_decode('+moms') .";Reguleret;DB;DG");
 			if (count($lagergruppe) && $lagertal) {
-				print "<td align=\"right\"><b>Beholdning</b></td>
-				<td align=\"right\"><b>Værdi</b></td>";
+				print "<td align=\"right\"><b>".findtekst(980,$sprog_id)."</b></td>
+				<td align=\"right\"><b>".findtekst(476,$sprog_id)."</b></td>";
 				fwrite($csvfile,";Beholdning;". utf8_decode('Værdi'));
 			}	
 			print "</tr>\n";
@@ -612,11 +623,16 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 		$samlevare[$x]=$r['samlevare'];
 		if ($kun_salg || ($lagertal && in_array($v_gr[$x],$lagergruppe) && !$samlevare[$x])) {
 			$qtxt="select sum(antal) as beholdning from batch_kob where vare_id='$v_id[$x]' and fakturadate <= '$date_to'";
-			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$beholdning[$x]+=$r['beholdning'];
+			$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$beholdning[$x]+=$r2['beholdning'];
 			$qtxt="select sum(antal) as beholdning from batch_salg where vare_id='$v_id[$x]' and fakturadate <= '$date_to'";
-			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$beholdning[$x]-=$r['beholdning'];
+			$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$beholdning[$x]-=$r2['beholdning'];
+		}
+		if ($date_to != date('Y-m-d')) { #20220321
+			$qtxt="select kostpris from kostpriser where vare_id = $v_id[$x] and transdate < '$date_to' order by transdate desc limit 1";
+			$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$v_kostpris[$x]=$r2['kostpris'];
 	}
 	}
 	for ($x=0;$x<count($v_id);$x++) {
@@ -679,7 +695,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 #			print "<tr><td colspan=\"3\"><b>$beskrivelse[$x]</b></td></tr>\n";
 			print "<tr><td></td></tr>\n";
 			if (!$kun_salg) {
-				print "<tr><td>Købsdato</td><td align=\"right\">Antal</td><td align=\"right\">Pris</td><td align=\"right\">Moms</td><td align=\"right\">Incl. moms</td><td align=\"right\">Ordre</td></tr>\n";
+				print "<tr><td>".findtekst(981,$sprog_id)."</td><td align=\"right\">".findtekst(916,$sprog_id)."</td><td align=\"right\">".findtekst(915,$sprog_id)."</td><td align=\"right\">".findtekst(770,$sprog_id)."</td><td align=\"right\">Incl. moms</td><td align=\"right\">".findtekst(107,$sprog_id)."</td></tr>\n";
 			fwrite($csvfile, utf8_decode('Købsdato') .";Antal;Pris;Moms\Incl. moms;Ordre\r\n");
 				print "<tr><td colspan=\"$cols\"><hr></td></tr>\n";
 			for ($y=0;$y<count($k_antal);$y++) {
@@ -799,7 +815,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 		if ($t_s_pris && $t_dkBi) $t_dg=$t_dkBi*100/$t_s_pris;
 		else $t_dg=100;
 		if ($detaljer) {
-			print "<tr><td>Salgsdato</td><td align=\"right\">Antal</td><td align=\"right\">Pris</td><td align=\"right\">Moms</td><td align=\"right\">Incl.moms</td><td align=\"right\">Kostpris</td><td align=\"right\">DB</td><td align=\"right\">DG</td><td align=\"right\">Ordre</td></tr>\n";
+			print "<tr><td>".findtekst(982,$sprog_id)."</td><td align=\"right\">".findtekst(916,$sprog_id)."</td><td align=\"right\">".findtekst(915,$sprog_id)."</td><td align=\"right\">".findtekst(770,$sprog_id)."</td><td align=\"right\">Incl.moms</td><td align=\"right\">".findtekst(950,$sprog_id)."</td><td align=\"right\">DB</td><td align=\"right\">DG</td><td align=\"right\">".findtekst(605,$sprog_id)."</td></tr>\n";
 			fwrite($csvfile, "Salgsdato;Antal;Pris;Moms;Incl.moms;Kostpris;DB;DG\r\n");
 			for ($y=count($bk_id);$y<count($linje_id);$y++) {
 				if ($s_ordre_id[$y]) {
@@ -1003,24 +1019,24 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 		if ($kun_salg) {
 			($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 			print "<tr bgcolor='$linjebg'><td Colspan=\"3\"><b>Summeret</b></td>
-			<td align=\"right\">Solgt</td>
-			<td align=\"right\">Salgspris</td>
+			<td align=\"right\">".findtekst(974,$sprog_id)."</td>
+			<td align=\"right\">".findtekst(949,$sprog_id)."</td>
 			<td align=\"right\">DB</td>
 			<td align=\"right\">DG</td>";
 		fwrite($csvfile, "Solgt;Salgspris;DB;DG\r\n");
 		}	else {
 			($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-			print "<tr bgcolor='$linjebg'><td Colspan=\"3\"><b>Summeret</b></td>
+			print "<tr bgcolor='$linjebg'><td Colspan=\"3\"><b>".findtekst(983,$sprog_id)."</b></td>
 			<td align=\"right\"></td>
 			<td align=\"right\"></td>
-				<td align=\"right\">K&oslash;bspris</td>
+			<td align=\"right\">".findtekst(978,$sprog_id)."</td>
 			<td align=\"right\"></td>
-				<td align=\"right\">Salgspris</td>
-			<td align=\"right\">Moms</td>
-			<td align=\"right\"></td>
+			<td align=\"right\">".findtekst(949,$sprog_id)."</td>
+			<td align=\"right\">".findtekst(770,$sprog_id)."</td>
+			<td align=\"right\">".findtekst(984,$sprog_id)."</td>
 				<td align=\"right\">DB</td>
 				<td align=\"right\">DG</td>
-<!--			<td align=\"right\">Samlet til-/afgang i perioden</td>  -->
+<!--			<td align=\"right\"></td>  -->
 			<td align=\"right\"></td>";
 			if ($lagertal && $tt_stockvalue) print "<td align=\"right\">Samlet lagerværdi</td>";
 			print "</tr>\n";

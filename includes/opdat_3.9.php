@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------ includes/opdat_3.9.php-------rel. 4.0.0 ------2021-01-02---------------
+// ------ includes/opdat_3.9.php-------rel. 4.0.0 ------2022-02-20---------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,8 +20,9 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2019 - 2021 Saldi.dk ApS
+// Copyright (c) 2019 - 2022 Saldi.dk ApS
 // ----------------------------------------------------------------------
+// 20200220 PHR	Changed column condition to state in table mylabel as condition can't be used in MariaDB 
 
 function opdat_3_9($majorNo, $subNo, $fixNo){
 	global $version;
@@ -47,7 +48,7 @@ function opdat_3_9($majorNo, $subNo, $fixNo){
 		include("../includes/online.php");
 		if ($db!=$sqdb){
 			$qtxt = "CREATE TABLE mylabel (id serial NOT NULL, account_id integer, page numeric(5,0), row numeric(5,0), ";
-			$qtxt.= "col numeric(5,0), price numeric(15,3), description varchar (40), condition varchar(10), barcode varchar (20), ";
+			$qtxt.= "col numeric(5,0), price numeric(15,3), description varchar (40), state varchar(10), barcode varchar (20), ";
 			$qtxt.= "PRIMARY KEY (id))";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$qtxt="UPDATE grupper set box1='$nextver' where art = 'VE'";

@@ -36,7 +36,7 @@
 // 2019.04.16 PHR - Added localPrint for printing through local webserver (raspberry) 
 // 2019.10.23 PHR - $exec_path now read from admin settings #20191023
 // 2019.11.05 PHR - Varius cleanup
-// 2002.01.13 PHR - Print from 'genfakturer' returned to includes/ordreliste.php which does not exist. 20200113
+// 2020.01.13 PHR - Print from 'genfakturer' returned to includes/ordreliste.php which does not exist. 20200113
 
 @session_start();
 $s_id=session_id();
@@ -213,47 +213,11 @@ if ($valg) {
 		}
 	}
 	
-	
-	/*
-		foreach(glob("../temp/*.htm") as $htmfil[$i]) {
-			echo "$htmfil[$i]<br>";
-			$i++;
-		}
-		/*
-/*
-			if (file_exists("../temp/".$ps_fil.".htm")) {
-echo __line__." ../temp/".$ps_fil.".htm<br>";
-#xit;
-				$indfil="../temp/".$ps_fil.".htm";
-				$udfil="../temp/".$ps_fil.".pdf";
-				system ("weasyprint -e UTF-8 $indfil $udfil");
-				unlink ($indfil);
-			} 
-			$i=2;
-echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
-#xit;
-			while(file_exists("../temp/".$ps_fil."_".$i.".htm")) {
-echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
-				$indfil="../temp/".$ps_fil."_".$i.".htm";
-				$udfil="../temp/".$ps_fil."_".$i.".pdf";
-				system ("weasyprint -e UTF-8 $indfil $udfil");
-					unlink ($indfil);
-				$i++;	
-}
-*/
-#				echo __line__." pdftk ../temp/".$ps_fil."_*.pdf output ../temp/".$ps_fil.".pdf<br>";
-#			system ("pdftk ../temp/".$ps_fil."_*.pdf output ../temp/".$ps_fil.".pdf");
-#echo __line__."<br>";
-#exit;
 	if ($zx) { # Brug PostScript 
 		$tmp = system ("ls");
-		echo $tmp;
 			fwrite($log,__line__." system (\"$ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf\")\n");
 			system ("$ps2pdf ../temp/$ps_fil.ps ../temp/$ps_fil.pdf");
 		}
-#echo "$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil.ps<br>";
-#		system ("$exec_path/gs -q -dNOPAUSE -dBATCH -sDEVICE=tiffg4 -r200 -sPAPERSIZE=a4 -sOutputFile=../temp/$ps_fil.tiff ../temp/$ps_fil.ps");
-#		print "-->";
 		
 		fwrite($log,__line__." if (file_exists(\"../temp/$ps_fil.pdf\")\n");
 		$ps_fil=str_replace("../temp/$db","",$ps_fil);
@@ -312,19 +276,15 @@ echo __line__." ../temp/".$ps_fil."_".$i.".htm<br>";
 			} elseif ($udskriv_til=='fil') {
 				$r=db_fetch_array(db_select("select * from ordrer where id='$id'",__FILE__ . " linje " . __LINE__));
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=../debitor/ordreliste.php?gem_id=$id&gem=../temp/$ps_fil.pdf&download=$r[kundeordnr]_$r[firmanavn].pdf\">";
-#				print "<span>Højreklik og vælg 'Gem som'<a href='../temp/$ps_fil.pdf' download='$r[kundeordnr]_$r[firmanavn].pdf'>$r[kundeordnr]_$r[firmanavn].pdf</a></span>";
 				exit;
 			}
-echo __line__." $returside<br>";
 			print "<table width=100% height=100%><tbody>";
 			if ($returside) $href="\"$returside\" accesskey=\"L\"";
 			else $href="\"udskriv.php?valg=tilbage&id=$id&art=$art\" accesskey=\"L\"";
 			print "<td width=\"10%\" height=\"1%\" $top_bund><a href=$href>$ordre_antal Luk</a></td>";
 			print "<td width=\"80%\" $top_bund align=\"center\" title=\"Klik her for at &aring;bne filen i nyt vindue, h&oslash;jreklik her for at gemme.\">";
 			print "<a href=../temp/$ps_fil.pdf target=blank>Vis PDF udskrift</a>";
-#			print "<a href=../temp/$ps_fil.htm target=blank>Vis HTML udskrift</a>";
 			print "</td>";
-#  		print "<td width=\"10%\" $top_bund align = \"right\"title=\"Klik her for at &aring;bne filen i tiff format\"><a href=\"../temp/$ps_fil.tiff\">TIFF-version</a></td>";
   		print "<td width=\"10%\" $top_bund align = \"right\"></td>";
 			print "<tr><td width=100% height=99% align=\"center\" valign=\"middle\" colspan=\"3\"><iframe frameborder=\"0\" width=\"100%\" height=\"100%\" scrolling=\"auto\" src=\"../temp/$ps_fil.pdf\"></iframe></td></tr>";
 			print "</tbody></table>";

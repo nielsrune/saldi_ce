@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//----------------- includes/posmenufunc.php -----ver 4.0.1---- 2021.03.20 ----------
+//--- includes/posmenufunc.php --- ver 4.0.5 --- 2021.08.24 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,34 +20,38 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2009-2021 Saldi.dk ApS
+// Copyright (c) 2009-2022 Saldi.dk ApS
 // ----------------------------------------------------------------------
-// 2015.08.20 Mulig for pris på varegenveje. Søg $pris
-// 2015.10.23	Diverse nye ændringer 
-// 2015.11.29	Tilføjet knap Konant på beløb & Betalingskort på beløb.
-// 2016.01.28 Tilføjet systemknap Stamkunder. Se funktion stamkunder i ordrefunc.php
-// 2016.01.31 Tilføjet systemknap Kontoudtog & Udskriv sidste. 
-// 2016.04.18 Alle 'på beløb' disables når der ikke er varer.
-// 2016.09.27 Det skal være muligt at betale med kort/kontant osv når der er kontonr og kunde ikke har kredit
-// 2016.10.06 !$sum rettet til (!$sum && $a!='Kontant') da det skal være muligt at afslutte en 0 bon 20161006
-// 2017.02.07	Tilføjet knap sæt
-// 2017.03.24 Afd kommer nu fra global (pos_ordre).
-// 2017.12.10 Hvis ip ikke er sat disables terminal knap. #20171210
-// 2018.01.25 Tilføjet $varenr_ny så det også fungerer med variant stregkoder # 20180125 
-// 2018.03.13	-	PHR Kontoopslag ændret til debitorposlag og kreditoropslag tilføjet.
-// 2018.10.30 CA  Håndtering af gavekort og tilgodebeviser med nummerering # 20181030
-// 2018.12.16 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
-//2018.12.16 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
-// 2019.01.07	PHR	Tilføjet systemknapknap til totalrabat Søg totalrabat
+// 20150820 Mulig for pris på varegenveje. Søg $pris
+// 20151023	Diverse nye ændringer
+// 20151129	Tilføjet knap Konant på beløb & Betalingskort på beløb.
+// 20160128 Tilføjet systemknap Stamkunder. Se funktion stamkunder i ordrefunc.php
+// 20160131 Tilføjet systemknap Kontoudtog & Udskriv sidste.
+// 20160418 Alle 'på beløb' disables når der ikke er varer.
+// 20160927 Det skal være muligt at betale med kort/kontant osv når der er kontonr og kunde ikke har kredit
+// 20161006 !$sum rettet til (!$sum && $a!='Kontant') da det skal være muligt at afslutte en 0 bon 20161006
+// 20170207	Tilføjet knap sæt
+// 20170324 Afd kommer nu fra global (pos_ordre).
+// 20171210 Hvis ip ikke er sat disables terminal knap. #20171210
+// 20180125 Tilføjet $varenr_ny så det også fungerer med variant stregkoder # 20180125
+// 20180313	-	PHR Kontoopslag ændret til debitorposlag og kreditoropslag tilføjet.
+// 20181030 CA  Håndtering af gavekort og tilgodebeviser med nummerering # 20181030
+// 20181216 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
+// 20181216 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
+// 20190107	PHR	Tilføjet systemknapknap til totalrabat Søg totalrabat
 // 20190107 PHR	Tilføjet 'change_cardvalue' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$change_cardvalue'
-// 2019.03.05	LN Added new button: Z-Rapport
-// 2019.03.13	LN Add more language txt to the buttons
-// 2019.03.14	LN Disable z-report button for ten seconds if clicked
-// 2020.07.02	PHR Cleanup in LN design issues
-// 2020.11.09 PHR Added '& skift_bruger=1' as skift_bruger (forced user select) was not called
-// 2020.11.14 . PHR Enhanged 'tilfravalg' add/remove to food items, (fx. extra bacon or no tomatoes in burger) $tilfravalgNy
-// 2021.03.20 PHR Made it possible to change qty in items with add ons 202103220
-
+// 20190305	LN Added new button: Z-Rapport
+// 20190313	LN Add more language txt to the buttons
+// 20190314	LN Disable z-report button for ten seconds if clicked
+// 20200702	PHR Cleanup in LN design issues
+// 20201109 PHR Added '& skift_bruger=1' as skift_bruger (forced user select) was not called
+// 20201114 PHR Enhanged 'tilfravalg' add/remove to food items, (fx. extra bacon or no tomatoes in burger) $tilfravalgNy
+// 20210320 PHR Made it possible to change qty in items with add ons 202103220
+// 20210811 LOE Added some codes for beskrivelse_ny to check if it is equal to $focus and updated some other codes
+// 20210812 LOE Added a block of code to for in description pose - stor for the text in a particular button and also added beskrivelse_old variable
+// 20210824 PHR Set $id to 0 if NULL;
+// 20210827 PHR Removed changed made 21020812 as it does not make sense.
+// 20220209 PHR  
 
 include ("posmenufunc_includes/buttonFunc.php");
 
@@ -66,7 +70,9 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 	global $tilfravalgNy;
 	global $url;
 	global $varenr_ny,$vare_id,$vare_id_ny;
+	global $beskrivelse_ny, $beskrivelse_old; #20210812 
 
+	if (!$id) $id = 0; #20210824
 	$b=$m=NULL;
 	$buttonTextArr = setAccordinglyLanguage();
 	(isset($_GET['antal']))?$antal=$_GET['antal']:$antal=0;
@@ -82,6 +88,9 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 	$dd=date("Y-m-d");
 	$tt=date("H:i:s");
 	
+	
+
+
 	if ($kasse=="?") find_kasse($kasse);
 	($vare_id || $vare_id_ny || $varenr_ny)?$disabled="disabled=\"disabled\"":$disabled=NULL;  #20180125
 	$qtxt = "select box2,box3,box4,box7,box10 from grupper where art = 'POS' and kodenr='2'";
@@ -178,8 +187,18 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 				print "<td width=\"".$width."px\" $nostil></td>"; 
 			} elseif ($a || $a=='0') {
 				if ($d<6) {
+/*
+					if($a == "pose - stor"){
+						if(!empty($beskrivelse_ny)|| $beskrivelse_ny == " "){
+						$a = $beskrivelse_ny;                 #20210812
+						}elseif(!empty($beskrivelse_old)){
+							$a = $beskrivelse_old;
+						}
+					}
+*/
 					$knap="<input type=\"button\" $stil value= \"$a\">";
 					$knap=str_replace("background-color: ;","background-color: $b;",$knap);
+
 				}
 				if (!$d || $d==1) {
 					if (strpos($a,'$pris')) {
@@ -203,15 +222,28 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 							$knap=str_replace("\n"," ",$knap,$tmp);
 						}
 					}
-					print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&$menu=$menu_id&vare_id=$vare_id&vare_id_ny=$c";
+#					print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&$menu=$menu_id&vare_id=$vare_id&vare_id_ny=$c";
+#					print "&antal_ny=$antal&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager";
+#					print "&tilfravalgNy=". str_replace(chr(9),'|',$tilfravalgNy) .">$knap</a>\n";
+					print "<td><span onclick = \"location.href = 'pos_ordre.php?id=$id&$menu=$menu_id&vare_id=$vare_id&vare_id_ny=$c";
 					print "&antal_ny=$antal&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager";
-					print "&tilfravalgNy=". str_replace(chr(9),'|',$tilfravalgNy) .">$knap</a>\n";
-				} elseif ($d==2) print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&vare_id=$vare_id&$menu=$c&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager>$knap</a>\n";
-				elseif ($d==3) print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&konto_id=$c&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager>$knap</a>\n";
-				elseif ($d==4) print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&spec_func=spec_$c&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager>$knap</a>\n";
-				elseif ($d==5) {
+					print "&tilfravalgNy=". str_replace(chr(9),'|',$tilfravalgNy) ."'\">$knap</span>\n";
+				} elseif ($d==2) {
+					# print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&vare_id=$vare_id&$menu=$c&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager>$knap</a>\n";
+					print "<td><span onclick = \"location.href = 'pos_ordre.php?id=$id&vare_id=$vare_id&$menu=$c";
+					print "&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager'\">$knap</span>\n";
+				} elseif ($d==3) {
+#					print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&konto_id=$c&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager>$knap</a>\n";
+					print "<td><span onclick = \"location.href = 'pos_ordre.php?id=$id&konto_id=$c&varenr_ny=$varenr_ny";
+					print "&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager'\">$knap</span>\n";
+				} elseif ($d==4) {
+#					print "<td><a style=\"text-decoration:none\" href=pos_ordre.php?id=$id&spec_func=spec_$c&varenr_ny=$varenr_ny&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager>$knap</a>\n";
+					print "<td><span onclick = \"location.href = 'pos_ordre.php?id=$id&spec_func=spec_$c&varenr_ny=$varenr_ny";
+					print "&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager'\">$knap</span>\n";
+				} elseif ($d==5) {
 				  $tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 				  print "<td><INPUT TYPE=\"button\" $tmp NAME=\"$a\" VALUE=\"$a\" onclick=\"pos_ordre.$fokus.value += '$a';pos_ordre.$fokus.focus();\">\n";
+				  
 				} elseif ($d==6) {
 					if ($c==1) {
                         $txt = $buttonTextArr['table'];
@@ -406,11 +438,11 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $disabled $tmp NAME=\"totalrabat\" VALUE=\"$a\">\n"; 	# 20181030
                     } elseif ($c=='39') {   ### LN 20190205
-						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						#$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp NAME=\"return\" VALUE=\"$a\">\n";
                     } elseif ($c=='40') {
  						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
- 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"proforma\" VALUE=\"Proforma\">";
+ 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"proforma\" VALUE=\"$a\">";
                             ### LN
 					} elseif ($c=='41') {
  						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
@@ -448,7 +480,8 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n"; #20160927 $tmp rettet til $tmp2
 					} elseif ($a=='Kontant på beløb') {
 						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n";
-					} elseif ($a=='Konto') {
+					} 
+					elseif ($a=='Konto') {
 						($betalingsbet=='Kontant' || !$sum)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp;
 						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($a=='Betalingskort') {
@@ -530,6 +563,7 @@ function tastatur($kasse,$status) {
 	global $width;
 
 	if ($kasse=="?") find_kasse($kasse);
+	if (!$id) $id = 0; #20210824
 	
 	$r = db_fetch_array(db_select("select box2,box3,box4,box7,box10 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
 	$x=$kasse-1;
@@ -694,10 +728,22 @@ function tastatur($kasse,$status) {
 		if ($fokus=='varenr_ny') {
 			print "<TD COLSPAN=\"2\"><INPUT TYPE=\"submit\" $stil2 NAME=\"varer\" VALUE=\"Varer\" ";
 			print "onclick=\"pos_ordre.$fokus.value += 'v';pos_ordre.$fokus.focus();\"></TD>\n";
-		} elseif ($fokus=='antal_ny' || $fokus=='pris_ny') { #20130310 Tilføjet: || $fokus=='pris_ny'
+		// } elseif ($fokus=='antal_ny' || $fokus=='pris_ny') { #20130310 Tilføjet: || $fokus=='pris_ny'
+		// 	if ($fokus=='antal_ny') {
+		// 		$txt = $buttonTextArr['price'];
+		// 		print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\" VALUE=\"$txt\" onclick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
+		// 	} else print "<TD COLSPAN=\"1\"></TD>\n";
+		// 	$txt = $buttonTextArr['discount'];
+		// 	print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"$txt\" onclick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
+	    } elseif ($fokus=='antal_ny' || $fokus=='pris_ny' || $fokus == 'beskrivelse_ny') { #20130310 Tilføjet: || $fokus=='pris_ny' 20210811 added beskrivelse_ny
+	    
 			if ($fokus=='antal_ny') {
                 $txt = $buttonTextArr['price'];
                 print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"pris\" VALUE=\"$txt\" onclick=\"pos_ordre.$fokus.value += 'p';pos_ordre.$fokus.focus();\"></TD>\n";
+		}elseif($fokus=='beskrivelse_ny'){#20210811
+			#Beskrivelse input goes here #20210811 the block of code above is an older form of this
+			$txt = $buttonTextArr['beskrivelse_ny'];
+			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"beskrivelse_ny\" VALUE=\"$txt\" onclick=\"pos_ordre.$fokus.value += 't';pos_ordre.$fokus.focus();\"></TD>\n";
 			} else print "<TD COLSPAN=\"1\"></TD>\n";
 			$txt = $buttonTextArr['discount'];
 			print "<TD COLSPAN=\"1\"><INPUT TYPE=\"submit\" $stil NAME=\"rabat\"VALUE=\"$txt\" onclick=\"pos_ordre.$fokus.value += 'r';pos_ordre.$fokus.focus();\"></TD>\n";
@@ -764,6 +810,8 @@ function tastatur($kasse,$status) {
 		if ($timeout && !$bon) print "<meta http-equiv=\"refresh\" content=\"$timeout;URL=pos_ordre.php?id=0\">\n";
 	}
 	print "</tr>\n";
+	
 #	print "</TBODY></TABLE></TD></tr>\n";
 	print "\n<!-- Function tastatur (slut)-->\n";
+
 }}

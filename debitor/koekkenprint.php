@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------debitor/koekkenprint.php----------lap 3.7.0-----2017-06-19----
-// LICENS
+// --- debitor/koekkenprint.php - lap 4.0.6 --- 2022-05-21 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2008-2022 saldi.dk aps
 // -----------------------------------------------------------------------
 // 20140903 - Rettet diverse pga antal blev stillet tilbage efter 3. klik
 // 20140904 - Indsat 3x linjeafstand på udskrift.
@@ -32,11 +29,14 @@
 // 20150616 - Understøtter nu til og fravalg Søg 'tilfravalg'
 // 20150627	- Der kan nu sendes besked til køkken. Søg besked
 // 20170619 - PHR udskriftsdel lagt i funktion så der kan laves kundetilpasninger. 20170619
+// 20210915 - PHR Replaced convert with iconv and defined some undefined variables. 
+// 20220302 - PHR Added $next as k2 was not printed if $1 was empty
+// 20220421 -	PHR	Avver varenr and grouping after 1 letter in varenr
 
 @session_start();
 $s_id=session_id();
+$besked=$bon=$bonantal=$kp[0]=$leveres=NULL;
 $css="../css/standard.css";
-
 $title="Køkkenprint";
 
 include("../includes/connect.php");
@@ -112,10 +112,10 @@ print "<a href=pos_ordre.php?id=$id accesskey=L><input style=\"width:200;height:
 print "</td></tr>";
 
 
-if ($_POST['linje_id']) {
-	$linje_id=$_POST['linje_id'];
+if (isset($_POST['linje_id']) && $linje_id=$_POST['linje_id']) {
 	$antal=$_POST['antal'];
-	$leveres=$_POST['leveres'];
+	$varenr=$_POST['varenr'];
+	$leveres=if_isset($_POST['leveres']);
 	$leveret=$_POST['leveret'];
 	$beskrivelse=$_POST['beskrivelse'];
 	$tilfravalg=$_POST['tilfravalg'];
@@ -125,13 +125,11 @@ if ($_POST['linje_id']) {
 	$kategori=$_POST['kategori'];
 	$besked=$_POST['besked'];
 
-	if ($_POST['send_bestilling']) {
+	if (isset($_POST['send_bestilling']) && $_POST['send_bestilling']) {
 		$bestil=$_POST['bestil'];
-		include("../includes/ConvertCharset.class.php");
 		if ($db_encode=="UTF8") $FromCharset = "UTF-8";
 		else $FromCharset = "iso-8859-15";
 		$ToCharset = "cp865";
-		$convert = new ConvertCharset($FromCharset, $ToCharset);
 		$skriv=0;
 
 		for ($x=0;$x<count($linje_id);$x++) {
@@ -140,8 +138,8 @@ if ($_POST['linje_id']) {
 			if ($tmp || $tmp=='0') $bestil[$x]=$tmp;
 			if ($bestil[$x]) {
 				$skriv=1;
-				$bestil[$x]=$convert ->Convert("$bestil[$x]");
-				$beskrivelse[$x]=$convert ->Convert("$beskrivelse[$x]");
+				$bestil[$x]=iconv($FromCharset, $ToCharset,trim($bestil[$x]));
+				$beskrivelse[$x]=iconv($FromCharset, $ToCharset,trim($beskrivelse[$x]));
 				if (strlen($bestil[$x])>5) $bestil[$x]=substr($bestil[$x],-5);
 				while(strlen($bestil[$x])<5) $bestil[$x]=' '.$bestil[$x];
 				if (strlen($beskrivelse[$x])>35) $b=substr($beskrivelse[$x],0,34);
@@ -149,7 +147,6 @@ if ($_POST['linje_id']) {
 		}
 		if ($skriv) {
 			for ($x=0;$x<count($linje_id);$x++) {
-#cho "B $bestil[$x]<br>";
 				if ($bestil[$x]) {
 					$tmp=$leveret[$x]+$bestil[$x];
 					if ($tmp>$antal) $tmp=$antal;
@@ -161,19 +158,15 @@ if ($_POST['linje_id']) {
 				}
 			}
 			$koekkenprinter=strtolower($koekkenprinter);
-#cho "$koekkenprinter<br>";
 			if (strpos($koekkenprinter,",")) {
 				$kp=array();
 				$kp=explode(",",$koekkenprinter);
-#cho "$kp[0] $kp[1]<br>";
 			} elseif (strpos($koekkenprinter,":")) {
 				$kp=array();
 				$kp=explode(":",$koekkenprinter);
-#cho "$kp[0] $kp[1]<br>";
 			} elseif (strpos($koekkenprinter,";")) {
 				$kp=array();
 				$kp=explode(";",$koekkenprinter);
-#cho "$kp[0] $kp[1]<br>";
 			} else {
 				if ($koekkenprinter=='box') {
 					$filnavn="http://saldi.dk/kasse/koekken_".$_SERVER['REMOTE_ADDR'].".ip";
@@ -189,91 +182,8 @@ if ($_POST['linje_id']) {
 					}
 				} else $kp[0]=$koekkenprinter;
 			} 
-			koekkenprint($linje_id,$bestil,$beskrivelse,$cat_id,$kategori);
-/*			
-			$udskrives=array();
-			for($y=0;$y<count($kp);$y++) {
-				$udskrives[$y]=0;
-				for ($x=0;$x<count($linje_id);$x++) {
-// Hvis der er bestilling på varen OG (der er flere køkkener og varen har køkkenet som kategori ELLER der ikke er defineret køkken kategorier);
-					if ($bestil[$x] && (in_array ($cat_id[$y],$kategori[$x]) || count($cat_id)<1)) $udskrives[$y]=1;
-				}
-				$kp[$y]=strtolower($kp[$y]);
-				if (trim($kp[$y])=='box') {
-					$z=$y+1;
-					$filnavn="http://saldi.dk/kasse/K".$z."_".$_SERVER['REMOTE_ADDR'].".ip";
-					if ($fp=fopen($filnavn,'r')) {
-						$kp[$y]=trim(fgets($fp));
-						fclose ($fp);
-					}
-				}
-				$pfnavn="../temp/".$db."/".abs($bruger_id).".$y";
-				$fp=fopen("$pfnavn","w");
-				if ($y) fwrite($fp,"$kp[$y]\n");
-				if ($udskrives[$y]) {
-					$txt=$convert ->Convert("******   BESTILLING   ******");
-					while (strlen($txt)<40) $txt=" ".$txt." ";
-					fwrite($fp,"$txt\n");
-					if (count($kp)) {
-						$txt="Køkken ";
-						$txt.= $y+1;
-						$txt=$convert ->Convert($txt);
-						while (strlen($txt)<40) $txt=" ".$txt." ";
-						fwrite($fp,"$txt\n");
-					}
-					fwrite($fp,"\nD. ".date("d.m.Y")." kl. ".(date("H:i"))."\n\n");  
-					$txt=$convert ->Convert("Bord:       $bordnavn");
-					fwrite($fp,"$txt\n\n");
-					$txt=$convert ->Convert("Bestilt af: $brugernavn");
-					fwrite($fp,"$txt\n\n");
-					if ($besked) {
-						fwrite($fp,"----------------------------------------\n");
-						$txt=$convert ->Convert("BESKED TIL KØKKEN!");
-						while (strlen($txt)<40) $txt=" ".$txt." ";
-						fwrite($fp,"$txt\n\n");
-						$ord=explode(' ',$besked);
-						$linje=array();
-						$l=0;
-						$linje[$l]=$ord[0];
-						for ($o=1;$o<count($ord);$o++) {
-							if (strlen($linje[$l]." ".$ord[$o]) <= 40 && $o<count($ord)) $linje[$l].=" ".$ord[$o];
-							else {
-								$l++;
-								$linje[$l]=$ord[$o]; 
-							}
-						}
-						for ($l=0;$l<count($linje);$l++) {
-							$txt=$convert ->Convert($linje[$l]);
-#							while (strlen($txt)<40) $txt=" ".$txt." ";
-							fwrite($fp,"$txt\n");
-						}
-						fwrite($fp,"----------------------------------------\n\n");
-					}
-					fwrite($fp,"Antal  Beskrivelse\n");
-					fwrite($fp,"----------------------------------------\n");
-					for ($x=0;$x<count($linje_id);$x++) {
-						if ($bestil[$x] && (in_array ($cat_id[$y],$kategori[$x]) || count($cat_id)<1)) {
-							fwrite($fp,"$bestil[$x]  $beskrivelse[$x]\n");
-							if ($tilfravalg[$x]){
-								$tfv=explode(chr(9),$tilfravalg[$x]);
-								for ($t=0;$t<count($tfv);$t++){
-									$r=db_fetch_array(db_select("select beskrivelse from varer where id = '$tfv[$t]'",__FILE__ . " linje " . __LINE__));
-									$txt=$convert ->Convert("$r[beskrivelse]");
-									fwrite($fp,"     $txt\n");
-								}
-							}
-							fwrite($fp,"$notes[$x]\n\n\n\n");
-							fwrite($fp,"----------------------------------------\n");
-						}
-					}
-					fwrite($fp,"\n\n\n");
-			#cho "$bestil[$x]=$tmp<br>";
-#		else $bestil[$x]=$antal[$x]; 
-				}
-				fclose($fp);
-				$bon='';
-			}
-*/			
+			if ($db == 'develop_22' || $db == 'pos_41') koekkenprint($linje_id,$bestil,$beskrivelse,$cat_id,$kategori,$varenr);
+			else koekkenprint($linje_id,$bestil,$beskrivelse,$cat_id,$kategori);
 		} else print "<BODY onload=\"javascript:alert('Der er ikke noget på bestillingslisten til køkken for $bordnavn')\">\n";
 		(count($kp)>1)?$next=1:$next=NULL;
 		$pfnavn="../temp/".$db."/".abs($bruger_id).".0";
@@ -281,11 +191,13 @@ if ($_POST['linje_id']) {
 		while($linje=fgets($fp))$bon.=$linje;
 		fclose($fp);
 		$bon=urlencode($bon);
+		if ($next || $bon && $kp[0]) { // 20220302
 		if ($next) $url="http://$kp[0]/saldiprint.php?printfil=&url=$url&bruger_id=$bruger_id&bon=$bon&bonantal=$bonantal&id=$id&returside=$url/debitor/koekkenprint.php&next=$next&gem=1";
 		else $url="http://$kp[0]/saldiprint.php?printfil=&url=$url&bruger_id=$bruger_id&bon=$bon&bonantal=$bonantal&id=$id&returside=$url/debitor/pos_ordre.php&next=$next&gem=0";
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=$url\">\n";
 		exit;
 		print $y+1 ."<br>";
+	}
 	}
 } else {
 	if (!$bordnr && $bordnr!='0') {
@@ -302,10 +214,20 @@ if ($_POST['linje_id']) {
 		$bordnavn=$bord[$bordnr];
 	}
 	$x=0;
-	$q=db_select("select ordrelinjer.id,ordrelinjer.antal,ordrelinjer.leveres,ordrelinjer.leveret,ordrelinjer.beskrivelse,ordrelinjer.tilfravalg,varer.notes,varer.kategori from ordrelinjer,varer where ordrelinjer.ordre_id='$id' and ordrelinjer.vare_id=varer.id  order by ordrelinjer.posnr desc",__FILE__ . " linje " . __LINE__);
+	if ($db == 'develop_22' || $db == 'pos_41') {
+		for ($i=0;$i<3;$i++) {
+			$qtxt = "select ordrelinjer.id,ordrelinjer.antal,ordrelinjer.leveres,ordrelinjer.leveret,ordrelinjer.beskrivelse,";
+			$qtxt.= "ordrelinjer.tilfravalg,varer.notes,varer.kategori,ordrelinjer.varenr from ordrelinjer,varer ";
+			$qtxt.= "where ordrelinjer.ordre_id='$id' and ordrelinjer.vare_id=varer.id ";
+			if ($i==0) $qtxt.= "and upper(ordrelinjer.varenr) like 'F%' ";
+			if ($i==1) $qtxt.= "and upper(ordrelinjer.varenr) like 'H%' ";
+			if ($i==2) $qtxt.= "and upper(ordrelinjer.varenr) like 'D%' ";
+			$qtxt.= "order by ordrelinjer.posnr desc";
+			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array ($q)) {
 		$linje_id[$x]=$r['id'];
 		$antal[$x]=$r['antal']*1;
+				$varenr[$x]=$r['varenr'];
 		$leveres[$x]=$r['leveres']*1;
 		$leveret[$x]=$r['leveret']*1;
 		$beskrivelse[$x]=$r['beskrivelse'];
@@ -320,7 +242,30 @@ if ($_POST['linje_id']) {
 		$x++;
 	}
 }
-
+	} else {
+		$qtxt = "select ordrelinjer.id,ordrelinjer.antal,ordrelinjer.leveres,ordrelinjer.leveret,ordrelinjer.beskrivelse,";
+		$qtxt.= "ordrelinjer.tilfravalg,varer.notes,varer.kategori,ordrelinjer.varenr from ordrelinjer,varer ";
+		$qtxt.= "where ordrelinjer.ordre_id='$id' and ordrelinjer.vare_id=varer.id  order by ordrelinjer.posnr desc";
+		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array ($q)) {
+			$linje_id[$x]=$r['id'];
+			$antal[$x]=$r['antal']*1;
+			$varenr[$x]=$r['varenr'];
+			$leveres[$x]=$r['leveres']*1;
+			$leveret[$x]=$r['leveret']*1;
+			$beskrivelse[$x]=$r['beskrivelse'];
+			$tilfravalg[$x]=$r['tilfravalg'];
+			$notes[$x]=$r['notes'];
+			$kategori[$x]=explode(chr(9),$r['kategori']);
+			for ($y=0;$y<count($cat_id);$y++) {
+				if (in_array($cat_id[$y],$kategori[$x])) {
+				$koekkennr[$x]=substr($cat[$y],1);
+				}
+			}
+			$x++;
+		}
+	}
+}
 print "<tr><td width=\"50%\" align=\"right\" valign=\"top\"><table cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tbody>";
 print "<form name=koekkenprint align=\"center\" action=\"koekkenprint.php?id=$id&bordnr=$bordnr&bordnavn=$bordnavn\" method=post autocomplete=\"off\">\n";
 print "<tr><td colspan=\"4\" align=\"center\">Besked til køkken</td></tr>";
@@ -334,6 +279,7 @@ for ($x=0;$x<count($linje_id);$x++) {
 	print "<input type=\"hidden\" name=\"tilfravalg[$x]\" value=\"$tilfravalg[$x]\">";
 
 	if (!count($cat) || $koekkennr[$x]) {
+		if (!isset($leveres[$x])) $leveres[$x]=0; 
 		if (isset($_POST['bestil'])) {
 			$bestil=$_POST['bestil'];
 		}	else $bestil[$x]=$antal[$x]-$leveret[$x];
@@ -353,6 +299,7 @@ for ($x=0;$x<count($linje_id);$x++) {
 		print "<tr>";
 		print "<td>
 		<input type=\"hidden\" name=\"koekkennr[$x]\" value=\"$koekkennr[$x]\">
+		<input type=\"hidden\" name=\"varenr[$x]\" value=\"$varenr[$x]\">
 		<input type=\"hidden\" name=\"antal[$x]\" value=\"$antal[$x]\">
 		<input type=\"hidden\" name=\"beskrivelse[$x]\" value=\"$beskrivelse[$x]\">
 		<input type=\"hidden\" name=\"bestil[$x]\" value=\"$bestil[$x]\">
@@ -372,12 +319,12 @@ print "<tr><td colspan=\"5\"><input type=\"hidden\" name=\"fokus\"><input type=\
 print "<input style=\"width:100%;height:40px;font-size:120%\" type=\"submit\" name=\"send_bestilling\" value=\"Send til køkken\"></td></tr>";
 print "</form>";
 print "</tbody></table></td><td style=\"width:100px\"></td>";
-tastatur();
+kptastatur();
 	
 #}
 
-function tastatur() {
-	print "\n<!-- Function tastatur (start)-->\n";
+function kptastatur() {
+	print "\n<!-- Function kptastatur (start)-->\n";
 	global $fokus;
 	
 	print "<TD height=\"100%\" valign=\"top\"  align=\"left\"><TABLE BORDER=\"0\" CELLPADDING=\"4\" CELLSPACING=\"4\"><TBODY>\n";
@@ -401,7 +348,7 @@ function tastatur() {
 		print "</TR><TR>\n";
 	print "</TR>\n";
 	print "</TBODY></TABLE></TD></TR>\n";
-	print "\n<!-- Function tastatur (slut)-->\n";
+	print "\n<!-- Function kptastatur (slut)-->\n";
 }
 if (!$fokus) $fokus='besked';
 ?>

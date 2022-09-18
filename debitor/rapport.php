@@ -4,38 +4,37 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------------------debitor/rapport.php-------patch 3.7.9----2019-04-10-----------
-// LICENS
+// -- ---------------------debitor/rapport.php---------------- ver 4.0.2 -- 2021-08-05 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2003-2021 Saldi.DK ApS
 // ----------------------------------------------------------------------
 
-// 2012.11.05 - Fejl ved "masseudligning (Klik på 0,00 i åbenpostoversigt) når kun 1 dato sat. Søg 20121105 
-// 2017.03.03 - Inlføjet inkasso (ikke aktiv)
-// 2018.02.07 - PHR Udlign kan nu bestå af flere kontonumre. Søg udlign
-// 2018.12.18 - MSC Rettet isset fejl
-// 2019.04.10 - PHR $konto_fra=$konto_fra=$konto rettet til $konto_fra=$konto_til=$konto;
-// 2019.08.15 - PHR
+// 20121105 - Fejl ved "masseudligning (Klik på 0,00 i åbenpostoversigt) når kun 1 dato sat. Søg 20121105 
+// 20170303 - Inlføjet inkasso (ikke aktiv)
+// 20180207 - PHR Udlign kan nu bestå af flere kontonumre. Søg udlign
+// 20181218 - MSC Rettet isset fejl
+// 20190410 - PHR $konto_fra=$konto_fra=$konto rettet til $konto_fra=$konto_til=$konto;
+// 20190815 - PHR
+// 20210805 - LOE Translated some texts 
+
 
 @session_start();
 $s_id=session_id();
-$css="../css/standard.css";
+$css="../css/std.css";
 $title="Debitorrapport";
 $modulnr=12;
 
@@ -49,6 +48,7 @@ include("../includes/autoudlign.php");
 include("../includes/rapportfunc.php");
 
 #print "<script LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\" SRC=\"../javascript/overlib.js\"></script>";
+global $sprog_id; //2021
 
 if ($popup) $returside="../includes/luk.php";
 else $returside="../index/menu.php";
@@ -173,9 +173,11 @@ if (isset($_POST['submit']) || $rapportart) {
 			print "<BODY onload=\"window.open('ny_rykker.php?kontoliste=alle&kontoantal=max','','$jsvars')\">";
 			$ny_rykker=1;
 		} else {
-			if ($submit=="mail kontoudtog") {print "<BODY onload=\"javascript:alert('Der er ikke afm&aelig;rket nogen konti til modtagelse af kontoudtog')\">";}
+			$alert = findtekst(1791, $sprog_id); #20210805
+			$alert1 = findtekst(1792, $sprog_id);
+			if ($submit=="mail kontoudtog") {print "<BODY onload=\"javascript:alert('$alert')\">";}
 			else {
-				print "<BODY onload=\"javascript:alert('Der er ikke afm&aelig;rket nogen konti til modtagelse af rykker eller bel&oslash;bet er ikke forfaldent til betaling')\">";
+				print "<BODY onload=\"javascript:alert('$alert2')\">";
 			}
 		}
 /*

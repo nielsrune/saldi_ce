@@ -4,27 +4,26 @@
 //                        \__ \/ _ \| |_| | | |
 //                        |___/_/ \_|___|__/|_|
 //
-// --------------systemdata/admin_brugere.php------lap 3.6.6----2016-11-04------
-// LICENS
+// --- systemdata/admin_brugere.php --- lap 4.0.4 --- 2021-09-17 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2021 saldi.dk aps
 // ------------------------------------------------------------------------
+// 20210328 PHR Some cleanup.
+// 20210917 LOE translated some texts
 
 @session_start();
 $s_id=session_id();
@@ -40,8 +39,8 @@ include("../includes/std_func.php");
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\" height=\"25\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-print "<td width=\"10%\" $top_bund><a href=../index/admin_menu.php accesskey=L>Luk</a></td>";
-print "<td width=\"80%\" $top_bund align=\"center\">Admin brugere</td>";
+print "<td width=\"10%\" $top_bund><a href=../index/admin_menu.php accesskey=L>".findtekst(30, $sprog_id)."</a></td>"; #20210917
+print "<td width=\"80%\" $top_bund align=\"center\">".findtekst(1927, $sprog_id)."</td>";
 print "<td width=\"10%\" $top_bund align = \"right\"><br></td>";
 print "</tbody></table>";
 print "</td></tr>\n";
@@ -82,7 +81,8 @@ if ($_POST) {
 	if ((strstr($submit,'Tilf'))&&($ret_bruger)&&($ret_bruger!="-")) {
 		$query = db_select("select id from brugere where brugernavn = '$ret_bruger'",__FILE__ . " linje " . __LINE__);
 		if ($row = db_fetch_array($query)) {
-			$alerttext="Der findes allerede en bruger med brugenavn: $ret_bruger!";
+			$txt = findtekst(1928, $sprog_id); 
+			$alerttext="$txt: $ret_bruger!";
 			print "<BODY onload=\"javascript:alert('$alerttext')\">";
 #			print "<tr><td align=center>Der findes allerede en bruger med brugenavn: $ret_bruger!</td></tr>\n";
 		}	else {
@@ -104,7 +104,7 @@ $td="width=\"8px\" align=\"center\"";
 print "<tr><td colspan=\"2\"></td><td title=\"".findtekst(337,$sprog_id)."\" colspan=\"4\" bgcolor=\"$bgcolor2\">".findtekst(332,$sprog_id)."</td></tr>\n";
 print "<tr><td colspan=\"2\"></td><td title=\"".findtekst(336,$sprog_id)."\" colspan=\"3\" >".findtekst(331,$sprog_id)."</td><td bgcolor=\"$bgcolor2\"></td></tr>\n";
 print "<tr><td colspan=\"2\"></td><td title=\"".findtekst(335,$sprog_id)."\" colspan=\"2\" bgcolor=\"$bgcolor2\">".findtekst(330,$sprog_id)."</td><td></td><td bgcolor=\"$bgcolor2\"></td></tr>\n";
-print "<tr><td><br></td><td  style=\"width:170px\" title='Klik p&aring; brugernavn for at &aelig;ndre password eller slette bruger'><b>Brugernavn</b></td>\n";
+print "<tr><td><br></td><td  style=\"width:170px\" title='Klik p&aring; brugernavn for at &aelig;ndre password eller slette bruger'><b>".findtekst(823, $sprog_id)."</b></td>\n";
 print "<td title=\"".findtekst(334,$sprog_id)."\">".findtekst(329,$sprog_id)."</td><td bgcolor=\"$bgcolor2\"></td><td></td><td bgcolor=\"$bgcolor2\"></td></tr>\n";
 
 print "<tr><td height=\"10px\" colspan=\"3\"><br></td><td bgcolor=\"$bgcolor2\"></td><td></td><td bgcolor=\"$bgcolor2\"></td></tr>\n";
@@ -136,7 +136,7 @@ if ($br_admin) {
 # print "<tr><td height=\"10px\" colspan=\"4\"></td><td></td><td bgcolor=\"$bgcolor2\"></td><td></td><td bgcolor=\"$bgcolor2\"></td></tr>\n";
 
 if ($ret_id) {
-	$query = db_select("select * from brugere where id = $ret_id");
+	$query = db_select("select * from brugere where id = $ret_id",__FILE__ . " linje " . __LINE__);
 	$row = db_fetch_array($query);
 	list($admin,$oprette,$slette,$adgang_til)=explode(",",$row['rettigheder'],4);
 	($admin)? $admin="checked":$admin="";

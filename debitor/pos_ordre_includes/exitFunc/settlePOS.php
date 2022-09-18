@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/exitFunc/settlePOS.php --- lap 3.9.9 --- 2021.01.25 ---
+// --- debitor/pos_ordre_includes/exitFunc/settlePOS.php --- lap 4.0.2 --- 2021.07.10 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -27,8 +27,10 @@
 // 20200305	PHR added db_escape_string and set $f_vatAccount=0 if no Vat.
 // 20201214	PHR Now inserted into pos_betalinger even if sum & payment = 0
 // 20210103	PHR Corrected last edit to 'sum+moms & payment = 0' (moms is vat)
-// 20211025 PHR Renamed from status.php and various changes related to voucher
-
+// 20210125 PHR Renamed from status.php and various changes related to voucher
+// 20210710 PHR	Added "|| ($incl_moms == 0 && count($vare_id)" as order was not settled if order contained items from diffent groups with different 
+//  groups with differentaccounts and total sum including VAT was 0;
+// 20210713 PHR Added varioan_id to m_rabat
 	$x=0;
 	if ($status<3) {
 		$r=db_fetch_array(db_select("select box2 from grupper where art='OreDif'",__FILE__ . " linje " . __LINE__));
@@ -50,14 +52,17 @@
 			$rabat[$x]=$r['rabat'];
 			$rabatart[$x]=$r['rabatart'];
 			$rabatgruppe[$x]=$r['rabatgruppe'];
+			$variant_id[$x]=$r['variant_id'];
 			$saet[$x]=$r['saet'];
 			if ($rabatgruppe[$x]) {
+#cho __line__." $rabatgruppe[$x]<br>";
 				if ($rabatgruppe[$x]==$rabatgruppe[$x-1]) {
 					$rabatantal[$x]=$antal[$x]+$rabatantal[$x-1];
 					$rabatantal[$x-1]=0;
 				} else $rabatantal[$x]=$antal[$x];
 			} else $rabatantal[$x]=0;
 			$m_rabat[$x]=$r['m_rabat']*-1;
+#cho "m_rabat $m_rabat[$x]<br>";
 		}
 		$linjeantal=$x;
 		$pos=0;
@@ -115,6 +120,7 @@
 				}
 			}
 			if ($rabatantal[$x]) {
+#cho "rabatantal[$x]<br>";
 				list($grupperabat,$rabattype)=explode(";",grupperabat($rabatantal[$x],$rabatgruppe[$x]));
 				if ($grupperabat) {
 					$pos++;
@@ -130,17 +136,23 @@
 						$r_varenr=$varenr[$x];
 						$r_beskrivelse='rabat';
 					}
-					db_modify("insert into ordrelinjer (ordre_id,vare_id,varenr,beskrivelse,antal,m_rabat,pris,kostpris,momsfri,posnr,projekt,kdo) values ('$id','$r_vare_id', '$r_varenr', '$r_beskrivelse', '$rabatantal[$x]','0','$grupperabat','0','$r_momsfri','$pos','$projekt','1')",__FILE__ . " linje " . __LINE__);
-					$tmp=afrund($grupperabat*$rabatantal[$x],2);
-					$sum+=$tmp;
+					if (!$r_momsfri) $rabat[$x] = $grupperabat / (100+$varemomssats[$x])*100;
+					$rabat[$x]*= -1;
+					$qtxt = "update ordrelinjer set rabat = '$rabat[$x]', rabatart = '$rabattype' ";
+					$qtxt.= "where rabatgruppe = '$rabatgruppe[$x]' and ordre_id = '$id'";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					$grpRbSum=afrund($grupperabat*$rabatantal[$x],2);
+					$sum+=$grpRbSum;
 					if (!$r_momsfri){
-						$incl_moms+=afrund($tmp+$tmp*$varemomssats[$x]/100,2);
+						$incl_moms+=$grpRbSum;
 					}
 				}
 			} elseif ($m_rabat[$x] && !$rabatgruppe[$x]) {
 				$pos++;
-				if ($rabatvareid && $r=db_fetch_array(db_select("select id,varenr,beskrivelse,salgspris,gruppe from varer where id = '$rabatvareid'",__FILE__ . " linje " . __LINE__))) {
-					$r2 = db_fetch_array(db_select("select box6, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'",__FILE__ . " linje " . __LINE__));
+				$qtxt = "select id,varenr,beskrivelse,salgspris,gruppe from varer where id = '$rabatvareid'";
+				if ($rabatvareid && $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+					$qtxt = "select box6, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'";
+					$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 					$r_momsfri = $r2['box7'];
 					$r_vare_id=$r['id'];
 					$r_varenr=$r['varenr'];
@@ -153,17 +165,21 @@
 				}
 				if ($momsfri[$x]) $r_momsfri = $momsfri[$x]; #20160812
 				$vatPrice[$x]=afrund($m_rabat[$x]+$m_rabat[$x]*$varemomssats[$x]/100,2);
-				$qtxt="insert into ordrelinjer (ordre_id,vare_id,varenr,beskrivelse,antal,m_rabat,pris,kostpris,momsfri,posnr,projekt,kdo,vat_price)";
+				$qtxt="insert into ordrelinjer (ordre_id,vare_id,varenr,beskrivelse,antal,m_rabat,pris,kostpris,momsfri,posnr,projekt,kdo,vat_price,variant_id)";
 				$qtxt.=" values "; 
-				$qtxt.="('$id','$r_vare_id', '$r_varenr', '$r_beskrivelse', '$antal[$x]','0','$m_rabat[$x]','0','$r_momsfri','$pos','$projekt','1','$vatPrice[$x]')";
+				$qtxt.="('$id','$r_vare_id', '$r_varenr', '$r_beskrivelse', '$antal[$x]','0','$m_rabat[$x]','0','$r_momsfri','$pos','$projekt','1','$vatPrice[$x]','$variant_id[$x]')";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				$rabatbelob=afrund($m_rabat[$x]*$antal[$x],2);
+#cho __line__ ."$rabatbelob<br>";
 				$sum+=$rabatbelob;
+#cho __line__." Sum $sum<br>";	
 				if ($r_momsfri) { 
 					$incl_moms+=$rabatbelob; #20160812
+#cho __line__." Incl_moms $incl_moms<br>";	
 				} else {
 					$moms+=afrund($rabatbelob*$momssats/100,2); #20131015
 					$incl_moms+=afrund($rabatbelob+$rabatbelob*$varemomssats[$x]/100,2);
+#cho __line__." Incl_moms $incl_moms<br>";	
 				}
 			}
 		}
@@ -182,6 +198,7 @@
 			db_modify ("update ordrer set fakturanr='$fakturanr' where id='$id'",__FILE__ . " linje " . __LINE__);
 		}
 		$sum*=1; $moms*=1;
+#cho __line__." Sum $sum<br>";	
 		$betalt=$modtaget+$modtaget2;
 		$retur=afrund($betalt-($sum+$moms),2); #20140613
 		if ($konto_id && ($betalingsbet || $indbetaling)) {
@@ -194,10 +211,11 @@
 			if ($indbetaling && is_numeric($indbetaling)) {
 			$modtaget2=$saldo-$indbetaling;
 			$sum=$indbetaling;
+#cho __line__." Sum $sum<br>";	
 			$moms='0';
 		} else $modtaget2=$saldo+$sum;
 	}
-#cho __line__."<br>";	
+#cho __line__." Sum $sum<br>";	
 	$moms=afrund($moms,2);
 	if ($betaling=='Kontant' && !$betaling2 && $retur) { 
 		if (!$tmp){
@@ -224,8 +242,9 @@
 	$modtaget=afrund($modtaget,2);
 	$modtaget2=afrund($modtaget2,2);
 #cho __FILE__." ".__LINE__."<br>";	
-
+#cho __line__." $sum+$moms!=$incl_moms<br>";
 	if ($sum+$moms!=$incl_moms) {
+#xit;
 // Denne rutine korrigerer for de differencer det kan opstå i totaler fordi momsberegningen på skærmen vises for den enkelte vare, mens databasen indeholder 
 // summen at varer excl moms og momsen separat. Hvis der er difference på summen tillægges/frratrækkes de enkelte varer så mange tienedele ører som muligt
 // uden at den afrundede værdi incl moms ændres, indtil summen ex. moms + moms svarer til summen af varer incl moms. 20131205
@@ -253,10 +272,11 @@
 			}
 		} elseif (!$indbetaling) {
 			print "<BODY onLoad=\"javascript:alert('Fejl i øreafrunding, kontakt Saldi på telefon 46902208')\">\n";
-			print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
+#				print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
 			exit;
 		}
 	}
+#xit;	
 #cho __FILE__." ".__LINE__."<br>";	
 	$tidspkt = date("H:i");
 	$dd      = date("Y-m-d");
@@ -272,11 +292,9 @@
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$leftToPay = $_POST['sum'] - $r['paid'];
 	
-#cho __FILE__." ".__LINE__." is_numeric($modtaget) && ($modtaget || ($modtaget == 0 && ($ms == 0 || $leftToPay== 0)))<br>";	
-#xit;
 	if (is_numeric($modtaget) && ($modtaget || ($modtaget == 0 && ($ms == 0 || $leftToPay== 0)))) {
 		if ($betaling == 'Cash' || $betaling == 'Cash on amount') $betaling='Kontant';
-		if ($modtaget) {
+			if ($modtaget || ($incl_moms == 0 && count($vare_id) > 0)) { #20210710
 			$qtxt="select id  from pos_betalinger where ordre_id='$id'and betalingstype ='!'";
 			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				$qtxt="update pos_betalinger set betalingstype='$betaling',amount='$modtaget',valuta='$betvaluta',valutakurs='$betvalkurs' ";	

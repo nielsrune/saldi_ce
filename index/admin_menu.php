@@ -4,29 +4,27 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ admin/admin_menu --------------- lap 3.7.2 --- 2018-10-31 ---
-// LICENS
+// ------------ admin/admin_menu --------------- ver 4.0.4 --- 2021-09-16 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2018 saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20180131 
+// 20210916 LOE translated some texts 
 
 @session_start();  # Skal angives oeverst i filen??!!
 $s_id=session_id();
@@ -61,9 +59,9 @@ print "<tr><td align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody><tr>\n";
 print "  <td $top_bund width=\"10%\">Ver $version</td>\n";
 print "  <td $top_bund width=\"35%\">&nbsp;</td>\n";
-print "  <td $top_bund width=\"10%\" align = \"center\"><a href=\"../http://saldi.dk/dok/komigang.html\" target=\"_blank\">Vejledning</a></td>\n";
+print "  <td $top_bund width=\"10%\" align = \"center\"><a href=\"../http://saldi.dk/dok/komigang.html\" target=\"_blank\">".findtekst(92, $sprog_id)."</a></td>\n";#Vejlednin 20210916
 print "<td $top_bund width=\"35%\">&nbsp;</td>";
-print "<td $top_bund width=\"10%\" align = \"right\"><a href=\"logud.php\" accesskey=\"L\">Log ud</a></td>\n";
+print "<td $top_bund width=\"10%\" align = \"right\"><a href=\"logud.php\" accesskey=\"L\">".findtekst(93, $sprog_id)."</a></td>\n"; #Log ud
 print "</tr></tbody></table></td></tr>\n<tr><td align=\"center\" valign=\"center\">\n";
 
 $td=" align=\"center\" height=\"35\"";
@@ -72,7 +70,7 @@ print"<table width=\"20%\" align=\"center\" border=\"4\" cellspacing=\"5\" cellp
 print"<tr>";
 print"<td colspan=\"5\" height=\"35\" align=\"center\" background=\"../img/blaa2hvid_bg.gif\"><big<big><big><b>SALDI</b></big></big></big></td>";
 print"</tr><tr>";
-print"<td  height=\"35\" align=\"center\"><b><big>Administrationsmenu</big></b></td>";
+print"<td  height=\"35\" align=\"center\"><b><big>Administration menu</big></b></td>";
 print"</tr><tr>";
 if ($admin || $oprette) print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/opret.php\"><big>".findtekst(339,$sprog_id)."</big></td>";
 else print "<td $td $stor_knap_bg><span style=\"color:#999;\"><big>".findtekst(339,$sprog_id)."</big></td>\n";
@@ -85,12 +83,12 @@ if ($revisorregnskab || $forhandlerregnskab) {
 	if ($admin || $slette) print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/slet_regnskab.php\"><big>".findtekst(341,$sprog_id)."</big></td>";
 	else print "<td $td $stor_knap_bg><span style=\"color:#999;\"><big>".findtekst(341,$sprog_id)."</big></td>\n";
 	print"</tr><tr>";
-	print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/admin_brugere.php\"><big>Brugere</big></td>";
+	print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/admin_brugere.php\"><big>".findtekst(777, $sprog_id)."</big></td>"; #Brugere 20210916
 	print"</tr><tr>";
-	print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/admin_settings.php\"><big>Indstillinger</big></td>";
+	print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/admin_settings.php\"><big>".findtekst(613, $sprog_id)."</big></td>"; #Indstillinger
 	if (isset($mastername) && $mastername=="ROTARY") {
 		print"</tr><tr>";
-		print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/bankfordeling.php\"><big>Kortbetalinger</big></td>";
+		print"<td $td $stor_knap_bg><a onfocus=\"this.style.color='$bgcolor2'\" onblur=\"this.style.color='#000066'\" href=\"../admin/bankfordeling.php\"><big>".findtekst(567, $sprog_id)."</big></td>";#Kortbetalinger
 	}
 }
 print"</tr>";
@@ -100,7 +98,7 @@ print"</td></tr>";
 
 print"<tr><td align=\"center\" valign=\"bottom\">";
 #print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
-print "<div class=top_bund><small>SALDI&nbsp;version&nbsp;$version&nbsp;-&nbsp;Copyright&nbsp;&copy;&nbsp;$copyright&nbsp;DANOSOFT&nbsp;aps</small></div></td></tr>\n";
+print "<div class=top_bund><small>SALDI&nbsp;version&nbsp;$version&nbsp;-&nbsp;Copyright&nbsp;&copy;&nbsp;$copyright&nbsp;</small></div></td></tr>\n";
 #print"<td align=\"left\" width=\"100%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000000\">&nbsp;Copyright&nbsp;&copy;&nbsp;2003-2011&nbsp;DANOSOFT&nbsp;ApS</td>";
 #print "</tbody></table>";
 print"</td></tr>";

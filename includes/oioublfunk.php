@@ -1,5 +1,5 @@
 <?php
-// --- includes/oioublfunk.php --- patch 4.0.2 --- 2021-05-26 ---
+// --- includes/oioublfunk.php --- patch 4.0.5 --- 2022-06-08 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,7 +15,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20140206 Afrundingsfejl,saldi_390 ordre id 16090 differ 1 øre på linjesum. 
@@ -28,6 +28,7 @@
 // 20160208 - PHR Ordredato blev skrevet som fakturadato Søn 20160208
 // 20190204	- PHR lidt ændringer i forhold til kommentarer. 20190204 
 // 20210526 - PHR Changed CustomizationID from OIOUBL-2.01 to OIOUBL-2.02. Requirement from ebConnect
+// 20220608 - PHR Replaced outdated ereg function with own solution
 
 $oioxmlubl="OIOUBL";
 
@@ -628,7 +629,8 @@ function oioubl_kontaktinfo ($l_id="", $l_type) { # $l_type = BuyerContact
 			$l_retur.="<cbc:ID>".$l_kontaktid."</cbc:ID>\n";
 			$l_retur.=$l_kontaktinfo;
 		} else {
-			if (preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/i", $l_id)) {
+			if (strpos($l_id,'@')) {
+#			if (eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $l_id)) {
 		
 				$l_retur.="<cbc:ID>".substr($l_id,0,strpos($l_id,'@'))."</cbc:ID>\n"; # 20140919
 				$l_retur.="<cbc:ElectronicMail>".$l_id."</cbc:ElectronicMail>\n";
@@ -645,10 +647,17 @@ function oioubl_kontaktinfo ($l_id="", $l_type) { # $l_type = BuyerContact
 function oioubl_tlfnr($l_tlf="") {
 
 	if (!$l_tlf) return "";
-
+  $l_retur = '';
+	if (substr($l_tlf,0,1) == '+') {
+		$tmp=explode(' ',$l_tlf);
+		$l_prefix = $tmp[0];
+		$l_tlf = str_replace($l_prefix,'',$l_tlf);
+	}  
 	$l_retur=trim($l_tlf);
 	
-	if (preg_match("/^(\+[0-9][0-9]*)/", $l_retur, $l_regs)) {
+	
+/*
+	if (ereg("^(\+[0-9][0-9]*)", $l_retur, $l_regs)) {
 	 $l_prefix=$l_regs[1];
 	 $l_retur=substr($l_retur, strlen($l_prefix));
 	}
@@ -664,7 +673,7 @@ function oioubl_tlfnr($l_tlf="") {
 	 $l_retur=preg_replace("/[. -]/","",$l_retur);
 	 }
 	}
-
+*/
 	$l_retur="$l_prefix $l_retur";
 
 	return $l_retur;
@@ -674,7 +683,22 @@ function oioubl_vej ($l_addr1="", $l_del="vejnavn") {
 
 	if (!$l_addr1) return "";
 
-	if (preg_match("/^([^0-9]*) ([0-9].*)$/", $l_addr1, $regs)) { # Antager at foerste mellemrum efterfulgt af et tal er husnummeret
+	$tmp = explode(' ',$l_addr1);
+	$vejnavn = $tmp[0];
+	$husnummer = '';
+
+	for ($x =1;$x <count($tmp);$x++) {
+		if ($husnummer) $husnummer.= " ".$tmp[$x]; 
+		elseif (is_numeric(substr($tmp[$x],0,1))) $husnummer =  $tmp[$x];
+		else $vejnavn.= " ".$tmp[$x]; 
+	}
+	if ($l_del=="vejnavn") $l_retur="$vejnavn";
+	if ($l_del=="husnummer") {
+		if (!$husnummer) $husnummer = 0;
+		$l_retur = $husnummer; #20150922
+	} 
+	/*	
+	if (preg_match("^([^0-9]*) ([0-9].*)$", $l_addr1, $regs)) { # Antager at foerste mellemrum efterfulgt af et tal er husnummeret
 		if ($l_del=="vejnavn") $l_retur=$regs[1];
 		if ($l_del=="husnummer") {
 			$l_retur=$regs[2];
@@ -684,6 +708,8 @@ function oioubl_vej ($l_addr1="", $l_del="vejnavn") {
 		if ($l_del=="vejnavn") $l_retur=$l_addr1;
 		if ($l_del=="husnummer") $l_retur=0; #20150922
 	}
+*/	
+	
 	return $l_retur;
 }
 

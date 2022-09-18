@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------------------includes/formfunk.php ------patch 3.9.1 ----2020-06-08--------------
+// ---------------------includes/formfunk.php ------patch 4.0.3 ----2021-10-28--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2020 Saldi.dk ApS
+// Copyright (c) 2003-2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2012.09.06 Tilføjet mulighed for at vise momssats på ordrelinjer. 
@@ -83,6 +83,7 @@
 // 2020.04.05 PHR Function kontoprint. Due date (forfaldsdato) now read from openposttable if exist there. 
 // 2020.05.05 PHR Insert if to avoid mutiple similar lines (saldi_390 reminder 1489 #2)  20200505
 // 2020.06.08	PHR Some correction regarding currency / rate in reminders 
+// 2021.10.28 PHR ordrer.notes will now linebreak if line length > 5 chars  
 
 if (!function_exists('skriv')) {
 function skriv($id,$str, $fed, $italic, $color, $tekst, $tekstinfo, $x, $y, $format, $form_font,$formular,$line) {
@@ -524,7 +525,8 @@ print "<!--function find_form_tekst start-->";
 				}
 				if ($tabel=="ordre") {
 					if ($variabel=="rykkerdate") $variabel="fakturadate";
-					$q2 = db_select("select $variabel from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
+					$qtxt = "select $variabel from ordrer where id=$id";
+					$q2 = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				} elseif ($tabel=="eget" || $tabel=="egen") {
 					$q2 = db_select("select $variabel from adresser where art='S'",__FILE__ . " linje " . __LINE__);
 				} elseif ($tabel=="adresser" || $tabel=="konto") {
@@ -661,7 +663,11 @@ print "<!--function find_form_tekst start-->";
 				}
 				$row['ya']=$y_pos;
 			}
+			if ($variabel == 'notes') { #20211028
+				$row['ya'] = ombryd($id,$row['str'],$row['fed'], $row['kursiv'], $row['color'], $ny_streng, 'tekster', $row['xa'], $row['ya'], $row['justering'], $row['font'],'75',$formular,'4');
+			} else {
 			skriv($id,"$row[str]","$row[fed]","$row[kursiv]","$row[color]","$ny_streng",'header',"$row[xa]","$row[ya]","$row[justering]","$row[font]","$formular",__line__ );
+			}
 		} # endif($ny_streng&&$udskriv)
 		$udskriv=1;
 	} # endwhile
@@ -714,8 +720,8 @@ print "<!--function find_forfaldsdato slut-->";
 if (!function_exists('tjek_lev_addr')) {
 function tjek_lev_addr($variabel, $id) {
 print "<!--function tjek_lev_addr start-->";
-	 if ($variabel=="lev_navn"){$tmp="firmanavn";}
-	 else {$tmp=substr($variabel, 4);}
+	 if ($variabel=="lev_navn") $tmp="firmanavn";
+	 else $tmp=substr($variabel, 4);
 	 $query = db_select("select $tmp from ordrer where id=$id and lev_navn!='' and lev_addr1!='' and lev_postnr!='' and lev_bynavn!=''",__FILE__ . " linje " . __LINE__);
 	 if ($row=db_fetch_array($query)) {return $variabel;}
 	 else {return $tmp;}
@@ -1842,10 +1848,10 @@ print "<!--function send_mails start-->";
 	fclose($chkfil);	
 	
 	if ($charset=="UTF-8" || $webservice) {
-		$subjekt=utf8_decode($subjekt);
-		$mailtext=utf8_decode($mailtext);
-		$bilagnavn=utf8_decode($bilagnavn);
-		$afsendernavn=utf8_decode($afsendernavn);
+#		$subjekt=utf8_decode($subjekt);
+#		$mailtext=utf8_decode($mailtext);
+#		$bilagnavn=utf8_decode($bilagnavn);
+#		$afsendernavn=utf8_decode($afsendernavn);
 	}
 	if (file_exists ("../temp/$db/mailCheck.txt")) {
 		$fp=fopen("../temp/$db/mailCheck.txt","r");

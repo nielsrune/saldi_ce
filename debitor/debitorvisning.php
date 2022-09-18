@@ -24,6 +24,7 @@
 // ----------------------------------------------------------------------
 // 2016.06.06 Tilføjet mulighed for at skjule lukkede debitorer Søg box11 / skjul_lukkede
 // 2020.06.23	PHR - various changes related to 'kommission' 
+// 20210701  LOE - translated with findtekst function some of these texts
 	
 @session_start();
 $s_id=session_id();
@@ -31,8 +32,7 @@ $s_id=session_id();
 if (isset($_GET['valg'])) $valg=($_GET['valg']);
 else $valg="debitor";
 
-if ($valg=="debitor") $title="Debitorvisning";
-else $title="Historikvisning";
+
 
 $modulnr=6;
 $css="../css/standard.css";
@@ -40,7 +40,8 @@ $css="../css/standard.css";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
-
+if ($valg=="debitor") $title=findtekst(112,$sprog_id);
+else $title=findtekst(1129,$sprog_id);
 $sort=trim(if_isset($_GET['sort']));
 
 if ($popup) $returside="../includes/luk.php"; 
@@ -136,7 +137,7 @@ global $sort;
 global $title;
 global $felter;	
 	
-print "<td width=\"10%\" align=center><div class=\"top_bund\"><a href=debitor.php?valg=$valg&sort=$sort accesskey=L>Luk</a></div></td>
+print "<td width=\"10%\" align=center><div class=\"top_bund\"><a href=debitor.php?valg=$valg&sort=$sort accesskey=L>".findtekst(30,$sprog_id)."</a></div></td>
 			<td width=\"80%\" align=center><div class=\"top_bund\">$title</a></div></td>
 			<td width=\"10%\" align=center><div class=\"top_bund\"><br></div></td>
 			 </tr>";
@@ -168,9 +169,9 @@ $vis_feltantal=count($vis_felt)-1;
 $select=explode(chr(9),$r['box8']);
 
 print "<form name=sektion_2 action=debitorvisning.php?sort=$sort&side=$side&sektion=2 method=post>";
-	print "<tr width=\"500px\"><td>Antal felter p&aring; ".$valg."oversigten</td>";
+	print "<tr width=\"500px\"><td>".findtekst(1126,$sprog_id)." ".$valg."".findtekst(1128,$sprog_id)."";
 	print "<td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
-	print "<tr><td>Antal linjer p&aring; ".$valg."oversigten</td>";
+	print "<tr><td>".findtekst(1127,$sprog_id)." ".$valg."".findtekst(1128,$sprog_id)."</td>";
 	print "<td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td>";
 print "<td><input type=submit value=\"OK\" name=\"submit\"></td></tr>\n";
 print "</form>";
@@ -194,10 +195,10 @@ function sektion_3() {
 	global $vis_feltantal;
 	global $select;
 	
-	print "<tr><td colspan=3>V&aelig;lg om lukkede debitorer skal v&aelig;re synlige p&aring; oversigten.</td></tr>";
+	print "<tr><td colspan=3>".findtekst(1121,$sprog_id)."</td></tr>";
 	
-	print "<tr><td colspan=3>Samt hvilke kundegrupper og kategorier der skal v&aelig;re synlige p&aring; oversigten.</td></tr>";
-	print "<tr><td colspan=3>Hvis intet er valgt, vil alt blive vist!</td></tr>";
+	print "<tr><td colspan=3>".findtekst(1122,$sprog_id)."</td></tr>";
+	print "<tr><td colspan=3>".findtekst(1123,$sprog_id)."</td></tr>";
 #	print "<tr><td colspan=3><hr></td></tr>";
 	
 	$r = db_fetch_array(db_select("select id,box1,box2,box11 from grupper where art = 'DLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
@@ -207,9 +208,9 @@ function sektion_3() {
 	
 	print "<form name=sektion_3 action=debitorvisning.php?sort=$sort&valg=$valg&sektion=3 method=post>";
 	print "<tr><td colspan=3><table border=1 width=100%><tbody>";
-	print "<tr><td>Skjul lukkede debitorer</td><td><input name=\"skjul_lukkede\" type=\"checkbox\" $skjul_lukkede></td></tr>";
+	print "<tr><td>".findtekst(1124,$sprog_id)."</td><td><input name=\"skjul_lukkede\" type=\"checkbox\" $skjul_lukkede></td></tr>";
 	print "<tr><td width=50%><table border=0 width=100%><tbody>";
-	print "<tr><td><b>Kundegrupper</b><br><hr></td></tr>";
+	print "<tr><td><b>".findtekst(1125,$sprog_id)."</b><br><hr></td></tr>";
 	$q = db_select("select * from grupper where art = 'DG' order by beskrivelse",__FILE__ . " linje " . __LINE__);
 	$x=-1;
 	while ($r = db_fetch_array($q)) {
@@ -222,7 +223,7 @@ function sektion_3() {
 	print "<input type=hidden name=dg_antal value=$x>";
 	print "</tbody></table>";
 	print "</td><td valign=top><table border=0 width=100%><tbody>";
-	print "<tr><td><b>Kategorier</b><br><hr></td></tr>";
+	print "<tr><td><b>".findtekst(388,$sprog_id)."</b><br><hr></td></tr>";
 	
 	$r=db_fetch_array(db_select("select box1,box2,box9 from grupper where art='DebInfo'",__FILE__ . " linje " . __LINE__));
 	$cat_id=explode(chr(9),$r['box1']);
@@ -269,8 +270,8 @@ function sektion_4() {
 	
 	print "<form name=sektion_4 action=debitorvisning.php?sort=$sort&valg=$valg&sektion=4 method=post>";
 	
-	print "<tr width=\"500px\"><td>Antal felter p&aring; ".$valg."oversigten</td><td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
-	print "<tr><td>Antal linjer p&aring; ".$valg."oversigten</td><td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td><tr>";
+	print "<tr width=\"500px\"><td>".findtekst(1126,$sprog_id)." ".$valg."".findtekst(1128,$sprog_id)."</td><td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
+	print "<tr><td>".findtekst(1127,$sprog_id)." ".$valg."".findtekst(1128,$sprog_id)."</td><td colspan=\"5\"><input type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td><tr>";
 	print "<tr><td colspan=\"5\"><hr></td><tr>";
 
 	$felter=array("firmanavn","addr1","addr2","postnr","bynavn","land","kontakt","tlf","fax","email","web","bank_navn","bank_reg","bank_konto","notes","rabat","momskonto","kreditmax","betalingsbet","betalingsdage","kontonr","cvrnr","ean","institution","art","gruppe","kontoansvarlig","oprettet","kontaktet","kontaktes","bank_fi","swift","erh","mailfakt","pbs","pbs_nr","pbs_date","felt_1","felt_2","felt_3","felt_4","felt_5","vis_lev_addr","kontotype","fornavn","efternavn","lev_firmanavn","lev_fornavn","lev_efternavn","lev_addr1","lev_addr2","lev_postnr","lev_bynavn","lev_land","lev_kontakt","lev_tlf","lev_email","lukket","status","invoiced");
@@ -281,12 +282,12 @@ function sektion_4() {
 #			 print "$felter[$y]<br>";
 #		}
 
-	print "<tr><td colspan=\"5\">V&aelig;lg hvilke felter der skal v&aelig;re synlige p&aring; oversigten.</td></tr>";
-	print "<tr><td colspan=\"5\">Kontonr. kan ikke frav&aelig;lges.</td></tr>";
+	print "<tr><td colspan=\"5\">".findtekst(1117,$sprog_id)."</td></tr>"; #20210701
+	print "<tr><td colspan=\"5\">".findtekst(1118,$sprog_id)."</td></tr>";
 	print "<tr><td colspan=\"5\"><hr></td></tr>";
-	print "<tr><td colspan=\"1\"><b>Felt</b></td><td align=\"center\"><b>Valgfri overskrift</b></td><td align=\"center\"><b>Feltbredde</b></td><td align=\"center\"><b>Justering</b></td><td align=\"center\" title=\"Angiver om feltets v&aelig;rdi skal kunne v&aelig;lges fra en liste\"><b>Valgbar</b></td></tr>";
+	print "<tr><td colspan=\"1\"><b>Felt</b></td><td align=\"center\"><b>".findtekst(539,$sprog_id)."</b></td><td align=\"center\"><b>".findtekst(540,$sprog_id)."</b></td><td align=\"center\"><b>".findtekst(541,$sprog_id)."</b></td><td align=\"center\" title=\"Angiver om feltets v&aelig;rdi skal kunne v&aelig;lges fra en liste\"><b>".findtekst(1119,$sprog_id)."</b></td></tr>";
 	if (!$feltnavn[0]) $feltnavn[0]="Kontonr";
-	print "<tr><td colspan=\"1\">Kontonr.</td>";
+	print "<tr><td colspan=\"1\">".findtekst(804,$sprog_id)."</td>";
 	print "<td align=\"center\"><input name=feltnavn[0] size=20 value=$feltnavn[0]></td>";
 	print "<td align=\"center\"><input name=feltbredde[0] style=\"text-align:right\" size=2 value=$feltbredde[0]></td>";
 	print "<td align=\"center\"><SELECT NAME=justering[0]>";

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- finans/rapport_includes/momsangivelse.php --- lap 4.0.0 --- 2021-01-03 ---
+// --- finans/rapport_includes/momsangivelse.php --- lap 4.0.5 --- 2022-01-19 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,10 +20,11 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2021 saldi.dk ApS
+// Copyright (c) 2003-2022 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20210107 PHR Corrected error in 'deferred financial year'.
 // 20210301 PHR php 7x issues
+// 20220119 PHR	Made i possible to use SUM accounts inside the this repport
 
 
 function momsangivelse ($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev)
@@ -180,12 +181,14 @@ if ($menu=='T') {
 		$konto_til=$row['box2'];
 
 		$x=0;
-		$query = db_select("select * from kontoplan where regnskabsaar='$regnaar' and kontonr>=$konto_fra and kontonr<=$konto_til order by kontonr",__FILE__ . " linje " . __LINE__);
+		$qtxt = "select * from kontoplan where regnskabsaar='$regnaar' and kontonr>=$konto_fra and kontonr<=$konto_til order by kontonr";
+		$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($row = db_fetch_array($query)){
 			$x++;
 			$kontonr[$x]=$row['kontonr']*1;
 			$kontobeskrivelse[$x]=$row['beskrivelse'];
 			$kontotype[$x]=$row['kontotype'];
+			$fra_kto[$x]=$row['fra_kto'];
 			$primo[$x]=$row['primo'];
 			$aarsum[$x]=0;
 		}

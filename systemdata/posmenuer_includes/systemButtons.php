@@ -1,28 +1,26 @@
 <?php
-// ----------systemdata/posmenuer_includes/systemButtons.php---------------- lap 3.5.5 -- 2019-05-08 --
-// LICENS
+// --- systemdata/posmenuer_includes/systemButtons.php --- ver 4.0.5 -- 2022-02-09 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2019-2022 Saldi.dk ApS
 // ----------------------------------------------------------------------------
-// LN 20190805 LN Allow only specific countries to see given system buttons
-// LN 20190709 LN Add buttons, "Gem bestilling", "Hent bestilling"
+// 20190805 LN Allow only specific countries to see given system buttons
+// 20190709 LN Add buttons, "Gem bestilling", "Hent bestilling"
 // 20191128 PHR	Set $country to 'Denmark' if not set.
+// 20220209	PHR enabled udskriv_sidste for Norway.
 
 $country = db_fetch_array(db_select("select land from adresser where art = 'S'",__FILE__ . " linje " . __LINE__))['land'];
 if (!$country) {
@@ -62,7 +60,7 @@ if ($d==6 && $menutype!='U') {
     if ($c==29) print "<OPTION value=\"29\">Vareopslag</OPTION>\n";
     if ($c==30) print "<OPTION value=\"30\">Stamkunder</OPTION>\n";
     if ($c==31) print "<OPTION value=\"31\">Kontoudtog</OPTION>\n";
-    if ($c==32 && $country == "Denmark") print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
+    if ($c==32) print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
     if ($c==33) print "<OPTION value=\"33\">Sæt</OPTION>\n";
     if ($c==34) print "<OPTION value=\"34\">Følgeseddel</OPTION>\n";
     if ($c==35) print "<OPTION value=\"35\">Leverandøropslag</OPTION>\n";
@@ -70,7 +68,7 @@ if ($d==6 && $menutype!='U') {
     if ($c==37) print "<OPTION value=\"37\">Gavekortstatus</OPTION>\n";	# 20181029
     if ($c==38) print "<OPTION value=\"38\">Totalrabat</OPTION>\n";	# 20190104
     if ($c==39 && $country == "Norway") print "<OPTION value=\"39\">Retur</OPTION>\n"; # LN 20190205
-    if ($c==40 && $country == "Norway") print "<OPTION value=\"40\">Proforma</OPTION>\n"; # LN 20190205
+    if ($c==40 && $country == "Norway") print "<OPTION value=\"40\">Udskriv</OPTION>\n"; # LN 20190205
     if ($c==41 && $country == "Norway") print "<OPTION value=\"41\">X-Rapport</OPTION>\n"; # LN 20190205
     if ($c==42 && $country == "Norway") print "<OPTION value=\"42\">Z-Rapport</OPTION>\n"; # LN 20190305
     if ($c==43 && $country == "Norway") print "<OPTION value=\"43\">$buttonTextArr[copy]</OPTION>\n"; # LN 20190305
@@ -107,7 +105,6 @@ if ($d==6 && $menutype!='U') {
     if ($c!=29) print "<OPTION value=\"29\">Vareopslag</OPTION>\n";
     if ($c!=30) print "<OPTION value=\"30\">Stamkunder</OPTION>\n";
     if ($c!=31) print "<OPTION value=\"31\">Kontoudtog</OPTION>\n";
-    if ($c!=32 && $country == "Denmark") print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
     if ($c!=33) print "<OPTION value=\"33\">Sæt</OPTION>\n";
     if ($c!=34) print "<OPTION value=\"34\">Følgeseddel</OPTION>\n";
     if ($c!=35) print "<OPTION value=\"35\">Kreditoropslag</OPTION>\n";
@@ -115,7 +112,8 @@ if ($d==6 && $menutype!='U') {
     if ($c!=37) print "<OPTION value=\"37\">Gavekortstatus</OPTION>\n";	# 20181029
     if ($c!=38) print "<OPTION value=\"38\">Totalrabat</OPTION>\n";	# 20190104
     if ($c!=39 && $country == "Norway") print "<OPTION value=\"39\">Retur</OPTION>\n";  # LN 20190205
-    if ($c!=40 && $country == "Norway") print "<OPTION value=\"40\">Proforma</OPTION>\n";   # LN 20190205
+    if ($c!=40 && $country == "Norway") print "<OPTION value=\"40\">Udskriv</OPTION>\n";   # LN 20190205
+    if ($c!=32) print "<OPTION value=\"32\">Udskriv sidste</OPTION>\n";
     if ($c!=41 && $country == "Norway") print "<OPTION value=\"41\">X-Rapport</OPTION>\n";   # LN 20190205
     if ($c!=42 && $country == "Norway") print "<OPTION value=\"42\">Z-Rapport</OPTION>\n";   # LN 20190305
     if ($c!=43 && $country == "Norway") print "<OPTION value=\"43\">$buttonTextArr[copy]</OPTION>\n";   # LN 20190305

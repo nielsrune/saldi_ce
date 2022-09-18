@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------finans/importer.php----------lap 3.9.0-----2020-03-05-------
+// ----------finans/importer.php----------lap 4.0.2-----2021-08-27-------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,17 +20,20 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20130415 - Fejl hvis linje starter med separatortegn.
 // 20150105 - Transdate sættes til dd hvis den ikke er sat20150105
 // 20170307 - Tilføjet loppeafregning.
-// 20180611 - Udkommenteret datotjek da den genererer en ugyldig dato fra en gyldig. 20180611
-// 2019.01.16 MSC - Rettet topdesign til og rettet isset fejl.
-// 2019.01.19 PHR - Added dataløn.
-// 2019.03.11 PHR - Added UTF-8 - $fileCharSet.
-// 2020.03.05 LOE - Changed tavle height from '100%' to 'auto' as it looked awfull in FF
+// 20180611 - Udkommenteret datotjek da den genererer en ugyldig dato fra en gyldig. 20180611 
+// 20190116 MSC - Rettet topdesign til og rettet isset fejl.
+// 20190119 PHR - Added dataløn.
+// 20190311 PHR - Added UTF-8 - $fileCharSet.
+// 20200305 LOE - Changed tavle height from '100%' to 'auto' as it looked awfull in FF  
+// 20210629 LOE - Translated these texts to English and Norsk
+// 20210722 LOE - Tranlated some texts and some title tags
+// 20200827	PHR	- Remover all non numeric characters from $bilag
 
 @session_start();
 $s_id=session_id();
@@ -77,8 +80,8 @@ if(($_GET)||($_POST)) {
 		include_once '../includes/top_menu.php';
 		print "<div id=\"header\">
 				<div class=\"headerbtnLft\"></div>
-				<span class=\"headerTxt\">Importer til kassekladde (Kassekladde $kladde_id)</span>";
-		print "<div class=\"headerbtnRght\"></div>";
+				<span class=\"headerTxt\">".findtekst(1074,$sprog_id)." ".findtekst(904,$sprog_id)." ".lcfirst(findtekst(105,$sprog_id))." (".lcfirst(findtekst(105,$sprog_id))." $kladde_id)</span>";     
+		print "<div class=\"headerbtnRght\"></div>";       
 		print "</div><!-- end of header -->
 			<div class=\"maincontentLargeHolder\">\n";
 		print  "<center><table border='0' cellspacing='1' width='75%'>";
@@ -87,8 +90,8 @@ if(($_GET)||($_POST)) {
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>Luk</a></td>";
-	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">Importer til kassekladde (Kassekladde $kladde_id)</td>";
+	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
+	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">".findtekst(1074,$sprog_id)." ".findtekst(904,$sprog_id)." ".lcfirst(findtekst(105,$sprog_id))." (".lcfirst(findtekst(105,$sprog_id))." $kladde_id)</td>";
 	print "<td width=\"10%\" $top_bund ><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"></td>";
 	print "</tbody></table>";
 	print "</td></tr>";
@@ -148,95 +151,97 @@ if ($menu =='T') {
 }
 
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
-print "<tr><td width=100% align=center><b>Import af bankposteringer</b></td></tr>";
+print "<tr><td width=100% align=center><b>".findtekst(1074,$sprog_id)." ".lcfirst(findtekst(1076,$sprog_id))."</b></td></tr>"; #20210629
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"bankimport.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center> V&aelig;lg datafil: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078,$sprog_id)."\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 print "<tr><td><br></td></tr>";
 print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 
 $title='';
-print "<tr><td width=100% align=center title='$title'><b>Import fra Danl&oslash;n</b></td></tr>";
+print "<tr><td width=100% align=center title='$title'><b>".findtekst(1079,$sprog_id)."</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"danlonimport.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center title='$title'> V&aelig;lg datafil: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center title='$title'> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078,$sprog_id)."\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 print "<tr><td><br></td></tr>";
 print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 
 $title='';
-print "<tr><td width=100% align=center title='$title'><b>Import fra Datal&oslash;n</b></td></tr>";
+print "<tr><td width=100% align=center title='$title'><b>".findtekst(1080,$sprog_id)."</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"datalonimport.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center title='$title'> V&aelig;lg datafil: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center title='$title'> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078,$sprog_id)."\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 print "<tr><td><br></td></tr>";
 print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 
-$title='Import at betalingsoplysninger leverance 0602"';
-print "<tr><td width=100% align=center title='$title'><b>Import af pbs betalinger M602</b></td></tr>";
+$title='Import af betalingsoplysninger leverance 0602"';
+print "<tr><td width=100% align=center title='$title'><b>".findtekst(1081,$sprog_id)." M602</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"pbsm602import.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center title='$title'> V&aelig;lg datafil: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center title='$title'> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078,$sprog_id)."\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 
 print "<tr><td><br></td></tr>";
 print "<tr><td>$hrlinje</td></tr>";
+//PBS Web
 print "<tr><td width=100% align=center><br></td></tr>";
-$title='Filen skal v&aelig;re af typen "udenopkrævningsarter.csv"';
-print "<tr><td width=100% align=center title='$title'><b>Import af pbs betalinger fra web</b></td></tr>";
+$title=findtekst(1644, $sprog_id);
+print "<tr><td width=100% align=center title='$title'><b>".findtekst(1643, $sprog_id)."</b></td></tr>"; #20210722
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"pbswebimport.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center title='$title'> V&aelig;lg datafil: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center title='$title'> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078,$sprog_id)."\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 
 print "<tr><td><br></td></tr>";
 print "<tr><td>$hrlinje</td></tr>";
+//Other data
 print "<tr><td width=100% align=center><br></td></tr>";
-print "<tr><td width=100% align=center><b>Import af andre data</b></td></tr>";
+print "<tr><td width=100% align=center><b>".findtekst(1082,$sprog_id)."</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"importer.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center> V&aelig;lg datafil: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078,$sprog_id)."\" /></td></tr>";
 print "<tr><td></form></td></tr>";
 
 print "<tr><td><br></td></tr>";
 print "<tr><td>$hrlinje</td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
-print "<tr><td width=100% align=center><b>Afregning Kommisionssalg</b></td></tr>";
+print "<tr><td width=100% align=center><b>".findtekst(1083,$sprog_id)."</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<tr><td width=100% align=center><a href='loppeafregning.php?kladde_id=$kladde_id'><button>Start</button></a></td></tr>";
 print "</tbody></table>";
@@ -357,10 +362,10 @@ if ($fileCharSet!='UTF-8') print "<option>UTF-8</option>";
 if ($fileCharSet!='ISO-8859-1') print "<option>ISO-8859-1</option>";
 print "</select> ";
 print "Datoformat <input style=\"width:80px\" type=\"text\" name=\"datoformat\" value=\"$datoformat\"> ";
-print "<span title='Angiv hvilket skilletegn der anvendes til opdeling af kolonner'>Separatortegn&nbsp;<select name=\"splitter\">\n";
+print "<span title='".findtekst(1645, $sprog_id)."'>".findtekst(1377, $sprog_id)."<select name=\"splitter\">\n";
 if ($splitter) {print "<option>$splitter</option>\n";}
-if ($splitter!='Semikolon') print "<option>Semikolon</option>\n";
-if ($splitter!='Komma') print "<option>Komma</option>\n";
+if ($splitter!='Semikolon') print "<option>".findtekst(1378, $sprog_id)."</option>\n";#20210722
+if ($splitter!='Komma') print "<option>".findtekst(1379, $sprog_id)."</option>\n";
 if ($splitter!='Tabulator') print "<option>Tabulator</option>\n";
 print "</select></span>";
 print "<input type=\"hidden\" name=\"filnavn\" value=$filnavn>";
@@ -375,7 +380,7 @@ $fil_splitter=$splitter;
 #elseif ($splitter=='Tabulator') {$splitter=chr(9);}
 $splitter=chr(9);
 print "<tr>";
-if (!in_array('bilag',$feltnavn)) print "<td><span title='Angiv 1. bilagsnummer'><input class=\"inputbox\" type=text size=4 name=bilag value=$bilag></span></td>";
+if (!in_array('bilag',$feltnavn)) print "<td><span title='".findtekst(1404, $sprog_id)."'><input class=\"inputbox\" type=text size=4 name=bilag value=$bilag></span></td>";
 for ($y=0; $y<=$feltantal; $y++) {
 	if ($feltnavn[$y]=='bilag' || strstr($feltnavn[$y],'beløb')) print "<td align=right><select name=\"feltnavn[$y]\">\n";
 #	elseif (!$feltnavn[$y]) print "<td><select>\n";
@@ -487,8 +492,9 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bila
 			if ($skriv_linje==1){
 				$amount=$debet=$kredit=$forfaldsdag=NULL;
 				for ($y=0; $y<=$feltantal; $y++) {
-					$bilag=$bilag*1;
 					if ($feltnavn[$y]=='bilag') $bilag=$felt[$y]*1;
+					$bilag = preg_replace("/[^0-9]/", "", $bilag); #20210827
+					if (!$bilag) $bilag=$bilag;
 					if (!$amount && $feltnavn[$y]=='debet(beløb)'){
 						if (nummertjek($felt[$y])=='DK') $amount=usdecimal($felt[$y])*1;
 						elseif (nummertjek($felt[$y])=='US') $amount=$felt[$y]*1;

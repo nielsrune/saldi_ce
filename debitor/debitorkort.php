@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/debitorkort.php ------ lap 3.9.0 ----2020-03-16-----------
+// ------------- debitor/debitorkort.php ------ lap 4.0.2 ----2021-10-06-----------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,8 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
-//
-// Copyright (c) 2003-2020 saldi.dk aps
+// 
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 2012.10.23 ID slettes fra pbs_kunder hvis pbs ikke afmærket, søg 20121023
@@ -33,6 +33,10 @@
 // 2019.04.12 MSC - Rettet isset fejl
 // 2019.04.23 PHR - Flyttet fejlmeddelse om 'Kontonr eksisterer' over 'firmanavn skal udfyldes'
 // 2020.03.16 PHR - Some design update (Removed borders)
+// 2021.05.23 PHR Added my sale password.
+// 20210702   LOE Translated these texts with findtekst() function
+// 20210706   LOE Commited out for future modification
+// 20211006   PHR added 'anonymize'
 
 @session_start();
 $s_id=session_id();
@@ -49,6 +53,7 @@ $css="../css/standard.css";
  include("../includes/online.php");
  include("../includes/std_func.php");
 
+  
  print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>\n";
 
  $id = if_isset($_GET['id']);
@@ -84,7 +89,9 @@ $rename_category=if_isset($_GET['rename_category']);
 if (isset($_POST['id']) || isset($_POST['firmanavn'])){
  	$submit=db_escape_string(trim($_POST['submit']));
  	$id=$_POST['id'];
- 	if ($submit!="Slet") {
+ 	
+	if (isset($_POST['anonymize']) && $id) include ('anonymize.php');
+  elseif ($submit!="Slet") {
 		$notes=$_POST['notes'];
 		$firmanavn=db_escape_string(trim($_POST['firmanavn']));
 		$addr1=db_escape_string(trim($_POST['addr1']));
@@ -129,6 +136,7 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 		$lev_email=db_escape_string(trim($_POST['lev_email']));
 		$vis_lev_addr=db_escape_string(trim($_POST['vis_lev_addr']));
 		$lukket=db_escape_string(trim($_POST['lukket']));
+		$password=db_escape_string(trim($_POST['password']));
 		list ($gruppe) = explode (':', $_POST['gruppe']);
 
 		$rabatgruppe=$_POST['rabatgruppe']*1;
@@ -354,7 +362,21 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
  	 	if(!$kreditmax){$kreditmax=0;}
  	 	if ($id==0 && $ny_kontonr && $ny_kontonr!='!') {
 				$oprettet=date("Y-m-d");
- 	 	 	 	db_modify("insert into adresser (kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,tlf,fax,email,mailfakt,web,betalingsdage,kreditmax,betalingsbet,cvrnr,ean,institution,notes,art,gruppe,kontoansvarlig,oprettet,bank_reg,bank_konto,swift,pbs_nr,pbs,kontotype,fornavn,efternavn,lev_firmanavn,lev_fornavn,lev_efternavn,lev_addr1,lev_addr2,lev_postnr,lev_bynavn,lev_land,lev_kontakt,lev_tlf,lev_email,felt_1,felt_2,felt_3,felt_4,felt_5,vis_lev_addr,lukket,kategori,rabatgruppe,status) values ('$ny_kontonr', '$firmanavn', '$addr1', '$addr2', '$postnr', '$bynavn', '$land', '$kontakt', '$tlf', '$fax', '$email','$mailfakt', '$web', '$betalingsdage', '$kreditmax', '$betalingsbet', '$cvrnr', '$ean', '$institution', '$notes', 'D', '$gruppe', '$kontoansvarlig', '$oprettet','$bank_reg','$bank_konto','$swift','$pbs_nr','$pbs','$kontotype','$fornavn','$efternavn','$lev_firmanavn','$lev_fornavn','$lev_efternavn','$lev_addr1','$lev_addr2','$lev_postnr','$lev_bynavn','$lev_land','$lev_kontakt','$lev_tlf','$lev_email','$felt_1','$felt_2','$felt_3','$felt_4','$felt_5','$vis_lev_addr','$lukket','$kategori','$rabatgruppe','$status')",__FILE__ . " linje " . __LINE__);
+				$qtxt = "insert into adresser ";
+				$qtxt.= "(kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,tlf,fax,email,";
+				$qtxt.= "mailfakt,web,betalingsdage,kreditmax,betalingsbet,cvrnr,ean,institution,notes,";
+				$qtxt.= "art,gruppe,kontoansvarlig,oprettet,bank_reg,bank_konto,swift,pbs_nr,pbs,kontotype,";
+				$qtxt.= "fornavn,efternavn,lev_firmanavn,lev_fornavn,lev_efternavn,lev_addr1,lev_addr2,lev_postnr,";
+				$qtxt.= "lev_bynavn,lev_land,lev_kontakt,lev_tlf,lev_email,felt_1,felt_2,felt_3,felt_4,felt_5,";
+				$qtxt.= "vis_lev_addr,lukket,kategori,rabatgruppe,status)";
+				$qtxt.= " values ";
+				$qtxt.= "('$ny_kontonr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$land','$kontakt','$tlf','$fax','$email',";
+				$qtxt.= "'$mailfakt','$web','$betalingsdage','$kreditmax','$betalingsbet','$cvrnr','$ean','$institution','$notes','D',";
+				$qtxt.= "'$gruppe','$kontoansvarlig','$oprettet','$bank_reg','$bank_konto','$swift','$pbs_nr','$pbs','$kontotype',";
+				$qtxt.= "'$fornavn','$efternavn','$lev_firmanavn','$lev_fornavn','$lev_efternavn','$lev_addr1','$lev_addr2','$lev_postnr',";
+				$qtxt.= "'$lev_bynavn','$lev_land','$lev_kontakt','$lev_tlf','$lev_email','$felt_1','$felt_2','$felt_3','$felt_4','$felt_5',";
+				$qtxt.= "'$vis_lev_addr','$lukket','$kategori','$rabatgruppe','$status')";
+ 	 	 	 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
  	 	 	 	$q = db_select("select id from adresser where kontonr = '$ny_kontonr' and art = 'D'",__FILE__ . " linje " . __LINE__);
  	 	 	 	$r = db_fetch_array($q);
  	 	 	 	$id = $r['id'];
@@ -381,7 +403,9 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 			$qtxt.= "lev_addr2='$lev_addr2',lev_postnr='$lev_postnr',lev_bynavn='$lev_bynavn',lev_land='$lev_land',";
 			$qtxt.= "lev_kontakt='$lev_kontakt',lev_tlf='$lev_tlf',lev_email='$lev_email',felt_1='$felt_1',felt_2='$felt_2',";
 			$qtxt.= "felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',vis_lev_addr='$vis_lev_addr',lukket='$lukket',kategori='$kategori',";
-			$qtxt.= "rabatgruppe='$rabatgruppe',status='$status' where id = '$id'";
+			$qtxt.= "rabatgruppe='$rabatgruppe',status='$status' ";
+			#if ($password != '**********') $qtxt.=",password = '". saldikrypt('$id','$password') ."' "; 20210706
+			$qtxt.= "where id = '$id'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
  	 	 	for ($x=1; $x<=$ans_ant; $x++) {
  	 	 	 	$y=trim($posnr[$x]);
@@ -486,9 +510,11 @@ if ($id > 0){
 	}
 	$maxbb='Netto';
 	for ($x=0;$x<count($bb);$x++) {
-		$r=db_fetch_array(db_select("select count(betalingsbet) as betalingsbet from adresser where  art='D' and betalingsbet = '$bb[$x]'",__FILE__ . " linje " . __LINE__));
+		$qtxt = "select count(betalingsbet) as betalingsbet from adresser where  art='D' and betalingsbet = '$bb[$x]'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$betbet[$x]=$r['betalingsbet'];
-		if ($x && $betbet[$x]>$betbet[$x-1]) $maxbb=$bb[$x];
+		if ($x == 0) $maxbb=$bb[$x];
+		elseif ($betbet[$x]>$betbet[$x-1]) $maxbb=$bb[$x];
 	}
 	$bb=NULL;
 	$x=0; $bd=array();
@@ -622,7 +648,7 @@ print "<input type=hidden name=pbs_date value='$pbs_date'>\n";
 
 $bg=$bgcolor5;
 print "<input type=hidden name=gl_kontotype value='$kontotype'>\n";
-print "<tr bgcolor='$bg'><td colspan=2 align=center>Kundetype <select class='inputbox' NAME=kontotype onchange=\"javascript:docChange = true;\">\n";
+print "<tr bgcolor='$bg'><td colspan=2 align=center>".findtekst(1149,$sprog_id)." <select class='inputbox' NAME=kontotype onchange=\"javascript:docChange = true;\">\n";
 if ($kontotype=='privat') {
 
 	print "<option value=privat>".findtekst(353,$sprog_id)."<!--tekst 353--></option>\n";
@@ -831,7 +857,7 @@ print "</tbody></table></td>";# <- TABEL 1.2.2
 print "<td valign=top><table border='0' width='100%'><tbody>"; # TABEL 1.2.3 ->
 $bg=$bgcolor5;
 if ($vis_lev_addr) {
-	print "<tr bgcolor=$bg><td colspan=2 align=center height=25px><b>Levering</b></td></tr>\n";
+	print "<tr bgcolor=$bg><td colspan=2 align=center height=25px><b>".findtekst(1148,$sprog_id)."</b></td></tr>\n"; #20210702
 	if ($kontotype=='privat') {
 		print "<input type=\"hidden\" name=\"lev_firmanavn\" value=\"$lev_firmanavn\">\n";
 		($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
@@ -868,13 +894,15 @@ if ($vis_lev_addr) {
 	($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
 	print "<tr bgcolor=$bg><td><span onmouseover=\"return overlib('".findtekst(264,$sprog_id)."', WIDTH=600);\" onmouseout=\"return nd();\"><!--tekst 264-->".findtekst(259,$sprog_id)."<!--tekst 259--></td><td><input type='text' class='inputbox' name=\"felt_5\" size=\"25\" value=\"$felt_5\"></td></tr>\n";
 }	
-/*
-print "<tr bgcolor='$bg'><td colspan='2'><br></td></tr>";
-print "<tr bgcolor='$bg'><td>Provision</td><td></td></tr>";
-($bg==$bgcolor)?$bg=$bgcolor5 : $bg=$bgcolor;
-print "<tr bgcolor='$bg'><td align='center' colspan='2'>Mit salg</td></tr>";
-*/
 
+$qtxt = "select var_value from settings where var_grp='debitor' and var_name='mySale'";
+if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+	($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
+	print "<tr bgcolor=$bg><td>";
+	$oLibTxt = "Adgangskode til Mit Salg<br>Stjerner vises også når der ikke er nogen kode!";
+	print "<span onmouseover=\"return overlib('$oLibTxt', WIDTH=600);\" onmouseout=\"return nd();\">Mit Salg kode</span>";
+	print "</td><td><input type='text' class='inputbox' name=\"Password\" size=\"25\" value=\"**********\"></td></tr>\n";
+}
 
 print "</tbody></table></td></tr>"; # <- TABEL 1.2.3
 
@@ -940,7 +968,7 @@ print "<tr><td colspan=6><hr></td></tr>\n";
  		 	print "<tr bgcolor=$bg>\n";
  			print "<td width=10><input class='inputbox' type='text' size=1 name=posnr[$x] value=\"$x\"></td><td title=\"".htmlentities($r['notes'],ENT_COMPAT,$charset)."\"><a href=ansatte.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=$id&id=$r[id]>".htmlentities($r['navn'],ENT_COMPAT,$charset)."</a></td>\n";
  			print "<td>$r[tlf]</td><td>$r[mobil]</td><td> $r[email]</td></tr>\n";
- 			print "<input class='inputbox' type=hidden name=ans_id[$x] value=$r[id]>\n";
+ 			print "<input class='inpPasswordutbox' type=hidden name=ans_id[$x] value=$r[id]>\n";
  			if ($x==1) {print "<input class='inputbox' type=hidden name=kontakt value='$r[navn]'>";}
 		}
 		print "<input type=hidden name=ans_ant value=$x>\n";
@@ -958,16 +986,18 @@ if (!isset ($slet)) $slet = NULL;
 if ($slet=="NO") {
 	print "<td colspan='6' align = 'center'>";
 	print "<input type='submit' 'style=width:200px' accesskey='g' ";
-	print "value='Gem / opdat&eacute;r' name='submit' onclick='javascript:docChange = false;'>";
+	print "value=".findtekst(471,$sprog_id)." name='submit' onclick='javascript:docChange = false;'>";
 	print "&nbsp;<input type='submit' 'style=width:200px' ";
-	print "value='Anonymisér' name='anonymize' onclick='javascript:docChange = false;'>";
+	print "value='Anonymisér' name='".findtekst(1929,$sprog_id)."' ";
+	$txt=str_replace('$kontonr',$kontonr,findtekst(1930,$sprog_id));
+	print "onclick=\"return confirm('$txt')\">";
 	print "</td>";
 } 	 	 
 else {
 	print "<td><br><td align = center>";
 	print "<input class='button green medium' 'style=width:200px' type=submit accesskey=\"g\" ";
-	print "value=\"Gem / opdat&eacute;r\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";
-	print "<td><br></td><td><input class='button rosy medium' type='submit' accesskey='s'";
+	print "value=\"".findtekst(471,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>";
+	print "<td><br></td><td><input class='button rosy medium' type='submit' accesskey='s'"; 
 	print "value='Slet' name='submit' onclick='return confirm('Slet $firmanavn?')'></td>";}
 print "</form>\n";
 #print "<tr><td colspan=5><hr></td></tr>\n";

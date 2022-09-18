@@ -1000,7 +1000,7 @@ function opdat_behold($reg_vare_id) {
 						$qtxt="update variant_varer set variant_beholdning='$ny_variant_beholdning' where id='".$variant_id[$x][$v]."'";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
 						if ($api_fil) {
-							$qtxt="select shop_variant from shop_varer where saldi_id='$vare_id[$x]' and saldi_variant='".$variant_id[$x]."'";
+							$qtxt="select shop_variant from shop_varer where saldi_id='$vare_id[$x]' and saldi_variant='".$variant_id[$x][$v]."'";
 							if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 								$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
 								$txt = "/usr/bin/wget --spider --no-check-certificate --header='$header' ";

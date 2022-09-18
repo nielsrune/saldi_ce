@@ -26,10 +26,16 @@
 // Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2018.03.08 Indhold kopieret dra debitor/debitor.php og tilrettet til kreditor
+// 20210331 LOE Translated some of these texts to English
+// 20210705 LOE Created switch case function for box6 to translate langue and also reassigned valg variable for creditor
+
+
 
 #ob_start();
 @session_start();
 $s_id=session_id();
+
+global $menu;
 
 $check_all=NULL; $ny_sort=NULL;
 $find=array();$dg_id=array();$dg_navn=array();$selectfelter=array();
@@ -50,7 +56,6 @@ function MasseFakt(tekst)
 ";
 $css="../css/standard.css";
 $modulnr=6;
-$title="Kreditorliste";
 $firmanavn=NULL; 
 
 include("../includes/connect.php");
@@ -58,37 +63,125 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
 	
+if ($menu=='T') {
+	$title="Konti";
+} else {
+	$title="Kreditorliste";
+}
+	
 $id = if_isset($_GET['id']);
 $returside=if_isset($_GET['returside']);
 $valg= strtolower(if_isset($_GET['valg']));
 $sort = if_isset($_GET['sort']);
 $start = if_isset($_GET['start']);
 $nysort = if_isset($_GET['nysort']);
+$kreditor1=lcfirst(findtekst(1169,$sprog_id)); #20210331
+$brisk1=findtekst(944,$sprog_id);
 
-if (!$valg) $valg="kreditor";
+$aa = findtekst(360, $sprog_id);
+$firmanavn =ucfirst(str_replace(' ','_', $aa));
 
+if (!$valg) $valg="$kreditor1";
+#echo "$kreditor1";
 $sort=str_replace("adresser.","",$sort);
 if ($sort && $nysort==$sort) $sort=$sort." desc";
 elseif ($nysort) $sort=$nysort;
 $r=db_fetch_array(db_select("select box7 from grupper where art = 'DIV' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 $jobkort=$r['box7'];
 
+ #>>>>>>>>>>>>>>>>>>>>>
+ function select_valg( $valg, $box ){ 
+	if ($valg=="$kreditor1") {
+		switch($box){
+			case "box3":
+				return "kontonr".chr(9)."firmanavn".chr(9)."addr1".chr(9)."addr2".chr(9)."postnr".chr(9)."bynavn".chr(9)."kontakt".chr(9)."tlf".chr(9)."kontoansvarlig";
+				break;
+			case "box5":
+				return "right".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left";
+				break;
+			case "box4":
+				return "5".chr(9)."35".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10";
+				break;
+			case "box6":
+				return "".findtekst(284,$sprog_id)."".chr(9)."".findtekst(360,$sprog_id)."".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."".findtekst(144,$sprog_id)."".chr(9)."By".chr(9)."".findtekst(502,$sprog_id)."".chr(9)."".findtekst(37,$sprog_id).""; 
+			default :
+				return "choose a box";
+				break;
+		}
+	}else{
+
+		switch($box){
+			case "box3":
+				return "kontonr".chr(9)."firmanavn".chr(9)."addr1".chr(9)."addr2".chr(9)."postnr".chr(9)."bynavn".chr(9)."kontakt".chr(9)."tlf".chr(9)."kontoansvarlig";
+				break;
+			case "box5":
+				return "right".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left";
+				break;
+			case "box4":
+				return "5".chr(9)."35".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10";
+				break;
+			case "box6":
+				return "".findtekst(284,$sprog_id)."".chr(9)."".findtekst(360,$sprog_id)."".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."".findtekst(144,$sprog_id)."".chr(9)."By".chr(9)."".findtekst(502,$sprog_id)."".chr(9)."".findtekst(37,$sprog_id).""; #20210705
+			default :
+				return "choose a box";
+				break;
+		}
+
+
+	}
+}		
+
+$box5 = select_valg("$valg", "box5");
+$box3 =select_valg("$valg", "box3");
+$box4 =select_valg("$valg", "box4");
+$box6=select_valg("$valg", "box6");
+#>>>>>>>>>>>>>>>>>>>>>
+
+
 if (!$r=db_fetch_array(db_select("select id from grupper where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__))) {
 #	db_modify("update grupper set box2='$returside' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
-#} else { 
-	if ($valg=="kreditor") {
-		$box3="kontonr".chr(9)."firmanavn".chr(9)."addr1".chr(9)."addr2".chr(9)."postnr".chr(9)."bynavn".chr(9)."kontakt".chr(9)."tlf".chr(9)."kontoansvarlig";
-		$box5="right".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left";
-		$box4="5".chr(9)."35".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10";
-		$box6="Kontonr".chr(9)."Firmanavn".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."Postnr".chr(9)."By".chr(9)."Kontakt".chr(9)."Telefon".chr(9)."S&aelig;lger";
+#} else { ".findtekst(360,$sprog_id)."
+	// if ($valg=="$kreditor1") { #20210331
+	// 	#$box3="kontonr".chr(9)."firmanavn".chr(9)."addr1".chr(9)."addr2".chr(9)."postnr".chr(9)."bynavn".chr(9)."kontakt".chr(9)."tlf".chr(9)."kontoansvarlig"; 
+	// 	$box3= "".findtekst(284,$sprog_id)."".chr(9)."".findtekst(360,$sprog_id)."".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."".findtekst(144,$sprog_id)."".chr(9)."By".chr(9)."".findtekst(502,$sprog_id)."".chr(9)."".findtekst(64,$sprog_id)."";
+	// 	$box5="right".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left";
+	// 	$box4="5".chr(9)."35".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10";
+	// 	#$box6="Kontonr".chr(9)."Firmanavn".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."Postnr".chr(9)."By".chr(9)."Kontakt".chr(9)."Telefon".chr(9)."S&aelig;lger";
+	// 	$box6="".findtekst(284,$sprog_id)."".chr(9)."".findtekst(360,$sprog_id)."".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."".findtekst(144,$sprog_id)."".chr(9)."By".chr(9)."".findtekst(502,$sprog_id)."".chr(9)."".findtekst(37,$sprog_id)."";
+	// } else {
+	// 	#$box3="kontonr".chr(9)."firmanavn".chr(9)."addr1".chr(9)."addr2".chr(9)."postnr".chr(9)."bynavn".chr(9)."kontakt".chr(9)."tlf".chr(9)."kontoansvarlig";
+	// 	$box3= "".findtekst(284,$sprog_id)."".chr(9)."".findtekst(360,$sprog_id)."".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."".findtekst(144,$sprog_id)."".chr(9)."By".chr(9)."".findtekst(502,$sprog_id)."".chr(9)."".findtekst(64,$sprog_id)."";
+	// 	$box5="right".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left";
+	// 	$box4="5".chr(9)."35".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10";
+	// 	#$box6="Kontonr".chr(9)."Firmanavn".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."Postnr".chr(9)."By".chr(9)."Kontakt".chr(9)."Telefon".chr(9)."S&aelig;lger";
+	// 	$box6 = "".findtekst(284,$sprog_id)."".chr(9)."".findtekst(360,$sprog_id)."".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."".findtekst(144,$sprog_id)."".chr(9)."By".chr(9)."".findtekst(502,$sprog_id)."".chr(9)."".findtekst(37,$sprog_id)."";
+	// }
+
+ ######
+
+
+            db_modify("insert into grupper(beskrivelse,kode,kodenr,art,box3,box4,box5,box6,box7)values('$brisk1','$valg','$bruger_id','KLV','$box3','$box4','$box5','$box6','100')",__FILE__ . " linje " . __LINE__);
+	
+
 	} else {
-		$box3="kontonr".chr(9)."firmanavn".chr(9)."addr1".chr(9)."addr2".chr(9)."postnr".chr(9)."bynavn".chr(9)."kontakt".chr(9)."tlf".chr(9)."kontoansvarlig";
-		$box5="right".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left".chr(9)."left";
-		$box4="5".chr(9)."35".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10".chr(9)."10";
-		$box6="Kontonr".chr(9)."Firmanavn".chr(9)."Adresse".chr(9)."Adresse 2".chr(9)."Postnr".chr(9)."By".chr(9)."Kontakt".chr(9)."Telefon".chr(9)."S&aelig;lger";
+
+	if($h1= db_fetch_array(db_select("select*from grupper where art='KLV' and kode='$valg' and kodenr = '$bruger_id' ",__FILE__ . " linje " . __LINE__))) $q =$h1['box6']; #20210331
+	
+	if( $q !== "" || false ) {
+		 if (!in_array(trim("$firmanavn"),explode(chr(9),$q)) ){
+
+			$qtxt ="update grupper set beskrivelse='$brisk1',kode='$valg',kodenr='$bruger_id',box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='100' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
+	
 	}
-	db_modify("insert into grupper(beskrivelse,kode,kodenr,art,box3,box4,box5,box6,box7)values('kreditorlistevisning','$valg','$bruger_id','KLV','$box3','$box4','$box5','$box6','100')",__FILE__ . " linje " . __LINE__);
+
+	 ######
 } else {
+		$qtxt ="update grupper set box3='$box3',box6='$box6' where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'";
+	    db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+
 	$r=db_fetch_array(db_select("select box1,box2,box7,box9,box10,box11 from grupper where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__)); 
 	$dg_liste=explode(chr(9),$r['box1']);
 	$cat_liste=explode(chr(9),$r['box2']);
@@ -96,7 +189,10 @@ if (!$r=db_fetch_array(db_select("select id from grupper where art = 'KLV' and k
 	$linjeantal=$r['box7'];
 	if (!$sort) $sort=$r['box9'];
 	$find=explode("\n",$r['box10']);
+	// var_dump($box6);
+	// var_dump($firmanavn);
 }
+if ($valg == "$kreditor1"){ $valg = 'kreditor';} #20210705
 
 if ($popup) $returside="../includes/luk.php";
 else $returside="../index/menu.php";
@@ -120,16 +216,26 @@ if (!$valg) $valg = "kreditor";
 $sort=str_replace("adresser.","",$sort);
 $sortering=$sort;
 
+if ($menu=='T') {
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\"><a accesskey=V href=kreditorvisning.php?valg=$valg title='Ændre ordrevisnig'><i class='fa fa-gear'></i></a> &nbsp; <a accesskey=N href='kreditorkort.php?returside=kreditor.php' title='Opret nyt leverandør kort'><i class='fa fa-plus-square'></i></a></div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
+} else {
 print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody>\n";
 print "<tr><td height = 25 align=center valign=top>";
 print "<table width=100% align=center border=0 cellspacing=2 cellpadding=0><tbody>\n";
-print "<tr><td width=10% $top_bund><a href=$returside accesskey=L>Luk</a></td>";
-print "<td width = 80% align=center $top_bund>&nbsp;Kreditorer&nbsp;</td>";
-print "<td width=5% $top_bund><a accesskey=V href=kreditorvisning.php?valg=$valg>Visning</a></td>\n";
+	print "<tr><td width=10% $top_bund><a href=$returside accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
+	print "<td width = 80% align=center $top_bund>".findtekst(607,$sprog_id)."</td>";
+	print "<td width=5% $top_bund><a accesskey=V href=kreditorvisning.php?valg=$valg>".findtekst(813,$sprog_id)."</a></td>\n";
 #if ($popup) {
 #		print "<td width=5% $top_bund onclick=\"javascript:kreditor=window.open('kreditorkort.php?returside=kreditor.php','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=kreditor.php?sort=$sort>Ny</a></td>\n";
 #	} else {
-		print "<td width=5%  $top_bund><a href=kreditorkort.php?returside=kreditor.php>Ny</a></td></tr>\n";
+			print "<td width=5%  $top_bund><a href=kreditorkort.php?returside=kreditor.php>".findtekst(39,$sprog_id)."</a></td></tr>\n";
 #	}
 #print "<tr><td></td><td align=center><table border=1	cellspacing=0 cellpadding=0><tbody>\n";
 #print "<td width = 20%$top_bund align=center><a href=kreditor.php?valg=tilbud accesskey=T>Tilbud</a></td>";
@@ -139,6 +245,7 @@ print "<td width=5% $top_bund><a accesskey=V href=kreditorvisning.php?valg=$valg
 
 print "</tbody></table>";
 print " </td></tr>\n<tr><td align=\"center\" valign=\"top\" width=\"100%\">";
+	}
 
 $r = db_fetch_array(db_select("select box3,box4,box5,box6,box8,box11 from grupper where art = 'KLV' and kodenr = '$bruger_id' and kode='$valg'",__FILE__ . " linje " . __LINE__));
 $vis_felt=explode(chr(9),$r['box3']);
@@ -207,11 +314,11 @@ $adresserantal=0;
 $r=db_fetch_array(db_select("select count(id) as antal from adresser where art = 'K' $udvaelg",__FILE__ . " linje " . __LINE__));
 $antal=$r['antal'];
 
-print "<table cellpadding=1 cellspacing=1 border=0 valign=top width=100%><tbody>\n<tr>";
+print "<table cellpadding=1 cellspacing=1 border=0 valign=top width=100% class='dataTable'><tbody>\n<tr>";
 if ($start>0) {
 	$prepil=$start-$linjeantal;
 	if ($prepil<0) $prepil=0;
-	print "<td><a href=kreditor.php?start=$prepil&valg=$valg><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+	print "<td><a href=kreditor.php?start=$prepil&valg=$valg><img class='imgFade' src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 } else {
 	print "<td>";
 	if (file_exists("rotary_addrsync.php")) print "<a href=\"rotary_addrsync.php\" target=\"blank\" title=\"Klik her for at synkronisere medlemsinfo\">!</a>";
@@ -224,7 +331,7 @@ for ($x=0;$x<$vis_feltantal;$x++) {
 }
 if ($antal>$slut && !$dg_liste[0] && !$cat_liste[0]) {
 	$nextpil=$start+$linjeantal;
-	print "<td align=right><a href=kreditor.php?start=$nextpil&valg=$valg><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
+	print "<td align=right><a href=kreditor.php?start=$nextpil&valg=$valg><img class='imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
 }
 print "</tr>\n";
 if ($dg_antal || $cat_antal) $linjeantal=0;
@@ -236,7 +343,6 @@ print "<input type=hidden name=valg value=$valg>";
 print "<input type=hidden name=sort value='$ny_sort'>";
 print "<input type=hidden name=nysort value='$sort'>";
 print "<input type=hidden name=kontoid value=$kontoid>";
-
 
 print "<tr><td></td>"; #giver plase til venstrepil v. flere sider
 if (!$start) {
@@ -291,7 +397,13 @@ if (!$start) {
 				print "<option>$r[$tmp]</option>";
 			}
 			print "</SELECT></td>";			
-		} else print "<input class=\"inputbox\" type=text size=$feltbredde[$x] style=\"text-align:$justering[$x]\" name=find[$x] value=\"$find[$x]\">";
+		} else { 
+			if ($menu=='T') {
+				print "<input class=\"inputbox\" type=text size=10 style=\"text-align:$justering[$x]\" name=find[$x] value=\"$find[$x]\">";
+			} else {
+				print "<input class=\"inputbox\" type=text size=$feltbredde[$x] style=\"text-align:$justering[$x]\" name=find[$x] value=\"$find[$x]\">";
+			}
+		}
 	}
 	print "</td>\n";  
 print "<td><input type=submit value=\"OK\" name=\"submit\"></td>";
@@ -370,7 +482,7 @@ for($i=0;$i<$dgcount;$i++) {
 			}
 	if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 	else {$linjebg=$bgcolor5; $color='#000000';}
-			print "<tr bgcolor=\"$linjebg\"><td bgcolor=$bgcolor></td>";
+			print "<tr bgcolor=\"$linjebg\"><td></td>";
 			print "<td align=$justering[0] $javascript> $linjetext $understreg $row[kontonr]$hrefslut</span><br></td>";
 			for ($x=1;$x<$vis_feltantal;$x++) {
 				print "<td align=$justering[$x]>";
@@ -386,6 +498,7 @@ for($i=0;$i<$dgcount;$i++) {
 				} else print $row[$tmp];
 				print "</td>"; 
 			}
+			print "<td></td>";
 			print "<input type=hidden name=adresse_id[$adresseantal] value=$row[id]>";
 #			$colspan=$vis_feltantal+2;
 
@@ -398,23 +511,29 @@ for($i=0;$i<$dgcount;$i++) {
 #$cols--;
 
 print "<tr>";
-if ($prepil || $prepil=='0')	print "<td colspan=$colspan><a href=kreditor.php?start=$prepil&valg=$valg><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
-else print "<td colspan=$colspan><br></td>";
-if ($nextpil) print "<td align=right><a href=kreditor.php?start=$nextpil&valg=$valg><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
+if ($prepil || $prepil=='0')	print "<td colspan=$colspan><a href=kreditor.php?start=$prepil&valg=$valg><img class='imgFade' src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+else print "<td colspan=$colspan></td>";
+if ($nextpil) print "<td align=right><a href=kreditor.php?start=$nextpil&valg=$valg><img class='imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
 else print "<td></td>";
 print "</tr>";
 $colspan++;
-print "<tr><td colspan=$colspan width=100%><hr></td></tr>";
+print "<tr><td colspan=$colspan width=100%></td></tr>";
 #print "<table border=0 width=100%><tbody>";
 
 #print "</tbody></table></td>";
 #print "<tr><td colspan=$colspan><hr></td></tr>\n";
 
-
-?>
-</tbody>
+print "</tbody>
 </table>
   </td></tr>
 </tbody></table>
+";
 
-</body></html>
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
+?>
+

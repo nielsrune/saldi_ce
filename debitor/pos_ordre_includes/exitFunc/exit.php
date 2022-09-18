@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/exitFunc/exit.php --- lap 3.9.9 --- 2021.01.25---
+// --- debitor/pos_ordre_includes/exitFunc/exit.php --- lap 4.0.5 --- 2021.12.03---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -25,6 +25,7 @@
 //
 // LN 20190510 Move function find_bon here
 // 20210125 PHR Varouis changes related to voucer.
+// 20211203 PHR drawer will now remail closed if no cash is involved
 
 
 function afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn) {
@@ -218,14 +219,22 @@ print "\n<!-- Function afslut (start)-->\n";
 		transaktion("commit");
 		$qtxt = "select id from grupper where art = 'POS' and kodenr = '1' and box10 = 'on'";
 		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-			if ($tracelog) fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
+			if ($tracelog) {
+				fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
+			}
 			pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling);
 		}
 	}
-	if (db_fetch_array(db_select("select id from grupper where art = 'POS' and kodenr = '1' and box10='on'",__FILE__ . " linje " . __LINE__))) {
-		if ($tracelog) fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
+	$qtxt = "select id from grupper where art = 'POS' and kodenr = '1' and box10='on'";
+	echo "$qtxt<br>";
+	
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+echo "ID $r[id]<br>";
+	if ($tracelog) {
+			fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
+		}
 		pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling);
-	 } elseif (!$konto_id)  {#20160211
+	 } elseif (!$konto_id && ($betaling == 'Kontant' || $betaling2 == 'Kontant' || $modtaget+$modtaget2 != $sum+$moms)) {#20160211+20211203
 		$url="://".$_SERVER['SERVER_NAME'].=$_SERVER['PHP_SELF'];
 		$url=str_replace("/debitor/pos_ordre.php","",$url);
 		if ($_SERVER['HTTPS']) $url="s".$url;
@@ -241,7 +250,6 @@ print "\n<!-- Function afslut (start)-->\n";
 			} 
 		}
 		if ($printserver=='box' || !$printserver) $printserver=$_COOKIE['saldi_printserver'];
-
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/saldiprint.php?&url=$url&bruger_id=$bruger_id&bon=&bonantal=1&id=$id&skuffe=1&returside=$returside&logo=\">\n";
 		exit;
   } else { #20160211

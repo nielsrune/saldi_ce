@@ -44,7 +44,7 @@ $filnavn="../temp/".$db."/".$ordre_id.".csv";
 $fp=fopen($filnavn,"w");
 
 fwrite($fp,"Pos".chr(9)."Vores varenummer".chr(9)."Deres varenummer".chr(9)."Beskrivelse".chr(9)."Antal".chr(9)."Pris".chr(9)."Rabat".chr(9)."I alt".chr(9)."\n");
-$q=db_select("select * from ordrelinjer where ordre_id = $ordre_id order by posnr");
+$q=db_select("select * from ordrelinjer where ordre_id = $ordre_id order by posnr",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
 	$beskrivelse=str_replace(chr(9)," ",$r['beskrivelse']);
 	$varenr=str_replace(chr(9)," ",$r['varenr']);

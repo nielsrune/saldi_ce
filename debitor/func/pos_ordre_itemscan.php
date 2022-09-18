@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.2 -- 2021.05.03 --
+// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.6 -- 2022.06.14 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2014-2021 saldi.dk aps
+// Copyright (c) 2014-2022 saldi.dk aps
 // ----------------------------------------------------------------------------
 //
 // 2014.05.08 - Indsat diverse til bordhåndtering, bruger nr fra ordrer til bordnummer (PHR - Danosoft) Søg 20140508 eller $bordnr 
@@ -45,8 +45,25 @@
 // 2020.11.14 PHR Enhanged 'tilfravalg' add/remove to food items, (fx. extra bacon or no tomatoes in burger) $tilfravalgNy
 // 2021.01.27 PHR Some minor design changes
 // 2021.05.03 PHR - Qty now red if stock below minimum stock 20210503
+// 20210810 LOE renamed some variables to accomodate bekrivelse_ny as new description
+// 20210811 LOE commented out some codes and updated for beskrivelse_ny
+// 20210812 LOE More updates on $beskrivelse_ny
+// 20210812 LOE Added $credit_type variable here from pos_ordre.php for rabat new
+// 20210820 LOE Translated title texts
+// 20210824 PHR Various minor changes related to 'beskrivelse_ny'.
+// 20200829 PHR As above..
+// 20200902 PHR Preserves $beskrivelse_ny if fokus is pris_ny or rabat_ny
+// 20200903 PHR Error correction in 'bordnr'
+// 20200906	PHR reversed 20200902 as it diden't include variations changes made in pos_ordre.php insteadt.
+// 20211006	PHR changed handling in barcode changed as it inserted a wrong item.
+// 20211024	PHR Added $low & $high to deal with an error in mylabel.php.
+// 20211115	PHR reversed 20211006 and added $low & $high.
+// 20211214	PHR_Removed alert "stregkode ikke genkendt";
+// 20220413 PHR Added jump2price
+// 20220427 PHR Disabled submit button when clicked to avoid doule posting.
+// 20220614 PHR Added hidden input tilfravalgNy as tilfravalg was reset when changing price or rebate. See pos_ordre.php too 
 
-function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_ny) {
+function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$rabat_ny,$lager_ny) {
 	print "\n<!-- Function varescan (start)-->\n";
 	global $afd_navn,$afslut;
 	global $betalingsbet,$betvaluta,$bordnr,$brugernavn;
@@ -61,11 +78,14 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 	global $status,$sum;
 	global $tilfravalgNy,$tracelog;
 	global $varenr_ny,$vatrate,$vis_saet;
+	global $beskrivelse_old;
+	global $credit_type; #20210813 
+  global $sprog_id;    #20210820
 			
-	$betaling2=$konto_id=$myAc=$myDe=$myPr=$vare_id=NULL;
+ 	$beskrivelse[0]=$betaling2=$konto_id=$myAc=$myDe=$myPr=$vare_id=NULL;
 	$pris[0]=0;
-	($fokus == 'textNew')?$textNew = 1:$textNew = 0;
-		
+	#($fokus == 'textNew')?$textNew = 1:$textNew = 0;
+	($fokus == 'beskrivelse_ny')?$textNew = 1:$textNew = 0; #20210810
 	while (substr($varenr_ny,-1) == chr(92)) { #removes '\' if last character 20200814
 		$l=strlen($varenr_ny)-1;
 		$varenr_ny=substr($varenr_ny,0,$l);
@@ -83,7 +103,6 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		$addr1=$r['addr1'];
 		$post_by=$r['postnr']." ".$r['bynavn'];
 		$status=$r['status'];
-#cho __file__." ".__line__." S $status.<br>";		
 		$kundeordnr=$r['kundeordnr'];
 		$betalingsbet=$r['betalingsbet'];
 		$bordnr=$r['nr'];
@@ -173,7 +192,9 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 			}
 		}	
 		if (strlen($varenr_ny)==12 && ctype_xdigit(substr($varenr_ny,-6)) && is_numeric(substr($varenr_ny,0,6))) {
-			$qtxt = "select * from mylabel where barcode='$varenr_ny' and price = '". hexdec(substr($varenr_ny,-6))/100 ."' ";
+			$low=hexdec(substr($varenr_ny,-6))/100 - 0.01; #20211024 Can be replaced by exact amount in 2023
+			$high=hexdec(substr($varenr_ny,-6))/100 + 0.01;#20211024 Can be replaced by exact amount in 2023
+			$qtxt = "select * from mylabel where barcode='$varenr_ny' and price >= '$low'  and price <= '$high' ";
 			$qtxt.= "and id='". substr($varenr_ny,0,6)*1 ."'";
 			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				$myAc=$r['account_id'];
@@ -182,15 +203,15 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				$myCo=$r['condition'];
 				$qtxt="select kontonr from adresser where id='$myAc'";
 			}	else {
-				$qtxt = "select * from mylabel where id='". substr($varenr_ny,0,6)*1 ."'";
-				if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				$qtxt = "select * from mylabel where id='". substr($varenr_ny,0,6)*1 ."' and price >= '$low'  and price <= '$high'";
+				if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { #20211021
 					$myAc=$r['account_id'];
 					$myPr=$r['price'];
 					$myDe=$r['description'];
 					$myCo=$r['condition'];
 					$qtxt="select kontonr from adresser where id='$myAc'";
 					alert('Stregkode ændret, kontroller label');	
-				} else $qtxt=NULL;
+				} else $qtxt=NULL; #20211214
 			} 
 			if ($qtxt) {
 				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -203,27 +224,6 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				} else $myAc=$myDe=$myPr=NULL;
 			} 
 		}
-/*
-		if (strpos($varenr_ny,'x')) { #20200603 Fjernes januar 21.
-			list ($a,$b)=explode('x',$varenr_ny,2);
-			if (is_numeric($a) && is_numeric($b)) $qtxt="select * from mylabel where id = '$b'";
-			else $qtxt=NULL;
-			if ($qtxt && $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-				$myAc=$r['account_id'];
-				$myPr=$r['price'];
-				$myDe=$r['description'];
-				$qtxt="select kontonr from adresser where id='$myAc'";
-				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-				$qtxt="select varenr,kostpris from varer where id='$a' and varenr like '_____$r[kontonr]'";
-				if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-					$varenr_ny=$r['varenr'];
-					$pris[0]=$myPr;
-					$beskrivelse[0]=$myDe;
-				} else $myAc=$myDe=$myPr=NULL;
-			}
-			$qtxt=NULL;
-		}
-*/		
 		if ((substr($varenr_ny,0,2) == 'kb' || substr($varenr_ny,0,2) == 'kn') && is_numeric(substr($varenr_ny,5,4))) {
 			$qtxt = "select salgspris,kostpris from varer where varenr = '$varenr_ny'";
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -253,17 +253,18 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		}
 		}
 		if ($qtxt && $r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__))) {
-#		  $varenr_ny=db_escape_string($r['varenr']);
 			$beholdning[0] = $r['beholdning'];
 			$min_lager[0]  = $r['min_lager'];
 			$itemGroup[0]  = $r['gruppe'];
 			$lukket[0]=$r['lukket'];
 			$kostpris[0]=$r['kostpris'];
 			if ($myDe) $beskrivelse[0]=$myDe;
+			elseif ($beskrivelse_ny) $beskrivelse[0] = $beskrivelse_ny; # Test scan from mysale and contineous scan if you change this.
 			else $beskrivelse[0]=$r['beskrivelse'];
 			if ($prisIkode) {
 				$pris[0]=find_pris($varenr_ny)*1;
-				$r2 = db_fetch_array(db_select("select box6, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'",__FILE__ . " linje " . __LINE__));
+				$qtxt = "select box6, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'";
+				$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$momsfri = $r2['box7'];
 				if ($r2['momsfri']) $kostpris[0]=$pris[0]*$kostpris[0];
 				else $kostpris[0]=$pris[0]*100/(100+$momssats)*$kostpris[0];
@@ -274,7 +275,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				$pris[0]=dkdecimal($pris[0],2);
 			}
 			else $pris[0]="";
-			if ($fokus!="pris_ny" && $fokus!="rabat_ny") $fokus="antal_ny";
+			if ($fokus!="pris_ny" && $fokus!="rabat_ny" && $fokus!="beskrivelse_ny") $fokus="antal_ny"; #20210811 beskrivelse_ny added 
 		} elseif ($variant_id) {
 			$qtxt="delete from variant_varer where id='$variant_id'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -291,7 +292,9 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		if ($variant_type) {
 			$varianter=explode(chr(9),$variant_type);
 			for ($y=0;$y<count($varianter);$y++) {
-				$r1=db_fetch_array(db_select("select variant_typer.beskrivelse as vt_besk,varianter.beskrivelse as var_besk from variant_typer,varianter where variant_typer.id = '$varianter[$y]' and variant_typer.variant_id=varianter.id",__FILE__ . " linje " . __LINE__));
+				$qtxt = "select variant_typer.beskrivelse as vt_besk,varianter.beskrivelse as var_besk from variant_typer,varianter ";
+				$qtxt.= "where variant_typer.id = '$varianter[$y]' and variant_typer.variant_id=varianter.id";
+				$r1 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$beskrivelse[0].=", ".$r1['vt_besk']; #20200830
 			}
 		}
@@ -315,6 +318,10 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 	}
     setItemHeaderTxt($lagerantal, $fokus);
 	if ($status < 3) {
+	$qtxt = "select var_value from settings where var_name = 'jump2price'";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	($r['var_value'])?$jump2price = 1:$jump2price = 0;
+
 		if(isset($_GET['ret']) && is_numeric($_GET['ret']) && !$antal_ny) {
 			$ret=$_GET['ret']*1;
 			$qtxt = "select varenr,variant_id,antal,lager,beskrivelse,pris,kostpris,momssats,momsfri,rabat,leveret,tilfravalg ";
@@ -345,25 +352,31 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 			$antal_old=$antal_ny;
 			$rabat_old=$rabat_ny;
 			$pris_old=$pris_ny; #20140702
-#			$beskrivelse[0]=''; Må ikke aktiveres!
 			$leveret[0]=0;
 		}
 		$bgColor = 'white';
 		$qtyTitle = '';
-		if (in_array($itemGroup[0],$stockGrp) && $beholdning[0] < $min_lager[0]) { #20210503
+		if (isset($itemGroup[0]) && in_array($itemGroup[0],$stockGrp) && $beholdning[0] < $min_lager[0]) { #20210503
 			$bgColor ='red';
 			$qtyTitle = "Obs!! Beholdning (". dkdecimal($beholdning[0],0) .") mindre end ". dkdecimal($min_lager[0],0);
-		}	elseif ($beholdning[0]) $qtyTitle = "Beholdning: ". dkdecimal($beholdning[0],0);
+		}	elseif (isset ($beholdning[0]) && $beholdning[0]) $qtyTitle = "Beholdning: ". dkdecimal($beholdning[0],0);
 		print "<input type=\"hidden\" name = \"fokus\" value=\"$fokus\">\n";
 		print "<input type=\"hidden\" name = \"pre_bordnr\" value=\"$bordnr\">\n";  #20140508
 		#print "<input type=\"hidden\" name = \"vare_id\" value=\"$vare_id[0]\">\n";
 		print "<input type=\"hidden\" name = \"momssats\" value=\"$momssats\">\n";
-		if (isset($beskrivelse[0])) print "<input type=\"hidden\" name = \"beskrivelse_ny\" value=\"$beskrivelse[0]\">\n";
+		print "<input type='hidden' name = 'beskrivelse_old' value=\"$beskrivelse[0]\">\n"; #20210829
+		if ($myDe) print "<input type='hidden' name = 'beskrivelse_ny' value=\"$myDe\">\n"; #20210829
 		print "<input type=\"hidden\" name = \"leveret\" value=\"$leveret[0]\">\n";
 		print "<input type=\"hidden\" name = \"antal\" value=\"$antal_old\">\n";
 		print "<input type=\"hidden\" name = \"lager\" value=\"$lager_ny\">\n";
+		print "<input type=\"hidden\" name = \"tilfravalgNy\" value=\"$tilfravalgNy\">\n"; # 20220614
 		if ($fokus=='pris_ny') print "<input type=\"hidden\" name = \"pris\" value=\"$pris_old\">\n";
-		if ($textNew) print "<input type=\"hidden\" name = \"itemText\" value=\"$beskrivelse[0]\">\n";
+		if ($fokus=='pris_ny' || $fokus=='rabat_ny') { #20210902
+#			print "<input type='hidden' name = 'beskrivelse_ny' value=\"$beskrivelse_ny\">\n"; #20210829
+		}
+#		if ($textNew) print "<input type=\"hidden\" name = \"itemText\" value=\"$beskrivelse[0]\">\n"; 
+		#if ($textNew) print "<input type=\"hidden\" name = \"beskrivelse_ny\" value=\"$beskrivelse[0]\">\n"; #20210811 
+		#if ($fokus == 'beskrivelse_ny') print "<input type=\"hidden\" name = \"beskrivelse_ny\" value=\"$beskrivelse_ny\">\n"; #20210811 commented out
 		print "<tr><td width=\"30px\">";
 		print "<input class=\"inputbox\" type=\"text\" style=\"width:120px;font-size:$ifs;\" name = \"varenr_ny\" value=\"$varenr_ny\">";
 		print "</td>\n"; 	
@@ -378,27 +391,19 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				}
 				print "<td align=\"center\"><input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:40px\" name=\"lager_ny\" placeholder=\"$lager_ny\" value=\"$lager_ny\"></td>\n";
 			}
+			if ($jump2price && $pris[0] == 0) {
+				$antal_ny = 1;
+				$fokus = 'pris_ny';
+			}
 			if ($antal_ny) {
-				# Slår op om varen er et gavekort
-				/*
-				if ($varenr_ny && isVoucher($varenr_ny)) {	# 20181202
-					$x="pris_ny";		# 20190215
-					print "<td >Gavekortnr: ";
-					print "<input class=\"inputbox\" type=\"text\" style=\"background:orange;  text-align:right;font-size:$ifs;width:120px\" name=\"gavekortnummer\" value=\"".nytgavekortnummer($gavekortnummer)."\" /></td>\n"; # 20190215 > felt
-					print "<input type=hidden name=\"pris_old\" value=\"$pris_old\">\n" ; #20140702
-					print "<td align=\"right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[0],2)."\">";
-					print "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:60px\" name = \"pris_ny\"  placeholder=\"$pris_old\" >";
-					print "</td>\n";
-				} else {
-				*/
 				if ($textNew) {
-					print "<td align=\"right\" title='Skriv ny varebeskrivelse'>";
+					print "<td align=\"right\" title='".findtekst(1873, $sprog_id)."'>"; #20210820
 					print "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:80px\" ";
-					print "name=\"textNew\" placeholder=\"$beskrivelse[0]\" value=\"\"></td>\n";
-					exit;
+					#print "name=\"textNew\" placeholder=\"$beskrivelse[0]\" value=\"\"></td>\n";
+					print "name=\"beskrivelse_ny\" value=\"$beskrivelse[0]\"></td>\n"; #20210810 + 20210812 + 20210829
 				} else print "<td>".$beskrivelse[0]."</td>\n";
 				$txt = "<input type=hidden name=\"pris_old\" value=\"$pris_old\">\n" ; #20140702
-				$txt.= "<td align=\"right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[0],2)."\">";
+				$txt.= "<td align=\"right\" title=\"".findtekst(1874, $sprog_id).": ".dkdecimal($kostpris[0],2)."\">";
 				$txt.= "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:60px\" ";
 				$txt.= "name = \"pris_ny\"  placeholder=\"$pris_old\" value=\"\"></td>\n";
 				print $txt;
@@ -406,7 +411,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 				print "<td>".$beskrivelse[0]."</td>\n";
 				print "<input type=hidden name=\"pris_ny\" value=\"$pris[0]\" />\n";
 				print "<input type=hidden name=\"tilfravalgNy\" value=\"$tilfravalgNy\" />\n";
-				print "<td align=\"right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[0],2)."\">$pris[0]</td>\n";
+				print "<td align=\"right\" title=\"".findtekst(1874, $sprog_id).": ".dkdecimal($kostpris[0],2)."\">$pris[0]</td>\n";
 			}
 			if ($pris_ny && $fokus=="rabat_ny") {
 
@@ -422,7 +427,7 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 #				}
 			} else {
 				print "<input type=hidden name=\"rabat_ny\" value=\"$rabat_old\" />\n";
-				if ($rabat_old && $rabat_old!='0,00') print "<td colspan=\"2\" align=\"right\">$rabat_old%</td>\n";
+				if ($rabat_old && $rabat_old!='0,00') print "<td colspan=\"2\" align=\"right\">$rabat_old% $credit_type</td>\n"; #20210813 This not fully implemented
 			}
 		}
 		print "</tr>\n";
@@ -472,7 +477,9 @@ function varescan ($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$rabat_ny,$lager_
 		$retur=pos_afrund($r['felt_2']+$r['felt_4']-$r['felt_3'],$difkto,'');
 		print "<tr><td>Retur</td><td  colspan=\"4\" align=\"right\">".dkdecimal($retur,2)."</td></tr>\n";
 	}
-	print "<tr><td colspan=\"6\" align=\"right\"><input  STYLE=\"width: 100%;height: 0.01em;\" type=submit name=\"OK\" value=\"\"></td></tr>\n";
+	print "<tr><td colspan=\"6\" align=\"right\"><button STYLE=\"width: 100%;height: 0.01em;\" ";
+	print "onClick=\"this.form.submit(); this.disabled=true;\"></button></td></tr>\n"; #20220427
+#	print "<tr><td colspan=\"6\" align=\"right\"><input  STYLE=\"width: 100%;height: 0.01em;\" type=submit name=\"OK\" value=\"\"></td></tr>\n";
 	if ($kontonr && $status<3 && ($betalingsbet!='Kontant' || $saldo)) { #20161001
 		print "<tr><td>Gl. saldo</td><td colspan=\"4\" align=\"right\">".dkdecimal($saldo,2)."</td></tr>\n";
 		$ny_saldo=$saldo+$sum;

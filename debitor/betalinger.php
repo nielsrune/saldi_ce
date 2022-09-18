@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/betalinger.php --- Patch 4.0.1 --- 2021.04.06 ---
+// --- debitor/betalinger.php --- Patch 4.0.5 --- 2022.02.01 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // -----------------------------------------------------------------------------------
 //
 // 2015.11.04 Kopieret fra kreditor og tilrettet til debitorer (phr) 
@@ -37,6 +37,8 @@
 // 2021.03.05 PHR removed <Id> section in between <Dbtr></Dbtr>  According to DNB
 // 2021.03.22 PHR above line just active for $format == 'norskeBank' as it is requered by other banks??
 // 2021.04.06 PHR some cleanup;
+// 20211109 MSC - Implementing new design
+// 20220201 PHR Moved functions to '../includes/payListFunc.php'
 
 $dan_liste=$gem=$listenote=$slet_ugyldige=$udskriv=NULL;
 
@@ -44,13 +46,16 @@ $dan_liste=$gem=$listenote=$slet_ugyldige=$udskriv=NULL;
 $s_id=session_id();
 		
 $modulnr=12;	
-$title="betalinger";
+$title="Betalinger til bank";
 $css="../css/standard.css";
+		
+global $menu;
 		
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/forfaldsdag.php");
+include("../includes/payListFunc.php");
 
 $reopen   = if_isset($_GET['reopen']);
 $liste_id = if_isset($_GET['liste_id']);
@@ -112,7 +117,7 @@ if (isset($_POST['slet_ugyldige']) || isset($_POST['gem']) || isset($_POST['udsk
 	db_modify("update betalingsliste set listenote='$listenote' where id='$liste_id'",__FILE__ . " linje " . __LINE__);
 	if ($udskriv) {
 		$r=db_fetch_array(db_select("select bogfort from betalingsliste where id='$liste_id'",__FILE__ . " linje " . __LINE__)); 
-		if ($r['bogfort']=='-') {
+		if ($r['bogfort']!='V	') {
 			$qtxt = "update betalingsliste set bogfort='V', bogfort_af='$brugernavn' where id='$liste_id'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
@@ -126,6 +131,14 @@ else {
 }
 $linjebg=$bgcolor;
 $erh_title= "ERH355 = Bankoverf. med normal advisering";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/header.php';
+	print "<div class='$kund'>$title</div>
+	<div class='content-noside'>";
+	print "<div class='dataTablediv'><table cellpadding='1' cellspacing='0' border='0' width='100%' valign = 'top' class='dataTable'><thead>";
+} else {
+	include_once '../includes/oldDesign/header.php';
 print "<table width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'><tbody>";
 print "<tr><td height = '25' align='center' valign='top'>";
 print "<table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>";
@@ -149,7 +162,9 @@ print "</form>";
 print "</tbody></table>";
 print "</td></tr>";
 print "<tr><td valign='top'>";
-print "<table cellpadding='1' cellspacing='0' border='0' width='100%' valign = 'top'>";
+	print "<table cellpadding='1' cellspacing='0' border='0' width='100%' valign = 'top'><tbody>";
+}
+
 if (!$liste_id) {
 	$tidspkt=microtime();
 	$listedate=date("Y-m-d");
@@ -158,6 +173,7 @@ if (!$liste_id) {
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$r=db_fetch_array(db_select("select MAX(id) as id from betalingsliste where tidspkt='$tidspkt'",__FILE__ . " linje " . __LINE__));
 	$liste_id=$r['id'];
+	print "<meta http-equiv='refresh' content='0; url=betalinger.php?liste_id=$liste_id'>";
 } 
 
 $tomorrow = date('U')+60*60*24;
@@ -165,7 +181,7 @@ $paydate  = date('dmY',$tomorrow);
 $r=db_fetch_array(db_select("select * from adresser where art = 'S'",__FILE__ . " linje " . __LINE__));
 $myBank=$r['bank_konto'];
 $myReg=$r['bank_reg'];
-$myName=$r['firmanavn'];
+$myName=str_replace('&','og',$r['firmanavn']);
 $myEan=$r['ean'];
 $myCtry=$r['land'];
 if (strtolower($myCtry)=='norway') $myCtry = 'NO'; 
@@ -199,7 +215,7 @@ if ($find) {
 		while ($r = db_fetch_array($q)) {
 			$custId=$r['id'];
 			$custNo=$r['kontonr'];
-			$custName=$r['firmanavn'];
+			$custName=str_replace('&','og',$r['firmanavn']);
 			$custBank=$r['bank_konto'];
 			$custReg=$r['bank_reg'];
 			while (strlen($custBank)<10) {
@@ -319,7 +335,7 @@ echo "<!-- UDDATA for ".$x.": k1:".$k1[$x]." k2:". $k2[$x]." k3:".$k3[$x]." k4:"
 if ($udskriv) {
 	if ($format=='bec') udskriv_bec($db_id,$bruger_id,$liste_id);
 	elseif ($format=='danskebank') udskriv_danskebank($db_id,$bruger_id,$liste_id);
-	elseif ($format=='jyskebank') udskriv_jyskebank($db_id,$bruger_id,$liste_id);
+	elseif ($format=='bankdata') udskriv_bankdata($db_id,$bruger_id,$liste_id);
 	elseif ($format=='nordea') udskriv_nordea($db_id,$bruger_id,$liste_id);
 	elseif ($format=='sdc') udskriv_sdc($db_id,$bruger_id,$liste_id);
 	elseif ($format=='xml' || $format=='norskeBank') udskriv_xml($db_id,$bruger_id,$liste_id);
@@ -331,27 +347,48 @@ if ($udskriv) {
 	print "<tr>";
 	if ($bogfort!='-'){
 		print "<td colspan=11 align='center'><b> $listenote</b></td></tr>";
-		print "<td colspan=11><hr></td></tr>";
+		if ($menu=='T') {
+		print "<tr><td colspan=11 class='border-hr-bottom'></td></tr>\n";
+	} else {
+		print "<tr><td colspan=11><hr></td></tr>\n";
+	}
 	}	else {
 		print "<td><b> <span title= 'Her kan skrives en bem&aelig;rkning til kladden'>Bem&aelig;rkning:</b></td>";
-		print "<td colspan=10><input type=\"text\" size=95 name=listenote value=\"$listenote\"></td></tr>";
+		print "<td colspan=10><input type=\"text\" style='width:100%;' name=listenote value=\"$listenote\"></td></tr>";
+		if ($menu=='T') {
+			$r=db_fetch_array(db_select("select bogfort from betalingsliste where id='$liste_id'",__FILE__ . " linje " . __LINE__));
+			if ($r['bogfort']=='-') {
+				print "<center><select name = 'find' style = 'width:50%;' onchange='this.form.submit()'>";
+				print "<option value = ''></option>";
+				print "<option value = 'fromList'>Fra liste</option>";
+				print "<option value = 'saldo'>Fra kontokort</option>";
+				print "</select></center>";
+			}
+		} else {
+			print "";
+		}
 	}
 	#print"<tr><td colspan=11><hr></td></tr>";
 	$paytitle = "Sæt en * i enden af datoen i øverste datofelt, for at sætte alle datoer til denne dato. F.eks: 010402021*";
-
 	print "<tr>
-		<td><span title=\"$erh_title\"><b>Betalingstype</b></span></td>
-		<td><b>Fra konto</b></td>
-		<td><b>Egen ref.</b></td>
-		<td><b>Modtager konto</b></td>
-		<td><b>Modtager ref.</b></td>
-		<td><b>Modtager</b></td>
-		<td align='center'><b>Bel&oslash;b</b></td>
-		<td align='center'><b>Valuta</b></td>
-		<td align='center' title='$paytitle'><b>Betalingsdato</b></td>
-		<td align='center'><span title='Se i nyt vindue'><b>Se</b></span></td>";
-		if ($bogfort!='V') print "<td align='center'><span title='Slet linjen fra listen'><b>Slet</b></span></td>";
+		<th><span title=\"$erh_title\"><b>Betalingstype</b></span></td>
+		<th><b>Fra konto</b></td>
+		<th><b>Egen ref.</b></td>
+		<th><b>Modtager konto</b></td>
+		<th><b>Modtager ref.</b></td>
+		<th><b>Modtager</b></td>
+		<th align='right' class='text-right'><b>Bel&oslash;b</b></td>
+		<th align='center' class='text-center'><b>Valuta</b></td>
+		<th align='right' class='text-right' title='$paytitle'><b>Betalingsdato</b></td>
+		<th align='center' class='text-center'><span title='Se i nyt vindue'><b>Se</b></span></td>";
+		if ($bogfort!='V') print "<th align='center'><span title='Slet linjen fra listen'><b>Slet</b></span></th>";
 		print "</tr>";
+		if ($menu=='T') {
+			print "</thead><tbody>";
+		} else {
+			print "";
+		}
+		
 #print"<tr><td colspan=11><hr></td></tr>";
 	$x=0;
 # echo "select betalinger.bet_type as bet_type,betalinger.fra_kto as fra_kto, betalinger.egen_ref as egen_ref, betalinger.til_kto as til_kto, betalinger.modt_navn as modt_navn, betalinger.kort_ref as kort_ref, betalinger.belob as belob, betalinger.betalingsdato as betalingsdato, kassekladde.bilag as bilag, ordrer.modtagelse as modtagelse from betalinger, ordrer, kassekladde where betalinger.liste_id=$liste_id and ordrer.id=betalinger.ordre_id and kassekladde.id=betalinger.bilag_id order by betalinger.betalingsdato<br>";
@@ -406,34 +443,34 @@ $q=db_select("select * from betalinger where liste_id=$liste_id order by modt_na
 				if ($erh[$x]!='ERH356') print "<option>ERH356</option>\n";
 				print "</SELECT></span></td>\n";
 				print "<td $k1_bg[$x]><span title=\"$k1[$x]\">";
-				print "<input type=\"text\" style=\"text-align:right\" name=\"fra_kto[$x]\" size=\"15px\" value=\"$r[fra_kto]\"></span></td>";
+				print "<input type=\"text\" style=\"text-align:right\" name=\"fra_kto[$x]\" size=14 value=\"$r[fra_kto]\"></span></td>";
 				print "<td $2_bg[$x]><span title=\"$k2[$x]\">";
-				print "<input type=\"text\" name=\"egen_ref[$x]\" size=\"30px\" value=\"$r[egen_ref]\"></span></td>";
+				print "<input type=\"text\" name=\"egen_ref[$x]\" size=20 value=\"$r[egen_ref]\"></span></td>";
 				print "<td $k3_bg[$x]><span title=\"$k3[$x]\">";
-				print "<input type=\"text\" style=\"text-align:right\" name=\"til_kto[$x]\" size=\"15px\" value=\"$r[til_kto]\"></span></td>";
+				print "<input type=\"text\" style=\"text-align:right\" name=\"til_kto[$x]\" size=12 value=\"$r[til_kto]\"></span></td>";
 				print "<td $k4_bg[$x]><span title=\"$k4[$x]\">";
-				print "<input type=\"text\" style=\"text-align:left\" name=\"kort_ref[$x]\" size=\"30px\" value=\"$kort_ref[$x]\"></span></td>";
+				print "<input type=\"text\" style=\"text-align:left\" name=\"kort_ref[$x]\" size=10 value=\"$kort_ref[$x]\"></span></td>";
 				print "<td $k5_bg[$x]><span title=\"$k5[$x]\">";
-				print "<input type=\"text\" name=\"modt_navn[$x]\" size=\"30px\" value=\"$r[modt_navn]\"></span></td>";
+				print "<input type=\"text\" name=\"modt_navn[$x]\" size=15 value=\"$r[modt_navn]\"></span></td>";
 				print "<td $k6_bg[$x]><span title=\"$k6[$x]\">";
-				print "<input type=\"text\" style=\"text-align:right\" name=\"belob[$x]\" size=\"15px\" value=\"$r[belob]\"></span></td>";
+				print "<input type=\"text\" style=\"text-align:right\" name=\"belob[$x]\" size=10 value=\"$r[belob]\"></span></td>";
 				print "<td $k7_bg[$x]><span title=\"$k7[$x]\">";
-				print "<input type=\"text\" style=\"text-align:right\" name=\"valuta[$x]\" size=\"5px\" value=\"$r[valuta]\"></span></td>";
+				print "<input type=\"text\" style=\"text-align:right\" name=\"valuta[$x]\" size=3 value=\"$r[valuta]\"></span></td>";
 				print "<td $k8_bg[$x]><span title=\"$k8[$x]\">";
-				print "<input type=\"text\" style=\"text-align:right\" name=\"betalingsdato[$x]\" size=\"10px\" value=\"$r[betalingsdato]\">";
+				print "<input type=\"text\" style=\"text-align:right\" name=\"betalingsdato[$x]\" size=10 value=\"$r[betalingsdato]\">";
 				print "</span></td>";
 				if ($r['ordre_id']) {
-					print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; ";
-					print "onclick=\"javascript:k_ordre=window.open";
-					print "('../debitor/ordre.php?id=$r[ordre_id]','k_ordre','width=800,height=400,scrollbars=1,resizable=1')\">";
-					print "<span title=\"Se modtagelse i nyt vindue\"><u>M:$r2[modtagelse]</u></span></td>";
+					print "<td align=right>";
+					print "<a href='../debitor/ordre.php?id=$r[ordre_id]' target='_blank'>";
+					print "<span title=\"Se modtagelse i nyt vindue\">M:$r2[modtagelse]</span></a></td>";
 				} elseif ($r['bilag_id']) {
-					print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; ";
-					print "onclick=\"javascript:kaskl=window.open";
-					print "('../finans/kassekladde.php?kladde_id=$r2[kladde_id]','kaskl','width=800,height=400,scrollbars=1,resizable=1')\">";
-					print "<span title=\"Se bilag i nyt vindue\"><u>B:$r2[bilag]</u></span></td>";
+					print "<td align=right>";
+					print "<a href='../finans/kassekladde.php?kladde_id=$r2[kladde_id]' target='_blank'>";
+					print "<span title=\"Se bilag i nyt vindue\">B:$r2[bilag]</span></a></td>";
+				} else {
+					print "<td></td>";
 				}
-				print	"<td><span title=\"Slet linje fra liste\"><input type=\"checkbox\" name=\"slet[$x]\"></span></td>";
+				print	"<td><span title=\"Slet linje fra liste\"><label class='checkContainerOrdreliste'><input type=\"checkbox\" name=\"slet[$x]\"><span class='checkmarkOrdreliste'></span></span></label></td>";
 				print "</tr>";
 				print "<input type=\"hidden\" name=\"id[$x]\" value=\"$r[id]\">";
 				print "<input type=\"hidden\" name=\"antal\" value=\"$x\">";
@@ -444,18 +481,23 @@ $q=db_select("select * from betalinger where liste_id=$liste_id order by modt_na
 			print "<td>$erh[$x]</td><td>$r[fra_kto]</td><td>$r[egen_ref]</td><td>$r[til_kto]</td><td>$kort_ref[$x]</td>";
 			print "<td>$r[modt_navn]</td><td align=right>$r[belob]</td><td align='center'>$r[valuta]</td><td align=right>$r[betalingsdato]</td>";
 			if ($r['ordre_id'])	{
-				print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; ";
-				print "onclick=\"javascript:k_ordre=window.open";
-				print "('../debitor/ordre.php?id=$r[ordre_id]','k_ordre','width=800,height=400,scrollbars=1,resizable=1')\">";
-				print "<span title=\"Se modtagelse i nyt vindue\"><u>M:$r2[modtagelse]</u></span></td></tr>";
+				print "<td align=right class='text-right'>";
+				print "<a href='../debitor/ordre.php?id=$r[ordre_id]' target='_blank'>";
+				print "<span title=\"Se modtagelse i nyt vindue\">M:$r2[modtagelse]</span></a></td></tr>";
 			} elseif ($r['bilag_id']) {
-				print "<td align=right onmouseover=\"this.style.cursor = 'pointer'\"; "; 
-				print "onclick=\"javascript:kaskl=window.open";
-				print "('../finans/}kassekladde.php?kladde_id=$r2[kladde_id]','kaskl','width=800,height=400,scrollbars=1,resizable=1')\">";
-				print "<span title=\"Se bilag i nyt vindue\"><u>B:$r2[bilag]</u></span></td></tr>";		
+				print "<td align=right class='text-right'>";
+				print "<a href='../finans/kassekladde.php?kladde_id=$r2[kladde_id]' target='_blank'>";
+				print "<span title=\"Se bilag i nyt vindue\">B:$r2[bilag]</span></a></td></tr>";		
 			}
 		}
 	}
+
+	if ($menu=='T') {
+		print "</tbody><tfoot>";
+	} else {
+		print "";
+	}
+
 	$modtagerantal=$x;
 	#($kn_kontrol)?$modtagerantal=0:$modtagerantal=$x;
 	if (!$modtagerantal) {
@@ -467,695 +509,37 @@ $q=db_select("select * from betalinger where liste_id=$liste_id order by modt_na
 	} else {
 	print "<tr><td colspan=11 align='center'>";
 	if ($bogfort!='V') {
-		print "<input type=submit accesskey=\"g\" value=\"Gem\" name=\"gem\">";
+		print "<input type=submit accesskey=\"g\" value=\"Gem\" name=\"gem\"> &nbsp;•&nbsp;";
 		if(!$fejl && $modtagerantal) { 
 			print "&nbsp;<select name=\"format\">";
 			print "<option value=\"bec\">BEC</option>";
 			print "<option value=\"danskebank\">Danske Bank</option>";
-			print "<option value=\"jyskebank\">Jyske Bank</option>";
+			print "<option value=\"bankdata\">Jyske Bank</option>";
 			print "<option value=\"nordea\">Nordea</option>";
 			print "<option value=\"sdc\">SDC</option>";
 			print "<option value=\"xml\">XML</option>";
 			print "<option value=\"norskeBank\">Norske Bank XML</option>";
 			print "</select>";
-				print "&nbsp;<input type=submit accesskey=\"u\" value=\"Udskriv og luk\" name=\"udskriv\">";
+			print "&nbsp;•&nbsp;<input type=submit accesskey=\"u\" value=\"Udskriv og luk\" name=\"udskriv\">";
 			} else {
-			print "<span title='Klik her for at fjerne alle ugyldige linjer'>&nbsp;<input type=submit accesskey=\"u\" value=\"Slet r&oslash;de\" name=\"slet_ugyldige\"></span>";
+			print "&nbsp;•&nbsp;<span title='Klik her for at fjerne alle ugyldige linjer'><input type=submit accesskey=\"u\" value=\"Slet r&oslash;de\" name=\"slet_ugyldige\"></span>";
 			}
 		} else {
-		print "<select name=\"format\">";
+		print "<select name=\"format\" style='width:200px;'>";
 		print "<option value=\"bec\">BEC</option>";
 		print "<option value=\"danskebank\">Danske Bank</option>";
-		print "<option value=\"jyskebank\">Jyske Bank</option>";
+		print "<option value=\"bankdata\">Jyske Bank</option>";
 		print "<option value=\"nordea\">Nordea</option>";
 			print "<option value=\"sdc\">SDC</option>";
 		print "<option value=\"xml\">XML</option>";
 		print "<option value=\"norskeBank\">Norske Bank XML</option>";
-		print "</select>";
-		print "<input type=submit accesskey=\"u\" value=\"Udskriv\" name=\"udskriv\">";
+		print "</select>&nbsp;•&nbsp;";
+		print "<input type=submit accesskey=\"u\" value=\"Udskriv\" name=\"udskriv\">&nbsp;•&nbsp;";
 		}
-	if ($modtagerantal) print "&nbsp;<input type=submit accesskey=\"m\" value=\"Mail til modtagere\" name=\"mail\">";
+	if ($modtagerantal) print "&nbsp;•&nbsp;<input type=submit accesskey=\"m\" value=\"Mail til modtagere\" name=\"mail\">";
 }
 }
 	
 print "</td></tr>";
 print "</form>";
-##############################################################################################################
-function betalingskontrol($erh,$fra_kto,$egen_ref,$til_kto,$kort_ref,$modt_navn,$belob,$valuta,$betalingsdato) {
-	global $myCtry;
-	
-		$x=0;
-		$k1[$x]=$k2[$x]=$k3[$x]=$k4[$x]=$k5[$x]=$k6[$x]=$k7[$x]=$k8[$x]=$k9[$x]=NULL;
-
-	
-	if (!$fra_kto || !is_numeric($fra_kto)) {
-		if ($myCtry=='NO' && strlen($fra_kto)!=11) $k1[$x] = "Egen konto ikke gyldig";
-		elseif (strlen($fra_kto)!=11) $k1[$x] = "Egen konto ikke gyldig"; 
-	}
-	if ($erh=='ERH351'||$erh=='ERH352'||$erh=='ERH358'||$erh=='SDCK020') {
-		if (!$til_kto || !is_numeric($til_kto)||strlen($til_kto)!=8) $k3[$x] = "Modtager konto ikke gyldig - skal være på 8 cifre";
-		if (!$kort_ref || !is_numeric($kort_ref)) {
-			$k4[$x] = "Ugyldig betalingsidentifikation (modt. ref - må kun bestå af cifre)";
-		} else {
-			if ($erh=='ERH351'||$erh='SDCK020') {
-				$len=15; #strlen af ERH351 og SDCK020 skal vaere 15
-			} else { 
-				$len=16;
-			}
-			for($x=strlen($kort_ref);$x<$len;$x++) $kort_ref='0'.$kort_ref;
-			for ($x=$len-1;$x>=0;$x--) { #Beregning af kontrolciffer.
-				$y=substr($kort_ref,$x,1)*2;
-				$x--;
-				$y=substr($kort_ref,$x,1)*1;
-			}
-			while ($y>9) { #Reduktion af kontrolciffer
-				$y=substr($y,0,1)+$y=substr($y,1,1);	
-			}
-			if (substr($kort_ref,-1) != $y) $kommentar = "Ugyldig betalingsidentifikation (modt. ref - kontrolciffer passer ikke)";
-		}
-	} elseif ($erh=='ERH355'||$erh=='ERH356'||$erh='SDC3') {
-		if ($myCtry=='NO' && strlen($til_kto)!=11) {
-			$k3[$x] = "Modtager konto ikke gyldig - skal være på 11 cifre";
-		}	elseif (!$til_kto || !is_numeric($til_kto) || ($myCtry!='NO' && strlen($til_kto)!=14)) {
-			$k3[$x] = "Modtager konto ikke gyldig - skal være på 14 cifre (regnr. på 4 og kontonr på 10)";
-		}
-		if(!$kort_ref) $k4[$x] = "Modt ref skal udfyldes";
-	}
-	if (usdecimal($belob,2)<0.01) $k4[$x]="Bel&oslash;b skal være st&oslash;rre end 0";
-	if ($valuta!='DKK') $k5[$x]="Ugyldig valuta, kun DKK kan anvendes";	
-	if (strlen($betalingsdato)!=8) $k6[$x]="ugyldig dato - skal v&aelig;re i formatet ddmmyyyy";
-	$dag=substr($betalingsdato,0,2);
-	$md=substr($betalingsdato,2,2);
-	$aar=substr($betalingsdato,4);
-	$bd=$aar.$md.$dag;
-	$dd=date("Ymd");
-	if ($dd>$bd) $k8[$x]="Betalingsdato er overskredet";
-	if (!checkdate($md, $dag, $aar)) $k8[$x]="ugyldig dato - skal v&aelig;re i formatet ddmmyyyy";
-	#	echo "$kort_ref,$kommentar -- ";
-
-	return(array($kort_ref,$k1[$x],$k2[$x],$k3[$x],$k4[$x],$k5[$x],$k6[$x],$k7[$x],$k8[$x],$k9[$x]));
-}
-
-function fejl_i_betalingslinje($linjenr_fejl, $erh_fejl,$fra_kto_fejl,$egen_ref_fejl,$til_kto_fejl,$kort_ref_fejl,$modt_navn_fejl,$belob_fejl,$valuta_fejl,$betalingsdato_fejl)
-{
-	$retur="Fejl i linje ".$linjenr_fejl.":";
-	if($erh_fejl) $retur.=" ".$erh_fejl.".";
-	if($fra_kto_fejl) $retur.=" ".$fra_kto_fejl.".";
-	if($egen_ref_fejl) $retur.=" ".$egen_ref_fejl.".";
-	if($til_kto_fejl) $retur.=" ".$til_kto_fejl.".";
-	if($kort_ref_fejl) $retur.=" ".$kort_ref_fejl.".";
-	if($modt_navn_fejl) $retur.=" ".$modt_navn_fejl.".";
-	if($belob_fejl) $retur.=" ".$belob_fejl.".";
-	if($valuta_fejl) $retur.=" ".$valuta_fejl.".";
-	if($betalingsdato_fejl) $retur.=" ".$betalingsdato_fejl.".";
-	$retur.="<br />\n";
-	
-	return $retur;
-}
-function udskriv_nordea($db_id,$bruger_id,$liste_id) {
-	$dd=date("Ymd");
-	$filnavn="../temp/$db_id"."$bruger_id".".UTF";
-	$fp=fopen("$filnavn","w");
-	$qtxt="select firmanavn from adresser where art='S'";
-	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	$myName=$r['firmanavn'];
-	
-	$qtxt="select * from betalinger where liste_id=$liste_id order by betalingsdato";
-	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)) {
-		#$kort_ref = $r['kort_ref'];
-#		if (substr($r['bet_type'], 0, 3)=="ERH") {
-			$x++;
-#			if ($betalingsdato<$dd)$betalingsdato=$dd;
-#cho __LINE__."<br>";
-			$linje='"0","45","","","","","","","","","","'; #felt 1-11
-			$linje.=$r['modt_navn']; #felt 12 Modtager
-			$linje.='","","","","","'; # felt 13-16 
-			$linje.=substr($r['til_kto'],0,4); # felt 17 Til-regnr
-			$tmp=substr($r['til_kto'],4,10); # 10 Til-konto-nr
-			while (strlen($tmp)<10)$tmp="0".$tmp;
-			$linje.=$tmp; # felt 17 Til-konto-nr
-			$linje.='","","","","","","';  # felt 18-22
-			$linje.=$r['kort_ref']; # felt 23 meddelelse til kunde  
-			$linje.='","';
-			$linje.=$r['kort_ref']; # felt 24   
-			$linje.='","0","';# felt 25
-			$linje.=$r['kort_ref']; # felt 26   
-			$linje.='","","","","","DKK","","'; # felt 27-32
-			$linje.=usdecimal($r['belob'],2); # felt 33;
-			$linje.='","'; #Felt 33
-			$linje.=str_replace("-","",usdate($r['betalingsdato'])); #Felt 34
-			$linje.='","","","'; #Felt 35-36
-			$linje.=substr($r['fra_kto'],0,4); # Felt 37 Til-regnr
-			$tmp=substr($r['fra_kto'],4,10); # Til-konto-nr
-			while (strlen($tmp)<10)$tmp="0".$tmp;
-			$linje.=$tmp; # Felt 37 Til-konto-nr
-			$linje.='","';
-			$linje.=substr($r['egen_ref'],0,20); #Felt 38 (max 20 tegn)
-			$linje.='","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","';
-#			$linje.='","","","","","","","","","","","","","","","'; #Felt 39-52
-#			$linje.=$r['kort_ref']; # felt 53 Kort advis
-#			$linje.='","","","","","","","","","","","","","","","","","","","","","","","","","","","0","'; #Felt 54-91
-#			$linje.=$r['kort_ref']; # felt 92 Modtagers identifikation af afsender  
-			$linje.='"';
-			$linje.="\r\n";
-		fwrite($fp,$linje);
-	}
-	fclose($fp);
-	print "<tr><td colspan=3 height=200 widht=100%><br></td></tr>\n";
-#	if ( $fejl_i_liste ) {
-#		print "<tr><td width='20%'><br /></td><td><b>Advarsel: Fejl i betalinger:</b><br>\n";
-#		print $fejl_i_liste;
-#		print "</td><td width='20%'><br /></td></tr>\n";
-#	}
-	print "<tr><td width=40%><br></td><td $top_bund title=\"Klik på knappen for at &aring;bne betalingsfilen eller h&oslash;jreklik for at gemme\"> <a href='$filnavn'>Se / gem betalingsfil</a></td><td width=40%><br></td></tr>\n";
-
-}
-function udskriv_danskebank($db_id,$bruger_id,$liste_id) {
-	$dd=date("Ymd");
-	$filnavn="../temp/$db_id"."$bruger_id".".UTF";
-	$fp=fopen("$filnavn","w");
-	$qtxt="select firmanavn from adresser where art='S'";
-	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	$myName=$r['firmanavn'];
-	
-	$qtxt="select * from betalinger where liste_id=$liste_id order by betalingsdato";
-	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)) {
-		#$kort_ref = $r['kort_ref'];
-#		if (substr($r['bet_type'], 0, 3)=="ERH") {
-			$x++;
-#			if ($betalingsdato<$dd)$betalingsdato=$dd;
-#cho __LINE__."<br>";
-			$linje='"CMBO",'; #felt 1
-			$linje.='"'.$r['fra_kto'].'",'; # Felt 2 Fra-reg+ktonr
-			$linje.='"'.$r['til_kto'].'",'; # Felt 3 Til-reg+ktonr
-			$linje.='"'.str_replace('.','',$r['belob']).'",'; # felt 4; Beløb
-			if (usdate($r['betalingsdato'])>date('Y-m-d')) $linje.='"'.$r['betalingsdato'].'",'; #Felt 5 Betalingsdato DDMMYYYY
-			else $linje.='"",'; #Felt 5 Betaling snarest
-			$linje.='"DKK",'; # felt 6 Valuta
-			$linje.='"",'; # felt 7 Blank = Standard transfer
-			$linje.='"","","","","","","","","","","","",'; # felt 8-19 Ubrugt
-			$linje.='"'.$r['egen_ref'].'",'; # felt 20 meddelelse til egen kto  
-			$linje.='"",'; # felt 21 Ubrugt
-			$linje.='"'.$r['kort_ref'].'"'; # felt 22 meddelelse til kunde  
-			$linje.="\r\n";
-		fwrite($fp,$linje);
-	}
-	fclose($fp);
-	print "<tr><td colspan=3 height=200 widht=100%><br></td></tr>\n";
-#	if ( $fejl_i_liste ) {
-#		print "<tr><td width='20%'><br /></td><td><b>Advarsel: Fejl i betalinger:</b><br>\n";
-#		print $fejl_i_liste;
-#		print "</td><td width='20%'><br /></td></tr>\n";
-#	}
-	print "<tr><td width=40%><br></td><td $top_bund title=\"Klik på knappen for at &aring;bne betalingsfilen eller h&oslash;jreklik for at gemme\"> <a href='$filnavn'>Se / gem betalingsfil</a></td><td width=40%><br></td></tr>\n";
-
-}
-function udskriv_jyskebank($db_id,$bruger_id,$liste_id){
-	$filnavn="../temp/$db_id"."$bruger_id".".txt";
-	$fp=fopen("$filnavn","w");
-#		if (substr($r['bet_type'], 0, 3)=="ERH") {
-		$linje='"';
-		$linje.="IB000000000000";
-		$linje.='","';
-		$linje.=date("Ymd");
-		$linje.='","';
-		$tmp='';
-		while (strlen($tmp)<90)$tmp.=' '; #felt3
-		$linje.=$tmp;		
-		$linje.='","';
-		$tmp='';
-		for ($i=0;$i<3;$i++){
-			while (strlen($tmp)<255)$tmp.=' '; #felt4-6
-			$linje.=$tmp;		
-			if ($i<2) $linje.='","';
-		}
-		$linje.='"';
-		$linje.="\r\n";
-		fwrite($fp,$linje);
-#	}
-	$x=0;
-	$sum=0;
-	$qtxt="select * from betalinger where liste_id=$liste_id order by betalingsdato";
-	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)) {
-		$kort_ref = $r['kort_ref'];
-		if (substr($r['bet_type'], 0, 3)=="ERH") {
-			$x++;
-#cho __LINE__."<br>";		
-			$linje='"';
-			$linje.="IB030202000005"; #1 Trans-type 
-			$linje.='","';
-			$linje.="0001"; #2 Index
-			$linje.='","';
-			$linje.=substr($r['betalingsdato'],-4).substr($r['betalingsdato'],2,2).substr($r['betalingsdato'],0,2); #3 Eksp-dato
-			$linje.='","';
-			$tmp=usdecimal($r['belob'],2)*100; #4 Transbeløb
-			$sum+=$tmp;
-			while (strlen($tmp)<13)$tmp="0".$tmp;
-			$linje.=$tmp; 
-			$linje.="+"; #Beløb skal slutte med et + 
-			$linje.='","';
-			$tmp=$r['valuta']; #5 Mønt
-			while (strlen($tmp)<3)$tmp.=" ";
-			$linje.=$tmp;
-			$linje.='","';
-			$linje.='2'; #6 Fra-type
-			$linje.='","';
-			$tmp=$r['fra_kto']; #7 Fra-konto
-			while (strlen($tmp)<15)$tmp="0".$tmp;
-			$linje.=$tmp; 
-			$linje.='","';
-			$linje.='2'; #8 Overførselstype
-			$linje.='","';
-			$tmp=substr($r['til_kto'],0,4); # 9Til-regnr
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp=substr($r['til_kto'],4,10); # 10 Til-konto-nr
-			while (strlen($tmp)<10)$tmp="0".$tmp;
-			$linje.=$tmp;
-			$linje.='","';
-			$linje.='0'; #11 Adviseringstype
-			$linje.='","';
-			$tmp=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['kort_ref']),0,20)); #12cPosteringstekst
-			while (strlen($tmp)<35)$tmp.=" ";
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['modt_navn']),0,32)); #Navn
-			while (strlen($tmp)<32)$tmp.=" ";
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp='';
-			while (strlen($tmp)<32)$tmp.=" "; #felt 14 Adresse-1
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp='';
-			while (strlen($tmp)<32)$tmp.=" "; #felt 15 Adresse-2
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp='';
-			while (strlen($tmp)<4)$tmp.=" "; #felt 16 Postnr
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp='';
-			while (strlen($tmp)<32)$tmp.=" "; #felt 17 Bynavn
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp='';
-			$tmp.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['egen_ref']),0,20)); #18 Eget-bilagnr
-			while (strlen($tmp)<35)$tmp.=" ";
-			$linje.=$tmp;
-			$linje.='","';
-			$tmp='';
-			for ($i=0;$i<9;$i++) {
-				$tmp='';
-				while (strlen($tmp)<35)$tmp.=" "; #felt 19-27
-				$linje.=$tmp;
-				$linje.='","';
-			}
-			$linje.=" ";# felt 28 Blanke
-			$linje.='","';
-			$tmp='';
-			while (strlen($tmp)<215)$tmp.=" "; #felt 29 Reserveret
-			$linje.=$tmp;
-			$linje.='"';
-			$linje.="\r\n";
-			#			if ($r['bet_type']=="ERH351") $kort_ref="71".$kort_ref;
-#			$linje="\"$r[bet_type]\",\"$r[fra_kto]\",\"$r[egen_ref]\",\"$r[til_kto]\",\"$r[modt_navn]\",\"00\",\"0\",,\"".str_replace(".", "", $r['belob'])."\",\"".substr($r['betalingsdato'],0,4).substr($r['betalingsdato'],-2)."\",\"$kort_ref\",,,,,,,,,\"N\"\r\n";
-		} elseif ($r['bet_type']=="SDCK020") { # SDC betalingstype K020 - FI-kort 71 
-#cho __LINE__."<br>";		
-			$bet_type=substr($r['bet_type'], 3);
-			$linje=$bet_type.$r['fra_kto'].$r['betalingsdato'];
-			$linje.=sprintf("%015.2f", str_replace(",", ".", str_replace(".", "", $r['belob'])))."N";
-			$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['egen_ref']),0,20));
-			$linje.=substr($r['til_kto'],0,8)."71";
-			$linje.=sprintf("%015s", substr($kort_ref,0,15)); 
-			$linlaengde=strlen($linje); # Linjelængden skal være på 87 tegn ifølge specifikationen - kan testes for senere
-			echo "\n<!-- SDCK020 linjelængde er ".strlen($linje)." (skal være 87) -->\n"; # Linjelængden skal være på 87 tegn ifølge specifikationen - kan testes for senere
-			$linje.="\r\n";
-		} elseif ($r['bet_type']=="SDC3") { # SDC betalingstype 3 - bankovf. med kort advisering
-#cho __LINE__."<br>";		
-			$linje="3".$r['fra_kto'].substr($r['betalingsdato'],0,4).substr($r['betalingsdato'],-2);
-			$linje.=sprintf("%015.2f", str_replace(",", ".", str_replace(".", "", $r['belob'])))."N";
-			$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['egen_ref']),0,20));
-			$linje.=substr($r['til_kto'], 0, 4).sprintf("%010s", substr($r['til_kto'], 4))."    ";
-			$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $kort_ref),0,20));
-			$linlaengde=strlen($linje); # Linjelængden skal være på 95 tegn ifølge specifikationen - kan testes for senere
-			$linje.="\r\n";
-		}
-		fwrite($fp,$linje);
-	}	
-#	if (substr($r['bet_type'], 0, 3)=="ERH") {
-		$linje='"';
-		$linje.="IB999999999999";
-		$linje.='","';
-		$linje.=date("Ymd");
-		$linje.='","';
-		$tmp=$x;
-		while (strlen($tmp)<6)$tmp='0'.$tmp; #felt3
-		$linje.=$tmp;		
-		$linje.='","';
-		$tmp=$sum;
-		while (strlen($tmp)<13)$tmp='0'.$tmp; #felt4
-		$linje.=$tmp;
-		$linje.="+";
-		$linje.='","';
-		$tmp='';
-		while (strlen($tmp)<64)$tmp.=' '; #felt4
-		$linje.=$tmp;		
-		$linje.='","';
-		$tmp='';
-		for ($i=0;$i<3;$i++){
-			while (strlen($tmp)<255)$tmp.=' '; #felt4
-			$linje.=$tmp;		
-			if ($i<2) $linje.='","';
-		}
-		$linje.='"';
-		$linje.="\r\n";
-		fwrite($fp,$linje);
-#	}
-	fclose($fp);
-	print "<tr><td colspan=3 height=200 widht=100%><br></td></tr>\n";
-#	if ( $fejl_i_liste ) {
-#		print "<tr><td width='20%'><br /></td><td><b>Advarsel: Fejl i betalinger:</b><br>\n";
-#		print $fejl_i_liste;
-#		print "</td><td width='20%'><br /></td></tr>\n";
-#	}
-	print "<tr><td width=40%><br></td><td $top_bund title=\"Klik på knappen for at &aring;bne betalingsfilen eller h&oslash;jreklik for at gemme\"> <a href='$filnavn'>Se / gem betalingsfil</a></td><td width=40%><br></td></tr>\n";
-}
-function udskriv_bec($db_id,$bruger_id,$liste_id){
-	$filnavn="../temp/$db_id"."$bruger_id".".txt";
-	$fp=fopen("$filnavn","w");
-	$q=db_select("select * from betalinger where liste_id=$liste_id order by betalingsdato",__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)) {
-		$kort_ref = $r['kort_ref'];
-		if (substr($r['bet_type'], 0, 3)=="ERH") {
-			if ($r['bet_type']=="ERH351") $kort_ref="71".$kort_ref;
-			$linje="\"$r[bet_type]\",\"$r[fra_kto]\",\"$r[egen_ref]\",\"$r[til_kto]\",\"$r[modt_navn]\",\"00\",\"0\",,\"".str_replace(".", "", $r['belob'])."\",\"".substr($r['betalingsdato'],0,4).substr($r['betalingsdato'],-2)."\",\"$kort_ref\",,,,,,,,,\"N\"\r\n";
-		} elseif ($r['bet_type']=="SDCK020") { # SDC betalingstype K020 - FI-kort 71 
-			$bet_type=substr($r['bet_type'], 3);
-			$linje=$bet_type.$r['fra_kto'].$r['betalingsdato'];
-			$linje.=sprintf("%015.2f", str_replace(",", ".", str_replace(".", "", $r['belob'])))."N";
-			$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['egen_ref']),0,20));
-			$linje.=substr($r['til_kto'],0,8)."71";
-			$linje.=sprintf("%015s", substr($kort_ref,0,15)); 
-			$linlaengde=strlen($linje); # Linjelængden skal være på 87 tegn ifølge specifikationen - kan testes for senere
-			echo "\n<!-- SDCK020 linjelængde er ".strlen($linje)." (skal være 87) -->\n"; # Linjelængden skal være på 87 tegn ifølge specifikationen - kan testes for senere
-			$linje.="\r\n";
-		} elseif ($r['bet_type']=="SDC3") { # SDC betalingstype 3 - bankovf. med kort advisering
-			$linje="3".$r['fra_kto'].substr($r['betalingsdato'],0,4).substr($r['betalingsdato'],-2);
-			$linje.=sprintf("%015.2f", str_replace(",", ".", str_replace(".", "", $r['belob'])))."N";
-			$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['egen_ref']),0,20));
-			$linje.=substr($r['til_kto'], 0, 4).sprintf("%010s", substr($r['til_kto'], 4))."    ";
-			$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $kort_ref),0,20));
-			$linlaengde=strlen($linje); # Linjelængden skal være på 95 tegn ifølge specifikationen - kan testes for senere
-			$linje.="\r\n";
-		}
-		fwrite($fp,$linje);
-	}	
-	fclose($fp);
-	print "<tr><td colspan=3 height=200 widht=100%><br></td></tr>\n";
-#	if ( $fejl_i_liste ) {
-#		print "<tr><td width='20%'><br /></td><td><b>Advarsel: Fejl i betalinger:</b><br>\n";
-#		print $fejl_i_liste;
-#		print "</td><td width='20%'><br /></td></tr>\n";
-#	}
-	print "<tr><td width=40%><br></td><td $top_bund title=\"Klik på knappen for at &aring;bne betalingsfilen eller h&oslash;jreklik for at gemme\"> <a href='$filnavn'>Se / gem betalingsfil</a></td><td width=40%><br></td></tr>\n";
-}
-function udskriv_sdc($db_id,$bruger_id,$liste_id){
-	$filnavn="../temp/$db_id"."$bruger_id".".txt";
-	$fp=fopen("$filnavn","w");
-	$qtxt="select * from betalinger where liste_id=$liste_id order by betalingsdato";
-	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)) {
-		$kort_ref = $r['kort_ref'];
-		$linje="3".$r['fra_kto'].substr($r['betalingsdato'],0,4).substr($r['betalingsdato'],-2);
-		$linje.=sprintf("%015.2f", str_replace(",", ".", str_replace(".", "", $r['belob'])))."N";
-		$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['egen_ref']),0,20));
-		$linje.=substr($r['til_kto'], 0, 4).sprintf("%010s", substr($r['til_kto'], 4))."    ";
-		$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $kort_ref),0,20));
-#		$linlaengde=strlen($linje);
-		$linje.="\r\n";
-		fwrite($fp,$linje);
-	}
-	fclose($fp);
-	print "<tr><td colspan=3 height=200 widht=100%><br></td></tr>\n";
-#	if ( $fejl_i_liste ) {
-#		print "<tr><td width='20%'><br /></td><td><b>Advarsel: Fejl i betalinger:</b><br>\n";
-#		print $fejl_i_liste;
-#		print "</td><td width='20%'><br /></td></tr>\n";
-#	}
-	print "<tr><td width=40%><br></td><td $top_bund title=\"Klik på knappen for at &aring;bne betalingsfilen eller h&oslash;jreklik for at gemme\"> <a href='$filnavn'>Se / gem betalingsfil</a></td><td width=40%><br></td></tr>\n";
-}
-function udskriv_xml($db_id,$bruger_id,$liste_id){
-
-	global $format,$top_bund;
-	$r=db_fetch_array(db_select("select * from adresser where art = 'S'",__FILE__ . " linje " . __LINE__));
-	$tmp=$r['bank_konto'];
-	$myName=$r['firmanavn'];
-	$myCvr=trim(str_replace(' ','',$r['cvrnr']));
-	$myEan=$r['ean'];
-	$myCtry=$r['land'];
-	$myBIG=$r['swift'];
-
-	if (strtolower(substr($myCtry,0,1))=='n') {
-		$myCtry='NO';
-		$myCcy='NOK';
-		$x=0;
-		$fp=fopen('../importfiler/BIC_NO.txt','r');
-		while($line=fgets($fp)) {
-			list($regLst[$x],$bicLst[$x])=explode(chr(9),trim($line));
-			$x++;
-		}
-		fclose($fp);
-	} else {
-		$myCtry='DK';
-		$myCcy='DKK';
-	}
-	
-	$r=db_fetch_array(db_select("select tidspkt from betalingsliste where id='$liste_id'",__FILE__ . " linje " . __LINE__));
-	$tidspkt = substr($r['tidspkt'],-10);
-
-	$date    = date("Y-m-d",$tidspkt);
-	$time    = date("H:i:s",$tidspkt);
-
-	$qtxt="select * from betalinger where liste_id=$liste_id order by id";
-	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	$x=0;
-	while ($r=db_fetch_array($q)) {
-		$EndToEndId[$x]  = $r['id'];
-		$ordreId[$x]     = $r['ordre_id'];
-		$bilagId[$x]     = $r['bilag_id'];
-		$PmtInfId[$x]    = $tidspkt ."-". $x;
-		$Id[$x]          = $r['til_kto'];
-		$Nm[$x]          = urlencode($r['modt_navn']); 
-		$Prtry[$x]       = urlencode($r['kort_ref']);
-		$DbtrAcctId[$x]  = $r['fra_kto'];
-		$CdtrAcctId[$x]  = $r['til_kto'];
-		$ReqdExctnDt[$x] = usdate($r['betalingsdato']);
-		$InstdAmt[$x]    = usdecimal($r['belob']);
-		$Ctry[$x]        = $myCtry;
-		$Ccy[$x]         = $myCcy;
-		$BIC[$x]         = NULL;
-		$DbNo[$x]        = NULL;
-		$x++;
-	}
-	for ($x=0;$x<count($Id);$x++){
-
-		if ($ordreId[$x]) {
-			$qtxt = "select konto_id from ordrer where id='$ordreId[$x]'";
-			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$DbNo[$x]=$r['konto_id'];
-		}
-		if (!$DbNo[$x] && $bilagId[$x]) {
-			$qtxt = "select d_type,debet,k_type,kredit from kassekladde where id='$bilagId[$x]'";
-			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$DbNo[$x]=NULL;
-			if ($r['d_type']=='D' && $r['debet']) $DbNo[$x]=$r['debet'];
-			elseif ($r['k_type']=='D' && $r['kredit']) $DbNo[$x]=$r['kredit'];
-		} 
-		if ($DbNo[$x]) {
-			$qtxt = "select land,swift from adresser where art='D' and kontonr='$DbNo[$x]'";
-			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$BIC[$x]=$r['swift'];
-		}
-		if ($myCtry=='NO') {
-			$DbtrAcctId[$x]=substr($DbtrAcctId[$x],0,4).substr($DbtrAcctId[$x],-7);
-			$CdtrAcctId[$x]=substr($CdtrAcctId[$x],-11);
-			if (!$myBIC) {
-				for ($b=0;$b<count($regLst);$b++) {
-					if (substr($DbtrAcctId[$x],0,4)==$regLst[$b]) $myBIC=$bicLst[$b];
-				}
-			}
-			if (!$BIC[$x]) {
-				for ($b=0;$b<count($regLst);$b++) {
-					if (substr($CdtrAcctId[$x],0,4)==$regLst[$b]) $BIC[$x]=$bicLst[$b];
-				}
-			}
-		}
-	}
-	$filnavn="../temp/$db_id"."$bruger_id".".xml";
-	$fp=fopen("$filnavn","w");
-	$xmltxt = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n";
-	$xmltxt.= "<Document xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n";
-	$xmltxt.= "xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.03\"\r\n";
-	$xmltxt.= "xsi:schemaLocation=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.03 pain.001.001.03.xsd\">\r\n";
-	$xmltxt.= "  <CstmrCdtTrfInitn>\r\n";
-	$xmltxt.= "    <GrpHdr>\r\n";
-	$xmltxt.= "      <MsgId>". $db_id ."00000". $liste_id. "</MsgId>\r\n";
-	$xmltxt.= "      <CreDtTm>". date("Y-m-d") ."T". date("H:i:s") ."</CreDtTm>\r\n";
-	$xmltxt.= "      <NbOfTxs>". count($PmtInfId) ."</NbOfTxs>\r\n";
-	$xmltxt.= "      <InitgPty>\r\n";
-	$xmltxt.= "        <Nm>$myName</Nm>\r\n";
-	$xmltxt.= "        <Id>\r\n";
-	$xmltxt.= "          <OrgId>\r\n";
-	$xmltxt.= "            <Othr>\r\n";
-	$xmltxt.= "              <Id>". str_replace(' ','',$myCvr) ."</Id>\r\n";
-	$xmltxt.= "              <SchmeNm>\r\n";
-	$xmltxt.= "                <Cd>CUST</Cd>\r\n";
-	$xmltxt.= "              </SchmeNm>\r\n";
-	$xmltxt.= "            </Othr>\r\n";
- 	$xmltxt.= "            <Othr>\r\n";
- 	$xmltxt.= "              <Id>PROVISJON</Id>\r\n";
-	$xmltxt.= "              <SchmeNm>\r\n";
-	$xmltxt.= "                <Cd>BANK</Cd>\r\n";
-	$xmltxt.= "              </SchmeNm>\r\n";
-	$xmltxt.= "            </Othr>\r\n";
-	$xmltxt.= "          </OrgId>\r\n";
-	$xmltxt.= "        </Id>\r\n";
-	$xmltxt.= "      </InitgPty>\r\n";
-	$xmltxt.= "    </GrpHdr>\r\n";
-	fwrite($fp,$xmltxt);
-	for ($x=0;$x<count($PmtInfId);$x++) {
-		$xmltxt = "    <PmtInf>\r\n";
-		$xmltxt.= "      <PmtInfId>$PmtInfId[$x]</PmtInfId>\r\n";
-		$xmltxt.= "      <PmtMtd>TRF</PmtMtd>\r\n";
-		$xmltxt.= "      <PmtTpInf>\r\n";
-		$xmltxt.= "        <InstrPrty>NORM</InstrPrty>\r\n";
-		$xmltxt.= "        <SvcLvl>\r\n";
-		$xmltxt.= "          <Cd>NURG</Cd>\r\n";
-		$xmltxt.= "        </SvcLvl>\r\n";
-		$xmltxt.= "        <CtgyPurp>\r\n";
-		$xmltxt.= "          <Cd>SUPP</Cd>\r\n";
-		$xmltxt.= "        </CtgyPurp>\r\n";
-		$xmltxt.= "        </PmtTpInf>\r\n";
-		$xmltxt.= "        <ReqdExctnDt>$ReqdExctnDt[$x]</ReqdExctnDt>\r\n";
-		$xmltxt.= "        <Dbtr>\r\n";
-		$xmltxt.= "          <Nm>$myName</Nm>\r\n";
-		$xmltxt.= "          <PstlAdr>\r\n";
-		$xmltxt.= "            <Ctry>$Ctry[$x]</Ctry>\r\n";
-		$xmltxt.= "          </PstlAdr>\r\n";
-		if ($format != 'norskeBank') {
-			$xmltxt.= "          <Id>\r\n";
-			$xmltxt.= "            <OrgId>\r\n";
-			$xmltxt.= "              <Othr>\r\n";
-			$xmltxt.= "               <Id>". str_replace(' ','',$myCvr) ."</Id>\r\n";
-			$xmltxt.= "              <SchmeNm>\r\n";
-			$xmltxt.= "                <Cd>BANK</Cd>\r\n";
-			$xmltxt.= "              </SchmeNm>\r\n";
-			$xmltxt.= "               </Othr>\r\n";
-			$xmltxt.= "            </OrgId>\r\n";
-			$xmltxt.= "          </Id>\r\n";
-		}
-		$xmltxt.= "        </Dbtr>\r\n";
-		$xmltxt.= "        <DbtrAcct>\r\n";
-		$xmltxt.= "          <Id>\r\n";
-		$xmltxt.= "            <Othr><Id>$DbtrAcctId[$x]</Id>\r\n";
-		$xmltxt.= "            <SchmeNm>\r\n";
-		$xmltxt.= "              <Cd>BBAN</Cd>\r\n";
-		$xmltxt.= "            </SchmeNm>\r\n";
-		$xmltxt.= "            </Othr>\r\n";
-		$xmltxt.= "          </Id>\r\n";
-		$xmltxt.= "          <Ccy>$myCcy</Ccy>\r\n";
-		$xmltxt.= "        </DbtrAcct>\r\n";
-		if ($myBIC) {
-			$xmltxt.= "       <DbtrAgt>\r\n";
-			$xmltxt.= "         <FinInstnId>\r\n";
-			$xmltxt.= "           <BIC>$myBIC</BIC>\r\n";
-			$xmltxt.= "           <PstlAdr>\r\n";
-			$xmltxt.= "             <Ctry>$myCtry</Ctry>\r\n";
-			$xmltxt.= "           </PstlAdr>\r\n";
-			$xmltxt.= "         </FinInstnId>\r\n";
-			$xmltxt.= "       </DbtrAgt>\r\n";
-		}
-		$xmltxt.= "       	<CdtTrfTxInf>\r\n";
-		$xmltxt.= "         <PmtId>\r\n";
-		$InstrId = $x+1000;
-		$xmltxt.= "           <InstrId>$InstrId</InstrId>\r\n";
-		$xmltxt.= "           <EndToEndId>$EndToEndId[$x]</EndToEndId>\r\n";
-		$xmltxt.= "         </PmtId>\r\n";
-		$xmltxt.= "         <Amt>\r\n";
-		$xmltxt.= "           <InstdAmt Ccy='$Ccy[$x]'>$InstdAmt[$x]</InstdAmt>\r\n";
-		$xmltxt.= "         </Amt>\r\n";
-		if ($BIC[$x]) {
-			$xmltxt.= "         <CdtrAgt>\r\n";
-			$xmltxt.= "           <FinInstnId>\r\n";
-			$xmltxt.= "             <BIC>$BIC[$x]</BIC>\r\n";
-			$xmltxt.= "             <PstlAdr>\r\n";
-			$xmltxt.= "               <Ctry>$Ctry[$x]</Ctry>\r\n";
-			$xmltxt.= "             </PstlAdr>\r\n";
-			$xmltxt.= "           </FinInstnId>\r\n";
-			$xmltxt.= "         </CdtrAgt>\r\n";
-		}
-		$xmltxt.= "         <Cdtr>\r\n";
-		$xmltxt.= "           <Nm>$Nm[$x]</Nm>\r\n";
-		$xmltxt.= "           <PstlAdr>\r\n";
-		$xmltxt.= "             <Ctry>$Ctry[$x]</Ctry>\r\n";
-		$xmltxt.= "           </PstlAdr>\r\n";
-		$xmltxt.= "         </Cdtr>\r\n";
-		$xmltxt.= "         <CdtrAcct>\r\n";
-		$xmltxt.= "           <Id>\r\n";
-		$xmltxt.= "             <Othr>\r\n";
-		$xmltxt.= "               <Id>$CdtrAcctId[$x]</Id>\r\n";
-		$xmltxt.= "               <SchmeNm>\r\n";
-		$xmltxt.= "                 <Cd>BBAN</Cd>\r\n";
-		$xmltxt.= "               </SchmeNm>\r\n";
-		$xmltxt.= "             </Othr>\r\n";
-		$xmltxt.= "           </Id>\r\n";
-		$xmltxt.= "         </CdtrAcct>\r\n";
-		$xmltxt.= "         <Purp>\r\n";
-		$xmltxt.= "           <Prtry>$Prtry[$x]</Prtry>\r\n";
-		$xmltxt.= "         </Purp>\r\n";
-		$xmltxt.= "       </CdtTrfTxInf>\r\n";
-		$xmltxt.= "    </PmtInf>\r\n";
-	fwrite($fp,$xmltxt);
-	}
-	$xmltxt = "</CstmrCdtTrfInitn>\r\n";
-	$xmltxt.= "</Document>\r\n";
-	fwrite($fp,$xmltxt);
-	fclose($fp);
-	
-/*
-  
-	$qtxt="select * from betalinger where liste_id=$liste_id order by betalingsdato";
-	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)) {
-		$kort_ref = $r['kort_ref'];
-		$linje="3".$r['fra_kto'].substr($r['betalingsdato'],0,4).substr($r['betalingsdato'],-2);
-		$linje.=sprintf("%015.2f", str_replace(",", ".", str_replace(".", "", $r['belob'])))."N";
-		$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $r['egen_ref']),0,20));
-		$linje.=substr($r['til_kto'], 0, 4).sprintf("%010s", substr($r['til_kto'], 4))."    ";
-		$linje.=sprintf("%-20s", substr(iconv("UTF-8", "Windows-1252//IGNORE", $kort_ref),0,20));
-#		$linlaengde=strlen($linje);
-		$linje.="\r\n";
-		fwrite($fp,$linje);
-	}
-	fclose($fp);
-*/	
-	print "<tr><td colspan=3 height=200 widht=100%><br></td></tr>\n";
-#	if ( $fejl_i_liste ) {
-#		print "<tr><td width='20%'><br /></td><td><b>Advarsel: Fejl i betalinger:</b><br>\n";
-#		print $fejl_i_liste;
-#		print "</td><td width='20%'><br /></td></tr>\n";
-#	}
-	print "<tr><td width=40%><br></td><td $top_bund title=\"Klik på knappen for at &aring;bne betalingsfilen eller h&oslash;jreklik for at gemme\"> <a href='$filnavn'>Se / gem betalingsfil</a></td><td width=40%><br></td></tr>\n";
-}
-
 ?>
-</tbody>
-</table>
-	</td></tr>
-</tbody></table>
-
-</body></html>

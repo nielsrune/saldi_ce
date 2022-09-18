@@ -17,6 +17,7 @@
 // Copyright (c) 2004-2007 Danosoft ApS
 // ----------------------------------------------------------------------
 
+if (!function_exists(opdat_0)) {
 function opdat_0($version, $dbver){
 	global $db_id;
 	global $s_id;
@@ -1330,5 +1331,5 @@ function opdat_0($version, $dbver){
 		transaktion("commit"); 
 	}	
 	db_modify("UPDATE grupper set box1 = '1.0.0' where art = 'VE'");
-}
+}}
 ?>

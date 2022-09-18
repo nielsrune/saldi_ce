@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/varekort.php --- lap 4.0.0 --- 2021-04-01 ---
+// --- lager/varekort.php --- lap 4.0.5 --- 2022-04-19 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,63 +20,66 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
-// 2013.02.10 Break ændret til break 1
-// 2013.10.07	Kontrol for cirkulær reference indsat. Søg 20131007
-// 2014.06.03 Indsat visning af stregkode. Søg 20140603
-// 2014.06.17 ekstra felt "indhold" til angivelse af vægt / rumfang mm. samt automatisk beregning af kg/liter/ pris mm. Søg indhold
-// 2104.09.09	Fejltekst fra "barcode" hvis stregkode ikke kan genereres bliver nu undertrykt. #20140909
-// 2015.02.10 Beholdninger og lokationer vises nu fra hvert lager.
-// 2015.05.21 Shopurl tilrettet til "nyt api". Søg shopurl
-// 2015.10.28 understøtter ny også tbarcode
-// 2016.01.19 PHR Tilføjet varefoto og regulering af varebeholdning ved gruppeændring fra ikke lagerført til lagerført og vice versa
-// 2016.01.30 PHR Tilføjet "tilbudsdage" så man kan vælge hvilke ugedage et tilbud skal være aktivt.
-// 2016.03.08 PHR Tilføjet "link til slet shop id dom fjerner binding til shop vare. Søg slet_shopbinding.php og fjernet mulighed for publicering.
-// 2016.06.06 PHR	Opdat shop_vare erstattet af opdat behold...
-// 2016.10.06 PHR hvis prisen er 0.001 vises prisen med 3 decimaler. Hvis brugt i pos indsættes varen til 0 kr oden at der hoppes til pris. 20161006
-// 2017.01.06 PHR Mrabat trak moms fra på procentrabat. Ændret "%" til "percent"
-// 2017.02.10	PHR - Aktivering af nyt API 20170210
-// 2017.10.30	PHR	Overføldige paramatrre i kald til og funktion kontoopslag fjernet.  
-// 2017.11.06 PHR	Stregkodegenereing flyttet i funktion barcode og der kan nu udskrives labels fra varianter. 
-// 2018.01.23 PHR	En del rettelser i i forhold til varianter og flere lagre. Beholdninger rettes nu kun i varianter, hvis varianter.
-// 2018.02.04 PHR Styklister deaktiveres, hvis der anvendes varianter.
-// 2018.02.14 PHR	Varianter kan ikke mere slettes hvis der er varianter på lager.
-// 2018.03.14 PHR Lager var fast til 1 i kald til 'vareproduktion'. 
-// 2019.01.17 MSC - Rettet topmenu design til og rettet isset fejl
-// 2019.01.18 PHR - Adjusted for different VAT rates. VAT is defined by 'gruppe' -> 'kontoplan'
-// 2019.01.18 PHR - Items can no longer be changed from item with variants or vice versa if there are items in stock.
-// 2019.01.23 PHR - Barcode line can now hold more than one barcode. Seperate by ';'
-// 2019.01.29 PHR	- PHR Incl_moms changed according to'$vatOnItemCard' to fullfill demands for different Vat Rates
-// 2019.02.20 MSC - Rettet topmenu design og isset fejl
-// 2019.03.21 PHR - Added 'read-only'. Look for $noEdit
-// 2019.04.04  LN - Added call to varios functions in varekort_includes/percentageField and created percentage field.
-// 2019.04.09 PHR - Added call to function vatPercent in varekort_includes/itemVat.php and moved vat calculation there.
-// 2019.04.21 PHR - Added confirmDescriptionChange, can be set in 'Indstillinger' > 'VareValg'. 
-// 2019.03.21 PHR - Edited 'read-only'. Changed from [10] to [9]
-// 2019.10.22 PHR - Added copy option, search 'Kopier'.
-// 2019.11.06 PHR - Added $netWeight & $grossWeight
-// 2019.12.09 PHR	- Added quantity incomming and outgoing. Search incomming / outgoing
-// 2020.02.11 PHR	- Removed htmlentities varius 
-// 2020.03.10 PHR - Changed (!count($lagernavn)) to (count($lagernavn) <= 1)  20200310-1
-// 2020.03.10 PHR - Changed = to += 20200310-2
-// 2020.03.12 PHR - Added 'order by posnr' in 'stykliste' queries
-// 2020.03.26 PHR - Moved function barcode to ../includes/std_func.php
-// 2020.03.27	PHR	- Changed weight to 3 decimal places
-// 2020.05.13	PHR	- Various cleanup related to variant handling as variants were disabled when less than 2 variants.  
-// 2020.06.11 PHR - handling of ' and " in description.
-// 2020.06.12 PHR - Added pattern match on item no (varenr).
-// 2020.07.14 PHR	- Corrected copy handling
-// 2020.09.22 PHR - Added confirmStockChange, can be set in 'Indstillinger' > 'VareValg'. 
-// 2020.10.20 PHR - Total qty was inserted as variant qty when adding variant.
-// 2020.11.15 PHR - Added weights and measures and moved unit section to varekort_includes/units.php
-// 2021.01.25 PHR - Changed $x to $y af parent loop was reset.
-// 2021.02.07 PHR - 'Lagerreguler' must not be run if variants.
-// 2021.02.13 PHR - Some cleanup
-// 2021.02.23 PHR - Commission is calculated if sales price > 0 and cost = 0 and default commission is set.  
-// 2021.03.08 PHR - Added hidden as shock was reset when using FIFO 20210308 
-// 2021.04.01 PHR - Changed 'kostpris til real kostpris when salgsspris > 0 20210401 
-
+// 20130210 Break ændret til break 1
+// 20131007	Kontrol for cirkulær reference indsat. Søg 20131007
+// 20140603 Indsat visning af stregkode. Søg 20140603
+// 20140617 ekstra felt "indhold" til angivelse af vægt / rumfang mm. samt automatisk beregning af kg/liter/ pris mm. Søg indhold
+// 21040909	Fejltekst fra "barcode" hvis stregkode ikke kan genereres bliver nu undertrykt. #20140909
+// 20150210 Beholdninger og lokationer vises nu fra hvert lager.
+// 20150521 Shopurl tilrettet til "nyt api". Søg shopurl
+// 20151028 understøtter ny også tbarcode
+// 20160119 PHR Tilføjet varefoto og regulering af varebeholdning ved gruppeændring fra ikke lagerført til lagerført og vice versa
+// 20160130 PHR Tilføjet "tilbudsdage" så man kan vælge hvilke ugedage et tilbud skal være aktivt.
+// 20160308 PHR Tilføjet "link til slet shop id dom fjerner binding til shop vare. Søg slet_shopbinding.php og fjernet mulighed for publicering.
+// 20160606 PHR	Opdat shop_vare erstattet af opdat behold...
+// 20161006 PHR hvis prisen er 0.001 vises prisen med 3 decimaler. Hvis brugt i pos indsættes varen til 0 kr oden at der hoppes til pris. 20161006
+// 20170106 PHR Mrabat trak moms fra på procentrabat. Ændret "%" til "percent"
+// 20170210	PHR - Aktivering af nyt API 20170210 
+// 20171030	PHR	Overføldige paramatrre i kald til og funktion kontoopslag fjernet. 
+// 20171106 PHR	Stregkodegenereing flyttet i funktion barcode og der kan nu udskrives labels fra varianter. 
+// 20180123 PHR	En del rettelser i i forhold til varianter og flere lagre. Beholdninger rettes nu kun i varianter, hvis varianter.
+// 20180204 PHR Styklister deaktiveres, hvis der anvendes varianter.
+// 20180214 PHR	Varianter kan ikke mere slettes hvis der er varianter på lager.
+// 20180314 PHR Lager var fast til 1 i kald til 'vareproduktion'. 
+// 20190117 MSC - Rettet topmenu design til og rettet isset fejl
+// 20190118 PHR - Adjusted for different VAT rates. VAT is defined by 'gruppe' -> 'kontoplan'
+// 20190118 PHR - Items can no longer be changed from item with variants or vice versa if there are items in stock.
+// 20190123 PHR - Barcode line can now hold more than one barcode. Seperate by ';'
+// 20190129 PHR	- PHR Incl_moms changed according to'$vatOnItemCard' to fullfill demands for different Vat Rates
+// 20190220 MSC - Rettet topmenu design og isset fejl
+// 20190321 PHR - Added 'read-only'. Look for $noEdit
+// 20190404  LN - Added call to varios functions in varekort_includes/percentageField and created percentage field.
+// 20190409 PHR - Added call to function vatPercent in varekort_includes/itemVat.php and moved vat calculation there.
+// 20190421 PHR - Added confirmDescriptionChange, can be set in 'Indstillinger' > 'VareValg'. 
+// 20190321 PHR - Edited 'read-only'. Changed from [10] to [9]
+// 20191022 PHR - Added copy option, search 'Kopier'.
+// 20191106 PHR - Added $netWeight & $grossWeight
+// 20191209 PHR	- Added quantity incomming and outgoing. Search incomming / outgoing
+// 20200211 PHR	- Removed htmlentities varius 
+// 20200310 PHR - Changed (!count($lagernavn)) to (count($lagernavn) <= 1)  20200310-1
+// 20200310 PHR - Changed = to += 20200310-2
+// 20200312 PHR - Added 'order by posnr' in 'stykliste' queries
+// 20200326 PHR - Moved function barcode to ../includes/std_func.php
+// 20200327	PHR	- Changed weight to 3 decimal places
+// 20200513	PHR	- Various cleanup related to variant handling as variants were disabled when less than 2 variants.  
+// 20200611 PHR - handling of ' and " in description.
+// 20200612 PHR - Added pattern match on item no (varenr).
+// 20200714 PHR	- Corrected copy handling
+// 20200922 PHR - Added confirmStockChange, can be set in 'Indstillinger' > 'VareValg'. 
+// 20201020 PHR - Total qty was inserted as variant qty when adding variant.
+// 20201115 PHR - Added weights and measures and moved unit section to varekort_includes/units.php
+// 20210125 PHR - Changed $x to $y af parent loop was reset.
+// 20210207 PHR - 'Lagerreguler' must not be run if variants.
+// 20210213 PHR - Some cleanup
+// 20210223 PHR - Commission is calculated if sales price > 0 and cost = 0 and default commission is set.  
+// 20210308 PHR - Added hidden as shock was reset when using FIFO 20210308 
+// 20210401 PHR - Changed 'kostpris til real kostpris when salgsspris > 0 20210401 
+// 20220117 PHR - Volume is now calulated.
+// 20220203 PHR - Moved shop syncronization to function sync_shop_vare
+// 20220215 PHR - Vat is withdrawn from m_rabat_array items if $incl_moms is set.
+// 20220419 DAPE - dg is now properly calculated without VAT
 ob_start(); //Starts output buffering
 
 @session_start();
@@ -113,7 +116,7 @@ $css="../css/standard.css";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
-include("../includes/vareopslag.php"); # 2009.05.14
+include("../includes/vareopslag.php"); # 20090514
 include("../includes/stykliste.php");
 include("../includes/fuld_stykliste.php");
 include("varekort_includes/itemVat.php");
@@ -129,9 +132,12 @@ $qtxt="select id,var_value from settings where var_name = 'confirmStockChange' a
 $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $confirmStockChange=$r['var_value'];
 
-$r=db_fetch_array(db_select("select box2 from grupper where art = 'DIV' and kodenr = '5' ",__FILE__ . " linje " . __LINE__));
-$shopurl=trim($r['box2']);
-
+$qtxt = "select box2 from grupper where art = 'DIV' and kodenr = '5'";
+if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $shopurl=trim($r['box2']);
+if (!$shopurl) {
+	$qtxt = "select box4 from grupper where art = 'API' and kodenr = '1'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $shopurl=trim($r['box4']);
+}
 $opener=if_isset($_GET['opener']);
 $id = if_isset($_GET['id'])*1;
 if(isset($_GET['returside']) && $returside= $_GET['returside']){
@@ -198,9 +204,9 @@ if ($acceptStockChange) {
 	$ny_lagerbeh=if_isset($_POST['ny_lagerbeh']);
 
 	for($x=1;$x<=count($ny_lagerbeh);$x++) {
-		if ($ny_lagerbeh[$x]!=$lagerbeh[$x]) {
+#		if ($ny_lagerbeh[$x]!=$lagerbeh[$x]) {
 			lagerreguler($id,$ny_lagerbeh[$x],$cost,$x,date("Y-m-d"),'0');
-		}
+#		}
 	}
 	print "<meta http-equiv='refresh' content='0;URL=varekort.php?id=$id'>";
 	exit;
@@ -445,12 +451,14 @@ if ($id && is_array($lagerlok)) {
 			$folgevare=substr($folgevarenr,4)*-1;
 		}	else print "<BODY onload=\"javascript:alert('Varenummer $folgevarenr eksisterer ikke!')\">";
 	}
+/* 20220215 Is this used for anything???
 	if ($rabatgruppe) {
 		$r=db_fetch_array(db_select("select * from grupper where art='VRG' and kodenr = '$rabatgruppe'",__FILE__ . " linje " . __LINE__));
 		$m_type=$r['box1'];
 		$m_rabat_array=explode(";",$r['box2']);
 		$m_antal_array=explode(";",$r['box3']);		
 	}
+*/	
 	if ($ny_gruppe && $ny_gruppe != $gruppe) {
 		$r=db_fetch_array(db_select("select box8 from grupper where art='VG' and kodenr = '$ny_gruppe'",__FILE__ . " linje " . __LINE__));
 		$tmp1= ($r['box8']);
@@ -828,6 +836,7 @@ for($x=1;$x<=$lagerantal;$x++) {
 			lagerreguler($id,$ny_lagerbeh[$x],$kostpris[0],$x,date("Y-m-d"),'0');
 		}
 	} elseif ($api_fil && !count($variant_vare_id)) { #20170210
+/*
 		$qtxt="select shop_id from shop_varer where saldi_id='$id'";
 		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $shop_id=$r['shop_id'];
 		else $shop_id.=urlencode("$varenr");
@@ -840,6 +849,8 @@ for($x=1;$x<=$lagerantal;$x++) {
 			$txt2.="&stockno=$y'";
 			exec ("nohup $txt2 > /dev/null 2>&1 &\n");
 		}
+*/
+		sync_shop_vare($id,0,$x); // 20220203 outcommented lines above 
 	}
 	}
 
@@ -878,10 +889,10 @@ if ($menu=='T') {
 print "<tr><td align=\"center\" valign=\"top\">\n";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>\n";
 $tmp = ($popup) ? "onclick=\"javascript=opener.location.reload();\"" : ""; 
-	if ($opener!='varer.php') print "<td width=\"10%\" $top_bund><a href=\"javascript:confirmClose('$returside?id=$ordre_id&fokus=$fokus&varenr=". addslashes($varenr) ."&vare_id=$id','$tekst')\" accesskey=L>Luk</a></td>\n";
+	if ($opener!='varer.php') print "<td width=\"10%\" $top_bund><a href=\"javascript:confirmClose('$returside?id=$ordre_id&fokus=$fokus&varenr=". addslashes($varenr) ."&vare_id=$id','$tekst')\" accesskey=L>".findtekst(30,$sprog_id)."</a></td>\n";
 else print "<td width=\"10%\" $tmp $top_bund> <a href=\"javascript:confirmClose('$returside?','$tekst')\" accesskey=L>Luk</a></td>\n";
-print "<td width=\"80%\" $top_bund align=\"center\"> varekort</td>\n";
-if ($id) print "<td width=\"10%\" $top_bund align=\"right\"><a href=\"javascript:confirmClose('varekort.php?opener=$opener&returside=$returside&ordre_id=$id','$tekst')\" accesskey=N>Ny</a>\n";
+	print "<td width=\"80%\" $top_bund align=\"center\">".findtekst(566,$sprog_id)."</td>\n";
+	if ($id) print "<td width=\"10%\" $top_bund align=\"right\"><a href=\"javascript:confirmClose('varekort.php?opener=$opener&returside=$returside&ordre_id=$id','$tekst')\" accesskey=N>".findtekst(39,$sprog_id)."</a>\n";
 print "</td></tbody></table>\n";
 print "</td></tr>\n";
 print "<td align = center valign = center>\n";
@@ -899,6 +910,7 @@ if ($id > 0) {
 	$indhold           = $row['indhold'];
 	$forhold           = $row['forhold'];
 	$salgspris         = $row['salgspris'];
+	$netprice          = $row['salgspris'];
 	$kostpris[0]       = $row['kostpris'];
 	$montage=$row['montage']; # montagepris til stillads
 	$demontage=$row['demontage']; # demontagepris til stillads
@@ -1033,6 +1045,11 @@ if ($id > 0) {
 		$m_type=$r['box1'];
 		$m_rabat_array=explode(";",$r['box2']);
 		$m_antal_array=explode(";",$r['box3']);
+		if ($incl_moms) { // 20220215
+			for ($x=0;$x<count($m_rabat_array);$x++) {
+				$m_rabat_array[$x] = usdecimal($m_rabat_array[$x]) * 100 / (100+$incl_moms);
+			}
+		}	
 	}
 	$qtxt="select var_value from settings where var_name = 'useCommission' and var_grp = 'items'";
 	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
@@ -1107,7 +1124,7 @@ for ($x=1;$x<=$vare_sprogantal;$x++) {
 }
 
 ($noEdit)?$href=NULL:$href="ret_varenr.php?id=$id";
-print "<tr><td colspan=\"3\" align=\"center\"><b>Varenr: <a href=\"$href\">$varenr</a></b></td></tr>";
+print "<tr><td colspan=\"3\" align=\"center\"><b>".findtekst(917,$sprog_id).": <a href=\"$href\">$varenr</a></b></td></tr>";
 if (!$varenr) {
 	($db=='saldi_735')?$pattern='[a-zA-Z0-9+._ -]+':$pattern='[a-zA-Z0-9+._-]+';
 	$fokus="varenr";
@@ -1115,13 +1132,13 @@ if (!$varenr) {
 	print "<td colspan=\"3\" align=\"center\">";
 	print "<input class=\"inputbox\" type=\"text\" size=\"25\" name=\"varenr\" value=\"$varenr\" pattern='". $pattern ."' ";
 	print "onchange=\"javascript:docChange = true;\"></td></tr>";
-	print "<tr><td align=center>Tilladte tegn er: a-z A-Z 0-9 . + -_</td></tr>";
+	print "<tr><td align=center>".findtekst(2021,$sprog_id)."</td></tr>";
 } else {
 	print "<input type=\"hidden\" name=\"varenr\" value=\"$varenr\">";
 	print "<tr><td colspan='4' width='100%'><table bordercolor='#FFFFFF' border='1' cellspacing='5' width='100%'><tbody>";
 	print "<tr><td colspan='2' valign='top'><table border='0' width='100%'><tbody>"; # Pris enhedstabel ->
 	if (!$beskrivelse[0]) $fokus="beskrivelse0";
-	print "<tr><td width='17%'>Beskrivelse</td><td>";
+	print "<tr><td width='17%'>".findtekst(914,$sprog_id)."</td><td>";
 	print "<input type='hidden' name='oldDescription' value=\"$beskrivelse[0]\">";
 	print "<input class='inputbox' type='text' style='text-align:left;width:400px;' name='beskrivelse0' ";
 	if (strpos($beskrivelse[0],"'")) print "value=\"". $beskrivelse[0] ."\" ";
@@ -1132,12 +1149,12 @@ if (!$varenr) {
 	$r=db_fetch_array(db_select("select box6 from grupper where art = 'bilag'",__FILE__ . " linje " . __LINE__));
 	if ($r['box6']) {
 		if ($fotonavn) {
-			$fotourl="../owncloud/".$db."/varefotos/".$id;
+			$fotourl="../bilag/".$db."/varefotos/".$id;
 			($noEdit)?$href=NULL:$href="varefoto.php?id=$id&fotonavn=".urlencode($fotonavn);
 			print "<a href=\"$href\"><img style=\"border:0px solid;height:100px\" alt=\"$fotonavn\" src=\"$fotourl\"></a>";
 		} else {
 			($noEdit)?$href=NULL:$href="varefoto.php?id=$id";
-			print "<a href=\"$href\">tilknyt billede</a>";
+			print "<a href=\"$href\">".findtekst(2022,$sprog_id)."</a>";
 		}
 	}
 	print "</td></tr>";
@@ -1145,11 +1162,11 @@ if (!$varenr) {
 		print "<input type=\"hidden\" name=\"vare_tekst_id[$x]\" value=\"$vare_tekst_id[$x]\">";
 		print "<tr><td>$vare_sprog[$x]</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"beskrivelse[$x]\" value=\"$beskrivelse[$x]\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	}
-	print "<tr><td>Varem&aelig;rke</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"trademark\" value=\"$trademark\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<tr><td>".findtekst(2019,$sprog_id)."</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"trademark\" value=\"$trademark\" onchange=\"javascript:docChange = true;\"></td></tr>";
 ################# VARIANTER #######################
 	if ($vare_varianter) {
 		print "<tr><td colspan=\"2\"><hr></td></tr>";
-		print "<tr><td colspan=\"2\">Varianter</td></tr>";
+		print "<tr><td colspan=\"2\">".findtekst(472,$sprog_id)."</td></tr>";
 		print "<tr><td colspan=\"2\"><table border=\"0\"><tbody>";
 
 		print "<tr>";
@@ -1224,7 +1241,7 @@ if (!$varenr) {
 		}
 		print "</tbody></table></td>";
 	} else {
-		print "<tr><td>Stregkode</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"stregkode\" value=\"$stregkode\" onchange=\"javascript:docChange = true;\"></td>";
+		print "<tr><td>".findtekst(2016,$sprog_id)."</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"stregkode\" value=\"$stregkode\" onchange=\"javascript:docChange = true;\"></td>";
 	}
 	print "</tbody></table></td>";
 	#print "<tr><td>Varianter</td><td>";
@@ -1245,7 +1262,7 @@ if (!$varenr) {
 ######### ==> tabel 4
 #print "<tr><td colspan=4 width=100%><table border=1 width=100%><tbody>";
 	print "<tr><td width=\"33%\" valign=top><table border=\"0\" width=\"100%\"><tbody>"; # Pris enhedstabel ->
-	print "<tr><td height=\"20%\"><b>Priser</b></td><td width=\"33%\" align=\"center\">$enhed</td><td width=\"33%\" align=\"center\">$enhed2</td></tr>";
+	print "<tr><td height=\"20%\"><b>".findtekst(2017,$sprog_id)."</b></td><td width=\"33%\" align=\"center\">$enhed</td><td width=\"33%\" align=\"center\">$enhed2</td></tr>";
 	if ($p_grp_salgspris) $type="readonly=readonly";
 	else $type="type=text";
 	if (round($salgspris,3)==0.001) $tmp=dkdecimal($salgspris,3); #20161006
@@ -1255,19 +1272,19 @@ if (!$varenr) {
 #    } else {
 #        setPercentageField($type, $tmp, $enhed2, $salgspris, $forhold, $incl_moms, $id, null);    
 #    }
-	print "<tr><td>Salgspris</td><td>";
+	print "<tr><td>".findtekst(949,$sprog_id)."</td><td>";
 	print "<input $type style=text-align:right size=\"8\" name=\"salgspris\" value=\"$tmp\" onchange=\"javascript:docChange = true;\">";
 	print "</td>";
-	if ($enhed2) {
+	if ($enhed2 && $forhold) {
 		$tmp=dkdecimal($salgspris/$forhold,2);
 		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
 	} elseif($incl_moms) {
-		print  "<td>(incl moms)</td>";
+		print  "<td>(".findtekst(2018,$sprog_id).")</td>";
     }
 	if ($p_grp_tier_price) $type="readonly=readonly";
 	else $type="type=text";
  $tmp=dkdecimal($tier_price,2);
-	print "<tr><td>B2B salgspris</td><td><input $type style=text-align:right size=8 name=tier_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
+	print "<tr><td>B2B ".findtekst(949,$sprog_id)."</td><td><input $type style=text-align:right size=8 name=tier_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
 	if ($enhed2) {
 		$tmp=dkdecimal($tier_price/$forhold,2);
 		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
@@ -1317,7 +1334,7 @@ if (!$varenr) {
 	if ($p_grp_kostpris || $samlevare) $type="readonly=readonly";
 	elseif ($fifo && $beholdning != 0) $type="readonly=readonly";
 	else $type="type=text";
-	print "<tr><td $title> Kostpris</td><td colspan='2' $title>";
+	print "<tr><td $title> ".findtekst(950,$sprog_id)."</td><td colspan='2' $title>";
 	print "<input $type style=text-align:right size=8 name=kostpris[0] value=\"$tmp\" onchange=\"javascript:docChange = true;\">";
 	if ($useCommission) {
 #		if ($salgspris) {
@@ -1325,7 +1342,7 @@ if (!$varenr) {
 #			print ' = '. dkdecimal($cost);
 #}
 		print "</td></tr>";
-		print "<tr><td>Kommissionsvare:</td><td>";
+		print "<tr><td>".findtekst(2020,$sprog_id).":</td><td>";
 		($provision || $commissionItem)?$checked="checked='checked'":$checked=NULL; 
 		print "<input type='checkbox' name='commissionItem' $checked onchange=\"javascript:docChange = true;\">";
 		if ($provision && !$salgspris && $kostpris[0]) print "&nbsp;". dkdecimal($provision,0) ."%";
@@ -1334,18 +1351,18 @@ if (!$varenr) {
 		}
 	} elseif ($salgspris) {
 		$CM=0;
-		$CM = 100 - $kostpris[0] * 100 / $salgspris; 
-		print " ". dkdecimal($CM,1) ."% db";
+		$CM = 100 - $kostpris[0] * 100 / $netprice;
+		print " ". dkdecimal($CM,1) ."% dg";
 	}
 	print "</td></tr>";
 	print "</tbody></table></td>"; #<- Pris enhedstabel
 	print "<td width=33% valign=top><table border=0 width=100%><tbody>"; # Tilbudstabel ->
-	print "<tr><td colspan=\"2\" height=\"20%\"><b>Tilbud</b></td><td colspan=\"2\"><a href=\"happyhour.php?vare_id=$id\">Avanceret</a></td></tr>";
+	print "<tr><td colspan=\"2\" height=\"20%\"><b>".findtekst(812,$sprog_id)."</b></td><td colspan=\"2\"><a href=\"happyhour.php?vare_id=$id\">".findtekst(2023,$sprog_id)."</a></td></tr>";
 	print "<tr>";
 	$tmp=dkdecimal($special_price,2);
 	if ($incl_moms) {
-		$tekst="(i/m)";
-		$title="Incl. moms";
+		$tekst="(".findtekst(2024,$sprog_id).")";
+		$title="".findtekst(2018,$sprog_id)."";
 	} else {
 		$tekst="";
 		$title="";
@@ -1353,8 +1370,8 @@ if (!$varenr) {
 	$inputTxt = "class='inputbox' type='text' style='text-align:right' size='8' name='special_price' ";
 	$inputTxt.= "value='$tmp' onchange='javascript:docChange = true;'";
 	if ($incl_moms && $specialType == 'price') {
-		$tekst="(i/m)";
-		$title="Incl. moms";
+		$tekst="(".findtekst(2024,$sprog_id).")";
+		$title="".findtekst(2018,$sprog_id)."";
 	} else {
 		$tekst="";
 		$title="";
@@ -1362,11 +1379,11 @@ if (!$varenr) {
 	print "<td>";
 	if (!$specialType || $m_antal_array[0]) $specialType='price';
 	if ($special_price || $m_antal_array[0]) {
-		($specialType=='price')?print "Salgspris":print "% Rabat";
+		($specialType=='price')?print "".findtekst(949,$sprog_id)."":print "".findtekst(2025,$sprog_id)."";
 		print "<input type='hidden' name='specialType' value='$specialType'>";
 	} else {
-		$options[0]="<option value='price'>Salgspris</option>";
-		$options[1]="<option value='percent'>% Rabat</option>";
+		$options[0]="<option value='price'>".findtekst(949,$sprog_id)."</option>";
+		$options[1]="<option value='percent'>".findtekst(2025,$sprog_id)."</option>";
 		print "<select name='specialType'>";
 		($specialType=='price')?print $options[0]:print $options[1];
 		($specialType=='price')?print $options[1]:print $options[0];
@@ -1375,34 +1392,34 @@ if (!$varenr) {
 	print "</td>";
 	print "<td title=\"$title\"><input $inputTxt>$tekst</td>";
 	$tmp=dkdecimal($campaign_cost,2);
-	print "<td height=20%>Kostpris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=campaign_cost value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<td height=20%>".findtekst(950,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=campaign_cost value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	if ($special_price!=0) $tmp=dkdato($special_from_date);
 	else $tmp='';
-	print "<tr><td height=20%>Dato start</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_from_date value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
-	print "<td height=20%>Tid start</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_from_time value=\"$special_from_time\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<tr><td height=20%>".findtekst(2026,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_from_date value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
+	print "<td height=20%>".findtekst(2028,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_from_time value=\"$special_from_time\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	if ($special_price!=0) $tmp=dkdato($special_to_date);
 	else $tmp='';
-	print "<tr><td height=20%>Dato slut</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_to_date value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
-	print "<td height=20%>Tid slut</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_to_time value=\"$special_to_time\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<tr><td height=20%>".findtekst(2027,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_to_date value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
+	print "<td height=20%>".findtekst(2029,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_to_time value=\"$special_to_time\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	print "</tbody></table></td>";# <- Tilbudstabel 
 	print "<td valign=top width=33%><table border=0 width=100%><tbody>"; # Collitabel ->
 	print "<tr><td colspan=3 height=20%><b>Colli</b></td></tr>";
 	$tmp=dkdecimal($colli,2);
-	print "<tr><td width=34%>St&oslash;rrelse</td><td width=33%><input class=\"inputbox\" type=text style=text-align:right size=8 name=colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td><td width=33%><br></td></tr>";
+	print "<tr><td width=34%>".findtekst(2030,$sprog_id)."</td><td width=33%><input class=\"inputbox\" type=text style=text-align:right size=8 name=colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td><td width=33%><br></td></tr>";
 	$tmp=dkdecimal($outer_colli,2);
-	print "<tr><td height=20%>Yder st&oslash;rrelse</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<tr><td height=20%>".findtekst(2031,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	$tmp=dkdecimal($open_colli_price,2);
-	print "<tr><td height=20%>Anbruds kostpris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=open_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<tr><td height=20%>".findtekst(2032,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=open_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	$tmp=dkdecimal($outer_colli_price,2);
-	print "<tr><td height=20%>Kostpris</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
+	print "<tr><td height=20%>".findtekst(950,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	print "</tbody></table></td></tr>";# <- Collitabel 
 
 	include ('varekort_includes/units.php');
 	
 	print "<td valign=top><table border=0 width=100%><tbody>"; # Gruppe tabel ->
-	print "<tr><td><b>Grupper</b></td></tr>";
+	print "<tr><td><b>".findtekst(2037,$sprog_id)."</b></td></tr>";
 	#varegruppe->
-	print "<tr><td width=33%>Varegruppe</td>";
+	print "<tr><td width=33%>".findtekst(774,$sprog_id)."</td>";
 	if (!$gruppe) $gruppe=1;
 	$qtxt="select beskrivelse,box10 from grupper where art='VG' and kodenr = '$gruppe'";
 	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -1437,7 +1454,7 @@ if (!$varenr) {
 	}
 	print "</SELECT></td></tr>";
 # Prisgruppe->
-	print "<tr><td>Prisgruppe</td>";
+	print "<tr><td>".findtekst(2038,$sprog_id)."</td>";
 	if (!$prisgruppe) $prisgruppe=0;
 	print "<td><SELECT class=\"inputbox\" NAME=prisgruppe value='$prisgruppe' style=\"width: 18em\">";
 	$qtxt = "select * from grupper where art='VPG' and kodenr='$prisgruppe' order by kodenr";
@@ -1454,7 +1471,7 @@ if (!$varenr) {
 #<- Prisgruppe
 
 # tilbudgruppe->
-	print "<tr><td>Tilbudsgruppe</td>";
+	print "<tr><td>".findtekst(2039,$sprog_id)."</td>";
 	if (!$tilbudgruppe) $tilbudgruppe=0;
 	print "<td><SELECT class=\"inputbox\" NAME=tilbudgruppe value='$tilbudgruppe' style=\"width: 18em\">";
 	print "<option value=\"$tilbudgruppe\">";
@@ -1470,7 +1487,7 @@ if (!$varenr) {
 	print "</SELECT></td></tr>";
 	#<- tilbudgruppe
 	# Rabatgruppe->
-	print "<tr><td>Rabatgruppe</td>";
+	print "<tr><td>".findtekst(2040,$sprog_id)."</td>";
 	if (!$rabatgruppe) $rabatruppe=0;
 	print "<td><SELECT class=\"inputbox\" NAME=rabatgruppe value='$rabatgruppe' style=\"width: 18em\">";
 	print "<option value=\"$rabatgruppe\">";
@@ -1486,9 +1503,9 @@ if (!$varenr) {
 	#<- Rabatgruppe
 	print "</tbody></table></td>";# <- Gruppe tabel 
 	print "<td valign=\"top\"><table border=\"0\" width=\"100%\"><tbody>"; # M-rabat tabel ->
-	print "<tr><td><b>M&aelig;ngderabatter</b></td>";
+	print "<tr><td><b>".findtekst(2041,$sprog_id)."</b></td>";
 	if ($special_price && $specialType=='percent') {
-		print "<tr><td>Mængderabat kan ikke kombineres med tilbuds rabat</td></tr>";
+		print "<tr><td>".findtekst(2043,$sprog_id)."</td></tr>";
 	} else {
 		print "<td align=\"right\"><SELECT class=\"inputbox\" NAME=m_type style=\"width: 4em\">";
 	if ($m_type == 'amount') {
@@ -1499,12 +1516,12 @@ if (!$varenr) {
 		print "<option value=\"amount\">kr</option>";
 	}
 	print "</SELECT> pr</td>";
-	print "<td> stk v. antal</td></tr>";
+		print "<td> ".findtekst(2042,$sprog_id)."</td></tr>";
 	for ($x=0;$x<	count($m_antal_array);$x++) {	
 		if ($m_antal_array[$x]) {
 			if ($incl_moms && $m_type!="percent") $m_rabat_array[$x]*=(100+$incl_moms)/100;
 			($rabatgruppe)? $inputtype="readonly=\"readonly\"":$inputtype="type=\"text\"";
-				print "<tr><td>Stk.rabat v. antal</td>";
+				print "<tr><td>".findtekst(2044,$sprog_id)."</td>";
 				print "<td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_rabat_array[$x]\" value=".dkdecimal($m_rabat_array[$x],3)."></td><td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_antal_array[$x]\" value=\"".dkdecimal($m_antal_array[$x],3)."\"></td></tr>";
 		}
 	}
@@ -1512,7 +1529,7 @@ if (!$varenr) {
 	if (!$rabatgruppe) {
 			if (!isset($m_rabat_array[$x])) $m_rabat_array[$x]='';
 			if (!isset($m_antal_array[$x])) $m_antal_array[$x]='';
-		print "<tr><td>Stk.rabat v. antal</td>";
+			print "<tr><td>".findtekst(2044,$sprog_id)."</td>";
 		print "<td><input class='inputbox' type='text' size='5' style='text-align:right' name='m_rabat_array[$x]'";
 		print "value='".dkdecimal($m_rabat_array[$x],3)."'></td>";
 		print "<td><input class='inputbox' type='text' size='5' style=text-align:right name='m_antal_array[$x]'";
@@ -1521,7 +1538,7 @@ if (!$varenr) {
 	}
 	print "</tbody></table></td></tr>";# <- M-rabat tabel 
 	print "<tr><td valign=\"top\" height=\"200px\"><table border=\"0\" width=\"100%\"><tbody>"; # Diverse tabel ->
-	print "<tr><td colspan=\"2\"><b>Diverse</b></td></tr>";
+	print "<tr><td colspan=\"2\"><b>".findtekst(782,$sprog_id)."</b></td></tr>";
 	if ($box8=='on'){
 		$lagernavn[1]='';
 		$x=0;
@@ -1569,7 +1586,7 @@ if (!$varenr) {
 		}
 		if (count($lagernavn)) {
 			print "<tr><td colspan=\"2\">
-			</td><td><b>Lokation</b></td></tr>";
+			</td><td><b>".findtekst(2045,$sprog_id)."</b></td></tr>";
 			for ($x=1;$x<=count($lagernavn);$x++) {
 				if (!isset($lagerid[$x])) $lagerid[$x]=0; 
 				print "<tr><td colspan=\"2\"><input type=\"hidden\" name=\"lagerid[$x]\" value=\"$lagerid[$x]\">$lagernavn[$x]</td>
@@ -1577,10 +1594,10 @@ if (!$varenr) {
 			}
 			print "<tr><td colspan=\"6\"><hr></td></tr>";
 		} else {
-			print "<tr><td colspan=\"2\">Lokation</td><td colspan=\"4\"><input class=\"inputbox\" type=\"text\" size=\"25\" name=\"location\" value=\"$location\" onchange=\"javascript:docChange = true;\"></td>";
+			print "<tr><td colspan=\"2\">".findtekst(2045,$sprog_id)."</td><td colspan=\"4\"><input class=\"inputbox\" type=\"text\" size=\"25\" name=\"location\" value=\"$location\" onchange=\"javascript:docChange = true;\"></td>";
 		}
 	}
-	print "<tr><td colspan=\"2\">F&oslash;lgevare</td><td colspan=\"4\"><input class=\"inputbox\" type=text size=25 name=folgevarenr value=\"$folgevarenr\" onchange=\"javascript:docChange = true;\"></td>";
+	print "<tr><td colspan=\"2\">".findtekst(2046,$sprog_id)."</td><td colspan=\"4\"><input class=\"inputbox\" type=text size=25 name=folgevarenr value=\"$folgevarenr\" onchange=\"javascript:docChange = true;\"></td>";
 	if ($operation) {
 		print "<tr><td colspan=\"2\">Montage</td><td colspan=\"4\">";
 		print "<input class=\"inputbox\" type=text style='text-align:right;' size='8' name='montage' value=\"".dkdecimal($montage)."\"";
@@ -1604,7 +1621,7 @@ if (!$varenr) {
 			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while ($r=db_fetch_array($q)) $outgoing+=$r['outgoing'];
 		}
-		print "<tr><td>Beholdning</td><td>Min:</td><td width=\"5%\" align='right'><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"min_lager\" value=\"". dkdecimal($min_lager,0). "\"></td>";
+		print "<tr><td>".findtekst(2046,$sprog_id)."</td><td>Min:</td><td width=\"5%\" align='right'><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"min_lager\" value=\"". dkdecimal($min_lager,0). "\"></td>";
 		print "<td width=\"5%\">Max:</td><td colspan=\"2\" align='right' ><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"max_lager\" value=\"". dkdecimal($max_lager,0) ."\"></td></tr>";
 		if (count($lagernavn)) {
 			if ($beholdning!=$lagersum) db_modify("update varer set beholdning='$lagersum' where id='$id'",__FILE__ . " linje " . __LINE__);
@@ -1665,7 +1682,7 @@ if (!$varenr) {
 			print "</td></tr>";
 	}
 	($provisionsfri)?$provisionsfri="checked":$provisionsfri=""; 
-	print "<tr><td colspan=\"2\" align='right'>Provisionsfri</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"provisionsfri\" $provisionsfri></td>";
+	print "<tr><td colspan=\"2\" align='right'>".findtekst(2048,$sprog_id)."</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"provisionsfri\" $provisionsfri></td>";
 	if ($shopurl) {
 #		($publiceret)?$publiceret="checked":$publiceret=""; 
 #		print "<tr><td colspan=\"2\">Publiceret</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"publiceret\" $publiceret></td>";
@@ -1776,35 +1793,6 @@ while ($a <= count($kat_id)) {
 
 	$a++;
 }
-
-
-/*
-	$used_id=array();
-	if (!$rename_category) {
-		for ($x=1;$x<=$kat_antal;$x++) {
-			if (!$kat_masters[$x]) { 
-				kategorier($x,$a,$id,$kat_niveau[$x],$kategori_antal,$kat_id[$x],$kategori,$kat_beskrivelse[$x],$kat_masters[$x]);
-				$z=($x);
-				while ($kat_id[$z] || $kat_masters[$z]){
-					$z++;
-					for ($y=1;$y<=$kat_antal;$y++) {
-						if (!isset($kat_masters[$y])) $kat_masters[$y]=array(); 
-						if (in_array($kat_id[$x],$kat_masters[$y])) {
-							if (!in_array($kat_id[$y],$used_id)) {
-								$z=count($kat_masters[$y])-1;
-								kategorier($y,$a,$id,$kat_niveau[$y],$kategori_antal,$kat_id[$y],$kategori,$kat_beskrivelse[$y],$kat_masters[$y][$z]);
-								$used_id[count($used_id)]=$kat_id[$y];	
-							}
-						}
-					}
-				} 
-			}
-		}
-	}
-*/
-	if (findtekst(390,$sprog_id)=="For at oprette en ny kategori skrives navnet p&aring; kategorien her") {
-		db_modify("delete from tekster where tekst_id = '390'",__FILE__ . " linje " . __LINE__);
-	}
 
 	if ($rename_category){
 		for ($x=0;$x<count($kat_id);$x++) {
@@ -2043,14 +2031,14 @@ print "<input type=hidden name=delvare value='$delvare'>";
 print "<input type=hidden name=gl_kostpris value='$kostpris[0]'>";
 
 print "<tr><td align = center><input class='button green medium' style='width:150px;' type=submit accesskey=\"g\" ";
-print "value=\"Gem\" name=\"saveItem\" onclick=\"javascript:docChange = false;\" $noEdit></td>";
+print "value=\"".findtekst(3,$sprog_id)."\" name=\"saveItem\" onclick=\"javascript:docChange = false;\" $noEdit></td>";
 
 ($beholdning || $noEdit)?$disabled='disabled':$disabled='';
 if ( $varenr && $samlevare=='on') {
 	print "<td align = center><input class='button blue medium' style='width:150px;' type=submit title='Inds&aelig;t varer i stykliste' accesskey=\"l\" value=\"Vareopslag\" name=\"submit\" onclick=\"javascript:docChange = false;\" $disabled></td>";
 } elseif ($varenr) {
-		print "<td align = center><input class='button blue medium' style='width:150px;' type=submit accesskey=\"k\" value=\"Kopier\" name=\"submit\"></td>";
-		print "<td align = center><input class='button blue medium' style='width:150px;' type=submit accesskey=\"l\" value=\"Leverand&oslash;ropslag\" name=\"submit\" onclick=\"javascript:docChange = false;\" $noEdit></td>";
+		print "<td align = center><input class='button blue medium' style='width:150px;' type=submit accesskey=\"k\" value=\"".findtekst(1100,$sprog_id)."\" name=\"submit\"></td>";
+		print "<td align = center><input class='button blue medium' style='width:150px;' type=submit accesskey=\"l\" value=\"".findtekst(2049,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\" $noEdit></td>";
 }
 if ($id) {
 	$q = db_select("select distinct(id) from ordrelinjer where vare_id = $id",__FILE__ . " linje " . __LINE__);

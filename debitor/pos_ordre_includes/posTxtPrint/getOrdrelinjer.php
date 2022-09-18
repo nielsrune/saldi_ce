@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/posTxtPrint/getOrdrelinjer.php -- lap 3.9.3 -- 2020.09.05 ---
+// --- debitor/pos_ordre_includes/posTxtPrint/getOrdrelinjer.php -- lap 4.0.4 -- 2021.11.24 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,19 +20,28 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190506 LN Get data from ordrelinjer
 // 20200721 PHR Added conversion of é & É 
 // 20200905 PHR Added ItemNo & ItemName
+// 20211124 PHR sets saet,salmevare and rabatgruppe to 0 if NULL to make sort function correct.
     
     $saetpris = 0;
     $x = 0;
 
+	$qtxt = "update ordrelinjer set saet = '0' where saet is NULL and ordre_id = '$id'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "update ordrelinjer set rabatgruppe = '0' where rabatgruppe is NULL and ordre_id = '$id'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "update ordrelinjer set samlevare = '0' where (samlevare = '' or samlevare is NULL) and ordre_id = '$id'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "select varenr from ordrelinjer where varenr='R' and ordre_id='$id'";
 	($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$rvnr=$r['varenr']:$rvnr='';
-	$q=db_select("select * from ordrelinjer where ordre_id = '$id' and posnr > 0 and varenr!='$rvnr' order by saet,rabatgruppe,samlevare,posnr,id desc",__FILE__ . " linje " . __LINE__);
+	$qtxt = "select * from ordrelinjer where ordre_id = '$id' and posnr > 0 and varenr!='$rvnr' ";
+	$qtxt.= "order by saet,rabatgruppe,samlevare,posnr,id desc";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
 		if (substr($r['tilfravalg'],0,2)!='L:' || $status>=3){ #20170622-2 tilføjet || $status>=3
 			$x++;
@@ -150,9 +159,5 @@
 			}
 		}
 	}
-	
-
-
-
 ?>
 

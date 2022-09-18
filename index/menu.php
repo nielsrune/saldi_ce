@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------index/menu.php---------lap 3.7.1-------2018-08-07--------
+// -----------index/menu.php---------lap 4.0.3-------2021-10-11--------
 /// LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,13 +20,17 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20180807 Corrected query to check if'kasse' is activated 20180807
+// 20210223 LOE replaced string Sikkerhedskopi with findtekst value
+// 20210721 LOE Fixed a bug and alsoo updated some texts not translated
+// 20210817 LOE Quotation mark added to some database variables where they were missing
+// 20211011 PHR Ramoved paperflow link as it is in 'kreditor'
 
 @session_start();	# Skal angives oeverst i filen??!!
 $s_id=session_id();
-$title="Menu";
+$title="Oversigt";
 $css="../css/standard.css";
 
 $produktion=0; # Menucolumn PRODUKTION id disabled until module is reasy for use
@@ -49,15 +53,8 @@ if (file_exists("../doc/vejledning.pdf")) $vejledning="../doc/vejledning.pdf";
 else $vejledning="http://saldi.dk/dok/komigang.html";
 
 if ($menu=='T') {
-include_once '../includes/top_header.php';
-include_once '../includes/top_menu.php';
-print "<div id=\"header\"> 
-    <div class=\"headerbtnLft\"></div>
-    <!--<span class=\"headerTxt\">Debitor - Ordreliste</span>-->";     
-print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=debitor/ordre&amp;title=debitor\" class=\"button green small right\">Ny ordre</a>--></div>";       
-print "</div><!-- end of header -->
-<div class=\"maincontentLargeHolder\">";
-print  "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\">";
+include_once '../includes/topmenu/header.php';
+include_once '../includes/topmenu/footer.php';
 } elseif ($menu=='S') {
 	include("../includes/sidemenu.php");
 } else {
@@ -72,7 +69,7 @@ function oldmenu() {
 	global $jsvars;
 	global $popup,$produktion,$provision;
 	global $regnskab,$rettigheder;
-	global $stor_knap_bg,$sprog_id;
+	global $stor_knap_bg,$sprog_id, $brugernavn; #20210721
 	global $textcolor;
 	global $vejledning,$version;
 
@@ -82,7 +79,7 @@ print "<table style=\"width:100%;height:20px;\" align=\"center\" border=\"0\" ce
 # print "<td  $top_bund width=\"10%\"> Ver $version</td>\n";
 print "<tr><td width=\"45%\"><div class=\"top_bund\">".date_default_timezone_get()." ".date("H:i")."&nbsp;</div></td>\n";
 print "<td width=\"10%\" align = \"center\"><div class=\"top_bund\"><a href=\"$vejledning\" target=\"_blank\" ";
-print " title=\"En kort kom-i-gang-vejledning med henvisning til yderligere dokumentation og videoer.\">".findtekst(92,$sprog_id)."</a></div></td>\n";
+	print " title=\"".findtekst(1622, $sprog_id)."\">".findtekst(92,$sprog_id)."</a></div></td>\n";
 print "<td><div class=\"top_bund\">&nbsp;</div></td>\n";
 print "<td width=\"20\" title=\"".findtekst(161,$sprog_id)."\"><div class=\"luk\" onclick=\"location.href='logud.php';\" style=\"cursor:pointer;\"></div></td>\n";
 print "</tbody></table></td></tr><tr><td align=\"center\" valign=\"middle\">\n";
@@ -168,10 +165,10 @@ if ($vis_kreditor) {
 
 if ($produktion) {
     if (substr($rettigheder,14,1)=='1') {
-        if ($popup) print "<td $stor_knap_bg onclick=\"javascript:p_ordrer=window.open('../produktion/ordreliste.php?returside=../includes/luk.php','p_ordrer','".$jsvars."');p_ordrer.focus();\"	onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">  Ordre</td>\n";
+			if ($popup) print "<td $stor_knap_bg onclick=\"javascript:p_ordrer=window.open('../produktion/ordreliste.php?returside=../includes/luk.php','p_ordrer','".$jsvars."');p_ordrer.focus();\"	onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">  ".findtekst(605, $sprog_id)."</td>\n";
         else print "<td $stor_knap_bg title=\"$tekst\"><a href=\"../produktion/ordreliste.php?returside=../index/menu.php\">".findtekst(107,$sprog_id)."</a></td>\n";
 		} else {
-        print "<td $stor_knap_bg><span style=\"color:#999;\">Ordre</td>\n";
+				print "<td $stor_knap_bg><span style=\"color:#999;\">".findtekst(605, $sprog_id)."</td>\n";
     }
 }
 if ($vis_lager) {
@@ -181,9 +178,11 @@ if (substr($rettigheder,9,1)=='1') {
     else print "<td $stor_knap_bg title=\"$tekst\"><a href=\"../lager/varer.php?returside=../index/menu.php\">".findtekst(110,$sprog_id)."</a></td>\n";
 } else {
     $row = db_fetch_array(db_select("select ansat_id from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__));
-    if ($row[ansat_id]) {
+				#if ($row[ansat_id]) {
+					if ($row['ansat_id']) {#20210817
         $row = db_fetch_array(db_select("select navn from ansatte where id = $row[ansat_id]",__FILE__ . " linje " . __LINE__));
-        if ($row[navn]) {
+					#if ($row[navn]) {
+					if ($row['navn']) { #20210817 quotation mark added
             $ref=$row['navn'];
 	    if ($row= db_fetch_array(db_select("select afd from ansatte where navn = '$ref'",__FILE__ . " linje " . __LINE__))) {
                 if ($row= db_fetch_array(db_select("select beskrivelse, kodenr from grupper where box1='$row[afd]' and art='LG'",__FILE__ . " linje " . __LINE__))) {
@@ -194,6 +193,7 @@ if (substr($rettigheder,9,1)=='1') {
             }
         }
     }
+			#if (!$lager) {
     if (!$lager) {
         print "<td $stor_knap_bg><span style=\"color:#999;\">".findtekst(110,$sprog_id)."</td>\n";
     }
@@ -203,6 +203,7 @@ $tekst=findtekst(112,$sprog_id);
 if (substr($rettigheder,0,1)=='1') {
    if ($popup) print "<td $stor_knap_bg onclick=\"javascript:kontoplan=window.open('../systemdata/kontoplan.php?returside=../includes/luk.php','kontoplan','".$jsvars."');kontoplan.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(113,$sprog_id)."</td>\n";
    else print "<td $stor_knap_bg title=\"$tekst\"><a href=\"../systemdata/kontoplan.php?returside=../index/menu.php\">".findtekst(113,$sprog_id)."</a></td>\n";
+#		print "<td $stor_knap_bg title=\"Paperflow\"><a href=\"../paperpdf/papflowselct.php\">"."Paperflow"."</a></td>\n";
 } else {
    print "<td $stor_knap_bg><span style=\"color:#999;\">".findtekst(113,$sprog_id)."</td>\n";
 }
@@ -312,8 +313,8 @@ if ($vis_lager) {
 }
 $tekst=findtekst(128,$sprog_id);
 if (substr($rettigheder,11,1)=='1') {
-    if ($popup) print "<td  $stor_knap_bg onclick=\"javascript:backup=window.open('../admin/backup.php?returside=../includes/luk.php','backup','".$jsvars."');backup.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">Sikkerhedskopi</td>\n";
-    else print "<td $stor_knap_bg title=\"$tekst\"><a href=\"../admin/backup.php?returside=../index/menu.php\">Sikkerhedskopi</a></td>\n";
+		if ($popup) print "<td  $stor_knap_bg onclick=\"javascript:backup=window.open('../admin/backup.php?returside=../includes/luk.php','backup','".$jsvars."');backup.focus();\" onmouseover=\"this.style.cursor = 'pointer'\" title=\"$tekst\">".findtekst(521,$sprog_id)."</td>\n"; #20210223
+		else print "<td $stor_knap_bg title=\"$tekst\"><a href=\"../admin/backup.php?returside=../index/menu.php\">".findtekst(521,$sprog_id)."</a></td>\n"; #20210223
 } else {
     print "<td $stor_knap_bg><span style=\"color:#999;\">Backup</td>\n";
 }

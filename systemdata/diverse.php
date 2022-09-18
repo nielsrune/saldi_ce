@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -- systemdata/diverse.php ------------------ ver 4.0.1 -- 2021-04-10 --
+// ------------------- systemdata/diverse.php ------------------ ver 4.0.5 -- 2022-05-14 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -70,6 +70,12 @@
 // 20210305 CA  Added the selection to use debtor number as phone number in orders - search debtor2orderphone
 // 20210312 PHR Changed intern_ftp til internFTP
 // 20210410 PHR Correction of minor error in alertcondition in 'vare_valg'.
+// 20210513 LOE	These texts were translated but not entered here previously
+// 20210801 CA  Added the selection to use order notes in ordre_valg - search orderNoteEnabled
+// 20210802 LOE Translated the remaining alert texts
+// 20211123 PHR added paperflow
+// 20211123 PHR added paperflowId & paperflowBearer
+// 20220514 PHR mailText is now removed when account is reset.  
 
 @session_start();
 $s_id=session_id();
@@ -184,6 +190,9 @@ if ($_POST) {
 		$dfm_pickup_town=if_isset($_POST['dfm_pickup_town']);
 		$dfm_pickup_zipcode=if_isset($_POST['dfm_pickup_zipcode']);
 		$mySale=if_isset($_POST['mySale']);
+		$paperflow          = if_isset($_POST['paperflow']);
+		$paperflowId        = if_isset($_POST['paperflowId']);
+		$paperflowBearer    = if_isset($_POST['paperflowBearer']);
 
 		if ($box8) {
 			ftptest($_POST['oiourl'],$_POST['oiobruger'],$_POST['oiokode']);
@@ -243,7 +252,30 @@ if ($_POST) {
 				$qtxt.= "('debitor','mySale','$mySale','Use mySale to allow customers acces to own salesdata (provision)','0')";
 		}	else $qtxt = NULL;
 			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-
+		$qtxt = "select id from settings where var_grp='creditor' and var_name='paperflow'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
+		$qtxt = "update settings set var_value='$paperflow' where id='$r[id]'";
+		} elseif ($paperflow) {
+			$qtxt = "insert into settings (var_grp,var_name,var_value,var_description,user_id) values ";
+			$qtxt.= "('creditor','paperflow','$paperflow','Use Paperflow to read text from scanned invoices','0')";
+		}	else $qtxt = NULL;
+		if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$qtxt = "select id from settings where var_grp='creditor' and var_name='paperflowId'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
+			$qtxt = "update settings set var_value='$paperflowId' where id='$r[id]'";
+		} elseif ($paperflowId) {
+			$qtxt = "insert into settings (var_grp,var_name,var_value,var_description,user_id) values ";
+			$qtxt.= "('creditor','paperflowId','$paperflowId','Id given by Paperflow','0')";
+		}	else $qtxt = NULL;
+		if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$qtxt = "select id from settings where var_grp='creditor' and var_name='paperflowBearer'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
+			$qtxt = "update settings set var_value='$paperflowBearer' where id='$r[id]'";
+		} elseif ($paperflowBearer) {
+			$qtxt = "insert into settings (var_grp,var_name,var_value,var_description,user_id) values ";
+			$qtxt.= "('creditor','paperflowBearer','$paperflowBearer','Bearer given by Paperflow','0')";
+		}	else $qtxt = NULL;
+		if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	#######################################################################################
 	} elseif ($sektion=='ordre_valg') {
 		$box1       = if_isset($_POST['box1']);#incl_moms
@@ -263,6 +295,7 @@ if ($_POST) {
 		$rabatvarenr=if_isset($_POST['rabatvarenr']);
 		$kostmetode =if_isset($_POST['kostmetode']);
 		$saetvarenr =if_isset($_POST['saetvarenr']); #20150907
+		$orderNoteEnabled = if_isset($_POST['orderNoteEnabled']);
 
 		if ($box2 && $r=db_fetch_array(db_select("select id from varer WHERE varenr = '$box2'",__FILE__ . " linje " . __LINE__))) {
 			$box2=$r['id'];
@@ -271,7 +304,7 @@ if ($_POST) {
 				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		}
 		if ($box14 && !$box2) {
-			$txt="Samlet pris forudsætter at der er et varenr til rabat";
+			$txt=findtekst(1875, $sprog_id); #20210820
 			print "<BODY onload=\"JavaScript:alert('$txt')\">";
 			$box14='';
 		}
@@ -280,7 +313,7 @@ if ($_POST) {
 		$qtxt = "select id from varer WHERE varenr = '$saetvarenr'";
 		if ($saetvarenr && $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $saetvareid=$r['id'];
 		if ($saetvarenr && !$saetvareid) { 
-			$txt="Varenummer for sæt eksisterer ikke";
+			$txt= findtekst(1876, $sprog_id);
 			print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		}
 /*
@@ -314,6 +347,15 @@ if ($_POST) {
 			$qtxt.= "values ('Div_valg','5','DIV','','','','','','','$kostmetode','','','','','','')";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} 
+
+		if ($r = db_fetch_array(db_select("select id from settings where var_name='orderNoteEnabled'",__FILE__ . " linje " . __LINE__))) { #20210729
+			$id=$r['id'];
+			$qtxt = "update settings set var_value='$orderNoteEnabled' WHERE id='$id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		} else {
+			$qtxt = "insert into settings (var_name, var_value) values ('orderNoteEnabled','$orderNoteEnabled')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		}
 	#######################################################################################
 	} elseif ($sektion=='vare_valg') {
 
@@ -400,7 +442,7 @@ if ($_POST) {
 					$qtxt.="'Account for commisionsale, new items. If set, commmision sale income of new items, is accounted in this account','0')";
 				}
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			} else alert ("Driftkonto $commissionAccountNew ikke fundet i kontoplan i aktivt år ($regnaar)");
+			} else alert ("".findtekst(1709, $sprog_id)." $commissionAccountNew ".findtekst(1735, $sprog_id)." ($regnaar)");
 		} elseif ($commissionAccountNewId) {
 			$qtxt="update settings set var_value='' ";
 			$qtxt.="where id='$commissionAccountNewId'";
@@ -420,7 +462,7 @@ if ($_POST) {
 					$qtxt.="commmision sale income of used items, is accounted in this account','0')";
 				}
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			} else alert ("Driftkonto $commissionAccountUsed ikke fundet i kontoplan i aktivt år ($regnaar)");
+					} else alert ("".findtekst(1709, $sprog_id)." $commissionAccountUsed ".findtekst(1735, $sprog_id)." ($regnaar)"); #20210802
 		} elseif ($commissionAccountUsedId) {
 			$qtxt="update settings set var_value='' ";
 			$qtxt.="where id='$commissionAccountUsedId'";
@@ -440,7 +482,7 @@ if ($_POST) {
 					$qtxt.= "If set, customers part of commmision sale of new items, is taken from this account','0')";
 				}
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			} else alert ("Statuskonto $customerCommissionAccountNew ikke fundet i kontoplan i aktivt år ($regnaar)");
+		} else alert ("".findtekst(1736, $sprog_id)." $customerCommissionAccountNew ".findtekst(1735, $sprog_id)." ($regnaar)");
 		} elseif ($customerCommissionAccountNewId) {
 			$qtxt="update settings set var_value='' ";
 			$qtxt.="where id='$customerCommissionAccountNewId'";
@@ -461,7 +503,7 @@ if ($_POST) {
 					$qtxt.= "If set, customers part of commmision sale of used items, is taken from this account','0')";
 				}
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			} else alert ("Statuskonto $customerCommissionAccountUsed ikke fundet i kontoplan i aktivt år ($regnaar)");
+			} else alert ("".findtekst(1736, $sprog_id)." $customerCommissionAccountUsed ".findtekst(1735, $sprog_id)." ($regnaar)");
 		} elseif ($customerCommissionAccountUsedId) {
 			$qtxt="update settings set var_value='' ";
 			$qtxt.="where id='$customerCommissionAccountUsedId'";
@@ -493,7 +535,7 @@ if ($_POST) {
 					$qtxt.= "If set, customers part of commmision sale of new items, is taken from this account','0')";
 				}
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			} else alert ("Statuskonto $ownCommissionAccountNew ikke fundet i kontoplan i aktivt år ($regnaar)");
+			} else alert ("".findtekst(1736, $sprog_id)." $ownCommissionAccountNew ".findtekst(1735, $sprog_id)." ($regnaar)");
 		} elseif ($ownCommissionAccountNewId) {
 			$qtxt="update settings set var_value='' ";
 			$qtxt.="where id='$ownCommissionAccountNewId'";
@@ -514,7 +556,7 @@ if ($_POST) {
 					$qtxt.= "If set, customers part of commmision sale of used items, is taken from this account','0')";
 				}
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			} else alert ("Statuskonto $ownCommissionAccountUsed ikke fundet i kontoplan i aktivt år ($regnaar)");
+			} else alert ("".findtekst(1736, $sprog_id)." $ownCommissionAccountUsed ".findtekst(1735, $sprog_id)." ($regnaar)");
 		} elseif ($ownCommissionAccountUsedId) {
 			$qtxt="update settings set var_value='' ";
 			$qtxt.="where id='$ownCommissionAccountUsedId'";
@@ -565,7 +607,7 @@ if ($_POST) {
 				}
 			}
 			sleep (10);
-			alert ("$x varer konvereteret");
+			alert ("$x ".findtekst(1737, $sprog_id)."");
 		}
 	# varevalg slut
 	#######################################################################################
@@ -641,12 +683,14 @@ if ($_POST) {
 		for ($x=0;$x<count($noGo);$x++) {
 			if (strstr($labelText,$noGo[$x])) {
 				$labelText=str_replace($noGo[$x],'',$labelText);
-				print "<BODY onload=\"JavaScript:alert('Illegal værdi i labeltekst')\">";
+				$alert = findtekst(1738, $sprog_id);
+				print "<BODY onload=\"JavaScript:alert('$alert')\">";
 			}
 		}
 		if ($createNewLabel && !$newLabelName) {
+			$alert1 = findtekst(1739, $sprog_id); #20210802
 			if ($labelTemplate) $newLabelName=str_replace('.txt','',$labelTemplate);
-			else alert('Beskrivelse mangler, label ikke oprettet');
+			else alert($alert1);
 		}
 		if ($createNewLabel && $newLabelName) {
 			if ($labelTemplate) {
@@ -752,7 +796,7 @@ if ($_POST) {
 			db_modify("update grupper set  box1='$box1',box2='$box2',box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box9='$box9' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
 		}
 	#######################################################################################
-	} elseif ($sektion=='pos_valg') {
+	} elseif ($sektion=='posOptions') {
 		$id1=if_isset($_POST['id1'])*1;
 		$box1=if_isset($_POST['kasseantal'])*1;
 		$afd_nr=if_isset($_POST['afd_nr']);
@@ -787,9 +831,7 @@ if ($_POST) {
 		$bordvalg=if_isset($_POST['bordvalg']);
 		$diffkonti=if_isset($_POST['diffkonti']);
 		$div_kort_kto=if_isset($_POST['div_kort_kto']); #20140129
-		$voucher=if_isset($_POST['voucher']); #20181029
-		$voucherText=if_isset($_POST['voucherText']); #20181029
-		$voucherItemNo=if_isset($_POST['voucherItemNo']); #20210116
+		$jump2price         = if_isset($_POST['jump2price']);
 		$kasseprimo=if_isset($_POST['kasseprimo']);
 		$kasseprimo=usdecimal($kasseprimo)*1;
 		$koekkenprinter=if_isset($_POST['koekkenprinter']);
@@ -800,6 +842,10 @@ if ($_POST) {
 		$terminal_ip=if_isset($_POST['terminal_ip']);
 		$varenr=if_isset($_POST['varenr']);
 		$vis_saet=if_isset($_POST['vis_saet']);
+		$voucher            = if_isset($_POST['voucher']); #20181029
+		$voucherText        = if_isset($_POST['voucherText']); #20181029
+		$voucherItemNo      = if_isset($_POST['voucherItemNo']); #20210116
+
 		$box14_2=if_isset($_POST['udtag0']);
 
 		for ($x=0;$x<count($kortno);$x++) { // Removes noise in log
@@ -924,7 +970,7 @@ if ($_POST) {
 					if ($r['id']) $voucherItemId[$x]=$r['id'];
 					else {
 						$voucherItemId[$x]='0';
-						$alerttxt="Varenummer $voucherItemNo[$x] ikke fundet";
+						$alerttxt="".findtekst(320, $sprog_id)." $voucherItemNo[$x] ".findtekst(1740, $sprog_id)."";
 						alert ($alerttxt);
 					}
 				} else $voucherItemId[$x]='0';
@@ -1035,7 +1081,16 @@ if ($_POST) {
 			$qtxt.= "('postEachSale','POS','$poEaSa','Post to transactions immediately when finishing sale','0')";
 		}
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-
+		$qtxt="select id from settings where var_name='jump2price'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		if ($r['id']) {
+			$qtxt="update settings set var_value='$jump2price' where id='$r[id]'";
+		} else {
+			$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id)";
+			$qtxt.= " values ";
+			$qtxt.= "('jump2price','globals','$jump2price','Cursor jumps direct to price and sets quantity to 1 if price is 0','0')";
+		}
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		#######################################################################################
 	} elseif ($sektion=='docubizz') {
 		$id=$_POST['id'];
@@ -1056,7 +1111,8 @@ if ($_POST) {
 		$r = db_fetch_array(db_select("select * from grupper WHERE art = 'DocBiz'",__FILE__ . " linje " . __LINE__));
 		$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$r['box2'].":".$r['box3']."@".$r['box1']."/".$r['box5']." < ftpscript > NULL ";
 		system ($kommando);
-		print "<BODY onload=\"JavaScript:alert('Data sendt til DocuBizz')\">";
+		$alert= findtekst(1741, $sprog_id);
+		print "<BODY onload=\"JavaScript:alert('$alert')\">";
 #######################################################################################
 	} elseif ($sektion=='bilag') {
 		$id   = if_isset($_POST['id']);
@@ -1160,6 +1216,11 @@ if ($_POST) {
 		} elseif ($id > 0) {
 			db_modify("update grupper set  box1='$brug_mfakt',box2='$brug_dellev',box3='$levfrist' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
 		}
+		
+
+######################################################################################
+
+
 ######################################################################################
 	} elseif ($sektion=='kontoplan_io') {
 		if (strstr($_POST['submit'])=="Eksport") {
@@ -1201,7 +1262,9 @@ if ($_POST) {
 			$nyt_navn=trim(db_escape_string($_POST['nyt_navn']));
 			include("../includes/connect.php");
 			if (db_fetch_array(db_select("select id from regnskab WHERE regnskab = '$nyt_navn'",__FILE__ . " linje " . __LINE__))) {
-				print "<BODY onload=\"JavaScript:alert('Der findes allerede et regnskab med navnet $nyt_navn! Navn ikke &aelig;ndret')\">";
+				$alert1 = findtekst(1742, $sprog_id);
+				$alert2 = findtekst(1743, $sprog_id);
+				print "<BODY onload=\"JavaScript:alert('$alert1 $nyt_navn! $alert2')\">";
 			} else {
 				$r=db_fetch_array(db_select("select id from kundedata WHERE regnskab_id = '$db_id'",__FILE__ . " linje " . __LINE__));
 				if (!$r['id']){
@@ -1225,24 +1288,25 @@ if ($_POST) {
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				setcookie("timezone",$timezone,time()+60*60*24*30,'/');
 			}
-		} elseif (isset($_POST['nulstil']) && $_POST['nulstil']=='Nulstil') { #20170731
-			$qtxt="TRUNCATE batch_kob,batch_salg,betalinger,betalingsliste,budget,jobkort,kassekladde,kladdeliste,kostpriser,lagerstatus,";
-			$qtxt.="openpost,ordrelinjer,ordrer,pos_betalinger,shop_ordrer,transaktioner,report,deleted_order,corrections,price_correction,";
-			$qtxt.="drawer,proforma";
+		} elseif (isset($_POST['nulstil']) && $_POST['nulstil']) { #20170731
+			$qtxt="TRUNCATE batch_kob,batch_salg,betalinger,betalingsliste,budget,corrections,deleted_order,drawer,jobkort,kassekladde,";
+			$qtxt.="kladdeliste,kostpriser,lagerstatus,mylabel,openpost,ordrelinjer,ordrer,pos_betalinger,report,price_correction,";
+			$qtxt.="paperflow,proforma,rental,rentalitems,rentalperiod,shop_ordrer,transaktioner,tekster,variant_typer,variant_varer,";
+			$qtxt.="varianter,voucher,voucheruse";
 			$qtxt.=" restart identity";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			db_modify("DELETE FROM grupper WHERE art='RA' and kodenr !='1'",__FILE__ . " linje " . __LINE__);
 			db_modify("DELETE FROM kontoplan WHERE regnskabsaar!='1'",__FILE__ . " linje " . __LINE__);
 			db_modify("UPDATE varer SET beholdning = '0'",__FILE__ . " linje " . __LINE__);
+			$qtxt = "DELETE From settings where (var_grp = 'debitor' or var_grp = 'mySale') and (var_name = 'mailSubject' or var_name = 'mailText')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			if ($_POST['behold_debkred']=='') {
 				$qtxt="select id from adresser WHERE art='S'";
 				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$eget_id=$r['id'];
 				$qtxt="DELETE FROM adresser WHERE id!='$eget_id'";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-				$qtxt="DELETE FROM ansatte WHERE konto_id!='$eget_id'";
-				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-				$qtxt="TRUNCATE vare_lev,shop_adresser restart identity";
+				$qtxt="TRUNCATE ansatte, vare_lev,shop_adresser restart identity";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 			if ($_POST['behold_varer']=='') {
@@ -1259,7 +1323,8 @@ if ($_POST) {
 				print "Sletter";
 			} else {
 				$tekst1=findtekst(852,$sprog_id);
-				alert("For at slette dit regnskab skal du afmærke feltet ved $tekst1: $regnskab");
+				$alert = findtekst(1744, $sprog_id);
+				alert("$alert $tekst1: $regnskab");
 		}
 		}
 	
@@ -1327,28 +1392,29 @@ if ($menu != 'T') {
 	print "<td width=\"170px\" valign=\"top\">";
 	print "<table cellpadding=\"2\" cellspacing=\"2\" border=\"0\" width=\"100%\"><tbody>";
 	print "<tr><td align=\"center\" valign=\"top\"><br></td></tr>";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=kontoindstillinger>Kontoindstillinger</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=provision>Provisionsberegning</a>&nbsp;</td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=personlige_valg>Personlige valg</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=ordre_valg>Ordrerelaterede valg</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=vare_valg>Varerelaterede valg</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=variant_valg>Variantrelaterede valg</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=shop_valg>Shoprelaterede valg</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=kontoindstillinger>".findtekst(783,$sprog_id)."</a></td></tr>\n"; // 20210513
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=provision>".findtekst(784,$sprog_id)."</a>&nbsp;</td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=personlige_valg>".findtekst(785,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=ordre_valg>".findtekst(786,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=vare_valg>".findtekst(787,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=variant_valg>".findtekst(788,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=shop_valg>".findtekst(789,$sprog_id)."</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=api_valg>API</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=labels>Labels</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=prislister>".findtekst(427,$sprog_id)."</a><!--tekst 427--></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=rykker_valg>Rykkerrelaterede valg</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=div_valg>Diverse valg</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=tjekliste>Tjeklister</a></td></tr>\n";
-	if ($docubizz) print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=docubizz>DocuBizz</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=bilag>Bilagshåndtering</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=labels>".findtekst(791,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=prislister>".findtekst(792,$sprog_id)."</a><!--tekst 427--></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=rykker_valg>".findtekst(793,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=div_valg>".findtekst(794,$sprog_id)."</a></td></tr>\n";
+	# print "<tr><td align=left $top_bund>&nbsp;<a href=..\paperpdf/activatepaperflow.php>".findtekst(795,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=tjekliste>".findtekst(796,$sprog_id)."</a></td></tr>\n";
+	if ($docubizz) print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=docubizz>".findtekst(796,$sprog_id)."</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=bilag>".findtekst(797,$sprog_id)."</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=orediff>".findtekst(170,$sprog_id)."</a><!--tekst 170--></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=massefakt>".findtekst(200,$sprog_id)."</a><!--tekst 200--></td></tr>\n";
-	if (file_exists("../debitor/pos_ordre.php")) print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=pos_valg>".findtekst(271,$sprog_id)."</a><!--tekst 271--></td></tr>\n";
+	if (file_exists("../debitor/pos_ordre.php")) print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=posOptions>".findtekst(271,$sprog_id)."</a><!--tekst 271--></td></tr>\n";
 	# print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=email>Mail indstillinger</a></td></tr>";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=sprog>Sprog</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=sprog>".findtekst(801,$sprog_id)."</a></td></tr>\n";
 	# print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=kontoplan_io>Indl&aelig;s  / udl&aelig;s kontoplan</a></td></tr>";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=div_io>Import &amp; eksport</a></td></tr>\n";
+	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=div_io>".findtekst(802,$sprog_id)."</a></td></tr>\n";
 	print "</tbody></table></td><td valign=\"top\" align=\"left\"><table align=\"left\" valign=\"top\" border=\"0\" width=\"90%\"><tbody>\n";
 }
 if (!$sektion) print "<td><br></td>";
@@ -1369,10 +1435,13 @@ if ($sektion=="rykker_valg") rykker_valg();
 if ($sektion=="div_valg") div_valg();
 if ($sektion=="docubizz") docubizz();
 if ($sektion=="bilag") bilag();
+//if ($sektion=="paperflow") activatePaperflow();
 if ($sektion=="orediff") orediff($diffkto);
 if ($sektion=="massefakt") massefakt();
-if ($sektion=="pos_valg") pos_valg();
-if ($sektion=="sprog") {
+if ($sektion=="posOptions") {
+	include ("diverseIncludes/posOptions.php");
+	posOptions();
+} if ($sektion=="sprog") {
 	include ("diverseIncludes/language.php");
 	language();
 }
@@ -1390,6 +1459,10 @@ print "</tbody></table></td></tr>";
 if ($menu=='T') print "</div>";
 #print "</form>";
 #print "</tbody></table></td></tr>";
+
+
+
+
 
 ?>
 </tbody></table>
