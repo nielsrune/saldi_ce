@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php --- lap 4.0.0 --- 2021.03.10 ---
+// --- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php --- lap 4.0.2 --- 2021.08.22 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -27,20 +27,20 @@
 // 20201114	PHR Enhanged 'tilfravalg' add/remove to food items, (fx. extra bacon or no tomatoes in burger) $tilfravalgNy
 // 20210127 PHR Some minor design changes 
 // 20210310 PHR Some error corections in minor design changes 
+// 20210822 PHR Added $discounttxt as global in function vis_pos_linjer
 
 #Called from pos_ordre.php & pos_ordre_itemscan.php
 function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
-
 	print "\n<!-- Function vis_pos_linjer (start)-->\n";
 	global $afd,$afd_lager,$afd_navn,$afslut;
 	global $bgcolor,$bgcolor5,$bordnr,$brugernavn,$betvaluta,$betvalkurs,$betvalsum;
-	global $del_bord,$difkto,$db_id;
+	global $del_bord,$difkto,$db_id,$discounttxt;
 	global $fokus;
 	global $ifs;
 	global $kasse,$koekken,$kundedisplay;
 	global $lager_ny,$lagerantal,$lagernavn,$lagernr;
 	global $regnaar;
-	global $status,$svnr;
+	global $sprog_id,$status,$svnr;
 	global $tilfravalgNy;
 	global $varelinjer,$varenr_ny,$vis_saet;
 
@@ -61,10 +61,7 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 		$samlet_pris=usdecimal($samlet_pris,2);
 		$samlet_pris*=1;
 	}
-
 	include("ordrelinjerData.php"); #20190510
-
-
 	include("ordrelinjerDataII.php"); #20190510 // Her sætter den ordre linierne
 
 	$varelinjer=$x;
@@ -107,6 +104,7 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 	print "<tr><td id=\"varelin\" style=\"width:100%; height:80%\" valign=\"top\">";
 	print "<div $class><table width=\"100%\" border=\"0\"><tbody>\n";
 #	}
+
 	include("productLines.php"); #20190510
 
 	if ($vis_saet && $samlet_rabatpct && $samlet_pris)  {

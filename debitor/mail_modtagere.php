@@ -1,36 +1,36 @@
 <?php
-@session_start();
-$s_id=session_id();
 //                ___   _   _   ___  _     ___  _ _
 //               / __| / \ | | |   \| |   |   \| / /
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------debitor/mail_modtagere.php---------------------Patch 3.7.4-----2018.12.28---
-// LICENS
+// --- debitor/mail_modtagere.php --- Patch 4.0.6 --- 2022.08.08 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2016-2018 saldi.dk aps
+// Copyright (c) 2022 Saldi.dk ApS
 // -----------------------------------------------------------------------------------
 // 20170613 PHR Tilføjet flere variabler til mailteksten og rettet datoudtræk fra beskrivelse. 
 // 20180417 PHR	rettet ',$mailtekst)' til ',$mtxt)' i '$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt)'
 // 20100907	PHR tilføjet and art='D' så den ikke fanger en kreditor...
 // 20181228 PHR tilføjet and ordrelinjer.fast_db > '0' så rabatlinjer ikke medregnes i antal.
+// 20220511 PHR Removed uft-8 decode
+// 20220808	PHR	Translated all texts
+
+@session_start();
+$s_id=session_id();
 
 $modulnr=12;
 $css="../css/standard.css";
@@ -119,11 +119,15 @@ if ($testmail) {
 	echo "sender til $r[email]<br>";
 	$x=0;
 	$mtxt=str_replace('$navn',$modt_navn[$x],$mailtekst);
+	$mtxt=str_replace('$name',$modt_navn[$x],$mailtekst);
 	$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt);
+	$mtxt=str_replace('$account',$kontonr[$x],$mtxt);
 	$mtxt=str_replace('$sum',$belob[$x],$mtxt);
 	$mtxt=str_replace('$antal',$antal[$x],$mtxt);
+	$mtxt=str_replace('$qty',$antal[$x],$mtxt);
 	$mtxt=str_replace('$start',dkdato($start[$x]),$mtxt);
 	$mtxt=str_replace('$slut',dkdato($slut[$x]),$mtxt);
+	$mtxt=str_replace('$end',dkdato($slut[$x]),$mtxt);
 	$mtxt=str_replace("\n","<br>",$mtxt);
 	send_mail($emne,$mtxt,$r['email'],$r['email'],$r['firmanavn']);
 }
@@ -132,27 +136,32 @@ if ($send_mails) {
 	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 	for ($x=0;$x<count($modt_navn);$x++) {
 		$mtxt=str_replace('$navn',$modt_navn[$x],$mailtekst);
+	$mtxt=str_replace('$name',$modt_navn[$x],$mailtekst);
 		$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt);
+	$mtxt=str_replace('$account',$kontonr[$x],$mtxt);
 		$mtxt=str_replace('$sum',$belob[$x],$mtxt);
 		$mtxt=str_replace('$antal',$antal[$x],$mtxt);
-		$mtxt=str_replace('$start',$start[$x],$mtxt);
-		$mtxt=str_replace('$slut',$slut[$x],$mtxt);
+	$mtxt=str_replace('$qty',$antal[$x],$mtxt);
+	$mtxt=str_replace('$start',dkdato($start[$x]),$mtxt);
+	$mtxt=str_replace('$slut',dkdato($slut[$x]),$mtxt);
+	$mtxt=str_replace('$end',dkdato($slut[$x]),$mtxt);
 		$mtxt=str_replace("\n","<br>",$mtxt);
 		send_mail($emne,$mtxt,$email[$x],$r['email'],$r['firmanavn']);
 	}
 }
 
 
-if (!$emne) $emne="Afregning";
+if (!$emne) $emne = findtekst(2051,$languageID);
 if (!$mailtekst) {
+	$mailtekst = findtekst(2052,$languageID)."\n\n";
+	$mailtekst.= findtekst(2053,$languageID)."\n\n";
+	$mailtekst.= findtekst(2054,$languageID)."\n\n";
+	$mailtekst.= findtekst(2055,$languageID)."\n\n";
+	$mailtekst.= findtekst(2056,$languageID)."\n";
 	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
-	$mailtekst='Kære $navn (Konto: $kontonr)'. "\n".'Du har i peroden $start til $slut opnået et tilgodehavende på kr. $sum'."\n";
-	$mailtekst.='I perioden er der solgt i alt $antal varer fra din stand'."\n\n";
-	$mailtekst.="Beløbet vil blive overført til din konto en af de nærmeste dage\n\n";
-	$mailtekst.="Med venlig hilsen\n";
 	$mailtekst.="$r[firmanavn]\n";
 }
-print "<a href=betalinger.php?liste_id=$liste_id>Tilbage til betalingsliste</a>";
+print "<a href=betalinger.php?liste_id=$liste_id>".findtekst(2059,$languageID)."</a>";
 print "<center>";
 print "<form name=\"mail_modtagere\" action=\"mail_modtagere.php?liste_id=$liste_id\" method=\"post\">";
 print "<table><tbody>";
@@ -161,7 +170,7 @@ print "<table><tbody>";
 print "<tr><td><b>Emne.</b></td></tr>";
 print "<tr><td><input style=\"width:800px\" type=\"text\" name=\"emne\" value=\"$emne\"></td></tr>";
 print "<tr><td></td></tr>";
-print "<tr><td><b>Mailtekst.</b> Du kan bruge $"."navn som navn på modtager,$"."kontonr som kontonr $"."sum som det beløb der overføres,<br>$"."antal som antal solgte enheder samt $"."start og $"."slut som hhv start og slutdato</td></tr>";
+print "<tr><td><b>".findtekst(2057,$languageID)."</b> ".findtekst(2058,$languageID)."</td></tr>";
 print "<tr><td>HTML koder accepteres</td></tr>";
 #print "<tr><td>Fed="."<"."b"."><b>tekst</b><"."/b"."></td></tr>";
 print "<tr><td><textarea rows='16' cols='100' name='mailtekst'>$mailtekst</textarea></td></tr>";
@@ -208,15 +217,17 @@ function send_mail($subjekt,$mailtekst,$modtager,$afsendermail,$afsendernavn) {
 	mkdir($tmpmappe);
 	if ($subjekt && $mailtekst && $modtager && $afsendermail && $afsendernavn) {	
 		$mailtext = "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTMP 4.01 Transitional//EN\">\n";
-		$mailtext .= "<html><head><meta content=\"text/html; charset=ISO-8859-15\" http-equiv=\"content-type\">\n";
+		$mailtext .= "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\">\n";
 		$mailtext .=$mailtekst;
 		$mailtext .= "</html>\n";			
+/*
 		if ($charset=="UTF-8") {
 			$subjekt=utf8_decode($subjekt);
 			$mailtext=utf8_decode($mailtext);
 			$afsendernavn=utf8_decode($afsendernavn);
 			$afsendermail=utf8_decode($afsendermail);
 		}
+*/		
 #	echo $mailtext;
 #		$fp=fopen("$tmpmappe/afregning.html","w");
 #		fwrite($fp,$mailtext);
@@ -231,7 +242,7 @@ function send_mail($subjekt,$mailtekst,$modtager,$afsendermail,$afsendernavn) {
 			if ($_SERVER['SERVER_NAME']=='ssl.saldi.dk') $mail->From = $db.'@ssl.saldi.dk'; #20140128
 			elseif ($_SERVER['SERVER_NAME']=='ssl2.saldi.dk') $mail->From = $db.'@ssl2.saldi.dk'; #20140128
 			elseif ($_SERVER['SERVER_NAME']=='ssl3.saldi.dk') $mail->From = $db.'@ssl3.saldi.dk'; #20140128
-			else $mail->From = 'kanikkebesvares@saldi.dk'; #20140128
+			else $mail->From = 'kanikkebesvares@'.$_SERVER['SERVER_NAME']; #20140128
 			$mail->FromName = $afsendernavn;
 		} else {
 			$mail->From = $afsendermail;

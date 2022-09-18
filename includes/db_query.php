@@ -146,8 +146,11 @@ if (!function_exists('db_modify')) {
 					fclose($ff);
 				} else $lastmail=0; 
 				if($lastmail!=date("U")) { 
+					if ($sqdb == 'develop') echo "$message<br>";
+					else {
 				$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 				mail('fejl@saldi.dk', 'SALDI Opdat fejl', $message, $headers);
+					}
 					$ff=fopen("../temp/$db/opdatfejl.txt","w");
 					fwrite($ff,date("U")."\n");
 					fclose($ff);
@@ -159,8 +162,11 @@ if (!function_exists('db_modify')) {
 					fclose($ff);
 				} else $lastmail=0; 
 				if($lastmail!=date("U")) { 
+					if ($sqdb == 'develop') echo "$message<br>";
+					else {
 				$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 				mail('fejl@saldi.dk', 'SALDI Fejl - modify', $message, $headers);
+					}
 					$ff=fopen("../temp/$db/modifyfejl.txt","w");
 					fwrite($ff,date("U")."\n");
 					fclose($ff);
@@ -172,7 +178,7 @@ if (!function_exists('db_modify')) {
 				}
 				
 				(isset($customAlertText))?$alerttekst=$customAlertText:$alerttekst="Uforudset h&aelig;ndelse, kontakt salditeamet på telefon 4690 2208"; 
-				if ($webservice) return ('1'.chr(9).'$alerttekst');
+				if ($webservice) return ('1'.chr(9)."$alerttekst");
 				print "<BODY onLoad=\"javascript:alert('$alerttekst')\">\n";
 				exit;
 			}
@@ -228,8 +234,11 @@ if (!function_exists('db_select')) {
 				} else $lastmail=0; 
 				if($lastmail!=date("U")) { 
 					$message=$db." | ".$qtext." | ".$spor." | ".$brugernavn." ".date("Y-m-d H:i:s")." | $errtxt";
+					if ($sqdb == 'develop') echo "$message<br>";
+					else {
 					$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
 					mail('fejl@saldi.dk', 'SALDI Fejl - select', $message, $headers);
+					}
 					$ff=fopen("../temp/$db/selectfejl.txt","w");
 					fwrite($ff,date("U")."\n");
 					fclose($ff);

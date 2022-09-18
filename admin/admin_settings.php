@@ -4,29 +4,28 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------ admin/admin_settings.php --------------- lap 3.7.9 --- 2019-04-11 ---
-// LICENS
+// --------------- admin/admin_settings.php --- patch 4.0.4 --- 2021.09.17 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2018-2019 saldi.dk ApS
+// Copyright (c) 2003-2021 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190411 PHR Added alertText
+// 20210917 LOE Translated some texts
+// 20210921 Added this block of code to set language
 
 @session_start();
 $s_id=session_id();
@@ -55,7 +54,16 @@ if (isset($_POST['gem'])) {
 	$tar=if_isset($_POST['tar']);
 	$alertTextId=if_isset($_POST['alertTextId']);
 	$alertText=if_isset($_POST['alertText']);
-	
+	$lang = if_isset($_POST['LanguageName']); #20210920
+	$languageId = if_isset($_POST['LanguageId']); #20210920
+	$sprog_id = $languageId;
+/*
+	    $qtxt="select * from online where sprog ='$lang'and brugernavn = '$brugernavn'";  #20210921
+		if (!$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
+			$qtxt="update online set sprog = '$lang' where brugernavn = '$brugernavn' and session_id = '$s_id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		}
+*/
 	if ($ps2pdfId) $qtxt="update settings set var_value='$ps2pdf' where id='$ps2pdfId'";
 	else $qtxt="insert into settings (var_name,var_value,var_description) values ('ps2pdf','$ps2pdf','Program til konvertering af PostScript til PDF')";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -89,13 +97,19 @@ if (isset($_POST['gem'])) {
 		$qtxt.="('alertText','".db_escape_string($alertText)."','".db_escape_string('Alert text if: unpredicted event')."')";
 	}
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt="update settings set var_value='$languageId' where var_name='languageId'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt="update online set language_id='$languageId' where session_id = '$s_id'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	
 } else {
 	$ps2pdf=$html2pdf=$pdfmerge=$ftp=$dbdump=$zip=$unzip=$tar=$alertText=NULL;
 	$ps2pdfId=$html2pdfId=$pdfmergeId=$ftpId=$dbdumpId=$zipId=$unzipId=$tarId=$alertTextId=NULL;
 }
 
 if ($db != $sqdb) {
-	print "<BODY onLoad=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">\n";
+	$txt1 = findtekst(1905, $sprog_id);
+	print "<BODY onLoad=\"javascript:alert('$txt1')\">\n";
 	print "<meta http-equiv=\"refresh\" content=\"1;URL=../index/logud.php\">\n";
 	exit;
 }
@@ -107,7 +121,6 @@ if ($brugerId=$r['id']) {
 #	if (strstr($rettigheder,",")=='0') echo "NUL<br>";
 	list($admin,$oprette,$slette,$tmp)=explode(",",$rettigheder,4);
 }
-
 $q=db_select("select * from settings",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
 	if ($r['var_name']=='ps2pdf') {
@@ -137,29 +150,32 @@ while ($r=db_fetch_array($q)) {
 	} elseif ($r['var_name']=='alertText') {
 		$alertTextId=$r['id'];
 		$alertText=$r['var_value'];
+	} elseif ($r['var_name']=='languageId') {
+		$languageId=$r['var_value'];
+	} elseif ($r['var_name']=='languages') {
+		$languages=explode(chr(9),$r['var_value']);
 	}
 }
 
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody><tr>\n";
-print "  <td $top_bund width=\"10%\"><a href='../index/admin_menu.php'>Luk</a></td>\n";
+print "  <td $top_bund width=\"10%\"><a href='../index/admin_menu.php'>".findtekst(30, $sprog_id)."</a></td>\n"; 
 print "  <td $top_bund width=\"35%\">&nbsp;</td>\n";
 print "  <td $top_bund width=\"10%\" align = \"center\"></td>\n";
 print "<td $top_bund width=\"35%\">&nbsp;</td>";
 print "<td $top_bund width=\"10%\" align = \"right\"></td>\n";
 print "</tr></tbody></table></td></tr>\n<tr><td align=\"center\" valign=\"center\">\n";
-
 $td=" align=\"center\" height=\"35\"";
-
-if ($ps2pdf && !file_exists($ps2pdf)) echo "$ps2pdf ikke fundet!";
-if ($html2pdf && !file_exists($html2pdf)) echo "$html2pdf ikke fundet!";
-if ($pdfmerge && !file_exists($pdfmerge)) echo "$pdfmerge ikke fundet!";
-if ($ftp && !file_exists($ftp)) echo "$ftp ikke fundet!";
-if ($dbdump && !file_exists($dbdump)) echo "$dbdump ikke fundet!";
-if ($zip && !file_exists($zip)) echo "$zip ikke fundet!";
-if ($unzip && !file_exists($unzip)) echo "$unzip ikke fundet!";
-if ($tar && !file_exists($tar)) echo "$tar ikke fundet!";
+$txt = findtekst(1926, $sprog_id); #20210917
+if ($ps2pdf && !file_exists($ps2pdf)) echo "$ps2pdf $txt";
+if ($html2pdf && !file_exists($html2pdf)) echo "$html2pdf $txt";
+if ($pdfmerge && !file_exists($pdfmerge)) echo "$pdfmerge $txt";
+if ($ftp && !file_exists($ftp)) echo "$ftp $txt";
+if ($dbdump && !file_exists($dbdump)) echo "$dbdump $txt";
+if ($zip && !file_exists($zip)) echo "$zip $txt";
+if ($unzip && !file_exists($unzip)) echo "$unzip $txt";
+if ($tar && !file_exists($tar)) echo "$tar $txt";
 
 if (!$ps2pdf) $ps2pdf=system("which ps2pdf");
 if (!$html2pdf) $html2pdf=system("which weasyprint");
@@ -172,8 +188,9 @@ if (!$dbdump) {
 if (!$zip) $zip=system("which gzip");
 if (!$unzip) $unzip=system("which gunzip");
 if (!$tar) $tar=system("which tar");
-if (!$alertText) $alertText="uforudset hændelse, Kontakt Salditeamet på 4690 2208";
+if (!$alertText) $alertText=findtekst(534, $sprog_id); #20210917
 
+#include("../includes/languages.php"); #20210920
 print "<form name='admin_settings' action='admin_settings.php' method='post'>";
 print "<input type='hidden' name='ps2pdfId' value='$ps2pdfId'>";
 print "<input type='hidden' name='html2pdfId' value='$html2pdfId'>";
@@ -188,21 +205,37 @@ print "<table align=\"center\" border=\"0\" cellspacing=\"5\" cellpadding=\"0\">
 print "<tr><td colspan=\"2\" height=\"35\" align=\"center\" background=\"../img/blaa2hvid_bg.gif\">";
 print "<big<big><big><b>SALDI</b></big></big></big></td></tr>";
 print "<tr><td  colspan=\"2\" height=\"35\" align=\"center\"><b><big>Indstillinger</big></b></td></tr>";
-print "<tr><td>Program til konvertering af PostScript til PDF</td><td><input style='width:400px' name='ps2pdf' value='$ps2pdf'></td></tr>"; 
-print "<tr><td>Program til konvertering af HTML til PDF</td><td><input style='width:400px' name='html2pdf' value='$html2pdf'></td></tr>"; 
-print "<tr><td>Program til sammenlægning af PDF filer</td><td><input style='width:400px' name='pdfmerge' value='$pdfmerge'></td></tr>"; 
-print "<tr><td>Program til FTP</td><td><input style='width:400px' name='ftp' value='$ftp'></td></tr>"; 
-print "<tr><td>Program til databasedump</td><td><input style='width:400px' name='dbdump' value='$dbdump'></td></tr>";
-print "<tr><td>Program til komprimering af filer</td><td><input style='width:400px' name='zip' value='$zip'></td></tr>";
-print "<tr><td>Program til dekomprimering af filer</td><td><input style='width:400px' name='unzip' value='$unzip'></td></tr>";
-print "<tr><td>Program til pakning af filer</td><td><input style='width:400px' name='tar' value='$tar'></td></tr>";
-print "<tr><td>Tekst ved 'uforudset hændelse'</td><td><input style='width:400px' name='alertText' value='$alertText'></td></tr>";
+print "<tr><td>".findtekst(1917, $sprog_id)."</td><td><input style='width:400px' name='ps2pdf' value='$ps2pdf'></td></tr>"; 
+print "<tr><td>".findtekst(1918, $sprog_id)."</td><td><input style='width:400px' name='html2pdf' value='$html2pdf'></td></tr>"; 
+print "<tr><td>".findtekst(1919, $sprog_id)."</td><td><input style='width:400px' name='pdfmerge' value='$pdfmerge'></td></tr>"; 
+print "<tr><td>".findtekst(1920, $sprog_id)."</td><td><input style='width:400px' name='ftp' value='$ftp'></td></tr>"; 
+print "<tr><td>".findtekst(1921, $sprog_id)."</td><td><input style='width:400px' name='dbdump' value='$dbdump'></td></tr>";
+print "<tr><td>".findtekst(1922, $sprog_id)."</td><td><input style='width:400px' name='zip' value='$zip'></td></tr>";
+print "<tr><td>".findtekst(1923, $sprog_id)."</td><td><input style='width:400px' name='unzip' value='$unzip'></td></tr>";
+print "<tr><td>".findtekst(1924, $sprog_id)."</td><td><input style='width:400px' name='tar' value='$tar'></td></tr>";
+print "<tr><td>".findtekst(1925, $sprog_id)."</td><td><input style='width:400px' name='alertText' value='$alertText'></td></tr>";
+
+##################### #20210920
+print "<tr><td title='".findtekst(2, $sprog_id)."'>".findtekst(436, $sprog_id)." ".findtekst(801, $sprog_id)."</td>";
+print"<td> <SELECT class ='inputbox' NAME = 'LanguageId' title=''>";
+/*
+foreach ($languages as $k => $v) {
+	print "<option  value='$v'>$v</option>";
+}
+*/
+
+for ($l=1;$l<count($languages);$l++) {
+	if ($languageId == $l) print "<option  value='$l'>$languages[$l]</option>";
+}
+for ($l=1;$l<count($languages);$l++) {
+	if ($languageId != $l) print "<option value='$l'>$languages[$l]</option>";
+}
+print "</SELECT></td></tr>";
+#####################
 print "<tr><td colspan=\"2\" height=\"35\" align=\"center\"><input type='submit' name='gem' value='gem'></b></td></tr>";
 print "</tbody></table>";
 print "</form>";
 print "</td></tr>";
-
-
 print "<tr><td align=\"center\" valign=\"bottom\">";
 print "<div class=top_bund><small>SALDI&nbsp;version&nbsp;$version&nbsp;-&nbsp;Copyright&nbsp;&copy;&nbsp;$copyright&nbsp;DANOSOFT&nbsp;aps</small></div></td></tr>\n";
 print "</td></tr>";

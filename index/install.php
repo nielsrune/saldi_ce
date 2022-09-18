@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//------------index/install.php----lap 3.9.9---2021-01-25---
+//------------index/install.php----lap 4.0.5---2022-08-23---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,13 +20,16 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20140701 Tilføjet bilag til create regnskab
 // 20161106 Tilrettet til ny adgangskodehåndtering. Søg saldikrypt.
 // 20200308	Added MySQLi support etc.
 // 20210125 PHR Added table mysale
+// 20211013 PHR Added colunm language_id to online.
+// 20220207 PHR Changed varchar size in 'regnskab'
+// 20220823 PHR Changer email to varchar(60) in 'regnskab'
 
 session_start();
 ob_start(); //Starter output buffering
@@ -200,16 +203,16 @@ if (isset($_POST['opret'])){
 	$r=db_fetch_array(db_select("SELECT id FROM brugere where brugernavn='$adm_navn'",__FILE__ . " linje " . __LINE__));	
 	$adm_password=saldikrypt($r['id'],$adm_password);
 	db_modify("UPDATE brugere SET kode='$adm_password' where id = '$r[id]'",__FILE__ . " linje " . __LINE__); 
-	$qtxt = "CREATE TABLE regnskab (id serial NOT NULL,	regnskab varchar(16), dbhost varchar(16), dbuser varchar(16), ";
-	$qtxt.= "db varchar(16), version  varchar(16), sidst  varchar(16), brugerantal numeric(2,0), posteringer numeric(10,0), ";
+	$qtxt = "CREATE TABLE regnskab (id serial NOT NULL,	regnskab varchar(25), dbhost varchar(25), dbuser varchar(25), ";
+	$qtxt.= "db varchar(25), version varchar(10), sidst varchar(16), brugerantal numeric(5,0), posteringer numeric(10,0), ";
 	$qtxt.= "posteret numeric(10,0), mysale numeric(1,0), lukket  varchar(2),administrator  varchar(2),lukkes date, ";
-	$qtxt.= "betalt_til date,logintekst text,email  varchar(2),bilag numeric(1,0), PRIMARY KEY (id))";
+	$qtxt.= "betalt_til date,logintekst text,email varchar(60),bilag numeric(1,0), PRIMARY KEY (id))";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "INSERT INTO regnskab (regnskab, dbhost, dbuser, db, version,bilag) values ";
 	$qtxt.= "('$db_navn' ,'$host', '$db_bruger', '$db_navn', '$version','0')";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-	$qtxt = "CREATE TABLE online (session_id text, brugernavn text, db text, dbuser text, rettigheder text, ";
-	$qtxt.= "regnskabsaar integer, logtime text, revisor boolean)";
+	$qtxt = "CREATE TABLE online (session_id varchar(30), brugernavn text, db varchar(30), dbuser varchar(30), rettigheder varchar(30), ";
+	$qtxt.= "regnskabsaar integer, logtime varchar(30), revisor boolean, language_id int)";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "CREATE TABLE kundedata (id serial NOT NULL, firmanavn text, addr1 text, addr2 text, postnr varchar(10), ";
 	$qtxt.= "bynavn text, kontakt text, email text, cvrnr text, regnskab text, regnskab_id integer,brugernavn text, ";
@@ -249,7 +252,13 @@ if (isset($_POST['opret'])){
 	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
 	$qtxt.= "('tar','globals','/bin/tar','Program for packing files','0')";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-
+	$languages = "Dansk".chr(9)."English".chr(9)."Norsk";
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('languages','globals','$languages','Avalilable languages','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+	$qtxt.= "('language_id','globals','0','Active systemlanguage','0')";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	
 	transaktion("commit");
 #	rename("../includes/connect", "../includes/connect.php");
@@ -337,26 +346,23 @@ function skriv_connect($fp,$host,$db_bruger,$db_password,$db_navn,$db_encode,$db
 	fwrite($fp,"//                        \__ \/ _ \| |_| | | | _ | |) |  <  \n");
 	fwrite($fp,"//                        |___/_/ \_|___|__/|_||_||___/|_\_\ \n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// ----/includes/connect.php---------------lap 3.7.2-----2018.10.31-----\n");
+	fwrite($fp,"// ----/includes/connect.php---------------lap 4.0.5-----2022.02.07-----\n");
 	fwrite($fp,"// LICENS\n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// Dette program er fri software. Du kan gendistribuere det og / eller\n");
-	fwrite($fp,"// modificere det under betingelserne i GNU General Public License (GPL)\n");
-	fwrite($fp,"// som er udgivet af The Free Software Foundation; enten i version 2\n");
-	fwrite($fp,"// af denne licens eller en senere version efter eget valg.\n");
-	fwrite($fp,"// Fra og med version 3.2.2 dog under iagttagelse af følgende:\n");
-	fwrite($fp,"// \n");
-	fwrite($fp,"// Programmet må ikke uden forudgående skriftlig aftale anvendes\n");
-	fwrite($fp,"// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.\n");
+	fwrite($fp,"// This program is free software. You can redistribute it and / or\n");
+	fwrite($fp,"// modify it under the terms of the GNU General Public License (GPL)\n");
+	fwrite($fp,"// which is published by The Free Software Foundation; either in version 2\n");
+	fwrite($fp,"// of this license or later version of your choice.\n");
+	fwrite($fp,"// However, respect the following:\n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// Programmet er udgivet med haab om at det vil vaere til gavn,\n");
-	fwrite($fp,"// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se\n");
-	fwrite($fp,"// GNU General Public Licensen for flere detaljer.\n");
+	fwrite($fp,"// It is forbidden to use this program in competition with Saldi.DK ApS\n");
+	fwrite($fp,"// or other proprietor of the program without prior written agreement.\n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// En dansk oversaettelse af licensen kan laeses her:\n");
-	fwrite($fp,"// http://www.saldi.dk/dok/GNU_GPL_v2.html\n");
+	fwrite($fp,"// The program is published with the hope that it will be beneficial,\n");
+	fwrite($fp,"// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.\n");
+	fwrite($fp,"// See GNU General Public License for more details.\n");
 	fwrite($fp,"//\n");
-	fwrite($fp,"// Copyright (c) 2004-2018 saldi.dk aps\n");
+	fwrite($fp,"// Copyright (c) 2003-2022 saldi.dk aps\n");
 	fwrite($fp,"// ----------------------------------------------------------------------\n");
 	fwrite($fp,"\n");
 	fwrite($fp,"if (!isset(\$bg)) \$bg='';\n");

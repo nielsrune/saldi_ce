@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/divFuncs/drawer/drawerStatusFunc.php --- lap 3.9.9----2021.01.10-------
+// --- debitor/pos_ordre_includes/divFuncs/drawer/drawerStatusFunc.php --- lap 4.0.5 --- 2021.12.03 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -25,25 +25,27 @@
 //
 // 20190708 LN Check drawer status and tell to close if open
 // 20201010 PHR function getDrawerStatus - added: ?returside=$returside
+// 20211202 PHR function getPrintserver - Chech for cookie and now it works with 'box' too
+// 20211203 PHR replaced alert("LUK SKUFFEN") with echo
 
 function getDrawerStatus() {
+	global $bgcolor;
+	$bg=urlencode($bgcolor);
 		$printserver = getPrintserver();
 		$drawerStatusLocation = 'http://' . $printserver . '/drawerstatus.php';
-
 		$url="://".$_SERVER['SERVER_NAME']. $_SERVER['PHP_SELF'];
 		$url=str_replace("/debitor/pos_ordre.php","",$url);
 		if ($_SERVER['HTTPS']) $url="s".$url;
 		$url="http".$url;
 		$returside=$url."/debitor/pos_ordre.php";
-
-		//print "<meta http-equiv=\"refresh\" content=\"0; URL=$drawerStatusLocation\">\n";
-		print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/drawerstatus.php?returside=$returside\">\n";
-		usleep(10000);
+	print "<meta http-equiv=\"refresh\" ";
+	print "content=\"0;URL=http://$printserver/drawerstatus.php?bg=$bg&returside=$returside\">\n";
+	exit;	#usleep(10000);
 }
 
 function preDrawerCheck() {
-		usleep(250000);
 		if(getCountry() == "Norway") {
+		usleep(250000);
 				if (isset($_POST['betaling']) || (isset($_POST['skuffe']) && $_POST['skuffe'] == 'Skuffe')) {
 				    $_SESSION['drawerstatus'] = true;
 				} elseif (isset($_SESSION['drawerstatus']) && $_SESSION['drawerstatus'] == true) {
@@ -51,16 +53,37 @@ function preDrawerCheck() {
 					getDrawerStatus();
 				} elseif (isset($_GET['drawerstatus']) && $_GET['drawerstatus'] == 0) {
 					unset($_GET['drawerstatus']);
-					 alert("LUK SKUFFEN");
+#			alert("LUK SKUFFEN");
+			echo "<center><br><br><br><br>LUK SKUFFEN</center>";
 					 getDrawerStatus();
 				}
 		}
 }
 
  function getPrintserver() {
+	if (isset($_COOKIE['saldi_printserver']) && isset($_COOKIE['saldi_printserver'])) $printserver=$_COOKIE['printserver'];
+	if (!$printserver) {
 	 $r = db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 	 $printer_ip=explode(chr(9),$r['box3']);
 	 $printserver=$printer_ip[0];
+	}
+	if (strtolower(substr($printserver,0,1))=='n') {
+		return NULL;
+		exit;
+	} elseif (strtolower($printserver)=='box') {
+		$filnavn="http://saldi.dk/kasse/".$_SERVER['REMOTE_ADDR'].".ip";
+		if ($fp=fopen($filnavn,'r')) {
+			$printserver=trim(fgets($fp));
+			fclose ($fp);
+			if ($printserver) setcookie("saldi_printserver",$printserver,time()+60*60*24*7,'/');
+		} 
+	}
+	if ($printserver=='box' || !$printserver) $printserver=$_COOKIE['saldi_printserver'];
+	if (!$printserver) {
+		alert ("Printserver ikke fundet");
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=$returside\">\n";
+		exit;
+	}
 	 return $printserver;
  }
 

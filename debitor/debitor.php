@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/debitor.php --- lap 4.0.1 --- 2021-03-12 ----
+// --- debitor/debitor.php --- lap 4.0.5 --- 2022-02-26 ----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,24 +20,31 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
-// 2013.02.10 Break ændret til break 1
-// 2016.02.18 Udvælg fungerer nu også hvis debitor er med i flere kategorier. Søg 20160218
-// 2016.06.06 Tilføjet mulighed for at skjule lukkede debitorer Søg box11 / skjul_lukkede
-// 2018.12.05 Definering af variabler.
-// 2018.12.17 msc Rettet design til
-// 2019.01.07 MSC Rettet topmenu design til
-// 2019.02.13 MSC - Rettet topmenu design til
-// 2019.09.20 PHR - All search fiels was set to '0' if not set. Chanced to NULL
-// 2020.05.14	PHR - Added option 'Kommission' 
-// 2020.05.31	PHR - replaced 'addslashes' with 'db_escape_string' 
-// 2020.06.23	PHR - various changes related to 'kommission' 
-// 2020.10.25	PHR	- Added option for creating own mailtext for mySale - $mailText
-// 2020.11.11	PHR	- Added ordinary mail til customers not using MySale
-// 2021.01.13	PHR	- Added links written to file if mysale is active.
-// 2021.01.25 PHR - Removed last change - link now written to table mysale in master DB. 
-// 2021.03.12 PHR - added 'postnr' to numfelter.
+// 20130210 Break ændret til break 1
+// 20160218 Udvælg fungerer nu også hvis debitor er med i flere kategorier. Søg 20160218
+// 20160606 Tilføjet mulighed for at skjule lukkede debitorer Søg box11 / skjul_lukkede
+// 20181205 Definering af variabler.
+// 20181217 msc Rettet design til
+// 20190107 MSC Rettet topmenu design til
+// 20190213 MSC - Rettet topmenu design til
+// 20190920 PHR - All search fiels was set to '0' if not set. Chanced to NULL
+// 20200514	PHR - Added option 'Kommission' 
+// 20200531	PHR - replaced 'addslashes' with 'db_escape_string' 
+// 20200623	PHR - various changes related to 'kommission' 
+// 20201025	PHR	- Added option for creating own mailtext for mySale - $mailText
+// 20201111	PHR	- Added ordinary mail til customers not using MySale
+// 20210113	PHR	- Added links written to file if mysale is active.
+// 20210125 PHR - Removed last change - link now written to table mysale in master DB. 
+// 20210312 PHR - added 'postnr' to numfelter.
+// 20210701 LOE - Translated these texts with findtekst function
+// 20210728 LOE - Updated some texts with translated ones 
+// 20210812 MSC - Implementing new top menu design 
+// 20210904 PHR - Sets cookie mySalePw to allow pawwwordless access t mySale 
+// 20210907 MSC - Implementing new design
+// 20211102 MSC - Implementing new design
+// 20220226 PHR - Added: 	$mail->CharSet = "$charset";
 
 #ob_start();
 @session_start();
@@ -69,7 +76,6 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
-	
 $id = if_isset($_GET['id']);
 $returside=if_isset($_GET['returside']);
 $valg= strtolower(if_isset($_GET['valg']));
@@ -77,7 +83,7 @@ $sort = if_isset($_GET['sort']);
 $start = if_isset($_GET['start']);
 $nysort = if_isset($_GET['nysort']);
 $invite=$mailTo=$mySale=array();
-
+if ($valg == 'kommission') setcookie("mySalePw", $s_id,0,"/");
 if (!$valg) $valg="debitor";
 if ((isset($_POST['kommission']) || isset($_POST['historik'])) && $_POST['debId']) {
 	$debId=$_POST['debId'];
@@ -180,13 +186,16 @@ if ((isset($_POST['kommission']) || isset($_POST['historik'])) && $_POST['debId'
 				$mailText=str_replace('$kunde',$custName[$i],$mailText);
 				$mailText=str_replace('$link',$myLink,$mailText);
 			}
+/*
 			if ($charset=="UTF-8") {
 				$subject=utf8_decode($subject);
 				$mailText=utf8_decode($mailText);
 				$afsendernavn=utf8_decode($afsendernavn);
 			}
+*/			
 			$mail = new PHPMailer();
 			$mail->IsSMTP();                                   // send via SMTP
+			$mail->CharSet = "$charset";
 			$mail->SMTPDebug  = 2;
 			$mail->Host  = $smtp; // SMTP servers 
 			if ($smtp!='localhost') {
@@ -200,12 +209,12 @@ if ((isset($_POST['kommission']) || isset($_POST['historik'])) && $_POST['debId'
 				$mail->SMTPAuth = false;
 				if (strpos($_SERVER['SERVER_NAME'],'saldi.dk')) { #20121016
 					$from = $db.'@'.$_SERVER['SERVER_NAME']; #20130731
-					$from = str_replace('bizsys','post',$db);
+				$from = str_replace('bizsys','post',$from);
 				}
 			}
 			if ($subject && $mailText) {
-				$mail->From = $from;
-				$mail->FromName = $afsendernavn;
+				$mail->SetFrom($from,$afsendernavn);
+#				$mail->FromName = $afsendernavn;
 				$mail->AddReplyTo($afsendermail);
 				$mail->AddAddress($custMail[$i]);
 				$mail->WordWrap = 50;  // set word wrap
@@ -330,48 +339,41 @@ $sort=str_replace("adresser.","",$sort);
 $sortering=$sort;
 
 if ($menu=='T') {
-	include_once '../includes/top_header.php';
-	include_once '../includes/top_menu.php';
+	include_once '../includes/topmenu/header.php';
 	if ($valg=='debitor') {
-	print "<div id=\"header\"> 
-		<div class=\"headerbtnLft\"></div>
-		<span class=\"headerTxt\">Konti</span>";     
-	print "<div class=\"headerbtnRght\"><a href=\"debitorkort.php?returside=debitor.php\" class=\"button green small right\">Ny</a></div>";
+	print "<div class='$kund'>".findtekst(117,$sprog_id)."</div>
+		<div class='content-noside'>";
 	} if ($valg=='historik') {
-	print "<div id=\"header\"> 
-		<div class=\"headerbtnLft\"></div>
-		<span class=\"headerTxt\">Historik</span>";     
-	print "<div class=\"headerbtnRght\"></div>";
+	print "<div class='$kund'>".findtekst(907,$sprog_id)."</div>
+		<div class='content-noside'>";
 	}
-	print "</div><!-- end of header -->
-	<div class=\"maincontentLargeHolder\">\n";
-	
 	} else {
+	include("../includes/oldDesign/header.php");
 print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody>\n";
 print "<tr><td height = 25 align=center valign=top>";
 print "<table width=100% align=center border=0 cellspacing=2 cellpadding=0><tbody><td width=10% $top_bund>\n";
-print "<a href=$returside accesskey=L>Luk</a></td>";
+	print "<a href=$returside accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
 print "<td width=80% $top_bund align=center><table border=0 cellspacing=2 cellpadding=0><tbody>\n";
 
-if ($valg=='debitor') print "<td width = 20% align=center $knap_ind>&nbsp;Debitorer&nbsp;</td>";
-else print "<td width = 20% align=center><a href='debitor.php?valg=debitor&returside=$returside'>&nbsp;Debitorer&nbsp;</a></td>";
-if ($valg=='historik') print "<td width = 20% align=center $knap_ind>&nbsp;Historik&nbsp;</td>";
-else print "<td width = 20% align=center><a href='debitor.php?valg=historik&returside=$returside'>&nbsp;Historik&nbsp;</a></td>";
-	if ($valg=='kommission') print "<td width = 20% align=center $knap_ind>&nbsp;Kommission&nbsp;</td>";
+	if ($valg=='debitor') print "<td width = 20% align=center $knap_ind>".findtekst(908,$sprog_id)."</td>"; #20210701
+	else print "<td width = 20% align=center><a href='debitor.php?valg=debitor&returside=$returside'>".findtekst(908,$sprog_id)."</a></td>";
+	if ($valg=='historik') print "<td width = 20% align=center $knap_ind>".findtekst(907,$sprog_id)."</td>";
+	else print "<td width = 20% align=center><a href='debitor.php?valg=historik&returside=$returside'>".findtekst(907,$sprog_id)."</a></td>";
+	if ($valg=='kommission') print "<td width = 20% align=center $knap_ind>".findtekst(909,$sprog_id)."</td>";
 	elseif ($showMySale) {
-		print "<td width = 20% align=center><a href='debitor.php?valg=kommission&returside=$returside'>&nbsp;Kommission&nbsp;</a></td>";
+		print "<td width = 20% align=center><a href='debitor.php?valg=kommission&returside=$returside'>".findtekst(909,$sprog_id)."</a></td>";
 	}	
-	if ($valg=='rental') print "<td width = 20% align=center $knap_ind>&nbsp;Booking&nbsp;</td>";
+	if ($valg=='rental') print "<td width = 20% align=center $knap_ind>".findtekst(1116,$sprog_id)."</td>";
 	elseif ($showRental) {
-		print "<td width = 20% align=center><a href='debitor.php?valg=rental&returside=$returside'>&nbsp;Booking&nbsp;</a></td>";
+		print "<td width = 20% align=center><a href='debitor.php?valg=rental&returside=$returside'>".findtekst(1116,$sprog_id)."</a></td>";
 	}	
-	$title="Klik her for at skifte til joblisten";
+	$title=findtekst(1664, $sprog_id); #20210728
 	if ($jobkort)	print "<td width = 20% align=center><a href='jobliste.php' title ='$title'>".findtekst(38,$sprog_id)."</a></td>";
 print "</tbody></table></td>\n";
-print "<td width=5% $top_bund><a accesskey=V href=debitorvisning.php?valg=$valg>Visning</a></td>\n";
+	print "<td width=5% $top_bund><a accesskey=V href=debitorvisning.php?valg=$valg>".findtekst(813,$sprog_id)."</a></td>\n";
 	print "<td width=5%  $top_bund>";
-	if ($valg=='kommission' ||$valg=='historik') print "<a href=mailTxt.php?valg=$valg&returside=debitor.php>Mailtekst</a></td>\n";
-	else print "<a href=debitorkort.php?returside=debitor.php>Ny</a></td>\n";
+	if ($valg=='kommission' ||$valg=='historik') print "<a href=mailTxt.php?valg=$valg&returside=debitor.php>".findtekst(218,$sprog_id)."</a></td>\n";
+	else print "<a href=debitorkort.php?returside=debitor.php>".findtekst(39,$sprog_id)."</a></td>\n";
 print "</td></tr>\n";
 print "</tbody></table>";
 print " </td></tr>\n<tr><td align=\"center\" valign=\"top\" width=\"100%\">";
@@ -454,29 +456,30 @@ $adresserantal=0;
 $r=db_fetch_array(db_select("select count(id) as antal from adresser where art = 'D' $udvaelg",__FILE__ . " linje " . __LINE__));
 $antal=$r['antal'];
 if ($menu=='T'){
-	print "<table class='dataTable' cellpadding='1' cellspacing='1' border='0' valign='top' width='100%'><tbody>\n<tr>";
+	print "<div class=\"maincontentLargeHolder\">\n";
+	print "<div class='dataTablediv'><table class='dataTable' cellpadding='1' cellspacing='1' border='0' valign='top' width='100%'><thead>\n<tr>";
 } else {
 	print "<table cellpadding='1' cellspacing='1' border='0' valign='top' width='100%'><tbody>\n<tr>";
 }
 if ($start>0) {
 	$prepil=$start-$linjeantal;
 	if ($prepil<0) $prepil=0;
-	print "<td><a href=debitor.php?start=$prepil&valg=$valg><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+	print "<td class='imgNoTextDeco style='padding: 20px'><a href=debitor.php?start=$prepil&valg=$valg><img class='imgInvert imgFade' src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 } else {
 	print "<td>";
-	if (file_exists("rotary_addrsync.php")) print "<a href=\"rotary_addrsync.php\" target=\"blank\" title=\"Klik her for at synkronisere medlemsinfo\">!</a>";
+	if (file_exists("rotary_addrsync.php")) print "<a href=\"rotary_addrsync.php\" target=\"blank\" title=\"".findtekst(1665, $sprog_id)."\">!</a>";
 	print "</td>";
 }
 if ($valg != 'rental' || $start == 0) {
 for ($x=0;$x<$vis_feltantal;$x++) {
 	if ($feltbredde[$x]) $width="width=$feltbredde[$x]";
 	else $width="";
-	print "<td align=$justering[$x] $width><b><a href='debitor.php?nysort=$vis_felt[$x]&sort=$sort&valg=$valg'>$feltnavn[$x]</b></td>\n";
+		print "<td align=$justering[$x] $width style='padding: 20px'><b><a href='debitor.php?nysort=$vis_felt[$x]&sort=$sort&valg=$valg'>$feltnavn[$x]</b></td>\n";
 }
 }
 if ($valg=='kommission') {
-	$tmp=trim($_SERVER['PHP_SELF'],'/');
-	list ($folder,$tmp)=explode('/',$tmp,2);
+	$folder=trim($_SERVER['PHP_SELF'],'/');
+	$folder=str_replace('debitor/debitor.php','',$folder);
 	$myLink="https://". $_SERVER['HTTP_HOST'] .'/'. $folder ."/mysale/mysale.php?id=";
 	$myLink=str_replace('bizsys','mysale',$myLink);
 	print "<td align='center'><b>Aktiv</b></td>";
@@ -484,7 +487,7 @@ if ($valg=='kommission') {
 }
 if ($antal>$slut && !$dg_liste[0] && !$cat_liste[0]) {
 	$nextpil=$start+$linjeantal;
-	print "<td align=right><a href=debitor.php?start=$nextpil&valg=$valg><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
+	print "<td align=right class='imgNoTextDeco' style='padding: 20px' colspan='4'><a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret nyt kundekort'><i class='fa fa-plus-square'></i></a> &nbsp; <a accesskey=V href='debitorvisning.php?valg=$valg' title='Ændre visning'><i class='fa fa-gear'></i></a> &nbsp; <a href=debitor.php?start=$nextpil&valg=$valg><img class='imgInvert imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
 }
 print "</tr>\n";
 if ($dg_antal || $cat_antal) $linjeantal=0;
@@ -562,7 +565,7 @@ print "<input type=hidden name=kontoid value=$kontoid>\n";
 			}
 			print "</SELECT></td>\n";			
 		} else {
-			if ($vis_felt[$x]=='invoiced') $titletxt="skriv et dato i formatet ddmmyy eller et interval adskilt af : fx. 010520:300620";
+			if ($vis_felt[$x]=='invoiced') $titletxt=findtekst(1666, $sprog_id); #20210728
 			else $titletxt= '';
 			print "<input class=\"inputbox\" title=\"$titletxt\" type='text' size='$feltbredde[$x]' style='text-align:$justering[$x]' ";
 			print "name='find[$x]' value=\"$find[$x]\">";
@@ -571,9 +574,18 @@ print "<input type=hidden name=kontoid value=$kontoid>\n";
 	print "</td>\n";  
 	if ($valg=='kommission') print "<td colspan='2'></td>";
 
-	print "<td><input class='button blue small' type='submit' value=\"Søg\" name=\"search\"></td>\n";
-print "</form></tr>\n<td></td>\n";
+	print "<td colspan='4' align=center><input class='button blue small' type='submit' value=\"Søg\" name=\"search\"></td>\n";
+	if ($valg=='historik') print "";
+	print "</form></tr>\n";
 }
+
+if ($menu=='T') {
+	print "<tr><th colspan=20 style='padding: 0px; height: 1px;'></th></tr>";
+	print "</thead><tbody>";
+} else {
+	print "<tr><td colspan=11><hr></td></tr>\n";
+}
+
 ######################################################################################################################
 if ($valg=='kommission' || $valg=='historik') {
 	$action="debitor.php?start=$start&valg=$valg&sort=$sort";
@@ -581,34 +593,55 @@ if ($valg=='kommission' || $valg=='historik') {
 			}
 if ($valg == 'rental') include ("../debitor/debLstIncludes/debRentalLst.php");
 else include ("../debitor/debLstIncludes/debLst.php");
-print "<tr>";
-if ($prepil || $prepil=='0')	print "<td colspan=$colspan><a href=debitor.php?start=$prepil&valg=$valg><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>\n";
-else print "<td colspan=$colspan><br></td>\n";
+if ($valg == 'historik'){
+	if ($menu=='T') {
+		print "</tbody><tfoot>\n";
+	} else {
+		print "<tr><td colspan=12><hr></td></tr>\n";
+	}
+} else {
+	if ($menu=='T') {
+		print "</tbody><tfoot>\n";
+	} else {
+		print "";
+	}
+}
+print "<tr><td colspan=$colspan><br></td>\n";
 if ($valg == 'kommission' || $valg == 'historik') {
 #	$colspan++;
 	print "<td colspan='2' align='right'>";
 	if ($valg == 'kommission') print "<input style='width:75px;' type='submit' name='kommission' value='OK'>";
-	else print "<input style='width:75px;' type='submit' name='historik' value='Send'>";
+	else print "<input style='width:100px;' type='submit' name='historik' value='Send'>";
 	print "</td></tr>";
 	print "<tr><td colspan='$colspan'>";
-	print "<td colspan='2' align='right'><input style='width:75px;' type='submit' name='chooseAll' value='Vælg alle'></td>";
+	print "<td colspan='2' align='right'><input style='width:100px;' type='submit' name='chooseAll' value='Vælg alle'></td>";
 	print "</form>";
 }	
-if ($nextpil) print "<td align=right><a href=debitor.php?start=$nextpil&valg=$valg><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td></tr>\n";
-else print "<td></td>";
 print "</tr>\n";
 $colspan++;
-print "<tr><td colspan=$colspan width=100%><hr></td></tr>\n";
 #print "<table border=0 width=100%><tbody>";
 
 #print "</tbody></table></td>";
 #print "<tr><td colspan=$colspan><hr></td></tr>\n";
 
-
-?>
+if ($menu=='T') {
+		print "
+	</tfoot>
+	</table>
+	</td></tr>
+	</tbody></table></div></div>
+	";
+	include_once '../includes/topmenu/footerDebRapporter.php';
+} else {
+		print "
 </tbody>
 </table>
 	</td></tr>
 </tbody></table>
+	";
 
-</body></html>
+	include_once '../includes/oldDesign/footer.php';
+}
+
+
+?>

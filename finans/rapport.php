@@ -83,6 +83,12 @@ if ($_POST){
 	$aar_til=if_isset($_POST['aar_til']);
 	$maaned_fra=trim(if_isset($_POST['maaned_fra']));
 	$maaned_til=trim(if_isset($_POST['maaned_til']));
+	if (strpos($maaned_fra,'|')) {
+		list ($aar_fra,$maaned_fra)=explode('|',$maaned_fra); 
+	}
+	if (strpos($maaned_til,'|')) {
+		list ($aar_til,$maaned_til)=explode('|',$maaned_til); 
+		}
 	$dato_fra=if_isset($_POST['dato_fra']);
 	$dato_til=if_isset($_POST['dato_til']);
 	$md=if_isset($_POST['md']);

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----systemdata/regnskabskort.php ---------------- lap 3.9.9 -- 2021-01-01 --
+// --- systemdata/regnskabskort.php --- lap 4.0.4 -- 2022-01-02 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,20 +20,22 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2015-01-02 Tilrettet til dynamisk lagerværdi. Søg find_lagervaerdi
 // 20150327 CA  Topmenudesign tilføjet søg 20150327
 // 20170516 Div oprydning samt tilføjelse af laas_lager Søg laas
-// 2019.02.21 MSC - Rettet topmenu design og isset fejl
-// 2019.02.25 MSC - Rettet topmenu design
-// 2021.01.01 PHR Various changes and cleanup. Accounting now alloewd by default.
+// 20190221 MSC - Rettet topmenu design og isset fejl
+// 20190225 MSC - Rettet topmenu design
+// 20210101 PHR - Various changes and cleanup. Accounting now alloewd by default.
+// 20210709 LOE - Translated these texts
+// 20220103 PHR - Made some cleanup, set it to save twice and set year active when new year created.
 
 @session_start();
 $s_id=session_id();
 
-$laast=NULL;
+$aut_lager=$aaben=$beskrivelse=$laast=$setFinancialYear=NULL;
 	
 $modulnr=2;
 $title="Regnskabskort";
@@ -43,9 +45,8 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/genberegn.php");
-
-$aaben = $aut_lager = $beskrivelse = null;
 /*
+$aaben = $aut_lager = $beskrivelse = null;
 if ($menu=='T') {  # 20150327 start
         include_once '../includes/top_header.php';
         include_once '../includes/top_menu.php';
@@ -62,7 +63,6 @@ if ($menu=='T') {  # 20150327 start
         print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>";
 }  # 20150327 stop
 */
-
 print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>";
 if ($menu=='T') {
 	#	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
@@ -70,8 +70,8 @@ if ($menu=='T') {
 		include_once '../includes/top_menu.php';
 		print "<div id=\"header\">\n";
 		print "<div class=\"headerbtnLft\"></div>\n";
-		print "<span class=\"headerTxt\">Regnskabskort</span>\n";     
-		print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">Ny debitor</a>--></div>";       
+		print "<span class=\"headerTxt\">".findtekst(1215,$sprog_id)."</span>\n";     
+		print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">".findtekst(39,$sprog_id)." ".findtekst(604,$sprog_id)."</a>--></div>";  #20210709     
 		print "</div><!-- end of header -->";
 		print "<div id=\"leftmenuholder\">";
 		include_once 'left_menu.php';
@@ -82,19 +82,24 @@ if ($menu=='T') {
 		print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
 print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody>"; ####################table 1a start.
 		print "<tr><td align='center' valign=top>";
+		print "<a href=\"javascript:confirmClose('regnskabsaar.php','". findtekst(154,$sprog_id) ."')\">";
+		print "<button style = 'width:80px;'>Luk</button></a>";
 		print "<table width=100% align='center' border=0 cellspacing=4 cellpadding=0><tbody>\n"; ##############table 2b start
 print "<tr>\n";
 	}
-
+/*
 if ($menu=='T') { # 20150327 stare
 	
-} else {
+} 
+
+else {
 	$tekst=findtekst(154,$sprog_id);
-	print "<td width=\"10%\" align='center'><div class=\"top_bund\"><a href=\"javascript:confirmClose('regnskabsaar.php','$tekst')\" accesskey=L>Luk</a></div></td>\n";
-	print "<td width=80% align='center'><div class=\"top_bund\">Regnskabskort</div></td>\n";
+	print "<td width=\"10%\" align='center'><div class=\"top_bund\"><a href=\"javascript:confirmClose('regnskabsaar.php','$tekst')\" accesskey=L>".findtekst(30, $sprog_id)."</a></div></td>\n";
+	print "<td width=80% align='center'><div class=\"top_bund\">".findtekst(1215,$sprog_id)."</div></td>\n";
 	print "<td width=\"10%\" align='center'><div class=\"top_bund\">&nbsp;</div></td>\n";
 } # 20150327 stop
 print "</tr>\n";
+*/
 print "</tbody></table>\n"; #####################################################table 2b slut.
 print "</td></tr>\n";
 print "<tr>\n";
@@ -104,7 +109,6 @@ print "<td align = center valign = center>";
 $id=if_isset($_GET['id']);
 
 if ($_POST) {
-	transaktion ("begin");
 	$id = if_isset($_POST['id']);
 	$beskrivelse = if_isset($_POST['beskrivelse']);
 	$kodenr = if_isset($_POST['kodenr']);
@@ -136,36 +140,39 @@ if ($_POST) {
 	$slutaar=$slutaar*1;
 	
 	if (!$beskrivelse){
-		Print "<BODY onLoad=\"javascript:alert('Beskrivelse ikke angivet. S&aelig;ttes til $aar!')\">";
-		$beskrivelse="$aar";
+		$beskrivelse = $startaar;
+		if ($startaar != $slutaar) $beskrivelse.= "/".$slutaar;
 	}
 	if (($startmd<1)||($startmd>12)){
-		Print "<BODY onLoad=\"javascript:alert('Startm&aring;ned skal v&aelig;re mellem 1 og 12!')\">";
+		alert('Startm&aring;ned skal v&aelig;re mellem 1 og 12!');
 		$startmd="";
 	}
-	elseif ($startmd<10){$startmd="0".$startmd;};
+	elseif ($startmd<10) $startmd="0".$startmd;
 	if (($slutmd<1)||($slutmd>12)){
-		Print "<BODY onLoad=\"javascript:alert('Slutm&aring;ned skal v&aelig;re mellem 1 og 12!')\">";
+		alert('Slutm&aring;ned skal v&aelig;re mellem 1 og 12!');
 		$slutmd="";
 	}
-	elseif ($slutmd<10){$slutmd="0".$slutmd;};
+	elseif ($slutmd<10) $slutmd="0".$slutmd;
 	if (($startaar<$bundaar)||($startaar>$topaar)){
-		print "<BODY onLoad=\"javascript:alert('Start&aring;r skal v&aelig;re mellem $bundaar og $topaar!')\">";
+		alert('Start&aring;r skal v&aelig;re mellem $bundaar og $topaar!');
 		$startaar="";
 	}
 	if (($slutaar<$bundaar)||($slutaar>$topaar)){
-		print "<BODY onLoad=\"javascript:alert('Slut&aring;r skal v&aelig;re mellem $bundaar og $topaar!')\">";
+		alert('Slut&aring;r skal v&aelig;re mellem $bundaar og $topaar!');
 		$slutaar="";
 	}
 	$startdato=$startaar.$startmd;
 	$slutdato=$slutaar.$slutmd;
 	if ($slutdato<=$startdato){
-		Print "<BODY onLoad=\"javascript:alert('Regnskabs&aring;r skal slutte senere end det starter')\">";
+		alert('Regnskabs&aring;r skal slutte senere end det starter');
 		$aaben="";
 	}
-
-	if ((($id!=0)||(!db_fetch_array(db_select("select id from grupper where kodenr = '$kodenr' and art = 'RA'",__FILE__ . " linje " . __LINE__))))&&(($startmd)&&($slutmd)&&($startdato)&&($slutdato)&&($startaar)&&($slutaar)&&($beskrivelse))) {
+	$qtxt = "select id from grupper where kodenr = '$kodenr' and art = 'RA'";
+	if ((($id!=0)||(!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))) &&
+	(($startmd)&&($slutmd)&&($startdato)&&($slutdato)&&($startaar)&&($slutaar)&&($beskrivelse))) {
 		transaktion("begin");
+		($id == 0)?$nn=2:$nn=1;
+		for($n=0;$n<$nn;$n++) { // 1. time it must be rerun to catch and update last year's result. 
 		if ($id==0){
 			$qtxt="insert into grupper (beskrivelse,kodenr,kode,art,box1,box2,box3,box4,box5)";
 			$qtxt.=" values ";
@@ -174,6 +181,7 @@ if ($_POST) {
 			$query = db_select("select id from grupper where kodenr = '$kodenr' and art = 'RA'",__FILE__ . " linje " . __LINE__);
 			$row = db_fetch_array($query);
 			$id = $row['id'];
+			$setFinancialYear=1; 
 		}
 		if ($kodenr==1) {
 			for ($x=1; $x<=$kontoantal; $x++) {
@@ -183,33 +191,45 @@ if ($_POST) {
 				db_modify ("update kontoplan set primo='$sum' where kontonr='$kontonr[$x]' and regnskabsaar=1",__FILE__ . " linje " . __LINE__);
 			}
 			if (db_fetch_array(db_select("select * from grupper where art = 'RB'",__FILE__ . " linje " . __LINE__))) {
-				db_modify("update grupper set box1 = '$fakt', box2 = '$modt', box3 = '$faktbill', box4 = '$modtbill', box5 = '$no_faktbill' where art = 'RB'",__FILE__ . " linje " . __LINE__);
+				$qtxt = "update grupper set box1 = '$fakt', box2 = '$modt', box3 = '$faktbill', box4 = '$modtbill', box5 = '$no_faktbill' ";
+				$qtxt.= "where art = 'RB'";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			} else {
-				db_modify("insert into grupper (beskrivelse,kodenr,kode,art,box1,box2,box3,box4,box5) values ('Regnskabsbilag','1','1','RB','$fakt','$modt','$faktbill','$modtbill','$no_faktbill')",__FILE__ . " linje " . __LINE__);
+				$qtxt = "insert into grupper (beskrivelse,kodenr,kode,art,box1,box2,box3,box4,box5) values "; 
+				$qtxt.= "('Regnskabsbilag','1','1','RB','$fakt','$modt','$faktbill','$modtbill','$no_faktbill')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 		} 
 		if (($id>0)&&($kodenr>0)) {
-			db_modify("update grupper set beskrivelse = '".db_escape_string($beskrivelse)."', kodenr = '$kodenr', kode = '$kode', box1 = '$startmd', box2 = '$startaar', box3 = '$slutmd', box4 = '$slutaar', box5 = '$aaben' where id = '$id'",__FILE__ . " linje " . __LINE__);
+			$qtxt = "update grupper set beskrivelse = '".db_escape_string($beskrivelse)."', kodenr = '$kodenr', kode = '$kode', ";
+			$qtxt.= "box1 = '$startmd', box2 = '$startaar', box3 = '$slutmd', box4 = '$slutaar', box5 = '$aaben' where id = '$id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			if ($kodenr==1){
 				for ($x=1; $x<=$kontoantal; $x++) {
-					if ($saldo[$x] && $overfor_til[$x]) db_modify ("update kontoplan set primo=primo+$saldo[$x],overfor_til=$overfor_til[$x] where kontonr='$kontonr[$x]' and regnskabsaar=$kodenr",__FILE__ . " linje " . __LINE__);
+					if ($saldo[$x] && $overfor_til[$x]) {
+						$qtxt = "update kontoplan set primo=primo+$saldo[$x],overfor_til=$overfor_til[$x] where ";
+						$qtxt = "kontonr='$kontonr[$x]' and regnskabsaar=$kodenr";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+					}
 				}
 			} else {
 				$query = db_select("select id from kontoplan where regnskabsaar=$kodenr",__FILE__ . " linje " . __LINE__);
 				if($row = db_fetch_array($query)) {
+					$qtxt = 	
 					db_modify ("update kontoplan set primo='0' where  regnskabsaar=$kodenr",__FILE__ . " linje " . __LINE__);
 					for ($x=0; $x<=$kontoantal; $x++) {
 						$overfor_til[$x]=$overfor_til[$x]*1;
 						$kontonr[$x]=$kontonr[$x]*1;
 						if ($overfor_til[$x]) {
 							$saldo[$x]*=1; #phr 20110605
-							db_modify ("update kontoplan set overfor_til='$overfor_til[$x]' where kontonr='$kontonr[$x]' and (regnskabsaar=$kodenr-1 or regnskabsaar='$kodenr')",__FILE__ . " linje " . __LINE__);
-#cho "update kontoplan set overfor_til='$overfor_til[$x]' where kontonr='$kontonr[$x]' and regnskabsaar=$kodenr-1 or regnskabsaar=$kodenr<br>";		
-							db_modify ("update kontoplan set primo=primo+'$saldo[$x]' where kontonr='$overfor_til[$x]' and regnskabsaar=$kodenr",__FILE__ . " linje " . __LINE__);
-						}
+							$qtxt = "update kontoplan set overfor_til='$overfor_til[$x]' ";
+							$qtxt.= "where kontonr='$kontonr[$x]' and (regnskabsaar=$kodenr-1 or regnskabsaar='$kodenr')";
+							db_modify ($qtxt,__FILE__ . " linje " . __LINE__);
+							$qtxt = "update kontoplan set primo=primo+'$saldo[$x]' where kontonr='$overfor_til[$x]' and regnskabsaar=$kodenr";
+							db_modify ($qtxt,__FILE__ . " linje " . __LINE__);
 					}
 				}
-				else {
+				} else {
 					$query = db_select("select * from kontoplan where regnskabsaar=$kodenr-1 order by kontonr",__FILE__ . " linje " . __LINE__);
 					$y=0;
 					while ($row = db_fetch_array($query)) {
@@ -220,7 +240,11 @@ if ($_POST) {
 						if (!$row['fra_kto']) $row['fra_kto']='0';
 						if (!$row['til_kto']) $row['til_kto']='0';
 						if (!$row['overfor_til']) $row['overfor_til']='0';
-						db_modify("insert into kontoplan(kontonr,beskrivelse,kontotype,moms,fra_kto,til_kto,lukket,primo,regnskabsaar,overfor_til,genvej)values('$row[kontonr]','".db_escape_string($row['beskrivelse'])."','$row[kontotype]','$row[moms]','$row[fra_kto]','$row[til_kto]','$row[lukket]','$belob','$kodenr','$row[overfor_til]','$row[genvej]')",__FILE__ . " linje " . __LINE__);
+						$qtxt = "insert into kontoplan(kontonr,beskrivelse,kontotype,moms,fra_kto,til_kto,lukket,primo,regnskabsaar,overfor_til,genvej)";
+						$qtxt.= " values ";
+						$qtxt.= "('$row[kontonr]','".db_escape_string($row['beskrivelse'])."','$row[kontotype]','$row[moms]',";
+						$qtxt.= "'$row[fra_kto]','$row[til_kto]','$row[lukket]','$belob','$kodenr','$row[overfor_til]','$row[genvej]')";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					}
 				}	
 			}
@@ -231,16 +255,27 @@ if ($_POST) {
 			print "<meta http-equiv=\"refresh\" content=\"1;URL=laas_lager.php?fra=$fra&til=$til\">"; 
 
 		}
+		}
 		transaktion("commit");
 	}
 }
+if ($setFinancialYear) {
+	include("../includes/connect.php");
+	db_modify("update online set regnskabsaar = '$kodenr' where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
+	if ($revisor) {
+		$qtxt = "update revisor set regnskabsaar = '$kodenr' where brugernavn = '$brugernavn' and db_id='$db_id'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+	include("../includes/online.php");
+	if (!$revisor) db_modify("update brugere set regnskabsaar = '$kodenr' where id = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+}
+
 if ($id > 0) {
 	$query = db_select("select * from grupper where id = '$id' and art = 'RA'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
 		genberegn($row['kodenr']);
-		if ($row['kodenr']==1){aar_1($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5']);}
-		else
-		{
+		if ($row['kodenr']==1) aar_1($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5'],'');
+		else {
 			aar_x($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5'],$row['box9']);
 		}
 	}
@@ -274,8 +309,9 @@ if ($id > 0) {
 	if ($x==0) aar_1($id, 1, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager);
 	else aar_x($id, $x, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager);
 }
-function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager) {
 	
+function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager) {
+	global $sprog_id;
 	$row = db_fetch_array(db_select("select MAX(kodenr) as kodenr from grupper where art = 'RA'",__FILE__ . " linje " . __LINE__));
 	if ($row['kodenr'] > $kodenr) $laast=1;  
 	if ($row = db_fetch_array(db_select("select * from grupper where art = 'RB' order by kodenr",__FILE__ . " linje " . __LINE__))) {
@@ -295,7 +331,7 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	if (!$modt) $modt='1';
 	
 	print "<form name='aar_1' action='regnskabskort.php' method='post'>";
-	if ($id) print "<tr><td colspan=4 align = center><big><b>Ret 1. regnskabs&aring;r: $beskrivelse</big></td></tr>\n";
+	if ($id) print "<tr><td colspan=4 align = center><big><b>".findtekst(1226,$sprog_id)." $beskrivelse</big></td></tr>\n";
 	else {
 		print "<tr><td colspan=4 align = center><big><b>Velkommen til som SALDI bruger</b></big><br />
 			Du skal f&oslash;rst oprette dit 1. regnskabs&aring;r, f&oslash;r du kan bruge systemet.<br /><br /> 
@@ -305,11 +341,11 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 			Hvis der er noget, du er i tvivl om, er du velkommen til at kontakte os p&aring; telefon 4690 2208<br /> 
 			God forn&oslash;jelse.<br /><br />
 			</td></tr>\n";
-		print "<tr><td colspan=4 align = center><big><b>Opret 1. regnskabs&aring;r: $beskrivelse</big></td></tr>\n";
+		print "<tr><td colspan=4 align = center><big><b>".findtekst(1227,$sprog_id)." $beskrivelse</big></td></tr>\n";
 	}
 	print "<tr><td colspan=4 align='center'><table width=100% border=0><tbody><tr>"; #########################table 4c start
-	print "<tr><td></td><td align='center'>Start</td><td align='center'>Start</td><td align='center'>Slut</td><td align='center'>Slut</td><td align='center'>Bogf&oslash;ring</td></tr>\n";
-	print "<tr><td align='center'>Beskrivelse</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>tilladt</tr>\n";
+	print "<tr><td></td><td align='center'>Start</td><td align='center'>Start</td><td align='center'>".findtekst(1216,$sprog_id)."</td><td align='center'>".findtekst(1216,$sprog_id)."</td><td align='center'>".findtekst(1086,$sprog_id)."</td></tr>\n";
+	print "<tr><td align='center'>".findtekst(914,$sprog_id)."</td><td align='center'>".findtekst(1217,$sprog_id)."</td><td align='center'>".findtekst(1218,$sprog_id)."</td><td align='center'>".findtekst(1217,$sprog_id)."</td><td align='center'>".findtekst(1218,$sprog_id)."</td><td align='center'>".findtekst(1219,$sprog_id)."</tr>\n";
 	print "<input type=hidden name=kodenr value=1><input type=hidden name='id' value='$id'>\n";
 	print "<tr><td align='center'><input type=text size='30' name='beskrivelse' value=\"$beskrivelse\" onchange=\"javascript:docChange = true;\"></td>\n";
 	if ($laast) $type="readonly=readonly";
@@ -326,24 +362,24 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	print "</tr>\n</tbody></table></td></tr>\n"; ###################################################table 4c slut
 	print "<tr><td colspan=4 width=100% align='center'><table heigth=100% border=0><tbody>"; ###########################table 5c start
 	print "<td align='center' valign=\"top\"><table heigth=100% border=1><tbody>\n";  #################################table 6d start	print "<tr><td align='center'>1. faktnr</td><td align='center'>1. modt. nr.</td><tr>";
-	print "<tr>\n <td>1.&nbsp;fakturanummer</td>\n";
+	print "<tr>\n <td>".findtekst(1220,$sprog_id)."</td>\n";
 	print " <td align='center'><input type=text style='text-align:right' size='4' name=fakt value=$fakt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
-	print "<tr>\n <td>1.&nbsp;modtagelsesnummer</td>\n";
+	print "<tr>\n <td>".findtekst(1221,$sprog_id)."</td>\n";
 	print " <td align='center'><input type=text style='text-align:right' size='4' name=modt value=$modt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
 	print "</tbody></table></td>\n"; ##########################################################table 6d slut
 	print "<td><table border=1><tbody>"; ##############################################table 7d start
 	if ($no_faktbill) $no_faktbill="checked"; 
 	if ((!$no_faktbill)&&($faktbill)) $faktbill="checked"; 
 	if ($modtbill) $modtbill="checked";
-	print "<tr><td align='center'>Undlad bilagsnummer til faktura</td><td align='center'><input type='checkbox' name=no_faktbill $no_faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
-	print "<tr><td align='center'>Brug fakturanummer som bilagsnummer</td><td align='center'><input type='checkbox' name=faktbill $faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
-	print "<tr><td align='center'>Brug modtagelsesnummer som bilagsnummer</td><td align='center'><input type='checkbox' name=modtbill $modtbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
+	print "<tr><td align='center'>".findtekst(1222,$sprog_id)."</td><td align='center'><input type='checkbox' name=no_faktbill $no_faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n"; #20210709
+	print "<tr><td align='center'>".findtekst(1223,$sprog_id)."</td><td align='center'><input type='checkbox' name=faktbill $faktbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
+	print "<tr><td align='center'>".findtekst(1224,$sprog_id)."</td><td align='center'><input type='checkbox' name=modtbill $modtbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
 	print "</tbody></table></td>\n"; ##########################################################table 7d slut
 	print "<td valign=\"top\"><table border=0><tbody>\n"; ##############################################table 8d start
-	print "<tr><td><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<tr><td><input class='button green medium' type=submit accesskey=\"g\" value=\"".findtekst(3,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 	print "</tbody></table></td></tr>\n";#####################################################table8d slut
 	print "</td></tbody></table></td></tr>\n";#####################################################table5c slut
-	print "<tr><td colspan=2 align='center'> Indtast primotal for 1. regnskabs&aring;r:</td><td align = center> Debet</td><td align = center> Kredit</td></tr>\n";
+	print "<tr><td colspan=2 align='center'> ".findtekst(1225,$sprog_id)."</td><td align = center> ".findtekst(1000,$sprog_id)."</td><td align = center> ".findtekst(1001,$sprog_id)."</td></tr>\n";
 	$query = db_select("select id, kontonr, primo, beskrivelse from kontoplan where kontotype='S' and regnskabsaar='1' order by kontonr",__FILE__ . " linje " . __LINE__);
 	$y=0;
 	$debetsum=0;
@@ -374,18 +410,17 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align='center'><input type='checkbox' name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
 	print "<tr><td colspan='4' align='center'>";
-	print "<input class='buttom green medium' type='submit' accesskey=\"g\" value=\"Gem/opdat&eacute;r\" style=\"width:100px\" ";
+	print "<input class='buttom green medium' type='submit' accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\" style=\"width:100px\" ";
 	print "name=\"submit\" onclick=\"javascript:docChange = false;\">";
-	print "&nbsp;&nbsp;<input class='button green medium' type=submit value=\"Slet år\" name=\"delete\"  style=\"width:100px\" ";
-	print "onclick=\"javascript:docChange = false;\">";
+#	print "&nbsp;&nbsp;<input class='button green medium' type=submit value=\"".findtekst(1009,$sprog_id)." ".findtekst(1218,$sprog_id)."\" name=\"delete\"  style=\"width:100px\" ";
+#	print "onclick=\"javascript:docChange = false;\">";
 	print "</td></tr>\n";
 	print "</form>";
 	exit;
 }
 
 function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager) {
-	global $overfor_til;
-	global $regnaar;
+	global $overfor_til,$regnaar,$sprog_id;
 	$debetsum=0;
 	$kreditsum=0;
 	
@@ -410,15 +445,20 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	$pre_regnstart = $pre_startaar. "-" . $pre_startmd . "-" . '01';
 	$pre_regnslut = $pre_slutaar . "-" . $pre_slutmd . "-" . $pre_slutdato;
 
-	print "<form name=aar_1 action=regnskabskort.php method=post>";
-	if ($id) print "<tr><td colspan=5 align = center><big><b>Ret $kodenr. regnskabs&aring;r: $beskrivelse</td></tr>\n";
+	if (!$beskrivelse){
+		$beskrivelse = $startaar;
+		if ($startaar != $slutaar) $beskrivelse.= "/".$slutaar;
+	}
+
+	print "<form id = '1' name='aar_x' action='regnskabskort.php' method='post'>";
+	if ($id) print "<tr><td colspan=5 align = center><big><b>".findtekst(1206,$sprog_id)." $kodenr. ".findtekst(894,$sprog_id).": $beskrivelse</td></tr>\n";
 	else {
-		print "<tr><td colspan=5 align = center><big><b>Opret $kodenr. regnskabs&aring;r: $beskrivelse</td></tr>\n";
+		print "<tr><td colspan=5 align = center><big><b>". findtekst(1232,$sprog_id)." $kodenr. ".findtekst(894,$sprog_id).": $beskrivelse</td></tr>\n";
 		$aaben='on';
 	}
 	print "<tr><td colspan=5 align='center'><table width=100% border=0><tbody><tr>"; ###########################table 8d start
-	print "<tr><td></td><td align='center'>Start</td><td align='center'>Start</td><td align='center'>Slut</td><td align='center'>Slut</td><td align='center'>Bogf&oslash;ring</td></tr>\n";
-	print "<tr><td align='center'>Beskrivelse</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>m&aring;ned</td><td align='center'>&aring;r</td><td align='center'>tilladt</td></tr>\n";
+	print "<tr><td></td><td align='center'>Start</td><td align='center'>Start</td><td align='center'>".findtekst(1216,$sprog_id)."</td><td align='center'>".findtekst(1216,$sprog_id)."</td><td align='center'>".findtekst(1086,$sprog_id)."</td></tr>\n";
+	print "<tr><td align='center'>".findtekst(914,$sprog_id)."</td><td align='center'>".findtekst(1217,$sprog_id)."</td><td align='center'>".findtekst(1218,$sprog_id)."</td><td align='center'>".findtekst(1217,$sprog_id)."</td><td align='center'>".findtekst(1218,$sprog_id)."</td><td align='center'>".findtekst(1219,$sprog_id)."</td></tr>\n";
 	print "<tr><input type=hidden name=kodenr value=$kodenr><input type=hidden name=id value='$id'	>";
 	print "<td align='center'><input type=text size=30 name=beskrivelse value=\"$beskrivelse\" onchange=\"javascript:docChange = true;\"></td>";
 	print "<td align='center'><input readonly=readonly style='text-align:right' size='2' name=startmd value=$startmd></td>";
@@ -429,7 +469,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	if (!$id) $checked='checked';
 	print "<td align='center'><input type='checkbox' name='aaben' $aaben onchange=\"javascript:docChange = true;\"></td>";
 	print "</tr>\n</tbody></table></td></tr>\n"; #####################################################table 8d slut
-	print "<tr><td colspan=2 align='center'> Primotal for $kodenr. regnskabs&aring;r:</td><td align = center> saldo</td><td align = center> overf&oslash;r til</td><td align = center> ny primo</td></tr>\n";
+	print "<tr><td colspan=2 align='center'> ".findtekst(1231,$sprog_id)." $kodenr. ".findtekst(894,$sprog_id).":</td><td align = center> ".findtekst(1073,$sprog_id)."</td><td align = center> ".findtekst(1228,$sprog_id)." ".findtekst(904,$sprog_id)."</td><td align = center> ".findtekst(39,$sprog_id)." ".findtekst(1229,$sprog_id)."</td></tr>\n";
 	$tmp=$kodenr;
 	$kontoantal=0;
 	while ($kontoantal<1&&$tmp>0){ #Hvis der ikke er oprettet konti for indevaerende regsskabsaar, hentes konti fra forrige.
@@ -463,7 +503,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 			}
 		}
 		if ($laas_lager) {
-			db_modify("update grupper set box9='on' where kodenr='$pre_regnaar' and art='RA'");
+			db_modify("update grupper set box9='on' where kodenr='$pre_regnaar' and art='RA'",__FILE__ . " linje " . __LINE__);
 			$aut_lager=NULL;
 		}
 	}
@@ -505,7 +545,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		print "<td width='10' align='right'><input type=hidden name=saldo[0] value=$resultat>".dkdecimal($resultat,2)."</td>";
 		print "<td><SELECT NAME=overfor_til[0]>";
 		if (isset($r['overfor_til']) && $r['overfor_til']) print "<option>$r[overfor_til]</option>";  
-		print "<option>$kontonr[$y]</option>";
+		print "<option></option>";
 		for ($x=1;$x<=$kontoantal;$x++) print "<option>$kontonr[$x]</option>";
 		print "</SELECT></td>";
 		print "<td width='10'><br /></td></tr>\n";
@@ -565,11 +605,11 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	if ($debetsum-$kreditsum!=0) {print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";}
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align='center'><input type='checkbox' name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
-	print "<tr><td colspan = 5 align = center><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
+	print "<tr><td colspan = 5 align = center><input class='button green medium' type=submit accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
 	if ($aut_lager && date("Y-m-d")>$pre_regnslut) {
 		$title="Bogfører alle lagerbevægelser i det foregående år. Bør gøres umiddelbart efter årsskifte og lageroptælling".
 		$confirmtxt="";
-		print "&nbsp;<a href=laas_lager.php?regnaar=$pre_regnaar&regnaar_id=$id&print=0><input title=\"$title\" type=\"button\" value=\"Lås lagerværdi\" onclick=\"return confirm('Bogfør og lås lagerprimo? Obs - Vær tålmodig det kan tage flere minutter')\"></a>"; 
+		print "&nbsp;<a href=laas_lager.php?regnaar=$pre_regnaar&regnaar_id=$id&print=0><input title=\"$title\" type=\"button\" value=\"".findtekst(1230, $sprog_id)."\" onclick=\"return confirm('Bogfør og lås lagerprimo? Obs - Vær tålmodig det kan tage flere minutter')\"></a>"; 
 	}
 	# if ($regnaar==$max_aar) print "<input type=submit value=\"Slet\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
 	print "</td></tr>\n";

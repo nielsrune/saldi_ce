@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- finans/rapport_includes/forside.php --- rev 3.9.9 --- 2021-02-11 ---
+// --- finans/rapport_includes/forside.php --- rev 4.0.1 --- 2021-10-20 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -27,7 +27,9 @@
 // 20190924 PHR Added option 'Poster uden afd". when "afdelinger" is used. $afd='0' 
 // 20210110 PHR some minor changes related til 'deferred financial year'
 // 20210211 PHR some cleanup
-
+// 20210326 LOE updated the form names with findtekst func. variables..
+// 20210722 Fixed a form bug for konto_fra and konto_til values; they were not properly named and used in /finans/rapport.php file
+// 20211020 PHR aar_fra &aar_til can now be now included in maaned_fra & maaned_til.
 
 function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til,$simulering,$lagerbev){
 	global $brugernavn;
@@ -39,10 +41,11 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	global $sprog_id;
 	global $top_bund;
 
-
 	$regnaar=$regnaar*1; #fordi den er i tekstformat og skal vaere numerisk
-	$konto_fra=$konto_fra*1;
-	$konto_til=$konto_til*1;
+	#$konto_fra=$konto_fra*1;
+	$konto_fra=(int)$konto_fra;
+	#$konto_til=$konto_til*1;
+	$konto_til=(int)$konto_til;
 	
 	($simulering)?$simulering="checked":$simulering=NULL;
 	($lagerbev)?$lagerbev="checked":$lagerbev=NULL;
@@ -145,9 +148,9 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 		print "<tr>";
 #	print "<table width='100%' align='center' border='10' cellspacing='3' cellpadding='0'><tbody>"; #B
 		print "<td width='10%' $top_bund>";
-		if ($popup) print "<a href=../includes/luk.php accesskey=L>Luk</a></td>";
-		else print "<a href=../index/menu.php accesskey=L>Luk</a></td>";
-		print "<td width='80%' $top_bund> Finansrapport - forside </td>";
+		if ($popup) print "<a href=../includes/luk.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
+		else print "<a href=../index/menu.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
+		print "<td width='80%' $top_bund> ".findtekst(897,$sprog_id)." </td>";
 		print "<td width='10%' $top_bund><br></td>";
 	}
 #	print "</tbody></table>"; #B slut
@@ -158,20 +161,20 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	} else {
 		print "<table cellpadding='1' cellspacing='5' bordercolor='#FFFFFF' border='1' align='center'><tbody>\n"; #C
 	}
-	print "<tr><td align=center><h3>Finansrapport</font><br></h3></td></tr>\n";
+	print "<tr><td align=center><h3>".findtekst(895,$sprog_id)."</font><br></h3></td></tr>\n"; //20210326
 	print "<td><table cellpadding='1' cellspacing='1' border='0' width='100%' align=center><tbody>\n"; #D
-	print "<tr><td>Regnskabs&aring;r</td><td><select name='regnaar'>\n";
+	print "<tr><td>".findtekst(894,$sprog_id)."</td><td><select name='regnaar'>\n";
 	print "<option>$regnaar. - $regn_beskrivelse[$aktiv]</option>\n";
 	for ($x=1; $x<=$antal_regnaar;$x++) {
 		if ($x!=$aktiv) {print "<option>$regn_kode[$x] - $regn_beskrivelse[$x]</option>\n";}
 	}
-	print "</select></td><td><input class='button gray small' type=submit value='Opdat&eacute;r' name='submit'></td></tr>\n";
+	print "</select></td><td><input class='button gray small' type=submit value=".findtekst(898,$sprog_id)." name='submit'></td></tr>\n";
 	print "</form>\n\n";
 	print "<form name=rapport action=rapport.php method=post>\n";
 	if ($r=db_fetch_array(db_select("select id from kladdeliste where bogfort='S'",__FILE__ . " linje " . __LINE__))) {
 		print "<tr><td title='Medtag simulerede kladder i rapporter'>Simulering</td><td title='Medtag simulerede kladder i rapporter'><input class='checkmark' type='checkbox' name='simulering' $simulering></td></tr>";
 	}
-	print "</tr><td>Rapporttype</td><td><select name=rapportart>\n";
+	print "</tr><td>".findtekst(896,$sprog_id)."</td><td><select name=rapportart>\n";
 	if ($rapportart=="kontokort") print "<option title='".findtekst(509,$sprog_id)."' value='kontokort'>".findtekst(515,$sprog_id)."</option>\n";
 	elseif ($rapportart=="kontokort_moms") print "<option title='".findtekst(510,$sprog_id)."' value='kontokort_moms'>".findtekst(516,$sprog_id)."</option>\n";
 	elseif ($rapportart=="balance") print "<option title='".findtekst(511,$sprog_id)."' value='balance'>".findtekst(517,$sprog_id)."</option>\n";
@@ -197,7 +200,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	if ($lagerLaas[$aktiv]) {
 		print "<td><input type='hidden' name='lagerbev' value=''></td></tr>";
 	} else {
-	print "<td>Medtag lagerbevægelser&nbsp;";
+	print "<td>".findtekst(902,$sprog_id)."";
 	print "<input class='checkmark' type='checkbox' name='lagerbev' $lagerbev></td>";  
 	print "</tr>\n";
 	}
@@ -274,9 +277,9 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 		}
 	}
 	print "<input type = hidden name = antal_ansatte value = $antal_ansatte>";
-	print "<tr><td>  Periode</td><td colspan=2>Fra <select name=maaned_fra>\n";
+	print "<tr><td> ".findtekst(899,$sprog_id)."</td><td colspan=2>".findtekst(903,$sprog_id)."<select name=maaned_fra>\n";
 	if (!$aar_fra) $aar_fra=$start_aar[$aktiv];
-	print "<option value='$maaned_fra'>$aar_fra $maaned_fra</option>\n";
+	print "<option value='$aar_fra|$maaned_fra'>$aar_fra $maaned_fra</option>\n";
 	$x=$start_md[$aktiv]-1;
 	$z=$start_aar[$aktiv];
 	for ($y=1; $y <= $antal_mdr; $y++) {
@@ -284,7 +287,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 			$z++;
 			$x=1;
 		} else $x++;
-		print "<option value='$md[$x]'>$z $md[$x]</option>\n";
+		print "<option value='$z|$md[$x]'>$z $md[$x]</option>\n";
 	}
 #	if (($start_md[$aktiv]>1)&&($slut_md[$aktiv]<12)) {
 #		for ($x=1; $x<=$slut_md[$aktiv]; $x++) print "<option>$slut_aar[$aktiv] $md[$x]</option>\n";
@@ -295,10 +298,10 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	print "<option value='$dato_fra'>$dato_fra</option>\n";
 	for ($x=1; $x <= 31; $x++) print "<option value='$x'>$x.</option>\n";
 	print "</select>";
-	print "&nbsp;til&nbsp;";
+	print "".findtekst(904,$sprog_id)."";
 	print "<select name=maaned_til>\n";
 	if (!$aar_til) $aar_til=$slut_aar[$aktiv];
-	print "<option value='$maaned_til'>$aar_til $maaned_til</option>\n";
+	print "<option value='$aar_til|$maaned_til'>$aar_til $maaned_til</option>\n";
 	$x=$start_md[$aktiv]-1;
 	$z=$start_aar[$aktiv];
 	for ($y=1; $y <= $antal_mdr; $y++) {
@@ -307,12 +310,13 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 			$x=1;
 		} else $x++;
 		$md[$x]=trim($md[$x]);
-		print "<option value='$md[$x]'>$z $md[$x]</option>\n";
+		print "<option value='$z|$md[$x]'>$z $md[$x]</option>\n";
 	}
 #	for ($x=$start_md[$aktiv]; $x <= 12; $x++) print "<option>$start_aar[$aktiv] $md[$x]</option>\n";
 #	if (($start_md[$aktiv]>1)&&($slut_md[$aktiv]<12)) {
 #		for ($x=1; $x<=$slut_md[$aktiv]; $x++) print "<option>$slut_aar[$aktiv] $md[$x]</option>\n";
 #	}
+    $kontrospor1 = explode(' ', findtekst(905, $sprog_id)); #20210722
 	print "</select>";
 	if (!$dato_til) $dato_til=31;
 	print "<select name=dato_til>\n";
@@ -320,15 +324,20 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	for ($x=1; $x <= 31; $x++) print "<option value='$x'>$x.</option>\n";
 	print "</select>";
 	print "</td></tr>\n";
-	print "<tr><td>  Konto (fra)</td><td colspan=2><select name=konto_fra>\n";
+	#print "<tr><td> ".findtekst(900,$sprog_id)."</td><td colspan=2><select name=Konto (fra)\n";
+	print "<tr><td> ".findtekst(900,$sprog_id)."</td><td colspan=2><select name=konto_fra\n";#20210722
 	print "<option>$konto_fra</option>\n";
+	
 	for ($x=1; $x<=$antal_konti; $x++) print "<option>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n";
+	#for ($x=1; $x<=$antal_konti; $x++) print "<option value='konto_fra'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n";
 	print "</td>";
 #	print "<td><input type='tekst' name='$konto_fra2' value='$konto_fra2'></td>";
 	print "</tr>\n";
-	print "<tr><td>  Konto (til)</td><td colspan=2><select name=konto_til>\n";
+	#print "<tr><td>  ".findtekst(901,$sprog_id)."</td><td colspan=2><select name=Konto (til)>\n";
+	print "<tr><td>  ".findtekst(901,$sprog_id)."</td><td colspan=2><select name=konto_til>\n";
 	print "<option>$konto_til</option>\n";
 	for ($x=1; $x<=$antal_konti; $x++) print "<option>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n";
+	#for ($x=1; $x<=$antal_konti; $x++)  print "<option value='konto_til'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n"; 
 	print "</td></tr>\n";
 	print "<input type=hidden name=regnaar value=$regnaar>\n";
 	print "<tr><td colspan=3 align=center><input class='button green medium' type=submit value=' OK ' name='submit'></td></tr>\n";
@@ -336,12 +345,15 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	print "</td></tr><tr>";
 	print "<td colspan=3 ALIGN=center><table cellpadding='1' cellspacing='1' border='0'><tbody>\n"; #E
 	if ($popup) {
-		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:kontrolspor=window.open('kontrolspor.php','kontrolspor','scrollbars=1,resizable=1');kontrolspor.focus();\"><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value='Kontrolspor' name='submit'></span></td></tr>";
-		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:provisionsrapport=window.open('provisionsrapport.php','provisionsrapport','scrollbars=1,resizable=1');provisionsrapport.focus();\"><span title='Rapport over medarbejdernes provisionsindtjening'><input class='button blue medium' type=submit value='Provisionsrapport' name='submit'></span></td></tr>";
+		 //else $kontrospor1= findtekst(905, $sprog_id);
+		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:kontrolspor=window.open('kontrolspor.php','kontrolspor','scrollbars=1,resizable=1');kontrolspor.focus();\"><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value=".$kontrospor1[0]." name='submit'></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:provisionsrapport=window.open('provisionsrapport.php','provisionsrapport','scrollbars=1,resizable=1');provisionsrapport.focus();\"><span title='Rapport over medarbejdernes provisionsindtjening'><input class='button blue medium' type=submit value=".findtekst(906,$sprog_id)." name='submit'></span></td></tr>";
+		
 	} else {
-		print "<tr><td colspan=3 ALIGN=center><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value='Kontrolspor' name='submit'></span></td></tr>";
-		print "<tr><td colspan=3 ALIGN=center><span title='Rapport over medarbejdernes provisionsindtjening'>  <input class='button blue medium' type=submit value='Provisionsrapport' name='submit'></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value=".findtekst(905,$sprog_id)." name='submit'></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center><span title='Rapport over medarbejdernes provisionsindtjening'>  <input class='button blue medium' type=submit value=".findtekst(906,$sprog_id)." name='submit'></span></td></tr>";
 	} 
+	
 	print "</form>\n";
 	print "</tbody></table>\n"; #E
 	print "</td></tr>";

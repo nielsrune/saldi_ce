@@ -39,7 +39,6 @@ function printVoucher($orderId,$bc) {
 	$myCity			=  $r['bynavn'];
 	$myVatNo		=  $r['cvrnr'];
 	$myPhone		=  $r['tlf'];
-
 	$v=0;
 	$voucherId=array();
 	if ($orderId) {

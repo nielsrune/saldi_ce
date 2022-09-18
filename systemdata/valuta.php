@@ -1,24 +1,26 @@
 <?php
-// -------------systemdata/valuta.php------------------- 3.5.5 -- 2015-03-13 --
-// LICENS
+// -- -------------systemdata/valuta.php------------- ver 4.0.1 -- 2021-07-06 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2021 Saldi.DK ApS
 // ----------------------------------------------------------------------------
 // 20150313 CA  Topmenudesign tilføjet                             søg 20150313
-// 2019.02.21 MSC - Rettet topmenu design
-// 2019.02.25 MSC - Rettet topmenu design
+// 20190221 MSC - Rettet topmenu design
+// 20190225 MSC - Rettet topmenu design
+// 20210706 LOE std_func.php missing file included and also translated some of the texts
 
 @session_start();
 $s_id=session_id();
@@ -31,6 +33,7 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/settings.php");
 include("../includes/dkdecimal.php");
+include("../includes/std_func.php");#20210706
 
 if ($menu=='T') {  # 20150313 start
         include_once '../includes/top_header.php';
@@ -55,16 +58,17 @@ include("../includes/db_query.php");
 
 ?>
 <tr><td valign="top"><center><table width='100%' border=0><tbody>
-	<tr><td colspan="3" align="center"><b>Valutaer</b></td></tr>
+	<tr><td colspan="3" align="center"><b><?php echo findtekst(552,$sprog_id)?></b></td></tr>
 	<tr>
 <!--
 		<td><b><font face="Helvetica, Arial, sans-serif" color="<?php echo $bgcolor2 ?>">Valuta</b></td>
 		<td><b><font face="Helvetica, Arial, sans-serif" color="<?php echo $bgcolor2 ?>">Beskrivelse</b></td>
 		<td align="right"><b><font face="Helvetica, Arial, sans-serif" color="<?php echo $bgcolor2 ?>">Kurs</a></b></td>
 -->
-		<td>Valuta</td>
-		<td>Beskrivelse</td>
-		<td>Kurs</td>
+		<?php print "<td>".findtekst(30,$sprog_id)."</td>"; #20210706
+		print "<td>".findtekst(914,$sprog_id)."</td>"; 
+		print "<td>".findtekst(915,$sprog_id)."</td>"; 
+		?>
 	</tr>
 	<?php
 $x=0;
@@ -90,7 +94,7 @@ while ($r = db_fetch_array($q)) {
 </td>
 </tr>
 <?php
-print "<tr><td colspan=\"3\" align=\"center\"><a class='button green medium' href=valutakort.php?kodenr=-1>$font Tilf&oslash;j ny valuta</a><br></td></tr>"; 
+print "<tr><td colspan=\"3\" align=\"center\"><a class='button green medium' href=valutakort.php?kodenr=-1>$font ".findtekst(1170,$sprog_id)."</a><br></td></tr>"; 
 
 #if ($x<1) {print "<meta http-equiv=refresh content=0;url=regnskabskort.php>";}
 

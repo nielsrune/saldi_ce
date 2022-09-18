@@ -23,6 +23,7 @@
 // Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2020.11.15 PHR - Created this file from unit section of ../varekort.php
+// 20220817
 
 
 print "<!-- varekort_includes/units.php start -->";
@@ -37,25 +38,27 @@ while ($row = db_fetch_array($query)) {
 	$betegnelse[$x]=$row['betegnelse'];
 	$x++;
 }
+if ($enhed) print "<option></option>";
 for ($x=0; $x<count($betegnelse); $x++) {
-	if (isset($betegnelse[$x]) && $enhed!=$betegnelse[$x]) {print "<option>$betegnelse[$x]</option>";}
+	if (isset($betegnelse[$x]) && $enhed!=$betegnelse[$x]) print "<option>$betegnelse[$x]</option>";
 } 
 print "</SELECT></td><td width=33%><br></td></tr>";
 if (count($betegnelse)>1) {
 	print "<tr><td>Alternativ enh.</td>";
 	print "<td><SELECT style=\"width: 7em\" NAME=enhed2><option>$enhed2</option>";
+	if ($enhed2) print "<option></option>";
 	for ($x=0; $x<count($betegnelse); $x++) {
-		if (isset($betegnelse[$x]) && $enhed2!=$betegnelse[$x]) {print "<option>$betegnelse[$x]</option>";}	
+		if (isset($betegnelse[$x]) && $enhed2!=$betegnelse[$x]) print "<option>$betegnelse[$x]</option>";	
 	}
 	print "</SELECT></td></tr>";
 	if ($forhold > 0) $x=dkdecimal($forhold,2);
 	else $x='';
-	if (($enhed)&&($enhed2)) {
+	if ($enhed != 0 && $enhed2) {
 		print "<tr><td> $enhed2/$enhed</td><td width=100>";
 		print "<input class='inputbox' type='text' style='text-align:right' style='width:80px'' name='forhold' ";
 		print "value='$x' onchange='javascript:docChange = true;'></td></tr>";
 	}
-	if ($enhed && $indhold) {
+	if ($enhed && $indhold != 0) {
 		print "<tr><td height='20%'>Indhold  ($enhed)</td><td><input class='inputbox' type='text' style=text-align:right  style='width:80px' name=indhold value=\"".dkdecimal($indhold,2)."\" onchange=\"javascript:docChange = true;\"></td></tr>";
 		print "<tr><td height='20%'>Pris pr $enhed</td><td><input class='inputbox' type='text' readonly=readonly style=text-align:right  style='width:80px' value=\"".dkdecimal($salgspris/$indhold,2)."\" onchange=\"javascript:docChange = true;\"></td></tr>";
 	}
@@ -83,7 +86,7 @@ print "<input class='inputbox' type='text' style='text-align:right;width:35px' n
 print "value=\"".dkdecimal($width,0)."\" onchange=\"javascript:docChange = true;\">";
 print "<input class='inputbox' type='text' style='text-align:right;width:35px' name='height' ";
 print "value=\"".dkdecimal($height,0)."\" onchange=\"javascript:docChange = true;\">";
-print "<td align='center'>cm</td>";
+print "<td align='center'>". $length*$width*$height ." cm&sup3;</td>";
 print "</tr>";
 print "</tbody></table></td>";
 print "<!-- varekort_includes/units.php end -->"; 

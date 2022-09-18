@@ -1,22 +1,28 @@
 <?php
-// -------- kreditor/ansatte.php --------lap 2.1.4--- 2010.03.26 -------
-// LICENS
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
+// -------- kreditor/ansatte.php --------lap 4.0.6--- 2022.03.13 -------
+// LICENSE
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Copyright (c) 2004-2010 DANOSOFT ApS
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
+//
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
-
+// 20220313 PHR Added ",__FILE__ . " linje " . __LINE__" to queries
 
 @session_start();
 $s_id=session_id();
@@ -64,17 +70,17 @@ if ($_POST){
 		if(!$betalingsdage) $betalingsdage=0;
  	 	if(!$kreditmax) $kreditmax=0;
 		if (($id==0)&&($navn)) {
- 	 	 	$query = db_modify("insert into ansatte (navn, konto_id, addr1, addr2, postnr, bynavn, tlf, fax, mobil, email, cprnr, notes, lukket) values ('$navn', '$konto_id', '$addr1', '$addr2', '$postnr', '$bynavn', '$tlf', '$fax', '$mobil', '$email', '$cprnr', '$notes', '')");
- 	 	 	$query = db_select("select id from ansatte where konto_id = '$konto_id' and navn='$navn' order by id desc");
+ 	 	 	$query = db_modify("insert into ansatte (navn, konto_id, addr1, addr2, postnr, bynavn, tlf, fax, mobil, email, cprnr, notes, lukket) values ('$navn', '$konto_id', '$addr1', '$addr2', '$postnr', '$bynavn', '$tlf', '$fax', '$mobil', '$email', '$cprnr', '$notes', '')",__FILE__ . " linje " . __LINE__);
+ 	 	 	$query = db_select("select id from ansatte where konto_id = '$konto_id' and navn='$navn' order by id desc",__FILE__ . " linje " . __LINE__);
  	 	 	$row = db_fetch_array($query);
  	 	 	$id = $row[id];
  	 	}
  	 	elseif ($id > 0)	{
- 	 	 	$query = db_modify("update ansatte set navn = '$navn', konto_id = '$konto_id', addr1 = '$addr1', addr2 = '$addr2', postnr = '$postnr', bynavn = '$bynavn', email = '$email', tlf = '$tlf', fax = '$fax', mobil = '$mobil', cprnr = '$cprnr', notes = '$notes', lukket = '' where id = '$id'");
+ 	 	 	$query = db_modify("update ansatte set navn = '$navn', konto_id = '$konto_id', addr1 = '$addr1', addr2 = '$addr2', postnr = '$postnr', bynavn = '$bynavn', email = '$email', tlf = '$tlf', fax = '$fax', mobil = '$mobil', cprnr = '$cprnr', notes = '$notes', lukket = '' where id = '$id'",__FILE__ . " linje " . __LINE__);
  	 	}
  	}
 }
-$query = db_select("select firmanavn from adresser where id = '$konto_id'");
+$query = db_select("select firmanavn from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__);
 $row = db_fetch_array($query);
 
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
@@ -90,7 +96,7 @@ print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
 
 
 if ($id > 0) {
- 	$query = db_select("select * from ansatte where id = '$id'");
+ 	$query = db_select("select * from ansatte where id = '$id'",__FILE__ . " linje " . __LINE__);
  	$row = db_fetch_array($query);
  	$konto_id=htmlentities($row['konto_id'],ENT_COMPAT,$charset);
  	$navn=htmlentities($row['navn'],ENT_COMPAT,$charset);
