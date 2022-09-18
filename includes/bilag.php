@@ -1,5 +1,5 @@
 <?php
-// --- includes/bilag.php --- patch 3.9.9 ---2021.02.08 ---
+// --- includes/bilag.php --- patch 4.0.6------2022.07.15---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -17,14 +17,17 @@
 // 
 // Copyright (c) 2010-2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
-// 2014.01.12 Tilføjet ordre som kilde.
-// 2014.01.22 Rettet if til elseif dat man ellers kommer tilbage til historik ved opslag fra kassekladde. Søg 2014.01.22
-// 2014.11.05 Flyttet tjek op i "egen FTP"  #20141105
-// 2014.11.06 Sletter nu også bilag når der ikke er en descfil
-// 2015.01.05 Ganger bilag med 1 for at sikre at der er en værdi til indsættelse - 20150105
-// 2015.04.23 Indsat break ved upload fejlet, så bilag ikke sættes i tabel.
-// 2016.01.16 ændret mkdir mv osv fra systemkommandoer til PHP kommandoer
-// 2021.02.08 PHR Corrected error handling
+// 20140112 Tilføjet ordre som kilde.
+// 20140122 Rettet if til elseif dat man ellers kommer tilbage til historik ved opslag fra kassekladde. Søg 2014.01.22
+// 20141105 Flyttet tjek op i "egen FTP"  #20141105
+// 20141106 Sletter nu også bilag når der ikke er en descfil
+// 20150105 Ganger bilag med 1 for at sikre at der er en værdi til indsættelse - 20150105
+// 20150423 Indsat break ved upload fejlet, så bilag ikke sættes i tabel.
+// 20160116 ændret mkdir mv osv fra systemkommandoer til PHP kommandoer
+// 20210208 PHR Corrected error handling
+// 20210714 LOE Translated some texts 
+// 20220715 PHR Some changes in vis_bilag
+
 
 @session_start();
 $s_id=session_id();
@@ -64,23 +67,23 @@ if(($_GET)||($_POST)) {
 	if ($kilde=="kassekladde") $tmp="../finans/kassekladde.php?kladde_id=$kilde_id&fokus=$fokus";
 	elseif ($kilde=="ordrer") $tmp="../debitor/ordre.php?id=$kilde_id&fokus=$fokus"; #20140122
 	else $tmp="../debitor/historikkort.php?id=$kilde_id";
-
-	if (file_exists("../owncloud")) $nfs_mappe='owncloud';
+	if (file_exists("../documents")) $nfs_mappe='documents';
+	elseif (file_exists("../owncloud")) $nfs_mappe='owncloud';
 	elseif (file_exists("../bilag")) $nfs_mappe='bilag';
 	else {
-		$alerttxt = "Mappe til bilag ikke fundet";
+		$alerttxt = findtekst(1409, $sprog_id);
 		alert ($alerttxt);
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">";
 		exit;
 	}
 	
-	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=$tmp accesskey=L>Luk</a></td>";
-	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$title $bilag</td>";
+	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><a href=$tmp accesskey=L>".findtekst(30, $sprog_id)."</a></td>";
+	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">".findtekst(1408, $sprog_id)." $bilag</td>";
 	print "<td width=\"10%\" $top_bund ><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"><br></td>";
 	print "</tbody></table>";
 	print "</td></tr>";
 
-	
+	$xalert=findtekst(1410, $sprog_id);
 	
 	if (isset($_POST['indsaet_bilag'])) {
 		upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion,$nfs_mappe);
@@ -96,7 +99,8 @@ if(($_GET)||($_POST)) {
 	} elseif ($filnavn=basename($_FILES['uploadedfile']['name'])) {
 		$filtype=strtolower(substr($filnavn,-4));
 		if ($kilde=='ordrer' && $filtype!='.pdf'){
-			print "<BODY onLoad=\"javascript:alert('Der tillades kun bilag af typen PDF')\">";
+
+			print "<BODY onLoad=\"javascript:alert('$xalert')\">";
 			upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus);
 		}
 	#		$filnavn=htmlentities($filnavn,ENT_COMPAT,$charset);
@@ -104,7 +108,7 @@ if(($_GET)||($_POST)) {
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'],"$tmp")) {
 			upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktion,$nfs_mappe);
 		}	else {
-			echo "Der er sket en fejl under hentningen, pr&oslash;v venligst igen";
+			echo findtekst(1370, $sprog_id);
 			upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$nfs_mappe);
 		}
 	} else upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$nfs_mappe);
@@ -113,8 +117,9 @@ print "</tbody></table>";
 ################################################################################################################
 function upload($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$nfs_mappe){
 global $charset;
+global $sprog_id;
 	print "<tr><td width=100% align=center><table width=\"500px\" height=\"200px\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border: 3px solid rgb(180, 180, 255); padding: 0pt 0pt 1px;\"><tbody>";
-	print "<tr><td width=100% align=center>Vedh&aelig;ft bilag</td></tr>";
+	print "<tr><td width=100% align=center>".findtekst(1411, $sprog_id)."</td></tr>";
 	print "<tr><td width=100% align=center><br></td></tr>";
 	if ($kilde=='kassekladde') {
 		$r=db_fetch_array(db_select("select * from grupper where art='bilag'",__FILE__ . " linje " . __LINE__));
@@ -125,7 +130,7 @@ global $charset;
 			print "<input type=\"hidden\" name=\"bilag_id\" value=$bilag_id>";
 			print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
 			print "<input type=\"hidden\" name=\"fokus\" value=$fokus>";
-			print "<tr><td width=100% align=center> V&aelig;lg bilag fra pulje: <input class=\"inputbox\" name=\"pulje\" type=\"submit\" value=\"Gennemse\"/><br /></td></tr>";
+			print "<tr><td width=100% align=center> ".findtekst(1412, $sprog_id).": <input class=\"inputbox\" name=\"pulje\" type=\"submit\" value=\"".findtekst(1413, $sprog_id)."\"/><br /></td></tr>";
 			print "</form>";
 		}
 	}
@@ -136,9 +141,9 @@ global $charset;
 	print "<input type=\"hidden\" name=\"bilag_id\" value=$bilag_id>";
 	print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
 	print "<input type=\"hidden\" name=\"fokus\" value=$fokus>";
-	print "<tr><td width=100% align=center> V&aelig;lg bilag til upload: <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+	print "<tr><td width=100% align=center> ".findtekst(1414, $sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 	print "<tr><td><br></td></tr>";
-	print "<tr><td align=center><input type=\"submit\" value=\"Hent\" /></td></tr>";
+	print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078, $sprog_id)."\" /></td></tr>";
 	print "<tr><td></form></td></tr>";
 }
 
@@ -147,6 +152,7 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 	global $db;
 	global $bruger_id;
 	global $exec_path;
+	#global $sprog_id 
 
 	$puljefil=if_isset($_POST['puljefil']);
 
@@ -254,8 +260,14 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 			$kredit*=1;
 			$afd*=1;
 			if ($kilde=="kassekladde") {
-					if ($puljefil) db_modify("update kassekladde set bilag='$bilag',transdate='".usdate($dato)."',beskrivelse='".db_escape_string($beskrivelse)."',d_type='$d_type',debet='$debet',k_type='$k_type',kredit='$kredit',faktura='$fakturanr',amount='".usdecimal($sum)."',afd='$afd',projekt='$projekt',dokument='$filnavn' where id='$bilag_id'",__FILE__ . " linje " . __LINE__);
-					else db_modify("update kassekladde set dokument='$filnavn' where id='$bilag_id'",__FILE__ . " linje " . __LINE__);
+					if ($puljefil) {
+						$qtxt = "update kassekladde set ";
+						$qtxt.= "bilag='$bilag',transdate='".usdate($dato)."',beskrivelse='".db_escape_string($beskrivelse)."',";
+						$qtxt.= "d_type='$d_type',debet='$debet',k_type='$k_type',kredit='$kredit',faktura='$fakturanr',";
+						$qtxt.= "amount='".usdecimal($sum)."',afd='$afd',projekt='$projekt',dokument='".db_escape_string($filnavn)."'";
+					} else $qtxt = "update kassekladde set dokument='".db_escape_string($filnavn)."'";
+					$qtxt.= "where id = '$bilag_id'";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			} else {
 				db_modify("update $kilde set dokument='".db_escape_string($filnavn)."' where id='$bilag_id'",__FILE__ . " linje " . __LINE__);
 			}
@@ -277,6 +289,7 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 				fwrite ($fp, "mkdir $mappe\ncd $mappe\nmkdir $undermappe\ncd $undermappe\nput $bilagfilnavn\nbye\n");
 			}
 			fclose($fp);
+#cho "$bilagfilnavn<br>";			
 			$fp=fopen("../temp/$db/ftplog","w");
 			fwrite ($fp, "cd ../temp/$db\n\rmv \"$filnavn\" \"$bilagfilnavn\"\n\r$exec_path/ncftp ftp://$box2:$box3@$box1\n\rrm $bilagfilnavn\n\r");
 			fclose($fp);
@@ -296,7 +309,7 @@ function upload_bilag($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$funktio
 			if (file_exists($langt_filnavn)) { #20141105
 				print "<BODY onLoad=\"javascript:alert('$filnavn er indl&aelig;st')\">";
 			} else {
-				print "<BODY onLoad=\"javascript:alert('A indl&aelig;sning af $filnavn fejlet')\">";
+				alert("Indlæsning af $filnavn fejlet");
 			}
 		}
 	} #print "<BODY onLoad=\"javascript:alert('B indl&aelig;sning af $filnavn fejlet')\">";
@@ -350,12 +363,11 @@ function vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn,$nfs_mappe){
 			$undermappe="debitor_$kilde_id";
 			$bilagfilnavn="doc_".$bilag_id;
 		}
-		$fp=fopen("../temp/$db/ftpscript.$bruger_id","w");
-		if ($fp) {
-			fwrite ($fp, "cd $mappe\ncd $undermappe\nget $bilagfilnavn\nbye\n");
-		}
-		fclose($fp);
-		$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$box2.":".$box3."@".$box1." < ftpscript.$bruger_id > ftplog\nmv \"$bilagfilnavn\" \"$filnavn\"\n";
+		$kommando="cd $mappe\ncd $undermappe\nget $bilagfilnavn\nbye\n";
+		file_put_contents("../temp/$db/ftpscript.txt", $kommando);
+	
+		$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$box2.":".$box3."@".$box1." < ftpscript.txt > ftplog.txt\ncp \"$bilagfilnavn\" \"$filnavn\"\n";
+		file_put_contents("../temp/$db/ftpCommand.txt", $kommando);
 		system ($kommando);
 	}
 	print "<tr><td width=100% height=100% align=\"center\" valign=\"middle\"><iframe frameborder=\"no\" width=\"100%\" height=\"100%\" scrolling=\"auto\" src=\"vis_bilag.php?filnavn=$filnavn&db=$db&bilag_id=$bilag_id&kilde_id=$kilde_id&kilde=$kilde\"></iframe></td></tr>";
@@ -363,7 +375,7 @@ function vis_bilag($kilde_id,$kilde,$bilag_id,$fokus,$filnavn,$nfs_mappe){
 
 function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$nfs_mappe){
 	global $db;
-	
+	global $sprog_id;
 	(isset($_POST['slet_bilag']) && $_POST['slet_bilag']=='Slet')?	$slet=1:$slet=0;
 	(isset($_POST['upload_bilag']) && $_POST['upload_bilag']=='inds&aelig;t')?	$indsaet=1:$inssaet=0;
 	$descfil=if_isset($_POST['descfil']);
@@ -434,6 +446,13 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$n
 		if ($dh = opendir($dir)) {
 			while (($file = readdir($dh)) !== false) {
 				if (substr($file,0,1)!='.' && substr($file,-5)!='.desc') {
+					if (strpos($file,' ')) {
+						$newFile = str_replace (' ','_',$file);
+						$from = "../".$nfs_mappe."/".$db."/pulje/".$file;
+						$to   = "../".$nfs_mappe."/".$db."/pulje/".$newFile;
+						system ("mv '$from' '$to'\n");
+						$file = $newFile;
+					}
 					($file==$puljefil)?$bgcolor='#aaaaaa':$bgcolor='#ffffff'; 
 					$fil_nr++;
 					print "<tr><td bgcolor=\"$bgcolor\"><a href=../includes/bilag.php?funktion=gennemse&kilde_id=$kilde_id&kilde=$kilde&bilag=$bilag&bilag_id=$bilag_id&dato=$dato&fokus=$fil_nr&puljefil=$file onfocus=\"document.forms[0].fokus.value=this.name;\" id=\"$fil_nr\">$file</a></td></tr>";
@@ -447,8 +466,8 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$n
 		if (!is_dir("../temp/$db/pulje")) mkdir("../temp/$db/pulje"); 
 		system("cd ../temp/$db/pulje\nrm *\ncp $tmp .\n");
 	} else {
-	
-		print "<BODY onLoad=\"javascript:alert('Ingen bilag i pulje')\">";
+	$ccalert= findtekst(1416, $sprog_id);
+		print "<BODY onLoad=\"javascript:alert('$ccalert')\">";
 		if ($kilde=="kassekladde") $tmp="../finans/kassekladde.php?kladde_id=$kilde_id&fokus=$fokus";
 		elseif ($kilde=="ordrer") $tmp="../debitor/ordre.php?id=$kilde_id&fokus=$fokus";
 		else $tmp="../debitor/historikkort.php?id=$kilde_id";
@@ -506,8 +525,8 @@ function gennemse($kilde_id,$kilde,$bilag_id,$bilag,$fokus,$filnavn,$puljefil,$n
 	print "<tr><td>Sag</td><td><input type=\"text\" style=\"width:150px\" name=\"sag\" value=\"$sag\"</td></tr>";	
 	print "<tr><td>Afd</td><td><input type=\"text\" style=\"width:150px\" name=\"afd\" value=\"$afd\"</td></tr>";	
 	print "<tr><td>Projekt</td><td><input type=\"text\" style=\"width:150px\" name=\"projekt\" value=\"$projekt\"</td></tr>";	
-	print "<tr><td colspan=\"2\"><input style=\"width:100%\" type=\"submit\" name=\"indsaet_bilag\" value=\"Inds&aelig;t\"</tr>";	
-	print "<tr><td colspan=\"2\"><input style=\"width:100%\" type=\"submit\" name=\"slet_bilag\" value=\"Slet\"</tr>";	
+	print "<tr><td colspan=\"2\"><input style=\"width:100%\" type=\"submit\" name=\"indsaet_bilag\" value=\"".findtekst(1415, $sprog_id)."\"</tr>";	
+	print "<tr><td colspan=\"2\"><input style=\"width:100%\" type=\"submit\" name=\"slet_bilag\" value=\"".findtekst(1099, $sprog_id)."\"</tr>";	
 	print "</tbody></table></td></tr>";
 	print "<input type=\"hidden\" style=\"width:150px\" name=\"descfil\" value=\"$descfil\"</td></tr>";	
 	print "</form>";

@@ -4,37 +4,40 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------debitor/ordrevisning.php-----lap 3.7.9-------2019.07.03-----------
-// LICENS
+// --------debitor/ordrevisning.php-----lap 4.0.3-------2021.09.14-----------
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2003-2021 Saldi.DK ApS
 // ----------------------------------------------------------------------
 // 2018.11.28	PHR Tilføjet kundegruppe som søgefelt
 // 2098.05.02	PHR Corrected error in first time '$vis_feltantal' 20190502
 // 2019.07.03 PHR - Users can now choose whether they want dropdown. Search $dropDown
-
+// 2021.04.20 LOE - Translated these table data #20210420
+// 20210720 MSC - Implementing new top menu design
+// 20210721 MSC - Implementing new top menu design 
+// 20210906 MSC - Implementing new top menu design 
 	
 @session_start();
 $s_id=session_id();
 $box4=NULL;
 
-if (isset($_GET['valg'])) $valg=($_GET['valg']);
+
+include("../includes/std_func.php");
+
+if (isset($_GET['valg'])) $valg=($_GET['valg']); //???
 else $valg="ordrer";
 
 if ($valg=="tilbud") $title="Tilbudsvisning";
@@ -42,12 +45,28 @@ elseif ($valg=="ordrer") $title="Ordrevisning";
 else $title="Fakturavisning";
 
 $modulnr=6;
+
 $css="../css/standard.css";
 
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/db_query.php");
-include("../includes/std_func.php");
+
+
+$aa=findtekst(545,$sprog_id); #20210420
+$bb=findtekst(546,$sprog_id);
+$cc=findtekst(544,$sprog_id);
+
+if (isset($_GET['valg'])) $valg=($_GET['valg']);
+else $valg="ordrer";
+
+if ($valg=="tilbud") $title= $aa;
+elseif ($valg=="ordrer") $title= $bb;
+else $title= $cc;
+
+$modulnr=6;
+
+
 
 $sort=trim(if_isset($_GET['sort']));
 
@@ -62,6 +81,8 @@ if (isset($_POST) && $_POST) {
 	$dropDown=if_isset($_POST['dropDown']);
 	for ($x=0;$x<=$vis_feltantal;$x++) {
 		if (!isset($dropDown[$x])) $dropDown[$x]=NULL;
+		if (!$feltbredde[$x]) $feltbredde[$x]=50;
+		if (!$pos[$x] && !$feltnavn[$x]) $pos[$x]=50;
 	}
 	$vis_felt=sorter($pos,$vis_felt,$vis_feltantal);
 	$feltbredde=sorter($pos,$feltbredde,$vis_feltantal);
@@ -92,26 +113,32 @@ if (isset($_POST) && $_POST) {
 	db_modify("update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$vis_linjeantal',box10='$box10' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 }
 
-print "<div align=\"center\"><table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 if ($menu=='T') {
-	$leftbutton="<a title=\"Klik her for at komme tilbage til ordrelisten\" href=\"../debitor/ordreliste.php\" accesskey=\"L\">LUK</a>";
-	$vejledning=NULL;
-	include("../includes/topmenu.php");
-	print "<div id=\"topmenu\" style=\"position:absolute;top:6px;right:0px\">";
+	$title="Ordrevisning • Kunder";
+	$classtable2 ="class=tableOrdrevisning";
+	include_once '../includes/topmenu/header.php';
+		print "
+	<div class='$kund'>Ordrevisning</div>
+	<div class='content-noside'>";
 } elseif ($menu=='S') {
 	include("../includes/sidemenu.php");
+	$classtable2 ="";
 } else {
+	$classtable2 ="";
+	include("../includes/oldDesign/header.php");
 	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">
 		<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"4\" cellpadding=\"0\"><tbody>
-			<td width=\"10%\" align=center><div class=\"top_bund\"><a href=ordreliste.php?valg=$valg&sort=$sort accesskey=L>Luk</a></div></td>
+			<td width=\"10%\" align=center><div class=\"top_bund\"><a href=ordreliste.php?valg=$valg&sort=$sort accesskey=L>".findtekst(30,$sprog_id)."</a></div></td>
 			<td width=\"80%\" align=center><div class=\"top_bund\">$title</a></div></td>
 			<td width=\"10%\" align=center><div class=\"top_bund\"><br></div></td>
 			 </tr>
 			</tbody></table>
 	</td></tr>";
+	print "<center>";
 }
+print "<div class=\"maincontentLargeHolder\">\n";
  print "<tr><td valign=\"top\" align=\"center\">
-<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" valign = \"top\">
+<table $classtable2 cellpadding=\"1\" cellspacing=\"1\" border=\"0\" valign = \"top\">
 <tbody>";
 
 print "<form name=ordrevisning action=ordrevisning.php?sort=$sort&valg=$valg method=post>";
@@ -128,9 +155,13 @@ $i++;
 $felter[$i] = 'kundegruppe';
 sort($felter);
 #$feltantal=count($felter);
-print "<tr><td colspan='7'>V&aelig;lg hvilke felter der skal v&aelig;re synlige p&aring; oversigten</td></tr>";
-print "<tr><td colspan='7'>Ordrenr kan ikke frav&aelig;lges</td></tr>";
-print "<tr><td colspan='7'><hr></td></tr>";
+print "<tr><td colspan='7' align='center'>".findtekst(537,$sprog_id)."</td></tr>"; #20210420
+print "<tr><td colspan='7' align='center'>".findtekst(538,$sprog_id)."</td></tr>";
+if ($menu=='T') {
+	print "<tr><td colspan=7 class='border-hr-top'></td></tr>\n";
+} else {
+	print "<tr><td colspan=7><hr></td></tr>\n";
+}
 
 #box1, 2, 8 & 9 er reserveret se ordrevisning.php
 $r = db_fetch_array(db_select("select box3,box4,box5,box6,box7,box10 from grupper where art = 'OLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
@@ -162,22 +193,32 @@ if (count($feltbredde)<=1) {
 	$vis_feltantal=count($feltbredde);
 	$vis_linjeantal=100;
 }
-print "<tr><td colspan=\"3\">Antal felter p&aring; fakturaoversigten</td><td><input class=\"inputbox\" type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
-print "<tr><td colspan=\"3\">Antal linjer p&aring; fakturaoversigten</td><td><input class=\"inputbox\" type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td></tr>";
-print "<tr><td colspan=\"6\"><hr></td></tr>";	
-print "<tr><td ><b>Pos</b></td><td colspan=\"2\"><b>Felt</b></td><td><b>Valgfri overskrift</b></td><td align=\"right\"><b>Feltbredde</b></td><td><b>Justering</b></td><td><b>DropDown</b></td></tr>";
+print "<table width=100% cellpadding=\"1\" cellspacing=\"1\" border=\"0\" valign = \"top\" class='table-Ordrevisning-no-title'><tbody>";
+print "<tr><td colspan=\"3\" ><b>".findtekst(535,$sprog_id)."</b></td><td><input class=\"inputbox\" type=text style=\"text-align:right\" size=2 name=vis_feltantal value=$vis_feltantal></td></tr>";
+print "<tr><td colspan=\"3\"><b>".findtekst(536,$sprog_id)."</b></td><td><input class=\"inputbox\" type=text style=\"text-align:right\" size=2 name=vis_linjeantal value=$vis_linjeantal></td></tr>";
+if ($menu=='T') {
+	print "<tr><td colspan=7 class='border-hr-top'></td></tr>\n";
+} else {
+	print "<tr><td colspan=7><hr></td></tr>\n";
+}
+print "<tr><td ><b>Pos</b></td><td colspan=\"2\"><b>".findtekst(543,$sprog_id)."</b></td><td><b>".findtekst(539,$sprog_id)."</b></td><td align=\"right\"><b>".findtekst(540,$sprog_id)."</b></td><td><b>".findtekst(541,$sprog_id)."</b></td><td><b>".findtekst(542,$sprog_id)."</b></td></tr>";
+if ($menu=='T') {
+	print "<tr><td colspan=7 class='border-hr-bottom'></td></tr>\n";
+} else {
+	print "<tr><td colspan=7><hr></td></tr>\n";
+}
 if (!$feltnavn[0]) $feltnavn[0]="Ordrenr";
 if (!$feltbredde[0]) $feltbredde[0]=50;
 if ($feltbredde[0]<=10) $feltbredde[0]*=10;
 print "<tr><td>Posnr</td>";
-print "<td colspan=\"2\">Ordrenr</td>";
+print "<td colspan=\"2\">".findtekst(500,$sprog_id)."</td>";
 print "<td><input class=\"inputbox\" type=text name=feltnavn[0] size=20 value=$feltnavn[0]></td>";
 print "<td align=\"right\" width=\"200px\"><input class=\"inputbox\" type=text name=feltbredde[0] style=\"text-align:right;width:$feltbredde[0]px;\"  value=$feltbredde[0]></td>";
 print "<td><SELECT class=\"inputbox\" NAME=justering[0]>";
 if ($justering[0]) print "<option>$justering[0]</option>";
 if ($justering[0] != "L") print "<option value=\"left\" style=\"text-align:left\">left</option>"; 
 if ($justering[0] != "C") print "<option value=\"center\" style=\"text-align:center\">center</option>"; 
-if ($justering[0] != "R") print "<option value=\"right\" style=\"text-align:right\">right</option>"; 
+if ($justering[0] != "R") print "<option value=\"right\" style=\"text-align:right\">Right</option>"; 
 print "</SELECT>";
 print "<input type='hidden' name='dropDown[0]' value=''></td></tr>";
 #cho count($feltbredde)."<br>";
@@ -201,10 +242,14 @@ if (!$feltnavn[$x]) $feltnavn[$x]=$vis_felt[$x];
 	if ($justering[$x] != "R") print "<option value=\"right\" style=\"text-align:right\">right</option>"; 
 	($dropDown[$x])?$dropDown[$x]='checked':$dropDown[$x]=''; 
 	print "</SELECT></td>";
-	print "<td align='center'><input class='inputbox' type='checkbox' name='dropDown[$x]' $dropDown[$x]></td></tr>";
+	print "<td align='center'><label class='checkContainerVisning'><input class='inputbox' type='checkbox' name='dropDown[$x]' $dropDown[$x]><span class='checkmarkVisning'></span></label></td></tr>";
 }
-print "<tr><td colspan='7'><hr></td></tr>\n";
-print "<tr><td colspan='7' align = 'center'><input type='submit' accesskey='a' value='OK' name='submit'></td></tr>\n";
+if ($menu=='T') {
+	print "<tr><td colspan=7 class='border-hr-bottom'></tr>\n";
+} else {
+	print "<tr><td colspan=7><hr></td></tr>\n";
+}
+print "<tr><td colspan='7' align = 'center'><input type='submit' accesskey='a' value='OK' name='submit'> &nbsp;•&nbsp; <input type='button' onclick=\"location.href='ordreliste.php?valg=$valg&sort=$sort'\" accesskey='L' value='".findtekst(30,$sprog_id)."'></td></tr>\n";
 print "</form>";
 
 function sorter($pos,$var,$vis_feltantal) {
@@ -229,7 +274,12 @@ function sorter($pos,$var,$vis_feltantal) {
 	return($var);
 }
 
-?>
-</tbody></table>
+print "</tbody></table>";
 
-</body></html>
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
+?>

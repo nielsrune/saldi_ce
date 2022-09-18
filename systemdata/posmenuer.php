@@ -4,50 +4,49 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------------- systemdata/posmenuer.php ------ patch 3.7.4--2019-01-07--------
-// LICENS..
+// --- systemdata/posmenuer.php --- ver 4.0.5 -- 2022-02-09 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2019 DANOSOFT ApS
-// ----------------------------------------------------------------------
-// 2013.10.17 Ku max ha' 10 menuer.
-// 2014.11.11 Tilføjet knapdesign på menu 0: Tastatur og tilføjet radius på knapper.
-// 2015.01.07 Menu blev slettet når side blev åbnet #20150107
-// 2015.09.25 Kolonner og rækker kan nu flyttes. Søg flyt_col & flyt_row
-// 2015.10.23	Tilføjet knap Enter+Menu. Efter knaptekst skrives +x, hvor x er den menu der skal kaldes.
-// 2015.11.29	Tilføjet knap Konant på beløb & Betalingskort på beløb. 
-// 2016.01.28 Tilføjet systemknap Stamkunder. Se funktion stamkunder i ordrefunc.php
-// // 2016.01.31 Tilføjet systemknap Kontoudtog & Udskriv sidste.
-// 2016.02.18 Kontrol for strenglængde for butcolor. Søg 20160218  
-// 2016.03.07 Man kunne ikke lave tastaturknapper med '-'Søg 20160307
-// 2017.02.07	Tilføjet knap sæt
-// 2017.03.23	Tilføjet afdeling på menuer. Søg $afd
-// 2018.10.29 CA  Tilføjet gavekort og tilgodebevis med nummerering. Søg 20181029
-// 2019.01.07	PHR	Tilføjet systemknapknap til totalrabat Søg totalrabat
-// 2019.02.18 LN: Adding array value to the button txt because we have different language
-// 2019.03.05 LN: Added new button: Z-Rapport
-// 2019.03.13	LN Add more language txt to the buttons
-// 2019.04.30	LN Add new button: Copy
-// 2019.05.08	LN Delegate systemButtons to systemButtons.php
+// Copyright (c) 2009-2022 Saldi.dk ApS
+// --------------------------------------------------------------------------
+// 20131017 Ku max ha' 10 menuer.
+// 20141111 Tilføjet knapdesign på menu 0: Tastatur og tilføjet radius på knapper.
+// 20150107 Menu blev slettet når side blev åbnet #20150107
+// 20150925 Kolonner og rækker kan nu flyttes. Søg flyt_col & flyt_row
+// 20151023	Tilføjet knap Enter+Menu. Efter knaptekst skrives +x, hvor x er den menu der skal kaldes.
+// 20151129	Tilføjet knap Konant på beløb & Betalingskort på beløb.
+// 20160128 Tilføjet systemknap Stamkunder. Se funktion stamkunder i ordrefunc.php
+// 20160131 Tilføjet systemknap Kontoudtog & Udskriv sidste.
+// 20160218 Kontrol for strenglængde for butcolor. Søg 20160218
+// 20160307 Man kunne ikke lave tastaturknapper med '-'Søg 20160307
+// 20170207 Tilføjet knap sæt
+// 20170323 Tilføjet afdeling på menuer. Søg $afd
+// 20181029 CA  Tilføjet gavekort og tilgodebevis med nummerering. Søg 20181029
+// 20190107 PHR Tilføjet systemknapknap til totalrabat Søg totalrabat
+// 20190218 LN Adding array value to the button txt because we have different language
+// 20190305 LN Added new button: Z-Rapport
+// 20190313	LN Add more language txt to the buttons
+// 20190430	LN Add new button: Copy
+// 20190508	LN Delegate systemButtons to systemButtons.php
+// 20211124 CA  Link til import og eksport af POS menuer
+// 20220209 PHR Renamed proforma to udskriv
 
 @session_start();
 $s_id=session_id();
-$title="POS knap menu";
+$title="POS menuer";
 $modulnr=1;
 $css="../css/pos.css";
 
@@ -58,6 +57,7 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/posmenufunc_includes/buttonFunc.php");
 
+$title=findtekst(1940, $sprog_id);
 $buttonTextArr = setAccordinglyLanguage();
 
 #$systemknap=array('Afslut','Bordvalg','Brugervalg','Del bord','Enter','Find bon','Flyt bord','Kasseoptælling','Kassevalg','Køkkenprint','Luk','Skuffe','Udskriv','Forfra','Ekspedient','Ryd','Afslut','Pris','Rabat','Tilbage','Ny kunde','Korrektion','Kortterminal','Send til køkken','Kør bord');
@@ -407,7 +407,7 @@ if (($menu_id) && $ret_col && $ret_row) {
 	}
 	print "<option value=\"ny\">Opret ny</option>\n";
 	print "</select></td>\n";
-	print "<td><input type=submit value=\"ok\" name=\"ok\"></td></tr>\n";
+	print "<td><input type=submit value=\"OK\" name=\"OK\"></td></tr>\n";
 	print "<input type=\"hidden\" name=\"menu_id\" value=\"$menu_id\">\n";
 	print "<tr><td>Beskrivelse</td><td><INPUT CLASS=\"inputbox\" TYPE=\"text\" name=\"beskrivelse\" value=\"$beskrivelse\"></td></tr>\n";
 	if ($beskrivelse) {
@@ -478,7 +478,7 @@ if (!$menu_id) {
 	print "<input type=\"hidden\" name=\"cols\" value=\"$cols\">";
 	print "<input type=\"hidden\" name=\"plads\" value=\"$plads\">";
 }
-print "<tr><td><input type=submit value=\"ok\" name=\"ok\"></td></tr>";
+print "<tr><td><input type=submit value=\"OK\" name=\"OK\"></td></tr>";
 print "</tbody></table></td></form>";
 print "<td><table border=0><tbody>";
 // <- Vindue 1
@@ -493,9 +493,17 @@ print "<table border=\"0\" cellspacing=\"5\" cellpadding=\"5\"><tbody>";
 	if ($plads=='B') output($menu_id,$rows,$cols,$radius,$width,$height,$fontsize,$bgcolor2);
 #}
 print "</tbody></table>";
-print "</td><tr><td colspan=\"2\ width=\"100%\"><tr>";
-print "<tbody>";
-print "</tbody>";
+print "</td><tr><td colspan=\"2\ width=\"100%\"><tr><td>";
+print "<table>\n"; #20211124
+print "<tr><th>".findtekst(1941, $sprog_id)."</th></tr>\n"; # Import and export POS menues
+print "<tr><td><form name='import_posmenu' action='importer_posmenu.php' method='post'>";
+print "<input class='button blue medium' type='submit' style='width: 16em' value='".findtekst(1934, $sprog_id)."'>"; # Import POS menus
+print "</form></td></tr>\n";
+print "<tr><td><form name='export_posmenu' action='exporter_posmenu.php' method='post'>";
+print "<input class='button blue medium' type='submit' style='width: 16em' value='".findtekst(1932, $sprog_id)."'>"; # Export POS menus
+print "</form></td></tr>\n";
+print "</table>";
+
 print "</td></tr></tbody></table>";
 
 function tid($tid) {
@@ -550,7 +558,7 @@ function input($menu_id,$rows,$cols) {
 				if ($c==10) print "<OPTION value=\"10\">$buttonTextArr[close]</OPTION>";
 				if ($c==11) print "<OPTION value=\"11\">$buttonTextArr[draw]</OPTION>";
 				if ($c==12) print "<OPTION value=\"12\">$buttonTextArr[print]</OPTION>";
-				if ($c==40) print "<OPTION value=\"40\">Proforma</OPTION>"; # LN 20190205
+				if ($c==40) print "<OPTION value=\"40\">Udskriv</OPTION>"; # LN 20190205
 				if ($c==41) print "<OPTION value=\"41\">X-Rapport</OPTION>"; # LN 20190205
 				if ($c==42) print "<OPTION value=\"42\">Z-Rapport</OPTION>"; # LN 20190305
 				if ($c==43) print "<OPTION value=\"43\">$buttonTextArr[copy]</OPTION>"; # LN 20190305
@@ -568,7 +576,7 @@ function input($menu_id,$rows,$cols) {
 				if ($c!=10) print "<OPTION value=\"10\">$buttonTextArr[close]</OPTION>";
 				if ($c!=11) print "<OPTION value=\"11\">$buttonTextArr[draw]</OPTION>";
 				if ($c!=12) print "<OPTION value=\"12\">$buttonTextArr[print]</OPTION>";
-				if ($c!=40) print "<OPTION value=\"40\">Proforma</OPTION>"; # LN 20190205
+				if ($c!=40) print "<OPTION value=\"40\">Udskriv</OPTION>"; # LN 20190205
 				if ($c!=41) print "<OPTION value=\"41\">X-Rapport</OPTION>"; # LN 20190205
 				if ($c!=42) print "<OPTION value=\"42\">Z-Rapport</OPTION>"; # LN 20190305
 				if ($c!=43) print "<OPTION value=\"43\">$buttonTextArr[copy]</OPTION>"; # LN 20190305
@@ -661,6 +669,7 @@ function output ($menu_id,$rows,$cols,$radius,$width,$height,$fontsize,$bgcolor2
 		}
 		print "</tr>";
 	}
+	print "</form>\n"; # 20211124
 }
 print "<script language=\"javascript\">document.posmenuer.buttxt.focus();</script>";
 ?>

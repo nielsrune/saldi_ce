@@ -4,26 +4,23 @@
 //                     \__ \/ _ \| |_| |) | | _ | |) |  <
 //                     |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------ systemdata/importer_varer.php ------------ lap 3.7.2 -- 2018-04-04 --
-// LICENS
+// --- systemdata/importer_varer.php --- 4.0.1---2022-02-18 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2018 saldi.dk aps
+// Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------------
 // tilføjet vejl.pris til import.
 // 2014.02.01 Gjort søgning på eksisterende varenumre case uafhængig 20140201
@@ -36,6 +33,10 @@
 // 20170509 Tilføjet varemærke (trademark);
 // 20171024 PHR Erstatter '<br>' med '\n' i notes 20171024	
 // 20180404 PHR Lokationer skrives nu også i lagerstatus. 20180404
+// 20200602	PHR newlines (notes) in text is now handled. 20200602
+// 20210714 LOE - Translated some text.
+// 20220218 First item line was in somecases omittet. 
+// 20220628 PHR like 20220218 and corrected type in salgspris_ex_moms
 
 @session_start();
 $s_id=session_id();
@@ -52,12 +53,14 @@ print "<div align=\"center\">\n";
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n";
 print "<tr><td height = \"25\" align=\"center\" valign=\"top\">\n";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>\n";
-if ($popup) print "<td width=\"10%\" $top_bund><a href=../includes/luk.php accesskey=L>Luk</a></td>\n"; 
-else print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>Luk</a></td>\n";
-print "<td width=\"80%\" $top_bund>$title</td>\n";
+if ($popup) print "<td width=\"10%\" $top_bund><a href=../includes/luk.php accesskey=L>".findtekst(30, $sprog_id)."</a></td>\n"; #20210714
+else print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>".findtekst(30, $sprog_id)."</a></td>\n";
+print "<td width=\"80%\" $top_bund>".findtekst(1380, $sprog_id)."</td>\n";
 print "<td width=\"10%\" $top_bund><br></td>\n";
 print "</tbody></table>\n";
 print "</td></tr>\n";
+
+$itemGroup = NULL;
 
 $submit=if_isset($_POST['submit']);
 
@@ -68,45 +71,46 @@ if($submit) {
 	$feltnavn=$_POST['feltnavn'];
 	$feltantal=$_POST['feltantal'];
 	$varenr=$_POST['varenr'];
-	$bilag=$_POST['bilag'];
+	$csvFile=$_POST['csvFile'];
 	$tegnset=$_POST['tegnset'];
-
+	$itemGroup=$_POST['itemGroup'];
+	if (in_array('gruppe',$feltnavn)) $itemGroup = NULL;
 	if (basename($_FILES['uploadedfile']['name'])) {
 		$filnavn="../temp/".$db."_".str_replace(" ","_",$brugernavn).".csv";
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $filnavn)) {
-			vis_data($filnavn,'','','1',$varenr,$bilag,$tegnset);
+			vis_data($filnavn,'','','1',$varenr,$csvFile,$tegnset,$itemGroup);
 		} else echo "Der er sket en fejl under hentningen, pr&oslash;v venligst igen";
 	} elseif($submit=='Vis'){
-		vis_data($filnavn,$splitter,$feltnavn,$feltantal,$varenr,$bilag,$tegnset);
+		vis_data($filnavn,$splitter,$feltnavn,$feltantal,$varenr,$csvFile,$tegnset,$itemGroup);
 	}	elseif($submit=='Importer'){
-		if (($filnavn)&&($splitter))	overfoer_data($filnavn,$splitter,$feltnavn,$feltantal,$tegnset);
-		else vis_data($filnavn,$splitter,$feltnavn,$feltantal,$varenr,$bilag,$tegnset);
+		if (($filnavn)&&($splitter))	overfoer_data($filnavn,$splitter,$feltnavn,$feltantal,$tegnset,$itemGroup);
+		else vis_data($filnavn,$splitter,$feltnavn,$feltantal,$varenr,$csvFile,$tegnset,$itemGroup);
 	}
 } else {
 	if (!$r1=db_fetch_array(db_select("select box1, box2, beskrivelse from grupper where art='RA' order by kodenr desc",__FILE__ . " linje " . __LINE__))) {
 		exit;
 	}
-	upload($bilag);
+	upload($csvFile);
 }
 print "</tbody></table>";
 print "</body></html>";
 #####################################################################################################
-function upload($bilag){
+function upload($csvFile){
 	print "<form enctype='multipart/form-data' action='importer_varer.php' method='POST'>\n";
 	print "<tr><td width='100%' align='center'><table width='100%' border='0' cellspacing='0' cellpadding='0'><tbody>\n";
 	#print "<input type='hidden' name='MAX_FILE_SIZE' value='900000'>\n";
 	print "<input type='hidden' name='MAX_FILE_SIZE' value='2900000'>\n";
-	print "<input type='hidden' name='bilag' value='$bilag'>\n";
-	print "<tr><td width='100%' align='center'> V&aelig;lg datafil: <input name='uploadedfile' type='file' /><br /></td></tr>\n";
+	print "<input type='hidden' name='csvFile' value='$csvFile'>\n";
+	print "<tr><td width='100%' align='center'> ".findtekst(1364, $sprog_id).": <input name='uploadedfile' type='file' /><br /></td></tr>\n";
 print "<tr><td><br></td></tr>\n";
-	print "<tr><td align='center'><input type='submit' name='submit' value='Hent' /></td></tr>\n";
+	print "<tr><td align='center'><input type='submit' name='submit' value='".findtekst(1078, $sprog_id)."' /></td></tr>\n";
 #print "</tbody></table>\n";
 #print "</td></tr>\n";
 	print "<tr><td>&nbsp;</td></tr>\n";
 	print "</form>\n";
 } # end function upload
 
-function vis_data($filnavn,$splitter,$feltnavn,$feltantal,$varenr,$bilag,$tegnset){
+function vis_data($filnavn,$splitter,$feltnavn,$feltantal,$varenr,$csvFile,$tegnset,$itemGroup) {
 global $charset;
 #cho "$charset<br>";
 
@@ -138,38 +142,58 @@ if ($feltnavn) {
  		if ($tmp) $tmp=$tmp.";".$feltnavn[$y];
 		else $tmp=$feltnavn[$y];
 	}
+	$tmp.="|$itemGroup";
 	setcookie("saldi_vareimp",$tmp,time()+60*60*24*30);
 } elseif (isset($_COOKIE['saldi_vareimp'])) {
-	$tmp = $_COOKIE['saldi_vareimp'];
+	list($tmp,$itemGroup) =  explode("|",$_COOKIE['saldi_vareimp']);
 	$feltnavn=explode(";",$tmp);
 }
+$v = 0;
 $q=db_select("select varenr from varer",__FILE__ . " linje " . __LINE__); #20161015 -> 4 linjer
 while($r=db_fetch_array($q)){
 	$v_nr[$v]=$r['varenr'];
 	$v++;
 }
-
+$vg = 0;
+$qtxt = "select * from grupper where art = 'VG' order by kodenr";
+$q=db_select($qtxt,__FILE__ . " linje " . __LINE__); 
+while($r=db_fetch_array($q)){
+	$vGrNr[$vg]=$r['kodenr'];
+	$vGrTxt[$vg]=$r['beskrivelse'];
+	$vg++;
+}
 print "<tr><td width='100%' align='center'><table width='100%' border='0' cellspacing='1' cellpadding='1'><tbody>\n";
 print "<form enctype='multipart/form-data' action='importer_varer.php' method='POST'>\n";
 #print "<tr><td colspan=6 width=100% align=center> $filnavn</td></tr>";
-print "<tr><td colspan='$cols' align='center'><span title='Angiv tegnsæt for import'>Tegns&aelig;t<select name='tegnset'>\n";
+print "<tr><td colspan='$cols' align='left'>";
+print "<span title='Angiv varegruppe for import.  Er varegruppen i listen skal dette felt være tom'>";
+print "&nbsp;Varegruppe<select name='itemGroup'>\n";
+if (!itemGroup) print "<option></option>\n";
+for ($x=0;$x<count($vGrNr);$x++) {
+	if ($vGrNr[$x] == $itemGroup) print "<option value = '$vGrNr[$x]'>$vGrNr[$x]: $vGrTxt[$x]</option>";
+}
+for ($x=0;$x<count($vGrNr);$x++) {
+	if ($vGrNr[$x] != $itemGroup) print "<option value = '$vGrNr[$x]'>$vGrNr[$x]: $vGrTxt[$x]</option>";
+}
+print "</select></span>\n";
+print "<span title='Angiv tegnsæt for import'>&nbsp;".findtekst(1376, $sprog_id)."<select name='tegnset'>\n";
 if ($tegnset=='ISO-8859-1') print "<option>ISO-8859-1</option>\n";
 if ($tegnset=='UTF-8') print "<option>UTF-8</option>\n";
 if ($tegnset!='ISO-8859-1') print "<option>ISO-8859-1</option>\n";
 if ($tegnset!='UTF-8') print "<option>UTF-8</option>\n";
 print "</select></span>\n";
-print "<span title='Angiv hvilket skilletegn der anvendes til opdeling af kolonner'>Separatortegn&nbsp;<select name=splitter>\n";
+print "<span title='Angiv hvilket skilletegn der anvendes til opdeling af kolonner'>&nbsp;".findtekst(1377, $sprog_id)."<select name=splitter>\n";
 if ($splitter) {print "<option>$splitter</option>\n";}
-if ($splitter!='Semikolon') print "<option>Semikolon</option>\n";
+if ($splitter!='Semikolon') print "    <option>".findtekst(1378, $sprog_id)."</option>\n";
 if ($splitter!='Komma') print "<option>Komma</option>\n";
 if ($splitter!='Tabulator') print "<option>Tabulator</option>\n";
 print "</select></span>\n";
 print "<input type='hidden' name='filnavn' value='$filnavn'>\n";
 print "<input type='hidden' name='feltantal' value='$feltantal'>\n";
-print "&nbsp; <input type='submit' name='submit' value='Vis' />\n";
+print "&nbsp; <input type='submit' name='submit' value='".findtekst(1133, $sprog_id)."' />\n";
 
 #20140718
-$felt_navn=array("varenr","stregkode","varemærke","beskrivelse","kostpris","salgspris","vejl.pris","notes","enhed","enhed2","forhold","gruppe","provisionsfri","leverandor","min_lager","max_lager","lokation","lukket","serienr","samlevare","delvare","trademark","	retail_price","special_price","	campaign_cost","tier_price","	open_colli_price","colli","	outer_colli","outer_colli_price","special_from_date","special_to_date","	komplementaer","circulate","operation","prisgruppe","tilbudgruppe","	rabatgruppe","dvrg","m_type","m_rabat","m_antal","folgevare","kategori","varianter","publiceret","indhold","montage","demontage");
+$felt_navn=array("varenr","stregkode","varemærke","beskrivelse","kostpris","salgspris_excl_moms","salgspris_incl_moms","vejl.pris","notes","enhed","enhed2","forhold","gruppe","provisionsfri","leverandor","min_lager","max_lager","lokation","lukket","serienr","samlevare","delvare","trademark","	retail_price", "special_price","	campaign_cost","tier_price","	open_colli_price","colli","outer_colli","outer_colli_price", "special_from_date","special_to_date","komplementaer","circulate","operation","prisgruppe","tilbudgruppe","	rabatgruppe", "dvrg","m_type","m_rabat","m_antal","folgevare", "kategori", "varianter", "publiceret","indhold","montage","demontage");
 
 
 $felt_antal=count($felt_navn);
@@ -184,7 +208,7 @@ for ($y=0; $y<=$feltantal; $y++) {
 	if ($feltnavn[$y]=='beskrivelse')$beskrivelse=1;
 }		
 
-if ($filnavn && $splitter && $varenr==1) print "&nbsp; <input type=\"submit\" name=\"submit\" value=\"Import&eacute;r\" /></td></tr>\n";
+if ($filnavn && $splitter && $varenr==1) print "&nbsp; <input type=\"submit\" name=\"submit\" value=\"".findtekst(1074, $sprog_id)."\" /></td></tr>\n";
 print "<tr><td colspan=$cols><hr></td></tr>\n";
 if ((!$splitter)||($splitter=='Semikolon')) {$splitter=';';}
 elseif ($splitter=='Komma') {$splitter=',';}
@@ -192,8 +216,8 @@ elseif ($splitter=='Tabulator') {$splitter=chr(9);}
 for ($y=0; $y<=$feltantal; $y++) {
 	if ($feltnavn[$y]) print "<td><select name=feltnavn[$y]>\n";
 	else  print "<td align=center><select name=feltnavn[$y]>\n";
-	print "<option>$feltnavn[$y]</option>\n";
-	if ($feltnavn[$y]) print "<option></option>\n";
+	if ($feltnavn[$y] && $feltnavn[$y] != '-') print "<option>$feltnavn[$y]</option>\n";
+		print "<option value = '-'></option>\n";
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($feltnavn[$y]!=$felt_navn[$x]) print "<option>$felt_navn[$x]</option>\n";
 	}
@@ -203,13 +227,28 @@ for ($y=0; $y<=$feltantal; $y++) {
 print "</form></td></tr>";
 $fp=fopen("$filnavn","r");
 if ($fp) {
+	$colNum=1;
 	$x=0;
 	$kontonumre=array();
 	while (!feof($fp)) {
 		$skriv_linje=0;
 		$varenr=NULL;
 		if ($linje=fgets($fp)) {
+			for($c=0;$c<strlen($linje);$c++) {
+				if (substr($linje,$c,1)==$splitter) {
+					$colNum++;
+				}
+			}
+			if ($colNum < $cols) {
+				$preLine.= $linje;
+			}	else {
 			$x++;
+			if ($preLine) {
+				$preLine.= $linje;
+				$linje = $preLine;
+			}
+			$colNum=1;
+			$preLine='';
 			$skriv_linje=1;
 			if ($charset=='UTF-8' && $tegnset!='UTF-8') $linje=utf8_encode($linje);
 			elseif ($charset!='UTF-8' && $tegnset=='UTF-8') $linje=utf8_decode($linje);
@@ -229,7 +268,13 @@ if ($fp) {
 					$tmp=str_replace(".","",$tmp);
 					if ($tmp && !is_numeric($tmp)) $skriv_linje=2;
 				}
-				if ($feltnavn[$y]=='salgspris')	{
+#				if ($feltnavn[$y]=='salgspris_ex_moms') $feltnavn[$y] = 'salgspris_excl_moms';
+				if ($feltnavn[$y]=='salgspris_excl_moms')	{
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje=2;
+				}
+				if ($feltnavn[$y]=='salgspris_incl_moms')	{
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
 					if ($tmp && !is_numeric($tmp)) $skriv_linje=2;
@@ -272,14 +317,15 @@ if ($fp) {
 #				} 
 			}
  		}
+ 		}
 		if ($skriv_linje==2 || in_array($varenr,$v_nr)) { #20161015
-			$txt='R&oslash;de linjer/felter indeholder fejl og bliver ikke importeret\n';
-			$txt.='Gr&oslash;nne linjer/felter er eksisterende varer og opdateres\n';
+			$txt=findtekst(1381, $sprog_id);
+			$txt.=findtekst(1382, $sprog_id);
 			print "<BODY onLoad=\"javascript:alert('$txt')\">";
 		}
 		if ($skriv_linje>=1){
 			print "<tr>";
-#			print "<tr><td>$bilag</td>";
+#			print "<tr><td>$csvFile</td>";
 			for ($y=0; $y<=$feltantal; $y++) {
 				if ($skriv_linje==2) $color="#e00000";
 				elseif ($feltfejl[$y]) $color="#e00000";
@@ -297,8 +343,24 @@ print "</tbody></table>";
 print "</td></tr>";
 } # end function vis_data
 
-function overfoer_data($filnavn,$splitter,$feltnavn,$feltantal,$tegnset) {
+function overfoer_data($filnavn,$splitter,$feltnavn,$feltantal,$tegnset,$itemGroup) {
 global $charset;
+
+if ($itemGroup) {
+	$VATrate = 0;
+	$qtxt = "select box4 from grupper where box4 != '' and art = 'VG' and kodenr = '$itemGroup'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+		$qtxt = "select moms from kontoplan where kontonr = '$r[box4]' order by id desc limit 1";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			$VATcode = substr($r['moms'],0,1).'M';
+			$VATcodeNo = substr($r['moms'],1);
+			$qtxt = "select box2 from grupper where art = '$VATcode' and kodenr = '$VATcodeNo'";
+			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				$VATrate = $r['box2'];
+			}
+		}
+	}
+}
 
 $x=0;
 $fp=fopen("../importfiler/postnr.csv","r");
@@ -333,7 +395,7 @@ if ($fp) {
 }
 fclose($fp);
 
-for ($y=0; $y<=$feltantal; $y++) {
+for ($y=0; $y<count($felt); $y++) {
 	for ($x=0; $x<=$felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]&& $felt_aktiv[$x]==1) {
 		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
@@ -341,18 +403,12 @@ for ($y=0; $y<=$feltantal; $y++) {
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
 }
-
 print "<tr><td colspan=$cols><hr></td></tr>\n";
 if ((!$splitter)||($splitter=='Semikolon')) {$splitter=';';}
 elseif ($splitter=='Komma') {$splitter=',';}
 elseif ($splitter=='Tabulator') {$splitter=chr(9);}
 
-# print "<tr><td><span title='Angiv 1. bilagsnummer'><input type=text size=4 name=bilag value=$bilag></span></td>";
-
 transaktion('begin');
- #echo "delete from kontoplan where regnskabsaar='$regnskabsaar'<br>";
-#db_modify("delete from de where regnskabsaar='$regnskabsaar'");
-
 $v=0;
 $q=db_select("select id,varenr from varer",__FILE__ . " linje " . __LINE__);
 while($r=db_fetch_array($q)){
@@ -366,16 +422,39 @@ $fp=fopen("$filnavn","r");
 if ($fp) {
 	$kontonumre=array();
 	$x=0;
-	$imp_antal=0;
-	$upd_antal=0;
-	$kostpris=0;
-	$salgspris=0;
+	$colNum=$imp_antal=$kostpris=$salgspris=$upd_antal=0;
 	$lokation=0;
 	$varenr="";	
+#cho "$splitter<br>";	
 	while (!feof($fp)) {
 		$skriv_linje=0;
 		if ($linje=fgets($fp)) {
+			$colNum = 0; # 20220628 Inserted this
+#			$felt = explode($splitter,$linje);
+#			$colNum = count($felt);
+			$count = 1;
+			for($c=0;$c<strlen($linje);$c++) {
+if ((substr($linje,$c,2)) == '"'.$splitter) $count=0; # 20220628 Inserted this
+if ((substr($linje,$c,2)) == $splitter.'"') $count=1; # 20220628 Inserted this
+				if ($count && substr($linje,$c,1)==$splitter) {
+					$colNum++;
+				}
+			}
+			if ($colNum && $cols) { # 20220628 '>=' changed to '&&'
+#				$preLine.= $linje;
+#cho __line__." $x $colNum < $cols<br>";
+				
+#cho __line__." $x $linje<br>";
+#			}	else {
 			$x++;
+#cho __line__." $x $colNum > $cols<br>";
+#cho __line__." $x $linje<br>";
+				if ($preLine) {
+					$preLine.= $linje;
+					$linje = $preLine;
+				}
+				$colNum=1;
+				$preLine='';
 			$skriv_linje=1;
 			if ($charset=='UTF-8' && $tegnset!='UTF-8') $linje=utf8_encode($linje);
 			elseif ($charset!='UTF-8' && $tegnset=='UTF-8') $linje=utf8_decode($linje);
@@ -383,15 +462,17 @@ if ($fp) {
 			$felt=array();
  			$felt = opdel($splitter, $linje);
  			for ($y=0; $y<count($felt); $y++) {
+#cho __line__." $x $y $feltnavn[$y] | $felt[$y]<br>";
 				$medtag_felt[$y]=1;
 				if (!trim($feltnavn[$y])) $medtag_felt[$y]=0;
 				$felt[$y]=trim($felt[$y]);
 				$feltnavn[$y]=strtolower($feltnavn[$y]);
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if ($feltnavn[$y]=='varenr') {
-					if (!$varenr=$felt[$y]) $skriv_linje=0;
+#cho "$feltnavn[$y] | $varenr | $felt[$y]<br>";
+					$varenr = $felt[$y];
+#					if ($varenr != $felt[$y]) $skriv_linje=0;
 				}
-				if ($feltnavn[$y]=='vejl.pris') $feltnavn[$y]='retail_price';
 				if ($feltnavn[$y]=='vejl.pris') $feltnavn[$y]='retail_price';
 				if ($feltnavn[$y]=='varemærke') $feltnavn[$y]='trademark';
 				if ($feltnavn[$y]=='lokation') {
@@ -404,11 +485,24 @@ if ($fp) {
 					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
 					$kostpris=$felt[$y]*1;
 				}
-				if ($feltnavn[$y]=='salgspris')	{
+				if ($feltnavn[$y]=='salgspris_ex_moms') $feltnavn[$y] = 'salgspris_excl_moms';
+				if ($feltnavn[$y]=='salgspris_excl_moms')	{
+					$nyt_feltnavn[$y] = 'salgspris';
 					$tmp=str_replace(",","",$felt[$y]);
 					$tmp=str_replace(".","",$tmp);
 					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
 					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
+					$salgspris=$felt[$y]*1;
+				}
+				if ($feltnavn[$y]=='salgspris_incl_moms')	{
+					$nyt_feltnavn[$y] = 'salgspris';
+					$tmp=str_replace(",","",$felt[$y]);
+					$tmp=str_replace(".","",$tmp);
+					if ($tmp && !is_numeric($tmp)) $skriv_linje=0;
+					elseif (!is_numeric($felt[$y])) $felt[$y]=usdecimal($felt[$y]);
+					if ($itemGroup && $VATrate) {
+						$felt[$y] = $felt[$y]*100/(100+$VATrate);
+					}
 					$salgspris=$felt[$y]*1;
 				}
 				if ($feltnavn[$y]=='retail_price')	{
@@ -459,23 +553,27 @@ if ($fp) {
 					$location=$felt[$y]; 
 				}
 			}
- 		}
+ 		}}
 		if ($skriv_linje==1) {
 			$vare_a='';
 			$vare_b='';
 			$upd='';
 			for ($y=0; $y<=$feltantal; $y++) {
-				if ($feltnavn[$y] && $medtag_felt[$y] && $feltnavn[$y]!='leverandor') {
-					if ($nyt_feltnavn[$y]) $feltnavn[$y]=$nyt_feltnavn[$y];
+				if ($feltnavn[$y] && $medtag_felt[$y] && $feltnavn[$y]!='leverandor' && $feltnavn[$y]!='-') {
+					($nyt_feltnavn[$y])?$fName=$nyt_feltnavn[$y]:$fName=$feltnavn[$y];
 					$felt[$y]=db_escape_string($felt[$y]);
-					($vare_a)?$vare_a.=",".$feltnavn[$y]:$vare_a=$feltnavn[$y];
+					($vare_a)?$vare_a.=",".$fName:$vare_a=$fName;
 					($vare_b)?$vare_b.=",'".$felt[$y]."'":$vare_b="'".$felt[$y]."'";
-					($upd)?$upd.=",".$feltnavn[$y]."='".$felt[$y]."'":$upd=$feltnavn[$y]."='".$felt[$y]."'";
+					($upd)?$upd.=",".$fName."='".$felt[$y]."'":$upd=$fName."='".$felt[$y]."'";
 				}
 			}
 			$vare_a=$vare_a.",lukket";
 			$vare_b=$vare_b.",''";
-			if ($varenr && $r=db_fetch_array(db_select("select id from varer where varenr='$varenr' or lower(varenr)='".strtolower($varenr)."' or upper(varenr)='".strtoupper($varenr)."'",__FILE__ . " linje " . __LINE__))) { #20140201
+			$tmp = db_escape_string($varenr);
+			$qtxt = "select id from varer where varenr='$tmp' or ";
+			$qtxt.= "lower(varenr)='".strtolower($tmp)."' ";
+			$qtxt.= "or upper(varenr)='".strtoupper($tmp)."'";
+			if ($varenr && $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { #20140201
 				$vare_id=$r['id'];
 			}
 			if (!$vare_id) {			
@@ -501,10 +599,15 @@ if ($fp) {
 				$imp_antal++;
 				$qtxt="insert into varer($vare_a) values ($vare_b)";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-				$r=db_fetch_array(db_select("select id from varer where varenr='$varenr'",__FILE__ . " linje " . __LINE__));
+ 				$qtxt = "select id from varer where varenr='". db_escape_string($varenr) ."'";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
 				$vare_id=$r['id'];
 			}
 			if ($vare_id) {
+				if ($itemGroup) {
+						$qtxt = "update varer set gruppe = '$itemGroup' where id = '$vare_id'";
+					if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
+				}
 				if ($lokation) { #20180404
 					$qtxt="select id from lagerstatus where vare_id='$vare_id' and lager <= '1'";
 					if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
@@ -532,6 +635,7 @@ if ($fp) {
 	}
 }
 }
+#xit;
 fclose($fp);
 #xit;
 transaktion('commit');
@@ -539,7 +643,7 @@ print "</tbody></table>";
 print "</td></tr>";
 print "<BODY onLoad=\"javascript:alert('$imp_antal varer importeret, $upd_antal varer opdateret')\">";
 #print "<BODY onLoad=\"javascript:alert('$imp_antal varer importeret')\">";
-#print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
+print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=div_io\">";
 exit;
 } # endfunc overfoer_data
 

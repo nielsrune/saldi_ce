@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.2 --- 2021.05.03 ---
+// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.2 --- 2021.08.21 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -29,9 +29,14 @@
 // 20210127 PHR Some minor design changes 
 // 20210320 PHR Made it possible to change qty in items with add ons and some cleanup 202103220
 // 20210503 PHR - Qty now red if stock below minimum stock - 20210503
+// 20210813 LOE Added credit_type variable from pos_ordre.php file
+// 20210815 LOE Set up $default_discounttxt for initial rabat on the frontend 
+// 20210816 LOE and also added a block of code to function with it $default_discounttxt
+// 20210822 PHR added $discounttxt and removed $default_discounttxt from above code.
 
 
 	print "<!-- ---------- start productLines.php ---------- -->\n";
+
 	if (isset($_GET['vare_id']) && $_GET['vare_id']) {
 		$itemIdNew=$_GET['vare_id'];	
 	} elseif ($varenr_ny) {
@@ -53,6 +58,7 @@
 			}
 		}
 	}
+
 	$s=0;
 	$qtxt = "select kodenr from grupper where art = 'VG' and box8 = 'on'";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
@@ -89,6 +95,8 @@
 				print "<td style=\"width:10%;text-align:right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[$x],2)."\">";
 				print dkdecimal($pris[$x],2);
 				print "</td>";
+
+				
 			}
 			if ($saet[$x]) {
 				if (!isset($saet[$x-1]) || $saet[$x-1] != $saet[$x]) $saetpris=0;
@@ -112,13 +120,33 @@
 		if ($rabat[$x] && !$saet[$x] && !$rvnr && $show) {
 			($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 			if ($rabatart[$x]=="amount") {
+/*	#20220302		
 				if ($varemomssats[$x] & $momsfri[$x]!='on') $tmp=afrund($rabat[$x]+$rabat[$x]/100*$varemomssats[$x],2)*-1;
 				else $tmp=afrund($rabat[$x],2)*-1;
-				if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>Rabat</td><td align=\"right\">".dkdecimal($tmp,2)."</td><td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n";
+*/
+				if ($posnr[$x]) {
+					print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>Rabat</td>";
+					print "<td align=\"right\">".dkdecimal($rabat[$x],2)."</td><td align=\"right\">".dkdecimal($rabat[$x]*$antal[$x],2)."</td></tr>\n";
+				}
 				$sum+=afrund($tmp*$antal[$x],2);
 			} else {
 				$tmp=afrund($pris[$x]*$rabat[$x]/-100,2);
-				if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>$rabat[$x]% rabat</td><td align=\"right\">".dkdecimal($tmp,2)."</td><td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n";
+				#if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabats</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>$rabat[$x]% rabat</td><td align=\"right\">".dkdecimal($tmp,2)."</td><td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n";
+				if($discounttxt[$x]){
+					if ($posnr[$x]) {
+						print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td>";
+						print "<td>$discounttxt[$x] $rabat[$x]%</td><td align=\"right\">".dkdecimal($tmp,2)."</td>";
+						print "<td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n"; #20210815 + 20210816
+					}
+				} else {
+				#if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabats</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>$rabat[$x]% $credit_type</td><td align=\"right\">".dkdecimal($tmp,2)."</td><td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n"; #20210813
+					$discounttxt[$x] = findtekst(428, $sprog_id); #20210815 This is also used in debitor../productLines.php
+					if ($posnr[$x]) {
+						print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td>";
+						print "<td>$discounttxt[$x] $rabat[$x]%</td><td align=\"right\">".dkdecimal($tmp,2)."</td>";
+						print "<td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n"; #20210813
+					}
+				}	
 			}
 			} elseif ($saetpris && isset($saet[$x+1]) && ($saet[$x+1]!=$saet[$x]) && $saet[$x] && $show) {
 			($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
@@ -186,8 +214,4 @@
 		}
 	}
 	print "<!-- ---------- end productLines.php ---------- -->\n";
-
-
-
-
 ?>

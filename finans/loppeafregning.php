@@ -4,28 +4,26 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------finans/loppeafregning.php---------------------Patch 3.7.1-----2018.06.21---
-// LICENS
+// --- finans/loppeafregning.php --- Patch 4.0.3 --- 2021.10.01 ---
+/// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under thefrom kontoplan where regnskabsaar terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2016-2018 saldi.dk aps
+// Copyright (c) 2016-2021 saldi.dk ApS
 // -----------------------------------------------------------------------------------
 // 20180621 PHR Summer tillægges moms hvis ordrelinjer er momsbelagt. Søg momsfri & momssats
+// 20211020 PHR Comparing $gruppesum[$y] to $totalsum and regulating $gruppesum[$y] if diff less than 0.1 to avoid diff in ledger.
 
 @session_start();
 $s_id=session_id();
@@ -118,6 +116,7 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 	for ($z=0;$z<count($v_gr);$z++) {
 		if ($v_gr[$z]==$gruppe[$x-1] && $gruppesum[$y]) {
 			$gruppesum[$y]=afrund($gruppesum[$y]/100*$kundedel,2);
+			if (abs($gruppesum[$y]-$totalsum) < 0.1) $gruppesum[$y] = $totalsum; #20211020
 			$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
 			$qtxt.="  values ";
 			$qtxt.="('$bilag','$dd','$afregning $fra - $til','F','$vg_modkonto[$z]','','0','','$gruppesum[$y]','$kladde_id','0')";

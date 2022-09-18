@@ -1,146 +1,98 @@
 <?php
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// --- systemdata/diverseIncludes/language.php --- ver 4.0.3 --- 2021-10-09 --
+// LICENSE
+//
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
+//
+// Copyright (c) 2003-2021 saldi.dk aps
+// ----------------------------------------------------------------------
+
+// 20210517 LOE Converted bruger_id from negative for admin and used to query the database
+// 20210818 LOE Added the active language id to the url
+// 20210819 LOE Did some documentations
+// 20210828 LOE Added some codes; This checks if the language already exists in tekster table
+// 20211009 PHR simplyfying and cleanup
+
 
 function language () {
 	include("../includes/languages.php"); #20210112
-	//include("../includes/connect.php");
+	global $bgcolor,$bgcolor5,$bruger_id,$brugernavn;
+	global $db;
+	global $s_id,$sprog_id; 
+
+	$languageId=$sprog_id;
 	
-	global $sprog_id; 
-	global $bgcolor;
-	global $bgcolor5;
-	global $bruger_id;
-	global $brugernavn;
 	$csvfile = "../importfiler/tekster.csv";
 	$g1 =csv_to_array($csvfile);
 	$x=0;
+	$user_id = null;
+	$user_id = (abs($bruger_id)); //20210517
 	
-	$q = db_select("select*from settings where var_grp = 'localization' order by var_name ASC",__FILE__ . " linje " . __LINE__);
-					while ($r = db_fetch_array($q)) {
-					$id[$x]=$r['id'];
-					$beskrivelse[$x]=$r['var_name'];
-					$kodenr[$x]=$r['var_value'];
-					//$sprogkode[$x]=$r['box1'];
-					
-					$x++;
-				}
 				
-	$antal_sprog=$x;
 	print "<form name=diverse action=diverse.php?sektion=sprog method=post>";
 	print "<tr><td colspan='6'><hr></td></tr>";
 	print "<tr bgcolor='$bgcolor5'><td colspan='6'><b><u>".findtekst(801,$sprog_id)."</b></u></td></tr>"; // 20210303
 	print "<tr><td colspan='6'><br></td></tr>";
-
-	if (isset($_POST['newLanguageName']) && $_POST['newLanguageName'])  {
-		
-		if (in_array($_POST['newLanguageName'],$beskrivelse)) {
-			$var_name = $_POST['newLanguageName'];	
-			$m = db_select("select * from settings where var_name = '$var_name'",__FILE__ . " linje " . __LINE__);
-			$n = db_fetch_array($m);
-
-			$sprog_id= $n['id'];
-		
-			db_modify("update brugere set sprog_id = '$sprog_id' where id ='$bruger_id'",__FILE__ . " linje " . __LINE__);				
-			alert ($_POST['newLanguageName']." eksisterer allerede");
-			print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/diverse.php?sektion=sprog\">\n";  
+	if (isset($_POST['newLanguageId']) && $_POST['newLanguageId'])  {
+		$newLanguageId = $_POST['newLanguageId'];
+		$qtxt = "select id from settings where var_name = 'languageId' and user_id='0'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			$qtxt = "update settings set var_value = '$newLanguageId' where id = '$r[id]'";
 		} else {
-			if($_POST['newLanguageName']=='English'){
-				$newar = engdan($g1, "English");
-				$var_name = $_POST['newLanguageName'];
-				db_modify("insert into settings (var_name,  var_grp , var_value , var_description, user_id)values('$var_name','localization','$var_name','$var_name language', 0)",__FILE__ . " linje " . __LINE__);
-				$m = db_select("select * from settings where var_name = '$var_name'",__FILE__ . " linje " . __LINE__);
-				$n = db_fetch_array($m);
-				$sprog_id= $n['id'];
-				db_modify("update brugere set sprog_id = '$sprog_id' where id ='$bruger_id'",__FILE__ . " linje " . __LINE__);
-				foreach ($newar as $key => $value){
-					 $g=str_replace("'","''", $value);
-                     $h =trim($key, " ");
-					 if($g!==""){
-
-				       db_modify("insert into tekster ( sprog_id, tekst_id, tekst )  values ('$sprog_id', '$h', '$g')",__FILE__ . " linje " . __LINE__);						
-					 }
-				}
-
-				echo "opretter ". $_POST['newLanguageName']."<br>";
-				print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/diverse.php?sektion=sprog\">\n"; 
-
-			}elseif($_POST['newLanguageName']=='Danish'){
-	
-				$newar = engdan($g1,"Danish"); // 20210303
-				$var_name = $_POST['newLanguageName'];
-				db_modify("insert into settings (var_name,  var_grp , var_value , var_description, user_id)values('$var_name','localization','$var_name','$var_name language', 0)",__FILE__ . " linje " . __LINE__);
-				$m = db_select("select * from settings where var_name = '$var_name'",__FILE__ . " linje " . __LINE__);
-				$n = db_fetch_array($m);
-				$sprog_id= $n['id'];
-				db_modify("update brugere set sprog_id = '$sprog_id' where id ='$bruger_id'",__FILE__ . " linje " . __LINE__);
-				foreach ($newar as $key => $value){
-					$g=str_replace("'","''", $value);
-					$h =trim($key, " ");
-					if($g!==""){
-
-					  db_modify("insert into tekster ( sprog_id, tekst_id, tekst )  values ('$sprog_id', '$h', '$g')",__FILE__ . " linje " . __LINE__);						
+			$qtxt = "insert into settings(var_name,var_grp,var_value,var_description,user_id) values ";
+			$qtxt.= "('languageId','globals','$newLanguageId','Active default language','0')";
 					}
-			    }
-
-				    echo "opretter ". $_POST['newLanguageName']."<br>";
-					print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/diverse.php?sektion=sprog\">\n"; 
-	
-			} 	  
-        } 
-    }elseif(isset($_POST['sprog']) && $_POST['sprog']=='English'|| $_POST['sprog']=='Danish') { // 20210224
-     
-  
-   //update here
-            $var_name = $_POST['sprog'];	
-			$m = db_select("select * from settings where var_name = '$var_name'",__FILE__ . " linje " . __LINE__);
-			$n = db_fetch_array($m);
-
-			$sprog_id= $n['id'];
-		
-			db_modify("update brugere set sprog_id = '$sprog_id' where id ='$bruger_id'",__FILE__ . " linje " . __LINE__);				
-			alert ($_POST['newLanguageName']." eksisterer allerede");
-			print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/diverse.php?sektion=sprog\">\n"; 
-
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		$languageId = $newLanguageId;
+		include("../includes/connect.php");
+		$qtxt = "update online set language_id = '$languageId' where session_id='$s_id'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=sprog\">";
+		exit;
 	}
-
-	if (isset($_POST['sprog']) && $_POST['sprog']=='addLanguage') {
-		// add language
+	include("../includes/connect.php");
+	$qtxt = "select id, var_value from settings where var_name = 'languages' order by id limit 1";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$languages=explode(chr(9),$r['var_value']);
+	include("../includes/online.php");
     
-
-		print "<tr><td title='Hvilket sprog vil du tilføje'>Nyt sprog</td>";
-		#print "<td title='Hvilket sprog vil du tilføje'><input name='newLanguageName' type='text' class='inputbox' style='width:200px'></td></tr>";
- #####
-		print"<td> <SELECT class ='inputbox' NAME = 'newLanguageName' title=''>";
-		foreach ($languages as $k => $v) {
-
-			print "<option  value='$v'>$v</option>";
-
-
-		}
-
-
-		print "</SELECT></td></tr>";
-
-
- #####
-		print "<tr><td title='Hvilket sprog vil du anvende som skabelon'>".findtekst(803,$sprog_id)."</td>";
-		print "<td><SELECT class='inputbox' NAME='languageTemplate' title=''>";
-#		if ($box3[$x]) print"<option>$box3[$x]</option>";
-		for ($x=0; $x<$antal_sprog; $x++) {
-			print "<option>$beskrivelse[$x]</option>";
-		}
-		print "</SELECT></td></tr>";
-	} else {
 		$tekst1=findtekst(1,$sprog_id);
 		$tekst2=findtekst(2,$sprog_id);
-		print "<tr><td title='Klik her for at rette tekster'><a href=tekster.php?sprog_id=1>$tekst1</a></td>";
-		print "<td><SELECT class='inputbox' NAME='sprog' title='$tekst2'>";
-#		if ($box3[$x]) print"<option>$box3[$x]</option>";
-		for ($x=0; $x<$antal_sprog; $x++) {
-			print "<option>$beskrivelse[$x]</option>";
-		}
-		$tekst1=findtekst(4,$sprog_id);
-		print "<option value='addLanguage'>$tekst1</option>";
-		print "</SELECT></td></tr>";
+	for ($x=1; $x<count($languages);$x++) {
+		if ($languageId == $x) $languageName  = $languages[$x];
 	}
+	if (!$languageId) {
+		$languageId = 1;
+		$languageName = 'Dansk';
+	}
+	#print "<tr><td title='Klik her for at rette tekster'><a href=tekster.php?sprog_id=1>$tekst1</a></td>";
+	print "<tr><td title='Klik her for at rette tekster'><a href=tekster.php?sprog_id=$languageId>$languageName</a></td>"; #20210818
+	print "<td><SELECT class='inputbox' NAME='newLanguageId' title='$tekst2'>";
+#		if ($box3[$x]) print"<option>$box3[$x]</option>";
+	for ($x=1; $x<count($languages);$x++) {
+		if ($languageId == $x) print "<option value='$x'>$languages[$x]</option>";
+		}
+	for ($x=1; $x<count($languages);$x++) {
+		if ($languageId != $x) print "<option value='$x'>$languages[$x]</option>";
+	}
+	print "</SELECT></td></tr>";
+#	}
     print "<tr><td><br></td></tr>";
     
 	$tekst1=findtekst(3,$sprog_id);
@@ -152,5 +104,12 @@ function language () {
  */
 	print "</form>";
 } # endfunc sprog
+ 
+
+
+
+
+
+
  
 ?>

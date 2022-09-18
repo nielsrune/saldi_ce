@@ -4,30 +4,28 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------systemdata/importer_kontoplan.php--lap 3.7.2---2018-11-12-------
+// --- systemdata/importer_kontoplan.php --- lap 4.0.6 --- 2022-04-03 ---
+// LICENSE
 //
-// LICENS
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2018 saldi.dk aps
+// Copyright (c) 2003 - 2022 Saldi.dk ApS
 // ----------------------------------------------------------------------
-// 2018.11.12 Håndtering af tegnsæt og MAC linjeskift.
-// 2018.12.04 Valg gemmes i cookie
+// 20181112 Håndtering af tegnsæt og MAC linjeskift.
+// 20181204 Valg gemmes i cookie
+// 20210713 LOE - Translated some texts
+// 20220404	PHR function vis_data & overfoer_data: Inserted trim($felt[$y],'"');	
 
 @session_start();
 $s_id=session_id();
@@ -52,7 +50,7 @@ print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 #if ($popup) print "<td width=\"10%\" $top_bund><a href=../includes/luk.php accesskey=L>Luk</a></td>"; 
 # else 
-print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>Luk</a></td>";
+print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>".findtekst(30, $sprog_id)."</a></td>"; #20210713
 print "<td width=\"80%\" $top_bund>$title</td>";
 print "<td width=\"10%\" $top_bund><br></td>";
 print "</tbody></table>";
@@ -106,7 +104,9 @@ if (isset($_POST['hent']) || isset($_POST['vis']) || isset($_POST['import'])) {
 		$startdate=$r1['box2']."-".$r1['box1']."-01";
 		$qtxt="select id from transaktioner where transdate >= '$startdate'";
 		if ($r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-			alert('Der er foretaget transaktioner i regnskabsåret: $r1[beskrivelse] - import afbrudt');
+			$txt1= findtekst(1365, $sprog_id);  #20210713
+			$txt2= findtekst(1366, $sprog_id);
+			alert("$txt1:"." $r1[beskrivelse]-" ."$txt2");
 			if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=div_io\">";
 			else print "<meta http-equiv=\"refresh\" content=\"0;URL=diverse.php?sektion=div_io\">";
 			exit;
@@ -122,7 +122,7 @@ function upload($kladde_id, $bilag){
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<form enctype=\"multipart/form-data\" action=\"importer_kontoplan.php\" method=\"POST\">";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
-print "<tr><td width=100% align=center> Vælg datafil: <input name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center> ".findtekst(1364, $sprog_id).": <input name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
 print "<tr><td><br></td></tr>";
 print "<tr><td align=center><input type=\"submit\" name=\"hent\" value=\"Hent\" /></td></tr>";
 print "<tr><td></form></td></tr>";
@@ -244,9 +244,10 @@ if ($fp) {
 			$kontotyper=array("H","D","S","Z","X","R");
 			$momstyper=array("S","K","E","Y");
 			$felt = explode($splitter, $linje);
-			for ($y=0; $y<$feltantal; $y++) {
+			for ($y=0; $y<=$feltantal; $y++) {
 				$felt[$y]=trim($felt[$y]);
-				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
+				$felt[$y]=trim($felt[$y],'"');
+				# if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if ($feltnavn[$y]=='Kontonr' && ($felt[$y]!=$felt[$y]*1 || in_array($felt[$y],$kontonumre))) {
 					if (!$alert) alert('Røde linjer indeholder fejl i kontonummer og bliver ikke importeret');
 					$alert=1;
@@ -390,9 +391,10 @@ if ($fp) {
 			$felt = explode($splitter, $linje);
 			for ($y=0; $y<=$feltantal; $y++) {
 				$felt[$y]=trim($felt[$y]);
+				$felt[$y]=trim($felt[$y],'"');
 				$feltnavn[$y]=strtolower($feltnavn[$y]);
-
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
+				if ((substr($felt[$y],0,1) == "'")&&(substr($felt[$y],-1) == "'")) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if (($feltnavn[$y]=='Kontonr')&&(($felt[$y]!=$felt[$y]*1)||(in_array($felt[$y],$kontonumre)))) {
 					$skriv_linje=2;
 				} elseif ($feltnavn[$y]=='Kontonr') $kontonumre[$x]=$felt[$y];
@@ -441,10 +443,12 @@ if ($fp) {
 				}
 				if ($feltnavn[$y]) {
 					$a=$a.$feltnavn[$y];
-					$b=$b."'".$felt[$y]."'";
+					if ($feltnavn[$y] == 'kontonr') $felt[$y]*=1;
+					$b=$b."'".db_escape_string(trim($felt[$y]))."'";
 				}
 			}
-			db_modify("insert into kontoplan($a, regnskabsaar) values ($b, '$regnskabsaar')",__FILE__ . " linje " . __LINE__);
+			$qtxt = "insert into kontoplan($a, regnskabsaar) values ($b, '$regnskabsaar')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			
 		}
 	}	

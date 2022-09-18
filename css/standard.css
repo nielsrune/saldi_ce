@@ -58,3 +58,64 @@ left:+2px;
 .bold {
 		font-weight:bold;
 }
+
+.CellWithComment{
+	position:relative;
+  }
+  
+ .CellComment{
+	display:none;
+	position:absolute; 
+	z-index:100;
+	border:1px;
+	background-color:#EEEEFF;
+	border-style:solid;
+	border-width:1px;
+	border-color:#AAAAFF;
+	padding:3px;
+	color:black; 
+	top:20px; 
+	left:20px;
+	width:auto;
+	min-width: 100px;
+	max-width: 500px;
+	text-align: left;
+ }
+  
+  .CellWithComment:hover span.CellComment{
+	display:block;
+ }
+
+ .expandable {
+  overflow: hidden;
+
+  transition: all .5s ease-in-out;
+  line-height: 0;
+  padding: 0 1em;
+  color: transparent;
+  height: 0;
+}
+ 
+.expandable:target {
+  line-height: 1.5;
+  padding-top: 1em;
+  padding-bottom: 1em;
+  color: black;
+  height: 50px;
+}
+ 
+.textareaBeholder {
+	margin-bottom: 5px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+th {
+	text-align: left;
+}

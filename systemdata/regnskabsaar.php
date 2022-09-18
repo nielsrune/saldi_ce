@@ -4,31 +4,33 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------systemdata/regnskabsaar.php--------- lap 3.6.6 -- 2016-12-02 --
-// LICENS
 //
-// // Dette program er fri software. Du kan gendistribuere det og / eller
-// // modificere det under betingelserne i GNU General Public License (GPL)
-// // som er udgivet af "The Free Software Foundation", enten i version 2
-// // af denne licens eller en senere version, efter eget valg.
-// // Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// // 
-// // Programmet må ikke uden forudgående skriftlig aftale anvendes
-// // i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
-// //
-// // Dette program er udgivet med haab om at det vil vaere til gavn,
-// // men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// // GNU General Public Licensen for flere detaljer.
-// //
-// // En dansk oversaettelse af licensen kan laeses her:
-// // http://www.saldi.dk/dok/GNU_GPL_v2.html
-// //
-// // Copyright (c) 2003-2017 saldi.dk ApS
+// --- systemdata/regnskabsaar.php --- ver 4.0.4 --- 2022-05-01 --
+// LICENSE
+//
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
+//
+// Copyright (c) 2003-2022 Saldi.dk ApS
 // ----------------------------------------------------------------------------
 // 20150327 CA  Topmenudesign tilføjet                             søg 20150327
 // 20161202 PHR Små designændringer
-// 2019.02.21 MSC - Rettet topmenu design
-// 2019.02.25 MSC - Rettet topmenu design
+// 20190221 MSC - Rettet topmenu design
+// 20190225 MSC - Rettet topmenu design
+// 20210709 LOE - Translated some of the texts
+// 20210805 LOE - Updated the title texts
+// 20220103 PHR - "Set all" now updates online.php.
+// 20220501 PHR - Corrected error in set all.
 
 @session_start();
 $s_id=session_id();
@@ -44,11 +46,19 @@ include("../includes/std_func.php");
 $aktiver=if_isset($_GET['aktiver']);
 $set_alle=if_isset($_GET['set_alle']);
 
-if ($set_alle) db_modify("update brugere set regnskabsaar = '$set_alle'",__FILE__ . " linje " . __LINE__);
+if ($set_alle) {
+	db_modify("update brugere set regnskabsaar = '$set_alle'",__FILE__ . " linje " . __LINE__);
+	include("../includes/connect.php");
+	db_modify("update online set regnskabsaar = '$set_alle' where db = '$db'",__FILE__ . " linje " . __LINE__);
+	include("../includes/online.php");
+}
 if ($aktiver) {
 	include("../includes/connect.php");
 	db_modify("update online set regnskabsaar = '$aktiver' where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
-	if ($revisor) db_modify("update revisor set regnskabsaar = '$aktiver' where brugernavn = '$brugernavn' and db_id='$db_id'",__FILE__ . " linje " . __LINE__);
+	if ($revisor) {
+		$qtxt = "update revisor set regnskabsaar = '$aktiver' where brugernavn = '$brugernavn' and db_id='$db_id'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
 	include("../includes/online.php");
 	if (!$revisor) db_modify("update brugere set regnskabsaar = '$aktiver' where id = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 }
@@ -74,11 +84,11 @@ if ($menu=='T') {  # 20150327 start
 print "<tbody>";
 print "<tr bgcolor='$bgcolor1'>";
 print "<td width = 8%><b>ID</b></td>";
-print "<td width = 40%><b>Beskrivelse</a></b></td>";
-print "<td width = 9%><b>Start md.</a></b></td>";
-print "<td width = 9%><b>Start &aring;r</a></b></td>";
-print "<td width = 9%><b>Slut md.</a></b></td>";
-print "<td width = 9%><b>Slut &aring;r</a></b></td>";
+print "<td width = 40%><b>".findtekst(914,$sprog_id)."</a></b></td>"; #20210709
+print "<td width = 9%><b>".findtekst(1208,$sprog_id)."</a></b></td>";
+print "<td width = 9%><b>".findtekst(1209,$sprog_id)."</a></b></td>";
+print "<td width = 9%><b>".findtekst(1210,$sprog_id)."</a></b></td>";
+print "<td width = 9%><b>".findtekst(1211,$sprog_id)."</a></b></td>";
 print "<td width = 8%><b><br></a></b></td>";
 print "<td width = 8%><b><br></a></b></td>";
 print "<tr>";
@@ -97,7 +107,7 @@ while ($row = db_fetch_array($query)) {
 	$x++;
 	($bgcolor1!=$bgcolor)?$bgcolor1=$bgcolor:$bgcolor1=$bgcolor5;
 	print "<tr bgcolor=\"$bgcolor1\">";
-	$title="Klik her for at redigere/opdatere regnskabsår $row[kodenr]";
+	$title="".findtekst(1793, $sprog_id)." $row[kodenr]";  #20210805
 	print "<td><a href='regnskabskort.php?id=$row[id]' title=\"$title\"> $row[kodenr]</a><br></td>";
 	print "<td> $row[beskrivelse]<br></td>";
 	print "<td> $row[box1]<br></td>";
@@ -105,15 +115,15 @@ while ($row = db_fetch_array($query)) {
 	print "<td> $row[box3]<br></td>";
 	print "<td> $row[box4]<br></td>";
 	if (($row['kodenr']!=$regnaar)&&($row['box5']=='on')) {
-		print "<td><a href='regnskabsaar.php?aktiver=$row[kodenr]'> S&aelig;t aktivt</a><br></td><td></td>";
+		print "<td><a href='regnskabsaar.php?aktiver=$row[kodenr]'> ".findtekst(1213,$sprog_id)."</a><br></td><td></td>";
 	}
-	elseif ($row['kodenr']!=$regnaar) print "<td> Lukket</td><td></td>";
+	elseif ($row['kodenr']!=$regnaar) print "<td> ".findtekst(387,$sprog_id)."</td><td></td>";
 	else {
-		print "<td><font color=#ff0000>Aktivt</font></td><td>";
+		print "<td><font color=#ff0000>".findtekst(1214,$sprog_id)."</font></td><td>";
 		if ($set_alle) {
-			$title="Klik for at sætte regnskabsår $regnaar aktivt for alle brugere";
-			$title2="Sæt regnskabsår $regnaar aktivt for alle brugere?";
-			print "<a href=\"regnskabsaar.php?set_alle=$regnaar\" title=\"$title\" onclick=\"return confirm('$title2')\"> S&aelig;t alle</a>";
+			$title="".findtekst(1794, $sprog_id)." $regnaar ".findtekst(1795, $sprog_id)."";
+			$title2="".findtekst(1796, $sprog_id)." $regnaar ".findtekst(1795, $sprog_id)."?";
+			print "<a href=\"regnskabsaar.php?set_alle=$regnaar\" title=\"$title\" onclick=\"return confirm('$title2')\"> ".findtekst(1212,$sprog_id)."</a>";
 		}
 		print "</td>";
 	}

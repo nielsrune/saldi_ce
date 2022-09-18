@@ -27,9 +27,9 @@
 print "<!-- varekort_includes/notsEtc.php start -->"; 
 
 print "<tr><td valign='top' colspan='3'><table border='0' width='100%'><tbody>"; # Notetabel ->
-print "<tr><td valign='top'>Bem&aelig;rkning</td>";
+print "<tr><td valign='top'>".findtekst(391,$sprog_id)."</td>";
 print "<td colspan='6'><textarea name='notes' rows='4' cols='100'>$notes</textarea></td>";
-print "<td><a href='../debitor/rental.php?subItemId=$id'><button type='button'>Udlejning</button></a></td>";
+print "<td><a href='../debitor/rental.php?subItemId=$id'><button type='button'>".findtekst(2050,$sprog_id)."</button></a></td>";
 print "</tr><tr>";
 if ($serienr == 'on') print "<td>Serienr.&nbsp;<input class='inputbox' type=checkbox name=serienr checked></td>";
 elseif  ($box8 == 'on') print "<td>Serienr&nbsp;<input class='inputbox' type=checkbox name=serienr></td>";

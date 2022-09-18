@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---- debitor/pos_ordre_includes/voucherFunc/voucherPay.php --- lap 3.9.9 --- 2021.01.25 ---
+// ---- debitor/pos_ordre_includes/voucherFunc/voucherPay.php --- lap 4.0.5 --- 2022.07.18 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,12 +20,17 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2021 saldi.dk aps
+// Copyright (c) 2021-2022 saldi.dk aps
 // --------------------------------------------------------------------------
 //
+// 20210111 PHR changed elseif ($betaling == "Gavekort" || $betaling == "Gavekort på beløb") 
+//              to elseif (isset($_POST['giftcardNumber']) && !$_POST['giftcardNumber'])
+// 20220718 PHR Added $indbetaling as payment was not registered when paid to account using voucher
+
 if (!function_exists('voucherPay')) {
 function voucherPay($orderId, $betaling, $modtaget) {
 	global $betvaluta,$betvalkurs;
+	global $indbetaling;
 	
 	$payCardNo = 0;
 	$vouchers[0] = 0;
@@ -45,8 +50,6 @@ function voucherPay($orderId, $betaling, $modtaget) {
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$modtaget = $_POST['sum'] - $r['paid'];
 		}
-		
-		
 		if (str_replace('q','',$_POST['modtaget'])) $modtaget = str_replace('q','',$_POST['modtaget']);
 		print "<center>
 			<div>
@@ -66,6 +69,7 @@ function voucherPay($orderId, $betaling, $modtaget) {
 					<input name='betvaluta' value  = '$_POST[betvaluta]' style='display: none;'>
 					<input name='sum' value        = '$_POST[sum]' style='display: none;'>
 					<input name='betaling' value   = '$_POST[betaling]' style='display: none;'>
+					<input name='indbetaling' value = '$_POST[indbetaling]' style='display: none;'>
 <!--			<input name='modtaget' value   = '$modtaget' style='display: none;'> -->
 					<input name='price' value      = '$modtaget' style='display: none;'>
 				</form>
@@ -81,10 +85,8 @@ function voucherPay($orderId, $betaling, $modtaget) {
 		#cho "Get array: <br>";
 		#cho '<pre>'; print_r($_GET); #cho '</pre>';
 		#cho "Id: $orderId <br>";
-		#cho "Betaling: $betaling <br>";
 		exit(0);
 	} elseif (isset($_POST['giftcardNumber']) && $_POST['giftcardNumber'] >= '0') {
-	#cho __line__."<br>";
 		if (!isset($_COOKIE['giftcard']) || !$_COOKIE['giftcard']) {
 			include ("../debitor/pos_ordre_includes/voucherFunc/useVoucher.php");
 			$amount = useVoucher($orderId,$betaling)*1;
@@ -95,11 +97,10 @@ function voucherPay($orderId, $betaling, $modtaget) {
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			return true;
 		}
-#	} elseif ($betaling == "Gavekort" || $betaling == "Gavekort på beløb") {
-#	#cho __line__."<br>";
-#		alert ("Gavekort nummer ikke angivet");
-#		print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
-#		exit;
+	} elseif (isset($_POST['giftcardNumber']) && !$_POST['giftcardNumber']) {
+		alert ("Gavekort nummer ikke angivet");
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
+		exit;
 	}	
 	#cho __line__."<br>";
 }}
