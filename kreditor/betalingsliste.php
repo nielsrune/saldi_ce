@@ -1,5 +1,5 @@
 <?php
-// --- kreditor/betalingsliste.php --- Patch 4.0.5 --- 2022.01.04 ---
+// --- kreditor/betalingsliste.php --- Patch 4.0.8 --- 20230105 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,12 +15,13 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // -----------------------------------------------------------------------------------
 // 
 // 2014.05.30 Rettet tegnsætfejl ved visning af Bemærkninger med danske tegn. (ca)
 // 20220105 PHR Cleanup
 // 20220201 PHR More cleanup
+// 20230105 PBLM Fixed minor errors
 
 @session_start();
 $s_id=session_id();
@@ -89,7 +90,7 @@ print "</tr>\n";
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
+		if (is_numeric($row["tidspkt"]) && ($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
 			print "<td><a href = 'betalinger.php?tjek=$row[id]&liste_id=$row[id]'>$row[id]</a></span></td>";
 		}
 		else print "<td><span title= 'liste er l&aring;st af $row[hvem]'>$row[id]</span></td>";

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// - debitor/pos_ordre_includes/boxCountMethods/boxCount.php - lap 3.9.5 - 2020.09.25 -
+// --- debitor/pos_ordre_includes/boxCountMethods/boxCount.php --- lap 4.0.8 - 2023.06.25 -
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // LN 20190215 Make function to count the box when submitting
@@ -33,6 +33,7 @@
 // 20200202	PHR	function cashCountResult. Added $db and $kasse as globals, specification of $log, fopen $log, and fclose $log(); 
 // 20200925 PHR Added button [Kasse] to make it possible to open drawer.
 // 20210517 PHR Outcommented setting '$ny_kortsum' to '$kortsum' and made 'card diff' red. (whish from Havemøbelland)
+// 20230655 PHR	if (count) changed to if ($count) 
 
 function setSpecifiedCashText() 
 { 
@@ -184,7 +185,8 @@ function cashCountResult($pfnavn, $kasse, $id, $byttepenge, $ny_morgen, $tilgang
 	fwrite($log,"$countInv $optalt $curr\n");
 	fwrite($log,"$diff ");
 	fwrite($log,$optalt-($byttepenge+$tilgang)."\n");
-	if ($_POST['optael']) {
+	$count = if_isset($_POST['optael'],NULL);
+	if ($count) {
 		(afrund($kassediff,2)*1)?$color='red':$color='black'; #20200111
 		if ($kassediff) {
 			print "<tr><td colspan=\"2\"><span style='color:$color;'><b>$diff</b></span</td>";
@@ -214,12 +216,18 @@ function setCreditCards($kontkonto, $kortnavn, $change_cardvalue, $kortsum, $ny_
 	global $db,$kasse,$reportNumber;
 	echo "<!-- ". __file__ ." setCreditCards -->\n";
 	
+	if (!$kortnavn)   $kortnavn   = array();
+	if (!$kortsum)    $kortsum    = array();
+	if (!$ny_kortsum) $ny_kortsum = array();
+
 	$logfil="../temp/".$db."/kasseopg".str_replace("-","",$kasse).".log";
 	$log=fopen("$logfil","a");
 
 	$curr = setCashCountText()['currency'];
 	
 	for ($x=0;$x<count($kontkonto);$x++) {
+		$kortsum[$x]    = if_isset($kortsum[$x],0);
+		$ny_kortsum[$x] = if_isset($ny_kortsum[$x],0);
 		if ($change_cardvalue) {
 			print "<tr><td colspan=\"2\"><b>$kortnavn[$x]</b>(".dkdecimal($kortsum[$x],2).")</td><td align=\"right\">"; 
 			print "<input type='text' style=\"width:100;text-align:right;font-size:$ifs;\" ";

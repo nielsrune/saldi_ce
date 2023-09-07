@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/mail_modtagere.php --- Patch 4.0.6 --- 2022.08.08 ---
+// --- debitor/mail_modtagere.php --- Patch 4.0.8 --- 2023.07.18 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2022 Saldi.dk ApS
+// Copyright (c) 2022-2023.dk ApS
 // -----------------------------------------------------------------------------------
 // 20170613 PHR Tilføjet flere variabler til mailteksten og rettet datoudtræk fra beskrivelse. 
 // 20180417 PHR	rettet ',$mailtekst)' til ',$mtxt)' i '$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt)'
@@ -28,13 +28,15 @@
 // 20181228 PHR tilføjet and ordrelinjer.fast_db > '0' så rabatlinjer ikke medregnes i antal.
 // 20220511 PHR Removed uft-8 decode
 // 20220808	PHR	Translated all texts
+// 20220825 PHR Sets domainname in emails to servername for all saldi servers 
+// 20221124 PHR Added $mail->ReturnPath = $afsendermail;
+// 20230718 PHR Added $begin & $end to be used in no dates in 'beskrivelse'
 
 @session_start();
 $s_id=session_id();
 
 $modulnr=12;
 $css="../css/standard.css";
-
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -46,6 +48,8 @@ $liste_id=if_isset($_GET['liste_id']);
 $mailtekst=if_isset($_POST['mailtekst']);
 $send_mails=if_isset($_POST['send_mails']);
 $testmail=if_isset($_POST['testmail']);
+$begin = if_isset($_GET['start']);
+$end = if_isset($_GET['slut']);
 
 if ($mailtekst) {
 	$qtxt = "select id from settings where var_name = 'mailtext' and var_grp = 'paylist' and user_id='0'";
@@ -86,7 +90,7 @@ list($tmp,$slut[$x])=explode(" - ",$r['beskrivelse']);
 	$qtxt.="(ordrer.art='PO') and ordrer.fakturadate >= '$start[$x]' and ordrer.fakturadate <= '$slut[$x]' and ";
 	$qtxt.="ordrelinjer.ordre_id = ordrer.id and ordrelinjer.varenr like '%$kontonr[$x]' and ordrelinjer.fast_db > '0'";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	$antal[$x]=$r2['antal']*1;
+		$antal[$x]=(float)$r2['antal'];
 	$qtxt="select id,firmanavn,email from adresser where kontonr='$kontonr[$x]' and art='D'	";
 	$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$modt_navn[$x]=$r2['firmanavn'];
@@ -102,14 +106,22 @@ list($tmp,$slut[$x])=explode(" - ",$r['beskrivelse']);
 		list($a,$b) = explode('-',$r['egen_ref'],2);
 		$kontonr[$x] = trim(str_replace('Afr:','',$a));
 		$belob[$x]=$r['belob'];
+		if ($begin && $end) {
+			$start[$x] = usdate($begin);
+			$slut[$x]  = usdate($end);
+			$qtxt="select sum(antal) as antal from ordrelinjer,ordrer where ";
+			$qtxt.="(ordrer.art='PO') and ";
+			$qtxt.="ordrer.fakturadate >= '$start[$x]' and ordrer.fakturadate <= '$slut[$x]' and ";
+			$qtxt.="ordrelinjer.ordre_id = ordrer.id and ordrelinjer.varenr like '%$kontonr[$x]' and ordrelinjer.fast_db > '0'";
+			$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$antal[$x] = (float)if_isset($r2['antal']);
+		} else $start[$x] = $slut[$x] = $antal[$x] = NULL;
 		$qtxt="select id,firmanavn,email from adresser where kontonr='$kontonr[$x]' and art='D'	";
 		$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$modt_navn[$x]=$r2['firmanavn'];
 		$email[$x]=$r2['email'];
 		$x++;
 	}
-
-
 }
 	
 $mailantal=$x;
@@ -119,7 +131,7 @@ if ($testmail) {
 	echo "sender til $r[email]<br>";
 	$x=0;
 	$mtxt=str_replace('$navn',$modt_navn[$x],$mailtekst);
-	$mtxt=str_replace('$name',$modt_navn[$x],$mailtekst);
+	$mtxt=str_replace('$name',$modt_navn[$x],$mtxt);
 	$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt);
 	$mtxt=str_replace('$account',$kontonr[$x],$mtxt);
 	$mtxt=str_replace('$sum',$belob[$x],$mtxt);
@@ -136,7 +148,7 @@ if ($send_mails) {
 	$r=db_fetch_array(db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__));
 	for ($x=0;$x<count($modt_navn);$x++) {
 		$mtxt=str_replace('$navn',$modt_navn[$x],$mailtekst);
-	$mtxt=str_replace('$name',$modt_navn[$x],$mailtekst);
+		$mtxt=str_replace('$name',$modt_navn[$x],$mtxt);
 		$mtxt=str_replace('$kontonr',$kontonr[$x],$mtxt);
 	$mtxt=str_replace('$account',$kontonr[$x],$mtxt);
 		$mtxt=str_replace('$sum',$belob[$x],$mtxt);
@@ -150,7 +162,6 @@ if ($send_mails) {
 	}
 }
 
-
 if (!$emne) $emne = findtekst(2051,$languageID);
 if (!$mailtekst) {
 	$mailtekst = findtekst(2052,$languageID)."\n\n";
@@ -163,7 +174,9 @@ if (!$mailtekst) {
 }
 print "<a href=betalinger.php?liste_id=$liste_id>".findtekst(2059,$languageID)."</a>";
 print "<center>";
-print "<form name=\"mail_modtagere\" action=\"mail_modtagere.php?liste_id=$liste_id\" method=\"post\">";
+print "<form name='mail_modtagere' action='mail_modtagere.php?liste_id=$liste_id";
+if ($begin && $end) print "&start=$begin&slut=$end";
+print "' method='post'>";
 print "<table><tbody>";
 #print "<tr><td><b>Periode</b></td></tr>";
 #print "<tr><td><input style=\"width:100px\" type=\"text\" name=\"start\" value=\"".dkdato($start)."\"> til <input style=\"width:100px\" type=\"text\" name=\"start\" value=\"dkdato($start)\"></td></tr>";
@@ -239,20 +252,15 @@ function send_mail($subjekt,$mailtekst,$modtager,$afsendermail,$afsendernavn) {
 		$mail->SMTPAuth = false;     // turn on SMTP authentication
 
 		if (strpos($_SERVER['SERVER_NAME'],'saldi.dk')) { #20121029
-			if ($_SERVER['SERVER_NAME']=='ssl.saldi.dk') $mail->From = $db.'@ssl.saldi.dk'; #20140128
-			elseif ($_SERVER['SERVER_NAME']=='ssl2.saldi.dk') $mail->From = $db.'@ssl2.saldi.dk'; #20140128
-			elseif ($_SERVER['SERVER_NAME']=='ssl3.saldi.dk') $mail->From = $db.'@ssl3.saldi.dk'; #20140128
-			else $mail->From = 'kanikkebesvares@'.$_SERVER['SERVER_NAME']; #20140128
-			$mail->FromName = $afsendernavn;
-		} else {
-			$mail->From = $afsendermail;
-			$mail->FromName = $afsendernavn;
-		}
+			$from = $db."@".$_SERVER['SERVER_NAME']; #20220825 
+		} else $from = $afsendermail;
 		$splitter=NULL;
+		if ($from != $afsendermail) $mail->AddReplyTo($afsendermail);
+		$mail->From = $from;
+		$mail->FromName = $afsendernavn;
+		$mail->ReturnPath = $afsendermail;
 		$mail->AddAddress($modtager); 
-		$mail->AddBCC($afsendermail); 
-		$mail->AddReplyTo($afsendermail,$afsendernavn);
-
+		if ($from != $afsendermail) $mail->AddBCC($afsendermail); 
 		$mail->WordWrap = 50;                              // set word wrap
 #		$mail->AddAttachment("$tmpmappe/afregning.html");      // attachment
 		$mail->IsHTML(true);                               // send as HTML

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------kreditor/kreditorvisning.php--------lap 3.7.2--2018-04-12-----
+// -----------kreditor/kreditorvisning.php--------lap 3.7.2--2023-24------
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -26,7 +26,7 @@
 // Copyright (c) 2003-2018 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2018.03.08 Indhold kopieret fra debitor/debitorvisning.php og tilrettet til kreditor
-
+// 2023.03.24 PBLM Fixed minor errors
 	
 @session_start();
 $s_id=session_id();
@@ -43,11 +43,11 @@ include("../includes/std_func.php");
 $sort=trim(if_isset($_GET['sort']));
 
 if ($popup) $returside="../includes/luk.php"; 
-else $returside="$side.php";
+elseif(isset($side)) $returside="$side.php";
 
 $sektion=if_isset($_GET['sektion']);
 
-if (isset($_POST) && $_POST) {
+if (isset($_POST) && $_POST && isset($_POST["cat_antal"])) {
 	if ($sektion=='3') {
 		$kg_antal=if_isset($_POST['kg_antal']);
 		$kg_id=if_isset($_POST['kg_id']);
@@ -85,7 +85,7 @@ if (isset($_POST) && $_POST) {
 		$box6=db_escape_string($feltnavn[0]);
 		if (!$vis_linjeantal) $vis_linjeantal=50; 
 		$box7=$vis_linjeantal*1;
-		$box8=$select[0];
+		if(isset($select[0])) $box8=$select[0];
 		for ($x=1;$x<=$vis_feltantal;$x++) {
 			if (!isset($vis_felt[$x])) $vis_felt[$x]="";
 			$box3=$box3.chr(9).$vis_felt[$x];
@@ -93,9 +93,9 @@ if (isset($_POST) && $_POST) {
 			$box4=$box4.chr(9).$feltbredde[$x];
 			$box5=$box5.chr(9).$justering[$x];
 			$box6=$box6.chr(9).db_escape_string($feltnavn[$x]);
-			$box8=$box8.chr(9).$select[$x];
+			if(isset($select[$x]) && isset($box8)) $box8=$box8.chr(9).$select[$x];
 }
-
+		if(!isset($box8)) $box8 = "";
 		db_modify("update grupper set box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8' where art = 'KLV' and kode='kreditor' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 	}
 }
@@ -220,6 +220,7 @@ while ($r = db_fetch_array($q)) {
 	print "<tr><td><b>Kategorier</b><br><hr></td></tr>";
 	
 	$r=db_fetch_array(db_select("select box1,box2,box9 from grupper where art='KredInfo'",__FILE__ . " linje " . __LINE__));
+	if(!empty($r)){
 	$cat_id=explode(chr(9),$r['box1']);
 	$cat_beskrivelse=explode(chr(9),$r['box2']);
 	$cat_antal=count($cat_id);
@@ -239,7 +240,7 @@ while ($r = db_fetch_array($q)) {
 
 	print "</form>";
 }
-
+}
 function sektion_4() {
 
 	global $bruger_id;
@@ -251,6 +252,7 @@ function sektion_4() {
 	global $vis_feltantal;
 	global $vis_felt;
 	global $felter;
+	global $sort;
 	
 	$r = db_fetch_array(db_select("select box3,box4,box5,box6,box7,box8 from grupper where art = 'KLV' and kode ='kreditor' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
 	$vis_felt=explode(chr(9),$r['box3']);
@@ -305,7 +307,7 @@ function sektion_4() {
 		if ($justering[$x] != "center") print "<option value=\"center\">center</option>"; 
 		if ($justering[$x] != "right") print "<option value=\"right\">right</option>"; 
 		print "</SELECT></td>";
-		($select[$x])?$select[$x]='checked':$select[$x]='';
+		(isset($select[$x]))?$select[$x]='checked':$select[$x]='';
 		print "<td align=\"center\"><input type=\"checkbox\" name=\"select[$x]\" $select[$x]></td>"; 
 		print "</tr>\n";
 	}

@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------ lager/varevisning.php --- lap 3.7.9 --- 2019.09.06 -----------
-// LICENS
+// --- lager/varevisning.php --- lap 4.0.7 --- 2023.04.21 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
-//
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2003-2023 saldi.dk ApS
 // --------------------------------------------------------------------
 // 20180328 Tilføjet $vis_lev_felt
 // 2018.11.23 PHR $vis_kostpriser tilføjet
@@ -33,7 +30,7 @@
 // 2019.04.29 PHR Added ShowTrademark.
 // 2019.04.30 PHR Error correction.
 // 2019.09.06 PHR some desigeupdates in 'top menu view'.
-
+// 2023.04.21 PHR PHP8
 	
 @session_start();
 $s_id=session_id();
@@ -44,6 +41,8 @@ $modulnr=9;
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+
+echo $bruger_id;
 
 if ($popup) $returside="../includes/luk.php";
 else $returside="varer.php	";
@@ -78,9 +77,18 @@ if (isset($_POST) && $_POST) {
 	}	
 	$tmp2=trim($tmp2,',');
 
-    db_modify("insert into settings(var_name, var_grp, var_value)values('showProvision', 'items', '$showProvision')",__FILE__ . " linje " . __LINE__);
-
-	$box4="$vis_lukkede".chr(9)."$vis_lev_felt".chr(9)."$vis_kostpriser".chr(9)."$href_vnr".chr(9)."$showProvision".chr(9)."$showTrademark";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "select id from settings where var_name = 'showProvision' and var_grp = 'items' and user_id = '$bruger_id'";
+	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
+		$qtxt = "update settings set var_value = '$showProvision' where id = '$r[id]'";
+	} else {
+		$qtxt = "insert into settings(var_name, var_grp, var_value, user_id) values ";
+		$qtxt.= "('showProvision', 'items', '$showProvision', '$bruger_id')";
+	}
+	echo $qtxt;
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$box4 = $vis_lukkede.chr(9).$vis_lev_felt.chr(9).$vis_kostpriser.chr(9).$href_vnr.chr(9);
+	$box4.= $showProvision.chr(9).$showTrademark;
 	$qtxt="update grupper set box2='$vis_VG', box3='$vis_K',box4='$box4' where art = 'VV' and box1 = '$brugernavn'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	if ($popup) print "<BODY onLoad=\"javascript=opener.location.reload();\">";

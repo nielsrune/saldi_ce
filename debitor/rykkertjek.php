@@ -1,5 +1,5 @@
 <?php
-// -----------debitor/rykkertjek.php---------lap 3.9.4.------2020-09-18------
+// --- debitor/rykkertjek.php --- lap 4.0.8 --- 2023-05-24 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,31 +15,39 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
-// ----------------------------------------------------------------------
+// Copyright (c) 2003-2023 saldi.dk aps
+// -----------------------------------------------------------
 // 20200918 Ckeck bypassed if no email.
+// 20230524 PHR php8
 
 @session_start();
 $s_id=session_id();
 
 $modulnr=5;
 $title="Rykker";
+$email = NULL;
 	
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/forfaldsdag.php");
 
-ini_set("include_path", "../phpmailer");
+if(!class_exists('phpmailer')) {
+	ini_set("include_path", ".:../phpmailer");
 require("class.phpmailer.php");
+}
+
+#ini_set("include_path", "../phpmailer");
+#require("class.phpmailer.php");
 
 $dd=date("Y-m-d");
 #echo "select * from grupper where art='DIV' and kodenr= '4'<br>";
-$r = db_fetch_array(db_select("select * from grupper where art='DIV' and kodenr= '4'",__FILE__ . " linje " . __LINE__));
+if ($r = db_fetch_array(db_select("select * from grupper where art='DIV' and kodenr= '4'",__FILE__ . " linje " . __LINE__))) {
 $mailmodt_id=$r['box1'];
 $email=$r['box2'];
 $ffdage=$r['box5'];
 $chkdate=$r['box8'];
+}
 if ($email) reminderCheck ($mailmodt_id,$email,$ffdage,$chkdate);
 
 function reminderCheck ($mailmodt_id,$email,$ffdage,$chkdate) {

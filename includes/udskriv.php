@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------includes/udskriv.php----lap 3.8.9----2020.01.13-------------------
+// --- includes/udskriv.php --- lap 4.0.7 --- 2023.05.23 ---
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2013.03.20 Tilføjet mulighed for fravalg af logo på udskrift. Søg "PDF-tekst"
 // 2013.12.02	Efter udskrivning af kreditorordre, åbnes ordre som debitorordre. Tilføjer $art. Søg $art.
@@ -37,6 +37,7 @@
 // 2019.10.23 PHR - $exec_path now read from admin settings #20191023
 // 2019.11.05 PHR - Varius cleanup
 // 2020.01.13 PHR - Print from 'genfakturer' returned to includes/ordreliste.php which does not exist. 20200113
+// 20230522 PHR php8
 
 @session_start();
 $s_id=session_id();
@@ -108,8 +109,9 @@ if ($valg=="tilbage" && !$bgr) {
 	}
 }
 if (!$valg) {
+	$valg="pdf";
 	$qtxt="select id,box1 from grupper where art='PV'";
-	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 	if ($r['box1']=='on') {
 		$ip=$_SERVER['REMOTE_ADDR'];
 		print "<!--!";
@@ -117,9 +119,9 @@ if (!$valg) {
 		print "-->";
 		if ($tjek) {
 			$ip=NULL;
-			$valg="pdf";
 		} else $valg='ip';
-	} else $valg="pdf";
+		}
+	}
 }
 if ($valg) {
 	include("../includes/connect.php"); #20191023
@@ -134,10 +136,10 @@ if ($valg) {
   $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
   if ($valg=="pdf" || $valg=="ip")  {
 #		print "<!--";
-    if ($r['box2']) {
+	if (isset($r['box2']) && $r['box2']) { 
 	fwrite($log,__line__." system (\"$r[box2] ../temp/$ps_fil.ps ../temp/$ps_fil.pdf\"\n");
 			system ("$r[box2] ../temp/$ps_fil.ps ../temp/$ps_fil.pdf");
-		} elseif ($r['box3'] && $udskrift!='kontokort') { # Brug html
+		} elseif (isset($r['box3']) && $r['box3'] && $udskrift!='kontokort') { # Brug html
 		fwrite($log,__line__." unlink(\"../temp/".$ps_fil."_*.pdf\"\n");
 		if (file_exists("../temp/".$ps_fil."_*.pdf")) unlink("../temp/".$ps_fil."_*.pdf");
 		list($a,$b,$c)=explode("/",$ps_fil);

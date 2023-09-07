@@ -28,27 +28,27 @@ print "<table cellpadding='1' cellspacing='0' bordercolor='#ffffff' border='1' v
 include ("orderIncludes/openOrderData.php");
 $x=0;
 $qtxt = "select * from ordrelinjer where ordre_id = '$id' order by posnr";
-$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
-while ($row = db_fetch_array($query))	{
-	if ($row['posnr']>0) {
+$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+while ($r = db_fetch_array($q))	{
+	if ($r['posnr']>0) {
 		$x++;
-		$linje_id[$x]=$row['id'];
-		$kred_linje_id[$x]=$row['kred_linje_id'];
-		$posnr[$x]=$row['posnr'];
-		$varenr[$x]=trim($row['varenr']);
-		$lev_varenr[$x]=trim($row['lev_varenr']);
-		$beskrivelse[$x]=trim($row['beskrivelse']);
-		$pris[$x]=$row['pris'];
-		$rabat[$x]=$row['rabat'];
-		$antal[$x]=$row['antal'];
-		$leveres[$x]=$row['leveres'];
-		$enhed[$x]=$row['enhed'];
-		$vare_id[$x]=$row['vare_id'];
-		$momsfri[$x]=$row['momsfri'];
-		$projekt[$x]=$row['projekt'];
-		$serienr[$x]=$row['serienr'];
-		$samlevare[$x]=$row['samlevare'];
-		($row['omvbet'])?$omvbet[$x]='checked':$omvbet[$x]='';
+		$linje_id[$x]      = $r['id'];
+		$kred_linje_id[$x] = $r['kred_linje_id'];
+		$posnr[$x]         = $r['posnr'];
+		$varenr[$x]        = trim($r['varenr']);
+		$lev_varenr[$x]    = trim($r['lev_varenr']);
+		$beskrivelse[$x]   = trim($r['beskrivelse']);
+		$pris[$x]          = $r['pris'];
+		$rabat[$x]         = $r['rabat'];
+		$antal[$x]         = $r['antal'];
+		$leveres[$x]       = $r['leveres'];
+		$enhed[$x]         = $r['enhed'];
+		$vare_id[$x]       = $r['vare_id'];
+		$momsfri[$x]       = $r['momsfri'];
+		$projekt[$x]       = $r['projekt'];
+		$serienr[$x]       = $r['serienr'];
+		$samlevare[$x]     = $r['samlevare'];
+		($r['omvbet'])?$omvbet[$x]='checked':$omvbet[$x]='';
 	}
 }
 $linjeantal=$x;

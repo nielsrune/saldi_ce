@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- kreditor/creditorIncludes/openOrders.php --- lap 4.0.5 --- 2022.02.18 ---
+// --- kreditor/creditorIncludes/openOrders.php --- lap 4.0.5 --- 2023.02.09 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,9 +20,20 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20221106 PHR - Various changes to fit php8 / MySQLi
+// 20221104 MLH added lookup function for the delivery address fields
+// 20221104 MLH added Rekv.nr. field
+// 20221104 MLH added email and udskriv_til
+// 20230105 MLH added mail_text and mail_subj
 
+$attachId    = if_isset($attachId,array());
+$email       = if_isset($email,NULL);
+$kundeordnr  = if_isset($kundeordnr,NULL);
+$projekt[0]  = if_isset($projekt[0],NULL);
+$ref         = if_isset($ref,NULL);
+$udskriv_til = if_isset($udskriv_til,'PDF');
 
 print "<tr><td><table cellpadding='0' cellspacing='0' border='0'style='width:355px' >";
 print "<tr><td style='width:100px'>".findtekst(276,$sprog_id)."</td><td style='width:250px'>";
@@ -52,7 +63,17 @@ if (!$id) {
 	print "<tr><td colspan='4' width='100%' align='center' valign='top'><span title='".findtekst(1507, $sprog_id)."'>";
 	print "<a href=ublimport.php>".findtekst(943,$sprog_id)."</a></span></td></tr>";
 	print "<tr><td colspan='4' width='100%'><hr width='90%'></td></tr>";
+	$id = 0;
 }
+#20221104 BEGIN
+print "<tr><td>".findtekst(402,$sprog_id)."</td>";
+print "<td><input class='inputbox' type='text' style='width:110px;' name='email' value='$email' onchange='javascript:docChange = true;'></td>";
+print "<td>".findtekst(3004,$sprog_id)."</td><td><select class='inputbox' style='width:130px' name='udskriv_til' onchange='this.form.submit()'>\n";
+print "<option value='PDF' ".((!$email || $udskriv_til=="PDF")?"selected='selected'":"").">PDF</option>\n";
+print "<option value='email' ".(($email && $udskriv_til=="email")?"selected='selected'":"")." title=\"".findtekst(1450, $sprog_id)."\">".findtekst(652, $sprog_id)."</option>\n";
+print "</SELECT></td></tr>\n";
+#20221104 END
+
 print "<tr><td>CVR-nr.</td>";
 print "<td><input class='inputbox' type='text' style='width:110px;' name=cvrnr value='$cvrnr' onchange='javascript:docChange = true;'></td>";
 $dkmomssats=dkdecimal($momssats,2);
@@ -99,6 +120,8 @@ if ($x>0) {
 	print "<td><span title= '".findtekst(950, $sprog_id)."';>".findtekst(553, $sprog_id)."</span></td>";
 	print "<td><select class='inputbox' name=projekt[0]>";
 	for ($x=0; $x<=$prj_antal; $x++) {
+		if (!isset($beskriv[$x])) $beskriv[$x] = NULL;
+		if (!isset($list[$x])   ) $list[$x]    = NULL;
 if ($projekt[0]!=$list[$x]) print "<option title='$beskriv[$x]' onchange='javascript:docChange = true;'>$list[$x]</option>";
 else print "<option title='$beskriv[$x]' selected='selected' onchange='javascript:docChange = true;'>$list[$x]</option>";
 	}
@@ -117,10 +140,12 @@ if (($betalingsbet=='Kontant')||($betalingsbet=='Efterkrav')||($betalingsbet=='F
 	elseif (!$betalingsdage) $betalingsdage='Nul';
 if ($betalingsdage) {
 	if ($betalingsdage=='Nul') $betalingsdage=0;
-	print "</SELECT>&nbsp;+<input class='inputbox' type='text' style='text-align:right;width:25px;' name='betalingsdage' value='$betalingsdage' "; 
+	print "</SELECT>&nbsp;+<input class='inputbox' type='text' style='text-align:right;width:35px;' name='betalingsdage' value='$betalingsdage' "; 
 	print "onchange='javascript:docChange = true;'></td>";
 }
-print "<td><b>Bilag</b></td><td align = 'center'>";
+print "<td>";
+if ($id) {
+	print "<b>Bilag</b></td><td align = 'center'>";
 if (count($attachId) >= 1) {
 	print "<select name = 'showAttachment' id = 'showAttachment'>";
 	for ($x=0;$x<count($attachId);$x++) {
@@ -137,15 +162,15 @@ urlmenu.onchange = function() {
  $qtxt = "select id from documents where source = 'creditorOrder' and source_id = '$id'";
  if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $clip = 'paper.png';
 else $clip = 'clip.png';
-
 print "<a href='../includes/documents.php?source=creditorOrder&&ny=ja&sourceId=$id'>";
-print "<img src='../ikoner/$clip' style='width:20px;height:20px;'></a></td>";
-print "</tr>";
+	print "<img src='../ikoner/$clip' style='width:20px;height:20px;'></a>";
+}
+print "</td></tr>";
 if (!$ref) {
-	$row = db_fetch_array(db_select("select ansat_id from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__));
-	if ($row['ansat_id']) {
-$row = db_fetch_array(db_select("select navn from ansatte where id = $row[ansat_id]",__FILE__ . " linje " . __LINE__));
-if ($row['navn']) {$ref=$row['navn'];}
+	$qtxt = "select ansat_id from brugere where brugernavn = '$brugernavn'";
+	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)) && $r['ansat_id']) {
+		$r = db_fetch_array(db_select("select navn from ansatte where id = $r[ansat_id]",__FILE__ . " linje " . __LINE__));
+		if ($r['navn']) $ref=$r['navn'];
 	}
 }
 $q = db_select("select id from adresser where art = 'S'",__FILE__ . " linje " . __LINE__);
@@ -198,10 +223,46 @@ print "<tr><td>".findtekst(648,$sprog_id)."</td><td colspan='2'><input class='in
 print "<tr><td></td><td colspan='2'><input class='inputbox' type='text' style='width:250px' name=lev_addr2 value='$lev_addr2' onchange='javascript:docChange = true;'></td></tr>\n";
 print "<tr><td>".findtekst(549,$sprog_id)."</td><td><input class='inputbox' type='text' size=4 name=lev_postnr value='$lev_postnr' onchange='javascript:docChange = true;'><input class='inputbox' type='text' size=19 name=lev_bynavn value='$lev_bynavn' onchange='javascript:docChange = true;'></td></tr>\n";
 print "<tr><td>Att.:</td><td colspan='2'><input class='inputbox' type='text' style='width:250px' name=lev_kontakt value='$lev_kontakt' onchange='javascript:docChange = true;'></td></tr>\n";
-	#print "<tr><td><textarea style='font-family: helvetica,arial,sans-serif;' name=lev_adr rows=5 cols=35>$lev_adr</textarea></td></tr>\n";
+print "<tr><td>Rekv.nr.:</td><td colspan='2'><input class='inputbox' type='text' style='width:250px' name='kundeordnr' value='$kundeordnr' onchange='javascript:docChange = true;'></td></tr>\n"; #20221104
 print "</td></tr></tbody></table></td>";
-print "</td></tr><tr><td align=center colspan=3><table cellpadding='1' cellspacing='0' width='100%' border = '0'><tbody>";
+print "</td></tr>";
+
+
+
+#20230105 BEGIN
+if ($udskriv_til=='email') {
+	if (!isset($formularsprog)) $formularsprog='Dansk';
+
+	if ($status<=1) $form_nr=12;
+	if ($status==2) $form_nr=13;
+	if ($status>2) $form_nr=14;
+
+	$std_subj = $std_txt = $std_txt_title = '';
+	
+	$q = db_select("select * from formularer where formular='$form_nr' and art='5' and lower(sprog)='".strtolower($formularsprog)."'",__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		if ($r['xa']=='1') $std_subj=$r['beskrivelse'];
+		elseif ($r['xa']=='2') $std_txt_title=$r['beskrivelse'];
+		else {
+			if (strpos($std_txt_title,'<br>')) list($std_txt,$tmp)=explode("<br>",$std_txt_title);
+			else $std_txt=$std_txt_title;
+		}	
+		($mail_text)?$std_txt_title=$mail_text:$std_txt_title=str_replace("<br>","",$std_txt_title);
+	}
+	print "<tr><td align=\"center\" colspan=\"3\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\"><tbody>\n"; #Tabel 2.4 ->
+	print "<tr><td width=\"120px\">Mail emne</td><td><input class=\"inputbox\" type=\"text\" style=\"width:1000px;\" onfocus=\"document.forms[0].fokus.value=this.name;\"name=\"mail_subj\" placeholder=\"$std_subj\" value=\"$mail_subj\" onchange=\"javascript:docChange = true;\"></td>";
+	print "</tr><tr><td valign=\"top\">".findtekst(585, $sprog_id)."</td><td title=\"$std_txt_title\">";
+	if ($mail_text) {
+		print "<textarea style=\"width:1000px;\" rows=\"2\" onfocus=\"document.forms[0].fokus.value=this.name;\"name=\"mail_text\" onchange=\"javascript:docChange = true;\">$mail_text</textarea>\n";
+	} else {
+		print "<input class=\"inputbox\" type=\"text\" style=\"width:1000px;\" onfocus=\"document.forms[0].fokus.value=this.name;\"name=\"mail_text\" placeholder=\"$std_txt\" value=\"$mail_text\" onchange=\"javascript:docChange = true;\">";
+	}
+	print "</td></tr></tbody></table></td></tr>\n"; # <- Tabel 2.4
+}
+#20230105 END
+print "<tr><td align=center colspan=3><table cellpadding='1' cellspacing='0' width='100%' border = '0'><tbody>";
 print "<tr>";
+
 if ($status==1) {
 	print "<td align=center title='".findtekst(1502, $sprog_id)."'>Pos.</td><td align=center title='".findtekst(320, $sprog_id)."'>".findtekst(917, $sprog_id).".</td><td align=center title='".findtekst(1511, $sprog_id)."'>".findtekst(952, $sprog_id).".</td><td align=center>".findtekst(916, $sprog_id)."</td><td align=center>".findtekst(945, $sprog_id)."</td><td align=center>".findtekst(914,$sprog_id)."</td><td align=center>".findtekst(915, $sprog_id)."</td><td align=center title='".findtekst(1503, $sprog_id)."'>%</td><td align=center>".findtekst(947, $sprog_id)."</td>";
 	if ($vis_projekt && !$projekt[0]) print "<td align=center title='".findtekst(1509, $sprog_id)."'>Proj.</td>";

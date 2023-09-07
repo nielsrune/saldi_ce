@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/regnskabskort.php --- lap 4.0.4 -- 2022-01-02 --
+// --- systemdata/regnskabskort.php --- lap 4.0.8 -- 2023-06-09 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2015-01-02 Tilrettet til dynamisk lagerværdi. Søg find_lagervaerdi
@@ -31,6 +31,8 @@
 // 20210101 PHR - Various changes and cleanup. Accounting now alloewd by default.
 // 20210709 LOE - Translated these texts
 // 20220103 PHR - Made some cleanup, set it to save twice and set year active when new year created.
+// 20220614 MSC - Implementing new design
+// 20230609 PHR - php8
 
 @session_start();
 $s_id=session_id();
@@ -45,38 +47,24 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/genberegn.php");
-/*
-$aaben = $aut_lager = $beskrivelse = null;
-if ($menu=='T') {  # 20150327 start
-        include_once '../includes/top_header.php';
-        include_once '../includes/top_menu.php';
-        print "<div id=\"header\">\n";
-        print "<div class=\"headerbtnLft\"></div>\n";
-        print "</div><!-- end of header -->";
-        print "<div id=\"leftmenuholder\">";
-        include_once 'left_menu.php';
-        print "</div><!-- end of leftmenuholder -->\n";
-        print "<div class=\"maincontent\">\n";
-        print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>";
-} else {
-        include("top.php");
-        print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>";
-}  # 20150327 stop
-*/
+
 print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>";
 if ($menu=='T') {
 	#	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
 		include_once '../includes/top_header.php';
 		include_once '../includes/top_menu.php';
-		print "<div id=\"header\">\n";
-		print "<div class=\"headerbtnLft\"></div>\n";
-		print "<span class=\"headerTxt\">".findtekst(1215,$sprog_id)."</span>\n";     
-		print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">".findtekst(39,$sprog_id)." ".findtekst(604,$sprog_id)."</a>--></div>";  #20210709     
-		print "</div><!-- end of header -->";
+		print "<div id=\"header\">";
+		print "<div class=\"headerbtnLft headLink\"><a href=regnskabsaar.php accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";
+		print "<div class=\"headerTxt\">$title</div>";
+		print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";
+		print "</div>";
+		print "<div class='content-noside'>";
 		print "<div id=\"leftmenuholder\">";
 		include_once 'left_menu.php';
 		print "</div><!-- end of leftmenuholder -->\n";
 		print "<div class=\"maincontentLargeHolder\">\n";
+		print "<div class='divSys'>";
+		print "<table class='dataTableSys' cellpadding=0 cellspacing=0 border=1 width='100%' bordercolor='$bgcolor5'><tbody>\n"; ############################	##table 3b start
 	} else {
 		include("top.php");
 		print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
@@ -86,25 +74,12 @@ print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody
 		print "<button style = 'width:80px;'>Luk</button></a>";
 		print "<table width=100% align='center' border=0 cellspacing=4 cellpadding=0><tbody>\n"; ##############table 2b start
 print "<tr>\n";
-	}
-/*
-if ($menu=='T') { # 20150327 stare
-	
-} 
-
-else {
-	$tekst=findtekst(154,$sprog_id);
-	print "<td width=\"10%\" align='center'><div class=\"top_bund\"><a href=\"javascript:confirmClose('regnskabsaar.php','$tekst')\" accesskey=L>".findtekst(30, $sprog_id)."</a></div></td>\n";
-	print "<td width=80% align='center'><div class=\"top_bund\">".findtekst(1215,$sprog_id)."</div></td>\n";
-	print "<td width=\"10%\" align='center'><div class=\"top_bund\">&nbsp;</div></td>\n";
-} # 20150327 stop
-print "</tr>\n";
-*/
 print "</tbody></table>\n"; #####################################################table 2b slut.
 print "</td></tr>\n";
 print "<tr>\n";
 print "<td align = center valign = center>";
 	print "<table class='dataTable2' cellpadding=0 cellspacing=0 border=1><tbody>\n"; ############################	##table 3b start
+	}
 
 $id=if_isset($_GET['id']);
 
@@ -118,8 +93,8 @@ if ($_POST) {
 	$slutmd = if_isset($_POST['slutmd']);
 	$slutaar = if_isset($_POST['slutaar']);
 	$aaben=trim($_POST['aaben']);
-	$fakt=if_isset($_POST['fakt'])*1;
-	$modt=if_isset($_POST['modt'])*1;
+	$fakt=if_isset($_POST['fakt'],0);
+	$modt=if_isset($_POST['modt'],0);
 	$no_faktbill=trim(if_isset($_POST['no_faktbill']));
 	$faktbill=trim(if_isset($_POST['faktbill']));
 	$modtbill=trim(if_isset($_POST['modtbill']));
@@ -132,7 +107,7 @@ if ($_POST) {
 #		$primotal = if_isset($_POST['primotal']);
 	$aar=date("Y");
 	$topaar=$aar+10;
-	$bundaar=$aar-10;
+	$bundaar=$aar-20;
 	$fejl=0;
 	$startmd=$startmd*1;
 	$startaar=$startaar*1;
@@ -154,7 +129,7 @@ if ($_POST) {
 	}
 	elseif ($slutmd<10) $slutmd="0".$slutmd;
 	if (($startaar<$bundaar)||($startaar>$topaar)){
-		alert('Start&aring;r skal v&aelig;re mellem $bundaar og $topaar!');
+		alert("Startår skal være mellem $bundaar og $topaar!");
 		$startaar="";
 	}
 	if (($slutaar<$bundaar)||($slutaar>$topaar)){
@@ -218,7 +193,7 @@ if ($_POST) {
 					$qtxt = 	
 					db_modify ("update kontoplan set primo='0' where  regnskabsaar=$kodenr",__FILE__ . " linje " . __LINE__);
 					for ($x=0; $x<=$kontoantal; $x++) {
-						$overfor_til[$x]=$overfor_til[$x]*1;
+						$overfor_til[$x]=(int)$overfor_til[$x];
 						$kontonr[$x]=$kontonr[$x]*1;
 						if ($overfor_til[$x]) {
 							$saldo[$x]*=1; #phr 20110605
@@ -271,10 +246,21 @@ if ($setFinancialYear) {
 }
 
 if ($id > 0) {
+	$qtxt = "select kodenr from grupper where id = '$id' and art = 'RA'";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$preNo = $r['kodenr'] -1;
+	if ($preNo) {
+		$qtxt = "select box10 from grupper where art = 'RA' and kodenr = '$preNo'";
+#cho "$qtxt<br>";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		($r['box10'] == 'on')?$preDeleted = 1:$preDeleted = 0;
+	}
+
 	$query = db_select("select * from grupper where id = '$id' and art = 'RA'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
 		genberegn($row['kodenr']);
-		if ($row['kodenr']==1) aar_1($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5'],'');
+#cho __line__." preDeleted $preDeleted<br>";
+		if ($row['kodenr']==1 || $preDeleted) aar_1($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5'],'');
 		else {
 			aar_x($row['id'], $row['kodenr'], $row['beskrivelse'], $row['box1'], $row['box2'], $row['box3'], $row['box4'], $row['box5'],$row['box9']);
 		}
@@ -285,7 +271,9 @@ if ($id > 0) {
 	print "<BODY onLoad=\"javascript:docChange = true;\">";
 	$x=0;
 	$q = db_select("select * from grupper where art = 'RA' order by kodenr desc",__FILE__ . " linje " . __LINE__);
-	while ($r = db_fetch_array($q)) if ($x <= $r['kodenr']) $x=$r['kodenr']; 
+	while ($r = db_fetch_array($q)) {
+		if ($x <= $r['kodenr']) $x = $r['kodenr'];
+	}
 	$query = db_select("select * from grupper where art = 'RA' and kodenr='$x'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
 		$x++;
@@ -298,6 +286,7 @@ if ($id > 0) {
 		}
 		$slutmd=$row['box3'];
 		$slutaar=$row['box4']+1;
+		$deleted = $row['box10'];
 	} else {
 		$beskrivelse=date(Y);
 		$startaar=date(Y);
@@ -306,12 +295,14 @@ if ($id > 0) {
 		$slutmd='12';
 		$aaben='on';
 	}
+
 	if ($x==0) aar_1($id, 1, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager);
 	else aar_x($id, $x, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager);
 }
 	
 function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager) {
-	global $sprog_id;
+	global $sprog_id, $bgcolor5;
+	global $menu;
 	$row = db_fetch_array(db_select("select MAX(kodenr) as kodenr from grupper where art = 'RA'",__FILE__ . " linje " . __LINE__));
 	if ($row['kodenr'] > $kodenr) $laast=1;  
 	if ($row = db_fetch_array(db_select("select * from grupper where art = 'RB' order by kodenr",__FILE__ . " linje " . __LINE__))) {
@@ -359,15 +350,21 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	} else {
 		print "<td align='center'><input type='checkbox' name='aaben' onchange=\"javascript:docChange = true;\"></td>\n";
 	}
+
+	if ($menu=='T') {
+		$styleborder="bordercolor='$bgcolor5'";
+	} else {
+		print "";
+	}
 	print "</tr>\n</tbody></table></td></tr>\n"; ###################################################table 4c slut
 	print "<tr><td colspan=4 width=100% align='center'><table heigth=100% border=0><tbody>"; ###########################table 5c start
-	print "<td align='center' valign=\"top\"><table heigth=100% border=1><tbody>\n";  #################################table 6d start	print "<tr><td align='center'>1. faktnr</td><td align='center'>1. modt. nr.</td><tr>";
+	print "<td align='center' valign=\"top\"><table heigth=100% border=1 $styleborder><tbody>\n";  #################################table 6d start	print "<tr><td align='center'>1. faktnr</td><td align='center'>1. modt. nr.</td><tr>";
 	print "<tr>\n <td>".findtekst(1220,$sprog_id)."</td>\n";
 	print " <td align='center'><input type=text style='text-align:right' size='4' name=fakt value=$fakt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
 	print "<tr>\n <td>".findtekst(1221,$sprog_id)."</td>\n";
 	print " <td align='center'><input type=text style='text-align:right' size='4' name=modt value=$modt onchange=\"javascript:docChange = true;\"></td>\n</tr>\n";  
 	print "</tbody></table></td>\n"; ##########################################################table 6d slut
-	print "<td><table border=1><tbody>"; ##############################################table 7d start
+	print "<td><table border=1 $styleborder><tbody>"; ##############################################table 7d start
 	if ($no_faktbill) $no_faktbill="checked"; 
 	if ((!$no_faktbill)&&($faktbill)) $faktbill="checked"; 
 	if ($modtbill) $modtbill="checked";
@@ -376,15 +373,18 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	print "<tr><td align='center'>".findtekst(1224,$sprog_id)."</td><td align='center'><input type='checkbox' name=modtbill $modtbill onchange=\"javascript:docChange = true;\"></td></tr>\n";
 	print "</tbody></table></td>\n"; ##########################################################table 7d slut
 	print "<td valign=\"top\"><table border=0><tbody>\n"; ##############################################table 8d start
-	print "<tr><td><input class='button green medium' type=submit accesskey=\"g\" value=\"".findtekst(3,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
+	print "<tr><td><input class='button green medium' style='width:150px' type=submit accesskey=\"g\" value=\"".findtekst(3,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td></tr>\n";
 	print "</tbody></table></td></tr>\n";#####################################################table8d slut
 	print "</td></tbody></table></td></tr>\n";#####################################################table5c slut
 	print "<tr><td colspan=2 align='center'> ".findtekst(1225,$sprog_id)."</td><td align = center> ".findtekst(1000,$sprog_id)."</td><td align = center> ".findtekst(1001,$sprog_id)."</td></tr>\n";
-	$query = db_select("select id, kontonr, primo, beskrivelse from kontoplan where kontotype='S' and regnskabsaar='1' order by kontonr",__FILE__ . " linje " . __LINE__);
 	$y=0;
 	$debetsum=0;
 	$kreditsum=0;
-	while ($row = db_fetch_array($query)) {
+	$qtxt = "select id, kontonr, primo, beskrivelse from kontoplan ";
+	$qtxt.= "where kontotype='S' and regnskabsaar='$kodenr' order by kontonr";
+#cho "$qtxt<br>";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($row = db_fetch_array($q)) {
 		$y++;
 		print "<tr><input type=hidden name=kontonr[$y] value=$row[kontonr]>";
 		$debet[$y]="0,00";
@@ -410,17 +410,24 @@ function aar_1($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align='center'><input type='checkbox' name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
 	print "<tr><td colspan='4' align='center'>";
-	print "<input class='buttom green medium' type='submit' accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\" style=\"width:100px\" ";
+	print "<input class='buttom green medium' style='width:150px;' type='submit' accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\" style=\"width:100px\" ";
 	print "name=\"submit\" onclick=\"javascript:docChange = false;\">";
 #	print "&nbsp;&nbsp;<input class='button green medium' type=submit value=\"".findtekst(1009,$sprog_id)." ".findtekst(1218,$sprog_id)."\" name=\"delete\"  style=\"width:100px\" ";
 #	print "onclick=\"javascript:docChange = false;\">";
 	print "</td></tr>\n";
-	print "</form>";
+	print "</form></tbody></table>";
+
+	print "</div></div>";
+	if ($menu=='T') {
+		include_once '../includes/topmenu/footer.php';
+	} else {
+		include_once '../includes/oldDesign/footer.php';
+	}
 	exit;
 }
 
 function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager) {
-	global $overfor_til,$regnaar,$sprog_id;
+	global $overfor_til,$regnaar,$sprog_id,$menu;
 	$debetsum=0;
 	$kreditsum=0;
 	
@@ -435,8 +442,8 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 		$pre_slutmd=$row['box3'];
 		$pre_slutaar=$row['box4'];
 		$pre_laast_lager=$row['box9'];
+		$preDeleted      = $row['box10'];
 	}
-	
 	$pre_slutdato=31;
 	while (!checkdate($pre_slutmd, $pre_slutdato, $pre_slutaar)) {
 		$pre_slutdato=$pre_slutdato-1;
@@ -605,7 +612,7 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	if ($debetsum-$kreditsum!=0) {print "<BODY onLoad=\"javascript:alert('Konti er ikke i balance')\">";}
 #	print "<tr><td colspan = 3> Overfr �ningsbalance</td><td align='center'><input type='checkbox' name=primotal checked></td></tr>\n";
 	print "<input type=hidden name=kontoantal value=$y>";
-	print "<tr><td colspan = 5 align = center><input class='button green medium' type=submit accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\"  style=\"width:100px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
+	print "<tr><td colspan = 5 align = center><input class='button green medium' type=submit accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\"  style=\"width:150px\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
 	if ($aut_lager && date("Y-m-d")>$pre_regnslut) {
 		$title="Bogfører alle lagerbevægelser i det foregående år. Bør gøres umiddelbart efter årsskifte og lageroptælling".
 		$confirmtxt="";
@@ -614,18 +621,17 @@ function aar_x($id, $kodenr, $beskrivelse, $startmd, $startaar, $slutmd, $slutaa
 	# if ($regnaar==$max_aar) print "<input type=submit value=\"Slet\" name=\"submit\" onclick=\"javascript:docChange = false;\">";
 	print "</td></tr>\n";
 	print "</form>";
+
+print "</tbody></table></td></tr>\n";# table 3b slut
+print "</tbody></table></div></div>";
+
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
 	exit;
 }
-######################################################################################################################################
-print "</tbody></table></td></tr>\n";# table 3b slut
-print "</tbody></table></td></tr>\n";# table 1a slut
-
+######################################################################################################################
 ?>
-<tr><td align = "center" valign = "bottom">
-		<table width="100%" align="center" border="1" cellspacing="0" cellpadding="0"><tbody>
-			<td width="100%" bgcolor="#ffcc00"><font face="Helvetica, Arial, sans-serif" color="#000066">Copyright (C) 2004 DANOSOFT ApS</td>
-		</tbody></table>
-</td></tr>\n
-</tbody></table>
-<?php if ($menu=='T') print "</div> <!-- end of maincontent -->\n";  # 20150327 ?>
-</body></html>

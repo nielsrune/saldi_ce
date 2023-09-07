@@ -101,7 +101,7 @@ function opdat_3_9($majorNo, $subNo, $fixNo){
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 
 			$qtxt="SELECT column_name FROM information_schema.columns WHERE table_name='labeltemplate' and column_name='id'";
-			if (!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				$qtxt="DROP TABLE labeltemplate";
 				db_modify($qtxt, __FILE__ . "linje" . __LINE__);
 			}

@@ -55,6 +55,7 @@ include("../includes/std_func.php");
 include("../includes/genberegn.php");
 
 $genvej=$kontotype=NULL; # ellers hentes typen fra connect.php  
+$valutakurs = 100;
 
 if (!isset ($_POST['gem'])) $_POST['gem'] = NULL;
 if (!isset ($forrige)) $forrige = 0;
@@ -78,7 +79,7 @@ if (isset($_POST['slet'])){
 	if ($r=db_fetch_array($q)) $id=$r['id'];
 	else $id=0;
 } elseif ($_POST['gem']){
-	$id=$_POST['id'];
+	$id          = (int)$_POST['id'];
 	$kontonr=round($_POST['kontonr'],0);
 	$beskrivelse=addslashes($_POST['beskrivelse']);
 	$kontotype=if_isset($_POST['kontotype']);
@@ -106,14 +107,12 @@ if (isset($_POST['slet'])){
 				$valutakode=0;
 				$kurs=100;
 			} else {
-				echo "select kodenr from grupper where art='VK' and box1 = '$valuta'";
-				$r=db_fetch_array(db_select("select kodenr from grupper where art='VK' and box1 = '$valuta'",__FILE__ . " linje " . __LINE__));
+				$qtxt = "select kodenr from grupper where art='VK' and box1 = '$valuta'";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$valutakode=$r['kodenr'];
-				$r=db_fetch_array(db_select("select kurs from valuta where gruppe='$valutakode' and valdate <= '$dd' order by valuta.valdate desc limit 1",__FILE__ . " linje " . __LINE__));
-				if ($r['kurs']) {
-					$kurs=$r['kurs'];
-echo $kurs;
-				}
+				$qtxt = "select kurs from valuta where gruppe='$valutakode' and valdate <= '$dd' order by valuta.valdate desc limit 1";
+				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				if ($r['kurs']) $kurs=$r['kurs'];
 			}
 			if ($ny_valuta=='DKK') {
 				$ny_valutakode=0;
@@ -144,7 +143,6 @@ echo $kurs;
 	}
 	elseif ($kontotype=='Sideskift') $kontotype='X';
 	
-
 	if ($kontonr<1) print "<BODY onLoad=\"javascript:alert('Kontonummer skal v&aelig;re et positivt heltal')\">";
 	elseif ($id==0) {
 		$query = db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar'",__FILE__ . " linje " . __LINE__);
@@ -159,22 +157,28 @@ echo $kurs;
 				if ($row['kodenr']>=$x){$x=$row['kodenr'];}
 			}
 			for ($y=$regnaar; $y<=$x; $y++) {
-				$query = db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$y'",__FILE__ . " linje " . __LINE__);
-				if(!$row = db_fetch_array($query)) {
-					db_modify("insert into kontoplan (kontonr, beskrivelse, kontotype, primo, regnskabsaar, genvej,valuta,valutakurs) values ($kontonr, '$beskrivelse', '$kontotype', '0', '$y', '$genvej','0','100')",__FILE__ . " linje " . __LINE__);
+				$qtxt =	"select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$y'";
+				if(!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+					$qtxt = "insert into kontoplan (kontonr, beskrivelse, kontotype, primo, regnskabsaar, genvej,valuta,valutakurs) "; $qtxt.= "values ($kontonr, '$beskrivelse', '$kontotype', '0', '$y', '$genvej','0','100')";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 			}
-			$query = db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar'",__FILE__ . " linje " . __LINE__);
-			$row = db_fetch_array($query);
-			$id = $row['id'];
+			$qtxt = "select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+			$id = $r['id'];
 		}
+	}	elseif ($id > 0) {
+		if (!$fra_kto) $fra_kto=0;
+		if (!$til_kto) $til_kto=0;
+		$qtxt = "select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar' and id!='$id'";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			alert("Der findes allerede en konto med nr: $kontonr");
+		} else {
+			$qtxt = "update kontoplan set kontonr = $kontonr, beskrivelse = '$beskrivelse', kontotype = '$kontotype', ";
+			$qtxt.= "moms = '$moms', fra_kto = '$fra_kto', til_kto = '$til_kto', genvej='$genvej', lukket = '$lukket' ";
+			$qtxt.= "where id = '$id'";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
-	elseif ($id > 0) {
-		if (!$fra_kto){$fra_kto=0;}
-		if (!$til_kto){$til_kto=0;}
-		if ($r=db_fetch_array(db_select("select id from kontoplan where kontonr = $kontonr and regnskabsaar = '$regnaar' and id!='$id'",__FILE__ . " linje " . __LINE__))) {
-			print "<BODY onLoad=\"javascript:alert('Der findes allerede en konto med nr: $kontonr')\">";
-		} else db_modify("update kontoplan set kontonr = $kontonr, beskrivelse = '$beskrivelse', kontotype = '$kontotype', moms = '$moms', fra_kto = '$fra_kto', til_kto = '$til_kto', genvej='$genvej', lukket = '$lukket' where id = '$id'",__FILE__ . " linje " . __LINE__);
 	}
 	genberegn($regnaar);
 }
@@ -355,7 +359,9 @@ if (($kontotype=='Drift')||($kontotype=='Status')) {
 		print "</select></td></tr>";
 	} else print "<input type=\"hidden\" name=\"ny_valuta\" value='DKK'>"; 
 }
-if ($kontotype=='Drift'||$kontotype=='Status') print "<tr><td colspan=\"2\">Saldo</td><td>$valuta: ".dkdecimal($saldo*100/$valutakurs)."</td><tr>";
+if ($kontotype=='Drift'||$kontotype=='Status') {
+	print "<tr><td colspan=\"2\">Saldo</td><td>$valuta: ".dkdecimal($saldo*100/$valutakurs)."</td><tr>";
+}
 if ($lukket=='on') $lukket="checked";
 print "<tr><td colspan=\"2\">Lukket</td>";
 print "<td><input type=checkbox name=lukket $lukket></td></tr>\n";

@@ -109,6 +109,7 @@ if (isset($_COOKIE['timezone'])) { #20190110
 
 if (!isset($meta_returside)) $meta_returside=NULL;
 $db_skriv_id=NULL; #bruges til at forhindre at skrivninger til masterbasen logges i de enkelte regnskaber.
+if (!isset($menu))$menu = NULL;
 if (!isset($modulnr))$modulnr=NULL;
 if (!isset($db_type))$db_type="postgres";
 if (!isset($db_type))$db_type="postgres";
@@ -130,6 +131,7 @@ $unixtime=date("U");
 		$logtime             = $r['logtime'];
 		($r['language_id'])? $languageID = $r['language_id'] : $languageID = 0;
 		$sprog_id            = $languageID;
+		$_SESSION['Language'] = $languageID;
 		if ($logtime) db_modify("update online set logtime = '$unixtime' where session_id = '$s_id'",__FILE__ . " linje " . __LINE__);
 	} elseif ($title!='login' && $title!='opdat' && $title!='logud' && $title!='Aaben regnskab') {
 		if ($webservice) return ('Session expired');
@@ -145,7 +147,7 @@ $unixtime=date("U");
 		}
 	}
 #}
-if (substr($db,0,7) == ' develop') ini_set('display_errors',1);
+if (substr($db,0,4) == 'laja') ini_set('display_errors',0);
 else ini_set('display_errors',0);
 
 $labelprint=0;
@@ -184,6 +186,7 @@ if ($row = db_fetch_array(db_select("select * from regnskab where db = 'develop'
 	$lingua= $row['sprog']; #20210916
 }
 */
+/*
 #.............	
 	$query = db_select("select * from online where session_id = '$s_id' and brugernavn ='$brugernavn'",__FILE__ . " linje " . __LINE__);
 	if ($row = db_fetch_array($query)) {
@@ -191,7 +194,7 @@ if ($row = db_fetch_array(db_select("select * from regnskab where db = 'develop'
 }
 	$_SESSION['Language'] = $lang1; #20210922
 #..............
-
+*/
 
 
 
@@ -220,7 +223,7 @@ if ($db_id && $db && $sqdb && $db!=$sqdb) { #20200928
 					tjek4opdat($db_ver,$version);
 				}
 			} else {
-				echo "stopper her";
+				alert("stopper her");
 				exit;
 			}
 		}
@@ -235,7 +238,7 @@ if ($db_id && $db && $sqdb && $db!=$sqdb) { #20200928
 	}	
 	if (!$revisor) {
 		if ($lukket) {
-			echo "regnskabet er lukket";
+			alert("regnskabet er lukket");
 			print "<meta http-equiv=\"refresh\" content=\"4;URL=../index/index.php\">";
 			exit;
 		}
@@ -259,7 +262,7 @@ if ($db_id && $db && $sqdb && $db!=$sqdb) { #20200928
 	}	else $bruger_id=-1;
 	if (!$sprog_id)$sprog_id=1;
 	
-	if (!strpos($css,'mysale')) {
+	if (!strpos($css,'mysale') && $bruger_id) {
 	$jsvars="statusbar=0,menubar=0,titlebar=0,toolbar=0,scrollbars=1,resizable=1,dependent=1";
 	$qtxt="select box1,box2,box3,box4,box5 from grupper where art = 'USET' and kodenr = '$bruger_id'";
 	if (!$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {

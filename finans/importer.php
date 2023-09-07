@@ -30,7 +30,7 @@
 // 20190116 MSC - Rettet topdesign til og rettet isset fejl.
 // 20190119 PHR - Added dataløn.
 // 20190311 PHR - Added UTF-8 - $fileCharSet.
-// 20200305 LOE - Changed tavle height from '100%' to 'auto' as it looked awfull in FF  
+// 20200305 LOE - Changed table height from '100%' to 'auto' as it looked awfull in FF
 // 20210629 LOE - Translated these texts to English and Norsk
 // 20210722 LOE - Tranlated some texts and some title tags
 // 20200827	PHR	- Remover all non numeric characters from $bilag
@@ -49,7 +49,7 @@ print "<div align=\"center\">";
 
 $fileCharSet="ISO-8895-1";
 $feltnavn = array();
-$fieldnames =  array('bilag','dato','beskrivelse','debet(konto)','kredit(konto)','debet(beløb)','kredit(beløb)','debitor','kreditor','fakturanr','beløb','forfaldsdag');
+$fieldnames =  array('bilag','dato','beskrivelse','debet(konto)','kredit(konto)','debet(beløb)','kredit(beløb)','debitor','kreditor','fakturanr','beløb','forfaldsdag','afd');
 
 
 if(($_GET)||($_POST)) {
@@ -150,7 +150,7 @@ if ($menu =='T') {
 	$hrlinje = "<hr width=30%>";
 }
 
-print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" class='emptyMe'><tbody>";
 print "<tr><td width=100% align=center><b>".findtekst(1074,$sprog_id)." ".lcfirst(findtekst(1076,$sprog_id))."</b></td></tr>"; #20210629
 print "<tr><td width=100% align=center><br></td></tr>";
 print "<form enctype=\"multipart/form-data\" action=\"bankimport.php\" method=\"POST\">";
@@ -198,13 +198,13 @@ print "<tr><td width=100% align=center><br></td></tr>";
 $title='Import af betalingsoplysninger leverance 0602"';
 print "<tr><td width=100% align=center title='$title'><b>".findtekst(1081,$sprog_id)." M602</b></td></tr>";
 print "<tr><td width=100% align=center><br></td></tr>";
-print "<form enctype=\"multipart/form-data\" action=\"pbsm602import.php\" method=\"POST\">";
+print "<form enctype=\"multipart/form-data\" method='POST'>";
 print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"100000\">";
 print "<input type=\"hidden\" name=\"kladde_id\" value=$kladde_id>";
 if ($bilag) print "<input type=\"hidden\" name=\"bilag\" value=$bilag>";
-print "<tr><td width=100% align=center title='$title'> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class=\"inputbox\" name=\"uploadedfile\" type=\"file\" /><br /></td></tr>";
+print "<tr><td width=100% align=center title='$title'> ".findtekst(586,$sprog_id)." ".findtekst(1077,$sprog_id).": <input class='inputbox file uploadFiles' name=\"uploadedfile\" type=\"file\" multiple/><br /></td></tr>";
 print "<tr><td><br></td></tr>";
-print "<tr><td align=center><input type=\"submit\" value=\"".findtekst(1078,$sprog_id)."\" /></td></tr>";
+print "<tr><td align=center></td></tr>";
 print "<tr><td></form></td></tr>";
 
 print "<tr><td><br></td></tr>";
@@ -382,9 +382,10 @@ $splitter=chr(9);
 print "<tr>";
 if (!in_array('bilag',$feltnavn)) print "<td><span title='".findtekst(1404, $sprog_id)."'><input class=\"inputbox\" type=text size=4 name=bilag value=$bilag></span></td>";
 for ($y=0; $y<=$feltantal; $y++) {
-	if ($feltnavn[$y]=='bilag' || strstr($feltnavn[$y],'beløb')) print "<td align=right><select name=\"feltnavn[$y]\">\n";
+	if ($feltnavn[$y]=='bilag' || $feltnavn[$y]=='afd' || strstr($feltnavn[$y],'beløb')) {
+		print "<td align=right><select name=\"feltnavn[$y]\">\n";
 #	elseif (!$feltnavn[$y]) print "<td><select>\n";
-	else  print "<td align=center><select name=\"feltnavn[$y]\">\n";
+	} else  print "<td align=center><select name=\"feltnavn[$y]\">\n";
 	if (!$feltnavn[$y]) print "<option></option>\n";
 	for ($f=0;$f<count($fieldnames);$f++) {
 		if($feltnavn[$y]==$fieldnames[$f]) print "<option \"align=right\" value='$fieldnames[$f]'>$fieldnames[$f]</option>\n";
@@ -431,11 +432,11 @@ if ($fp) {
 			if (!in_array('bilag',$feltnavn)) print "<td>$bilag</td>";
 			for ($y=0; $y<=$feltantal; $y++) {
 				if ($feltnavn[$y]=='dato') $felt[$y]=datotjek($datoformat,$felt[$y]);
-				if ($feltnavn[$y]=='bilag' || strstr($feltnavn[$y],'beløb')) {
+				if ($feltnavn[$y]=='bilag' || $feltnavn[$y]=='afd' || strstr($feltnavn[$y],'beløb')) {
 					print "<td align=right>$felt[$y]&nbsp;</td>";
 				}
-				elseif ($feltnavn[$y]) {print "<td>$felt[$y]&nbsp;</td>";}
-				else {print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";}
+				elseif ($feltnavn[$y]) print "<td>$felt[$y]&nbsp;</td>";
+				else print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 			}
 			print "</tr>";
 			if (!in_array('bilag',$feltnavn))	$bilag++;
@@ -447,7 +448,7 @@ if ($fp) {
 				if ($feltnavn[$y]=='bilag' || strstr($feltnavn[$y],'beløb')) {
 					print "<td align=right><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 				} elseif ($feltnavn[$y]) print "<td><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
-				else print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
+				else print "<td align='center'><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 			}
 			print "</tr>";
 		}	
@@ -524,6 +525,8 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bila
 					} elseif ($feltnavn[$y]=="fakturanr") $fakturanr=db_escape_string($felt[$y]);
 					elseif ($feltnavn[$y]=="forfaldsdag") {
 						($felt[$y])?$forfaldsdate=usdate($felt[$y]):$forfaldsdate=NULL;
+					} elseif ($feltnavn[$y]=="afd") {
+						$afd = $felt[$y];
 				}
 					}
 				if (!$transdate) $transdate=date('Y-m-d'); #20150105
@@ -533,12 +536,14 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn, $feltantal, $bila
 					if ($debet) $qtxt.=",d_type,debet";
 					if ($kredit) $qtxt.=",k_type,kredit";
 					if ($forfaldsdate) $qtxt.=",forfaldsdate";
+					if ($afd) $qtxt.=",afd";
 					$qtxt.=")";
 					$qtxt.=" values ";
 					$qtxt.="('$bilag','$transdate','$beskrivelse','$fakturanr','$amount','$kladde_id'";
 					if ($debet) $qtxt.=",'$d_type','$debet'";
 					if ($kredit) $qtxt.=",'$k_type','$kredit'";
 					if ($forfaldsdate) $qtxt.=",'$forfaldsdate'";
+					if ($afd) $qtxt.=",'$afd'";
 					$qtxt.=")";
 					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					if (!in_array('bilag',$feltnavn)) $bilag++;
@@ -558,12 +563,12 @@ function nummertjek ($nummer){
 	$retur=1;
 	$nummerliste=array("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", ".", "-");
 	for ($x=0; $x<strlen($nummer); $x++) {
-		if (!in_array($nummer{$x}, $nummerliste)) $retur=0;
+		if (!in_array($nummer[$x], $nummerliste)) $retur=0;
 	}
 	if ($retur) {
 		for ($x=0; $x<strlen($nummer); $x++) {
-			if ($nummer{$x}==',') $komma++;
-			elseif ($nummer{$x}=='.') $punktum++;		
+			if ($nummer[$x] == ',') $komma++;
+			elseif ($nummer[$x] == '.') $punktum++;
 		}
 		if ((!$komma)&&(!$punktum)) $retur='US';
 		elseif (($komma==1)&&(substr($nummer,-3,1)==',')) $retur='DK';
@@ -615,3 +620,86 @@ function datotjek ($datoformat,$dato){
 
 	return("$dag-$maaned-$aar");
 }
+?>
+
+<script>
+
+const submit = document.querySelector('.uploadFiles')
+const body = document.querySelector('.emptyMe')
+const queryString = window.location.search
+const urlParams = new URLSearchParams(queryString)
+const kladde_id = urlParams.get('kladde_id')
+const bilag = urlParams.get('bilagsnr')
+const fileNames = []
+const bruger_id = <?php echo $bruger_id ?>;
+console.log(submit)
+submit.addEventListener('change', async (e) => {
+	console.log("hello")
+    const file = document.querySelector('.file').files
+    for(let i = 0; i < file.length; i++){
+        await fetch("upload.php?data", {
+            method: "POST",
+            body: file[i]
+        }).then(res => res.text()).then(async res => {
+            const text = res.split("\n")
+            if(text[3].includes(" ")){
+                await fetch("upload.php?upload", {
+                    method: "POST",
+                    body: res
+                })
+                .then(res => res.json())
+                .then(res => {
+                    fileNames.push(res)
+                })
+            }
+        })
+    }
+	body.innerHTML = ""
+	body.innerHTML += "<form>"
+    for(let i = 0; i < fileNames.length; i++){
+        data = {
+            kladde_id: kladde_id,
+            bilag: bilag,
+            fileName: fileNames[i],
+			bruger_id: bruger_id,
+			id: i
+        }
+        await fetch(`upload.php?vis`, {
+            method: "POST",
+			headers: {
+				'Content-Type': 'application/json'
+			},
+            body: JSON.stringify(data)
+        })
+		.then(res => res.text())
+		.then(res => {
+			body.innerHTML += res
+		})
+    }
+	body.innerHTML += "<div style='text-align: center'><input type=\"submit\" name=\"submit\" value=\"FLYT FILER\" onClick='flyt(event)'></div></td></tr>"
+	body.innerHTML += "</form>"
+})
+
+const flyt = async (e) => {
+	e.preventDefault()
+	const checked = document.querySelectorAll("input[type='checkbox']:checked")
+	for(let i = 0; i < checked.length; i++){
+		const data = {
+			kladde_id: kladde_id,
+			bilag: bilag,
+			fileName: fileNames[checked[i].name],
+			bruger_id: bruger_id
+		}
+		await fetch(`upload.php?flyt`, {
+			method: "POST",
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(data)
+		})
+	}
+	alert("Filerne er flyttet")
+	window.location.href = `importer.php?kladde_id=${kladde_id}&bilag=${bilag}`
+}
+
+</script>

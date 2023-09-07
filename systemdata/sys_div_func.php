@@ -85,7 +85,7 @@
 // 20211022 LOE Fixed some bugs
 // 20211123 PHR added paperflow
 // 20211123 PHR added paperflowId & paperflowBearer
-// 20220413 PHR Renamed pos_valg til posOptions and moved function to sys_div_func_includes/chooseProvision.php
+// 20220413 PHR Renamed pos_valg til posOptions and moved function to diverse/posOptions.php
 
 	include("sys_div_func_includes/chooseProvision.php");
 
@@ -639,7 +639,7 @@ function personlige_valg() {
 	print "<tr><td title='".findtekst(207,$sprog_id)."'>".findtekst(208,$sprog_id)."</td><td><input class='inputbox' type='checkbox' name='popup' $popup></td></tr>";
 #	if (strpos($_SERVER['SERVER_NAME'],'dvikling') || strpos($_SERVER['SERVER_NAME'],'sl3')) {
 	#	print "<tr><td title='".findtekst(316,$sprog_id)."'><!--Tekst 523-->".findtekst(315,$sprog_id)."<!--Tekst 315--></td><td><input class='inputbox' type='radio' name='menu' value='sidemenu' $sidemenu></td></tr>";
-	if (substr($db,0,7) == 'develop') {
+	if (substr($db,0,4) == 'laja') {
 		print "<tr><td title='".findtekst(523,$sprog_id)."'><!--Tekst 523-->".findtekst(522,$sprog_id)."<!--Tekst 522--></td><td><input class='inputbox' type='radio' name='menu' value='topmenu' $topmenu></td></tr>";
 #	}	else $gl_menu='checked';
 	print "<tr><td title='".findtekst(525,$sprog_id)."'><!--Tekst 525-->".findtekst(524,$sprog_id)."<!--Tekst 524--></td><td><input class='inputbox' type='radio' name='menu'  value='gl_menu' $gl_menu></td></tr>";
@@ -684,6 +684,8 @@ function div_valg() {
 	$dfm_id=$dfm_pass=$dfm_user=$dfm_agree=$dfm_hub=$dfm_ship=$dfm_good=$dfm_pay=$dfm_url=$dfm_gooddes=$dfm_sercode=NULL;
 	$dfm_pickup_addr=$dfm_pickup_name1=$dfm_pickup_name2=$dfm_pickup_street1=$dfm_pickup_street2=$dfm_pickup_town=$dfm_pickup_zipcode=NULL;
 	$gruppevalg=$jobkort=$kort=$kuansvalg=$ref=$kua=$smart=$debtor2orderphone=NULL;
+	$qp_merchant = $qp_md5secret = $qp_agreement_id = $qp_itemGrp = NULL;
+
 
 	$q = db_select("select * from grupper where art = 'DIV' and kodenr = '2'",__FILE__ . " linje " . __LINE__);
 	$r = db_fetch_array($q);
@@ -712,7 +714,7 @@ function div_valg() {
 		if ($r['var_name']=='gls_pass') $gls_pass = $r['var_value'];
 		if ($r['var_name']=='gls_ctId') $gls_ctId = $r['var_value'];
 	}
-	$qtxt="select var_name,var_value from settings where var_grp='GLS'";
+	$qtxt="select var_name,var_value from settings where var_grp='DanskeFragt'";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
 		if ($r['var_name']=='dfm_id')      $dfm_id   = $r['var_value'];
@@ -739,6 +741,14 @@ function div_valg() {
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	($r['var_value'])?$mySale="checked='checked'":$mySale=NULL;
 
+	$qtxt="select var_value from settings where var_grp='debitor' and var_name='mySale'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	($r['var_value'])?$mySaleTest="checked='checked'":$mySaleTest=NULL;
+
+	$qtxt="select var_value from settings where var_grp='debitor' and var_name='mySaleLabel'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	($r['var_value'])?$mySaleLabel="checked='checked'":$mySaleLabel=NULL;
+	
 	$qtxt="select var_value from settings where var_grp='creditor' and var_name='paperflow'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	($r['var_value'])?$paperflow="checked='checked'":$paperflow=NULL;
@@ -750,6 +760,23 @@ function div_valg() {
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$paperflowBearer = $r['var_value'];
 	}
+	$qtxt = "select * from settings where var_grp = 'quickpay'";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		if ($r['var_name'] == 'qp_merchant')     $qp_merchant     = $r['var_value'];
+		if ($r['var_name'] == 'qp_md5secret')    $qp_md5secret    = $r['var_value'];
+		if ($r['var_name'] == 'qp_agreement_id') $qp_agreement_id = $r['var_value'];
+		if ($r['var_name'] == 'qp_itemGrp')      $qp_itemGrp      = $r['var_value'];
+	}
+	$x=0;
+	$qtxt = "select * from grupper where art = 'VG' order by kodenr";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		$itemGrpNo[$x]   = $r['kodenr'];
+		$itemGrpName[$x] = $r['beskrivelse'];
+		$x++;
+	}
+	array_multisort($itemGrpNo, SORT_ASC, $itemGrpName);
 
 	print "<form name='diverse' action='diverse.php?sektion=div_valg' method='post'>\n";
 	print "<tr style='background-color:$bgcolor5'><td colspan='6'><b>".findtekst(794,$sprog_id)."</b></td></tr>\n";
@@ -794,6 +821,24 @@ function div_valg() {
 	print "<!-- 768 : Brug 'Mit salg' -->";
 	print "<input name='mySale' class='inputbox' type='checkbox' $mySale>\n";
 	print "</td></tr>\n";
+	echo "mySale: $mySale <br>";
+	echo "mySaleLabel: $mySaleLabel <br>";
+	echo "mySaleTest: $mySaleTest";
+	
+	if ($mySale){
+	print "<tr>\n<td title='Deaktivere labels for kunder så det kun er ejeren der kan oprette dem'>Deaktiver labels for kunder</td>\n";
+	print "<td title='Deaktiver labels for kunder'>\n";
+	print "<input name='mySaleLabel' class='inputbox' type='checkbox' $mySaleLabel>\n";
+	print "</td></tr>\n";
+	}
+
+	print "<tr>\n<td title='Test'>mySaleTest</td>\n";
+	print "<td title='mySaleTest'>\n";
+	print "<input name='mySaleTest' class='inputbox' type='checkbox' $mySaleTest>\n";
+	print "</td></tr>\n";
+
+
+
 	print "<tr bgcolor='$bgcolor5'>\n<td title='".findtekst(194,$sprog_id)."'>".findtekst(168,$sprog_id)."</td>\n";
 	print "<td title='".findtekst(194,$sprog_id)."'>\n";
 	print "<!-- 168 : Brug jobkort -->";
@@ -871,9 +916,7 @@ function div_valg() {
 		print "<input name='gls_user' type='hidden' value='$gls_user'>\n";
 		print "<input name='gls_ctId' type='hidden' value='$gls_ctId'>\n";
 		print "<input name='gls_pass' type='hidden' value='$gls_pass'>\n";
-		
 	}
-
 	$txt=findtekst(1020,$sprog_id);
 	$title=findtekst(1021,$sprog_id);
 	$title.=" ".findtekst(1040,$sprog_id);
@@ -962,8 +1005,9 @@ function div_valg() {
 			$txt=findtekst(1053,$sprog_id);
 			$title=findtekst(1054,$sprog_id);
 			print "<!-- 1053 Postnummer -->";
-			print "<tr bgcolor='$bgcolor5'>\n<td title='$title'>--- $txt</td>\n";
-			print "<td title='$title'><input name='dfm_pickup_zipcode' class='inputbox' style='width:150px;' type='text' value='$dfm_pickup_zipcode'></td>\n</tr>\n";
+			print "<tr bgcolor='$bgcolor5'><td title='$title'>--- $txt</td><td title='$title'>";
+			print "<input name='dfm_pickup_zipcode' class='inputbox' style='width:150px;' type='text' value='$dfm_pickup_zipcode'>";
+			print "</td>\n</tr>\n";
 			$txt=findtekst(1055,$sprog_id);
 			$title=findtekst(1056,$sprog_id);
 			print "<!-- 1055 Bynavn -->";
@@ -993,12 +1037,171 @@ function div_valg() {
 		print "<input name='dfm_gooddes' type='hidden' value='$dfm_gooddes'>\n";
 		print "<input name='dfm_sercode' type='hidden' value='$dfm_sercode'>\n";
 	}
+	$txt =   'Quickpay agreement id';
+	$title = 'Aftale id fra Quickpay';
+	print "<!-- xxxx Aftale id fra Quickpay -->";
+	print "<tr bgcolor='$bgcolor5'><td title='$title'>$txt</td><td title='$title'>";
+	print "<input name='qp_agreement_id' class='inputbox' style='width:150px;' type='text' value='$qp_agreement_id'>";
+	print "</td>\n</tr>\n";
+	if ($qp_agreement_id) {
+    $txt =   'Quickpay merhcant';
+    $title = 'Forretnings nr fra Quickpay';
+    print "<!-- xxxx Forretnings nr id fra Quickpay -->";
+    print "<tr bgcolor='$bgcolor'><td title='$title'>$txt</td><td title='$title'>";
+    print "<input name='qp_merchant' class='inputbox' style='width:150px;' type='text' value='$qp_merchant'>";
+    print "</td>\n</tr>\n";
+    $txt =   'Quickpay md5 secret';
+    $title = 'Krypteringsnøgle fra Quickpay';
+    print "<!-- xxxx Krypteringsnøgle fra Quickpay -->";
+    print "<tr bgcolor='$bgcolor5'><td title='$title'>$txt</td><td title='$title'>";
+    print "<input name='qp_md5secret' class='inputbox' style='width:150px;' type='text' value='$qp_md5secret'>";
+    $txt =   'Quickpay varegruppe';
+    $title = 'Varegruppe for varer til betaling med Quickpay';
+    print "<!-- xxxx Quickpay varegruppe -->";
+    print "<tr bgcolor='$bgcolor'><td title='$title'>$txt</td><td title='$title'>";
+    print "<select name='qp_itemGrp' class='inputbox' style='width:150px;'>";
+    for($x=0;$x<count($itemGrpNo);$x++) {
+      if ($qp_itemGrp == $itemGrpNo[$x]) print "<option value = '$itemGrpNo[$x]'>$itemGrpNo[$x] : $itemGrpName[$x]</option>"; 
+    }
+    print "<option value = ''></option>";
+    for($x=0;$x<count($itemGrpNo);$x++) {
+      if ($qp_itemGrp != $itemGrpNo[$x]) print "<option value = '$itemGrpNo[$x]'>$itemGrpNo[$x] : $itemGrpName[$x]</option>"; 
+    }
+    print "</select>";
+    print "</td>\n</tr>\n";
+    
+  }
+
+  $qtxt = "SELECT var_value FROM settings WHERE var_name='flatpay_auth'";
+  $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+
+  # Guid form flatpay, looks like 9e802837-307b-48c3-9f0e-1b4cac291376
+  $guid = $r ? str_split($r[0], 7)[0]."-xxxx-xxxx-xxxx-xxxxxxxxxxxx" : "";
+
+	$mtxt=findtekst(3014,$sprog_id);
+	$mtitle=findtekst(3013,$sprog_id);
+  print "<tr>\n<td title='$mtitle'><!-- Tekst 3013 -->$mtxt <!-- Tekst 3014 --></td>\n";
+  print "<td title='$mtitle'>
+    <span style='position:relative;'>
+      <input name='flatpay_id' disabled class='inputbox' style='width:150px; cursor: pointer;' type='text' value='$guid' onclick='open_popup()'>
+      <div style='position:absolute; left:0; right:0; top:0; bottom:0; cursor: pointer;' onclick='open_popup(this)'></div>
+    </span>
+  </td>\n</tr>\n";
+
+  # API key for vibrant
+  $qtxt = "SELECT var_value FROM settings WHERE var_name='vibrant_auth'";
+  $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+
+  # Check if it exsists
+  $APIKEY = $r ? $r[0] : "";
+
+	$mtxt=findtekst(3016,$sprog_id);
+	$mtitle=findtekst(3017,$sprog_id);
+  print "<tr>\n<td title='$mtitle'><!-- Tekst 3013 -->$mtxt <!-- Tekst 3014 --></td>\n";
+  print "<td title='$mtitle'>
+    <input name='vibrant_id' class='inputbox' style='width:150px;' type='text' value='$APIKEY'>
+  </td>\n</tr>\n";
+  
+  # API key for copayone
+  $qtxt = "SELECT var_value FROM settings WHERE var_name='copayone_auth'";
+  $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+
+  # Check if it exsists
+  $APIKEY = $r ? $r[0] : "";
+
+	$mtxt=findtekst(2108,$sprog_id);
+	$mtitle=findtekst(2109,$sprog_id);
+  print "<tr>\n<td title='$mtitle'><!-- Tekst 2108 -->$mtxt <!-- Tekst 2109 --></td>\n";
+  print "<td title='$mtitle'>
+    <input name='copay_id' class='inputbox' style='width:150px;' type='text' value='$APIKEY'>
+  </td>\n</tr>\n";
+
 	
 	print "<tr><td colspan='2'>&nbsp;</td></tr>";
 	print "<tr><td colspan='1'>&nbsp;</td><td style='text-align:center'>\n";
 	print "     <input class='button green medium' name='submit' type=submit accesskey='g' value='".findtekst(471, $sprog_id)."'>\n";
 	print "</td></tr>\n";
 	print "</form>\n\n";
+
+  # Setup flatpay popup
+  print "
+    <div class='backdrop' onclick='close_popup()'></div>
+    <div id='popup-flatpay'>
+      <h2>Flatpay ID</h2>
+      <br>
+      <span>Dit flatpay ID er det vi brugere for at godkende transaktioner med Flatpay, dette ID må du ikke dele, og vises derfor kun en gang til dig.</span><span>Dit login gemmes ikke men bruges kun til at danne dit unikke ID.</span>
+      <br>
+      <span>Brugernavn</span>
+      <input class='inputbox' type='text' id='flatpay-username'>
+      <span>Adgangskode</span>
+      <input class='inputbox' type='password' id='flatpay-password'>
+      <br>
+      <br>
+      <button onclick='get_guid()'>Generer</button>
+      <button onclick='close_popup()'>Luk</button>
+    </div>
+
+    <script>
+      function open_popup(){
+        document.getElementById('popup-flatpay').style.display = 'block';
+        document.getElementsByClassName('backdrop')[0].style.display = 'block';
+      }
+
+      function close_popup(){
+        document.getElementById('popup-flatpay').style.display = 'none';
+        document.getElementsByClassName('backdrop')[0].style.display = 'none';
+      }
+
+      close_popup();
+
+      async function save_id(id){
+        var res = await fetch(
+          'diverseIncludes/save_flatpay_id.php',
+          {
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              'id': id
+            }),
+          }
+        )
+        location.reload();
+      }
+
+      async function get_guid(){
+        var res = await fetch(
+          'https://socket.flatpay.dk/socket/guid',
+          {
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              'username': document.getElementById('flatpay-username').value,
+              'password': document.getElementById('flatpay-password').value
+            }),
+          }
+        )
+        console.log({
+              'username': document.getElementById('flatpay-username').value,
+              'password': document.getElementById('flatpay-password').value
+            })
+        if (res.status == 200) {
+          const text = await res.text();
+          close_popup();
+          alert(`Dit Flatpay ID er \${text}, du vil kun blive vist dit ID denne gang, den vil automatisk blive indsat i systemet.`);
+          save_id(text);
+        } else {
+          alert('Forkert brugernavn eller adgangskode.');
+        }
+      
+      
+      }
+    </script>
+
+";
 } # endfunc div_valg
 
 function ordre_valg() {
@@ -1554,6 +1757,7 @@ function labels($valg) {
 		print "</td></tr></form>";
 	} elseif ($valg) {
 		$x=0;
+		$labelNames=array();
 		$qtxt="select id, labeltype, labelname from labels order by labelname";
 		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)) {

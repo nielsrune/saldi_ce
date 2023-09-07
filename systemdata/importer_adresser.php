@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------systemdata/importer_adresser.php---lap 3.8.4---2019-10-21--------
-// LICENS
+// --- systemdata/importer_adresser.php --- lap 4.0.8 --- 2023-07-01 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaetelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
-//
-// Copyright (c) 2003-2019 DANOSOFT ApS
+// Copyright (c) 2003-2023 saldi.dk ApS
 // -----------------------------------------------------------------------
 
 // 2013.02.10 Break ændret til break 1
@@ -31,6 +28,7 @@
 // 2014.08.11 se $find_kontakt... 
 // 2017.01.04 rettet else til elseif ($feltnavn[$y] != 'kontoansvarlig') 20170104
 // 2019.10.21 PHR Added '&& strpos($felt[$y]," "))' ad field was emptied if not  #20191021
+// 20230702 PHR php8
 
 @session_start();
 $s_id=session_id();
@@ -47,27 +45,26 @@ print "<div align=\"center\">";
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-if ($popup) print "<td width=\"10%\" $top_bund><a href=../includes/luk.php accesskey=L>Luk</a></td>";
-else print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>Luk</a></td>";
+print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>Luk</a></td>";
 print "<td width=\"80%\" $top_bund>$title</td>";
 print "<td width=\"10%\" $top_bund><br></td>";
 print "</tbody></table>";
 print "</td></tr>";
 
 if($_POST) {
-	$submit=$_POST['submit'];
-	$art=$_POST['art'];
-	$opdat=$_POST['opdat'];
+	$submit = if_isset($_POST['submit'],NULL);
+	$art    = if_isset($_POST['art'],NULL);
+	$opdat  = if_isset($_POST['opdat'],NULL);
 	if (strstr($submit, "Import")) $submit="Importer";
-	$filnavn=$_POST['filnavn'];
-	$splitter=$_POST['splitter'];
-	$feltnavn=$_POST['feltnavn'];
-	$feltantal=$_POST['feltantal'];
-	$kontonr=$_POST['kontonr'];
-	$kontotype=$_POST['kontotype'];
-	$bilag=$_POST['bilag'];
+	$filnavn   = if_isset($_POST['filnavn'],NULL);
+	$splitter  = if_isset($_POST['splitter'],NULL);
+	$feltnavn  = if_isset($_POST['feltnavn'],array());
+	$feltantal = if_isset($_POST['feltantal'],0);
+	$kontonr   = if_isset($_POST['kontonr'],array());
+	$kontotype= if_isset($_POST['kontotype'],NULL);
+	$bilag     = if_isset($_POST['bilag'],NULL);
 
-	if (basename($_FILES['uploadedfile']['name'])) {
+	if (isset($_FILES['uploadedfile']['name']) && basename($_FILES['uploadedfile']['name'])) {
 		$filnavn="../temp/".$db."_".str_replace(" ","_",$brugernavn).".csv";
 		if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $filnavn)) {
 			vis_data($filnavn, '', '', 1, $kontonr, $bilag);
@@ -82,19 +79,21 @@ if($_POST) {
 #	if (!$r1=db_fetch_array(db_select("select box1, box2, beskrivelse from grupper where art='RA' order by kodenr desc",__FILE__ . " linje " . __LINE__))) {
 #		exit;
 #	}
-	upload($bilag);
+	upload();
 }
 
 print "</tbody></table>";
 #####################################################################################################
-function upload($bilag){
+function upload(){
+
+	global $sprog_id; 
 
 	print "<tr><td width=100% align=center><table border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print "<form enctype=\"multipart/form-data\" action=\"importer_adresser.php\" method=\"POST\">";
 	print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"900000\">";
 	print "<tr><td width=\"150px\">Import art</td><td align=\"right\"><select name=\"art\" style=\"width:150px\">\n";
-	if ($art!='D') print "<option value=\"D\">Debitorimport</option>\n";
-	if ($art!='K') print "<option value=\"K\">Kreditorimport</option>\n";
+	print "<option value=\"D\">Debitorimport</option>\n";
+	print "<option value=\"K\">Kreditorimport</option>\n";
 	print "</select></span></td></tr>";
 	print "<tr><td width=\"150px\">Opdater eksisterende</td><td align=\"right\"><input type=\"checkbox\" name=\"opdat\"></td></tr>";
 	print "<tr><td colspan=\"2\"><hr></td></tr>";
@@ -107,13 +106,16 @@ function upload($bilag){
 }
 
 function vis_data($filnavn, $splitter, $feltnavn, $feltantal){
+	
 global $art,$db;
 global $charset;
-global $sprog_id;
+	global $felt_navn;
 global $opdat;
+	global $sprog_id;
 
 $fp=fopen("$filnavn","r");
 if ($fp) {
+		$komma = $semikolon = $tabulator = 0;
 	for ($y=1; $y<4; $y++) $linje=fgets($fp);#korer frem til linje nr. 4.
 	if ($charset=='UTF-8') $linje=utf8_encode($linje);
 	$tmp=$linje;
@@ -187,6 +189,7 @@ if ($art!='D') {
 $kontotype=NULL;
 for ($y=0; $y<=$feltantal; $y++) {
 	for ($x=0; $x<$felt_antal; $x++) {
+		$felt_aktiv[$x] = if_isset($felt_aktiv[$x],0);
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x] && $felt_aktiv[$x]==1) {
 			print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
 			$feltnavn[$y]='';
@@ -208,6 +211,8 @@ elseif ($splitter=='Tabulator') {$splitter=chr(9);}
 for ($y=0; $y<=$feltantal; $y++) {
 	$tmp='';
 	for ($x=0; $x<=$felt_antal; $x++) {
+		$felt_navn[$x]   = if_isset($felt_navn[$x],NULL);
+		$felt_betegn[$x] = if_isset($felt_betegn[$x],NULL);
 		if ($feltnavn[$y]==$felt_navn[$x])$tmp=$felt_betegn[$x];
 	}
 	if ($feltnavn[$y]) {
@@ -269,13 +274,15 @@ global $charset;
 global $kontotype;
 global $opdat;
 
+$kontakt = NULL;
+
 $x=0;
 $fp=fopen("../importfiler/postnr.csv","r");
 if ($fp) {
+	$komma = $semikolon = $tabulator = 0;
 	while (!feof($fp)) {
 		$x++;
-		$linje=trim(fgets($fp));
-		list($post_nr[$x],$by_navn[$x])=explode(chr(9),$linje);
+		if ($linje=trim(fgets($fp))) list($post_nr[$x],$by_navn[$x])=explode(chr(9),$linje);
 	}
 }
 fclose($fp);
@@ -300,14 +307,16 @@ if ($fp) {
 
 fclose($fp);
 
+/*
 for ($y=0; $y<=$feltantal; $y++) {
-	for ($x=0; $x<=$felt_antal; $x++) {
+	$feltnavn[$y] = if_isset($feltnavn[$y],NULL);
+	for ($x=0; $x<=count($felt_antal; $x++) {
 		if ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]&& $felt_aktiv[$x]==1) {
 		print "<BODY onLoad=\"javascript:alert('Der kan kun v&aelig;re 1 kolonne med $felt_navn[$x]')\">";
-		$feltnavn[$y]='';
 		} elseif ($felt_navn[$x] && $feltnavn[$y]==$felt_navn[$x]) $felt_aktiv[$x]=1;
 	}
 }
+*/
 
 print "<tr><td colspan=$cols><hr></td></tr>\n";
 if ((!$splitter)||($splitter=='Semikolon')) {$splitter=';';}
@@ -516,8 +525,7 @@ transaktion('commit');
 print "</tbody></table>";
 print "</td></tr>";
 print "<BODY onLoad=\"javascript:alert('$imp_antal adresser importeret')\">";
-if ($popup) print "<meta http-equiv=\"refresh\" content=\"0;URL=../includes/luk.php\">";
-else print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/diverse.php\">";
+print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/diverse.php\">";
 exit;
 } # endfunc overfoer_data
 
@@ -526,12 +534,12 @@ function nummertjek ($nummer){
 	$retur=1;
 	$nummerliste=array("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", ".", "-");
 	for ($x=0; $x<strlen($nummer); $x++) {
-		if (!in_array($nummer{$x}, $nummerliste)) $retur=0;
+		if (!in_array(substr($nummer,$x,1),$nummerliste)) $retur=0;
 	}
 	if ($retur) {
 		for ($x=0; $x<strlen($nummer); $x++) {
-			if ($nummer{$x}==',') $komma++;
-			elseif ($nummer{$x}=='.') $punktum++;
+			if (substr($nummer,$x,1) == ',') $komma++;
+			elseif (substr($nummer,$x,1) == '.') $punktum++;
 		}
 		if ((!$komma)&&(!$punktum)) $retur='US';
 		elseif (($komma==1)&&(substr($nummer,-3,1)==',')) $retur='DK';

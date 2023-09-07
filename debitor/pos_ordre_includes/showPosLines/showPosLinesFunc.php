@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php --- lap 4.0.2 --- 2021.08.22 ---
+// --- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php --- lap 4.0.5 --- 2022.11.23 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -28,13 +28,14 @@
 // 20210127 PHR Some minor design changes 
 // 20210310 PHR Some error corections in minor design changes 
 // 20210822 PHR Added $discounttxt as global in function vis_pos_linjer
+// 20221123 PHR Remove Vat if less than 0.1
 
 #Called from pos_ordre.php & pos_ordre_itemscan.php
 function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 	print "\n<!-- Function vis_pos_linjer (start)-->\n";
 	global $afd,$afd_lager,$afd_navn,$afslut;
 	global $bgcolor,$bgcolor5,$bordnr,$brugernavn,$betvaluta,$betvalkurs,$betvalsum;
-	global $del_bord,$difkto,$db_id,$discounttxt;
+	global $del_bord,$difkto,$db,$db_id,$discounttxt;
 	global $fokus;
 	global $ifs;
 	global $kasse,$koekken,$kundedisplay;
@@ -104,9 +105,7 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 	print "<tr><td id=\"varelin\" style=\"width:100%; height:80%\" valign=\"top\">";
 	print "<div $class><table width=\"100%\" border=\"0\"><tbody>\n";
 #	}
-
 	include("productLines.php"); #20190510
-
 	if ($vis_saet && $samlet_rabatpct && $samlet_pris)  {
 		$diff=afrund($samlet_pris-$sum,3); #20170721
 		if($diff || $samlet_rabatpct) {
@@ -121,8 +120,8 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 	$sum+=$r['pris'];
 	list($lev_vnr)=explode("|",$r['lev_varenr']);
 		if ($show) {
-	print "<tr><td></td><td></td><td></td><td></td><td align=right><td></tr>";
-	print "<tr><td></td><td></td><td>$r[beskrivelse]</td><td></td><td align=right>".dkdecimal($lev_vnr,2)."<td></tr>";
+			print "<tr><td></td><td></td><td></td><td></td><td align='right'><td></tr>";
+			print "<tr><td></td><td></td><td>$r[beskrivelse]</td><td></td><td align='right'>".dkdecimal($lev_vnr,2)."<td></tr>";
 		}
 	}
 	if (!$id) {
@@ -194,6 +193,7 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 	if ($afslut && $status<3 && $kundedisplay) kundedisplay('I alt',$sum,1);
 	if (($nettosum || $nettosum == '0') && $status<3 && $id) { #20150505
 		$moms=$sum-$nettosum;
+		if (abs($moms) < 0.1) $moms = 0; #20221123
 		if ($nettosum < 999999999999.99) {
 			$qtxt="update ordrer set sum= '$nettosum',moms='$moms',hvem = '$brugernavn',afd='$afd',felt_5='$kasse' where id = '$id'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__); #20171123

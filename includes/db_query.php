@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------includes/db_query.php----lap 3.8.9----2020-03-08--------------
-// LICENS
+// --- includes/db_query.php --- lap 4.0.7 --- 2022-11-06 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2020 saldi.dk ApS
+// Copyright (c) 2003-2022 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2012.12.22 Tilføjet db_escape_string
 // 2013.02.10 Break ændret til break 1
@@ -35,6 +32,8 @@
 // 2019.07.04 RG (Rune Grysbæk) Mysqli implementering 20190704
 // 2020.02.25 PHR some changes regarding MySQLi
 // 2020.03.08 PHR addded function db_create, db_exists & tbl_exists.
+// 20221106 PHR - Various changes to fit php8 / MySQLi
+
 
 if (!function_exists('db_connect')) {
 	function db_connect($l_host, $l_bruger, $l_password, $l_database="", $l_spor="") {
@@ -131,7 +130,7 @@ if (!function_exists('db_modify')) {
 			fclose($fp);
 		}
 		if (!$db_query) { #20190704
-			if ($db_type=="mysql") $errtxt=mysql_error();
+			if ($db_type=="mysql")       $errtxt = mysql_error($connection);
 			else if ($db_type=="mysqli") $errtxt=mysqli_error($connection); #20190704
 			else $errtxt=pg_last_error();
 			$fp=fopen("../temp/$db/.ht_modify.log","a");
@@ -359,9 +358,10 @@ if (!function_exists('db_exists')) {
 		if ($db_type=="mysql") {
 			(mysql_select_db($tmpDb))?$db_exists=1:$db_exists=0;
 			mysql_select_db($db);
-		}	elseif ($db_type=="mysqli") {
-			(mysqli_select_db($connection,$tmpDb))?$db_exists=1:$db_exists=0;
-			mysqli_select_db($connection,$db);
+		}	elseif ($db_type=="mysqli") { #20221106
+			$qtxt="SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$tmpDb'";
+			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+			(db_fetch_array($q))?$db_exists=1:$db_exists=0;
 		} else {
 			$qtxt="SELECT datname FROM pg_catalog.pg_database where datname='$tmpDb'";
 			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);

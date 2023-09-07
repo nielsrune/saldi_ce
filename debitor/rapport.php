@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -- ---------------------debitor/rapport.php---------------- ver 4.0.2 -- 2021-08-05 --
+// -------debitor/rapport.php------patch 4.0.8 ----2023-07-22--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2003-2021 Saldi.DK ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 20121105 - Fejl ved "masseudligning (Klik på 0,00 i åbenpostoversigt) når kun 1 dato sat. Søg 20121105 
@@ -78,13 +79,15 @@ if (isset($_GET['ny_rykker'])) {
 			autoudlign($udlign[$x]);
 		}
 	}	
+	if ($rapportart == 'accountChart') $rapportart = 'kontokort';
+	if ($rapportart == 'accountChart') include_once ("../includes/reportFunc/accountChart.php");
 	$rapportart($dato_fra, $dato_til,$konto_fra,$konto_til,$rapportart, 'D');
 	exit;
 }
 $rapportart=NULL;
 if (isset($_POST['openpost'])) $rapportart='openpost';
 if (isset($_POST['kontosaldo'])) $rapportart='kontosaldo';
-if (isset($_POST['kontokort'])) $rapportart='kontokort'; 
+if (isset($_POST['accountChart'])) $rapportart='accountChart'; 
 if (isset($_POST['dato'])) {
 	$dato=$_POST['dato'];
 	if (strpos($dato,':')) list($dato_fra,$dato_til)=explode(":",$dato);

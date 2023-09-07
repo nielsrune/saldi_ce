@@ -39,6 +39,8 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 	global $prj_navn_fra,$prj_navn_til;
 	global $top_bund;
 	
+	$title = 'Rapport • Kontokort med Moms';
+	
 	$csvfile="../temp/$db/rapport.csv";
 	$csv=fopen($csvfile,"w");
 	$query = db_select("select firmanavn from adresser where art='S'",__FILE__ . " linje " . __LINE__);
@@ -125,17 +127,15 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 
 #	print "  <a accesskey=L href=\"rapport.php?rapportart=Kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&dato_til=$slutdato&maaned_til=$mt&konto_fra=$konto_fra&konto_til=$konto_til&afd=$afd\">Luk</a><br><br>";
 	if ($menu=='T') {
-		$leftbutton="<a class='button red small' title=\"Klik her for at komme til forsiden af rapporter\" href=\"rapport.php?rapportart=kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&aar_fra=$aar_fra&dato_til=$slutdato&maaned_til=$mt&aar_til=$aar_til&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&ansat_til=$ansat_til&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev\" accesskey=\"L\">Luk</a>";
-		$rightbutton="";
-		include("../includes/top_header.php");
-		include("../includes/top_menu.php");
-		print "<div id=\"header\"> 
-		<div class=\"headerbtnLft\">$leftbutton</div>
-		<span class=\"headerTxt\">Rapport - Kontokort med Moms</span>";     
-		print "<div class=\"headerbtnRght\"></div>";       
-		print "</div><!-- end of header -->
-			<div class=\"maincontentLargeHolder\">\n";
-			print  "<table class='dataTable2' border='0' cellspacing='1' width='100%'>";
+		include_once '../includes/top_header.php';
+		include_once '../includes/top_menu.php';
+		print "<div id=\"header\">"; 
+		print "<div class=\"headerbtnLft headLink\"><a href=rapport.php?rapportart=kontokort_moms&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&aar_fra=$aar_fra&dato_til=$slutdato&maaned_til=$mt&aar_til=$aar_til&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&ansat_til=$ansat_til&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til&simulering=$simulering&lagerbev=$lagerbev accesskey=L title='Klik her for at komme tilbage til rapporter'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+		print "<div class=\"headerTxt\">$title</div>";     
+		print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+		print "</div>";
+		print "<div class='content-noside'>";
+			print  "<table class='dataTable' border='0' cellspacing='1' width='100%'>";
 	} elseif ($menu=='S') {
 		include("../includes/sidemenu.php");
 	} else {
@@ -147,23 +147,28 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 		print "<td width=\"10%\" $top_bund><a href='$csvfile'>csv</a></td>";
 		print "</tbody></table>"; #B slut
 		print "</td></tr>";
+		print "<tr><td colspan=\"4\"><big><big><big>".findtekst(516,$sprog_id)."</span></big></big></big></td>";
 	}
 	if (!isset ($sprog_id)) $sprog_id = NULL;
 
-	print "<tr><td colspan=\"4\"><big><big><big>".findtekst(516,$sprog_id)."</span></big></big></big></td>";
+	if ($menu=='T') {
+		print "<tr>";
+	} else {
+		print "";
+	}
 
-	print "<td colspan=2 align=right><table style=\"text-align: left; width: 100%;\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\"><tbody><tr>";
-	print "<td>Regnskabs&aring;r</span></td>";
-	print "<td>$regnaar.</span></td></tr>";
-	print "<tr><td>Periode</span></td>";
+	print "<td colspan=8 align=left><table style=\"text-align: left; width: 50%; \" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody><tr>";
+	print "<td colspan='1'><b>Regnskabs&aring;r:</b></span></td>";
+	print "<td colspan='1'>$regnaar.</span></td></tr>";
+	print "<tr><td><b>Periode:</b></span></td>";
 	## Finder start og slut paa regnskabsaar
 	if ($startdato < 10) $startdato="0".$startdato*1;	
-	print "<td>Fra ".$startdato.". $mf<br />Til ".$slutdato.". $mt</span></td></tr>";
+	print "<td colspan='2'>Fra ".$startdato.". $mf<br />Til ".$slutdato.". $mt</span></td></tr>";
 	if ($ansat_fra) {
-		if (!$ansat_til || $ansat_fra==$ansat_til) print "<tr><td>Medarbejder</span></td><td>$ansatte</span></td></tr>";
-		else print "<tr><td>Medarbejdere</span></td><td>$ansatte</span></td></tr>";
+		if (!$ansat_til || $ansat_fra==$ansat_til) print "<tr><td><b>Medarbejder:</b></span></td><td>$ansatte</span></td></tr>";
+		else print "<tr><td><b>Medarbejdere:</b></span></td><td>$ansatte</span></td></tr>";
 	}
-	if ($afd||$afd=='0') print "<tr><td>Afdeling</span></td><td>$afd_navn</span></td></tr>";
+	if ($afd||$afd=='0') print "<tr><td><b>Afdeling:</b></span></td><td>$afd_navn</span></td></tr>";
 	if ($projekt_fra) {
 		print "<td>Projekt:</td><td>";
 #		print "<tr><td>Projekt $prj_navn_fra</td>";
@@ -248,14 +253,21 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 */
 	$ktonr=array();
 	$x=0;
-	$qtxt = "select kontonr,projekt from transaktioner where transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id";
+	$qtxt = "select kontonr,projekt from transaktioner where transdate>='$regnstart' and transdate<='$regnslut' order by transdate,bilag,id";
 	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($row = db_fetch_array($q)){
+	while ($r = db_fetch_array($q)){
 #cho "$row[projekt]<br>";
-		if (!in_array($row['kontonr'],$ktonr)) {
+		if (!in_array($r['kontonr'],$ktonr)) {
 			$x++;
-			$ktonr[$x]=$row['kontonr'];
-#cho "$ktonr[$x]<br>";
+			$ktonr[$x]=$r['kontonr'];
+		}
+	}
+	$qtxt = "select kontonr from simulering where transdate>='$regnaarstart' and transdate<'$regnslut' order by transdate,bilag,id";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)){
+		if (!in_array($r['kontonr'],$ktonr)) {
+			$x++;
+			$ktonr[$x]=$r['kontonr'];
 		}
 	}
 	
@@ -280,7 +292,7 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 			while ($row = db_fetch_array($query)){
 			 	$kontosum+=afrund($row['debet'],2)-afrund($row['kredit'],2);
 			}
-			$query = db_select("select debet, kredit from simulering where kontonr=$kontonr[$x] and transdate>='$regnaarstart' and transdate<'$regnstart' $dim order by transdate,bilag,id",__FILE__ . " linje " . __LINE__);
+			$query = db_select("select debet, kredit from simulering where kontonr=$kontonr[$x] and transdate>='$regnaarstart' and transdate<'$regnslut' $dim order by transdate,bilag,id",__FILE__ . " linje " . __LINE__);
 			while ($row = db_fetch_array($query)){
 			 	$kontosum+=afrund($row['debet'],2)-afrund($row['kredit'],2);
 			}
@@ -288,16 +300,18 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 #			if (!$dim) print "<tr bgcolor=\"$linjebg\"><td></td><td></td><td>  Primosaldo </td><td></td><td></td><td align=right>$tmp </td></tr>";
 			$print=1;
 			$sim=0;
-#cho 			"select * from simulering where kontonr='$kontonr[$x]' and transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id<br>";
-			$q = db_select("select * from simulering where kontonr=$kontonr[$x] and transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id",__FILE__ . " linje " . __LINE__);
+			$qtxt = "select * from simulering where kontonr=$kontonr[$x] and transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id";
+			$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while ($r = db_fetch_array($q)){
+				$sim_kladde_id[$sim]=$r['kladde_id'];
 				$sim_transdate[$sim]=$r['transdate'];
 				$sim_bilag[$sim]=$r['bilag'];
 				$sim_kontonr[$sim]=$r['kontonr'];
 				$sim_beskrivelse[$sim]=$r['beskrivelse'];
 				$sim_xmoms[$sim]=$r['debet']-$r['kredit'];
 				$sim_moms[$sim]=$r['moms'];
-#cho "S $sim_kontonr[$sim]<br>";
+				$sim_debet[$sim]=$r['debet'];
+				$sim_kredit[$sim]=$r['kredit'];
 				$sim++;
 				if ($kontovaluta[$x]) {
 					for ($y=0;$y<=count($valkode);$y++){
@@ -310,7 +324,8 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 				} else $sim_transkurs[$tr]=100; 
 			}	
 			$tr=0;$transdate=array();
-			$q = db_select("select * from transaktioner where kontonr='$kontonr[$x]' and transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id",__FILE__ . " linje " . __LINE__);
+			$qtxt = "select * from transaktioner where kontonr='$kontonr[$x]' and transdate>='$regnstart' and transdate<='$regnslut' $dim order by transdate,bilag,id";
+			$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while ($r = db_fetch_array($q)){
 				$transdate[$tr]=$r['transdate'];
 				$bilag[$tr]=$r['bilag'];
@@ -334,14 +349,60 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 			}
 
 			if (!isset ($jsvars)) $jsvars = NULL;
-			if (!isset ($sim_kontonr)) $sim_kontonr = NULL;
+			if (!isset ($sim_kontonr)) $sim_kontonr = array();;
+
+			if (!count($transdate) && in_array($kontonr[$x],$sim_kontonr)) {
+				for ($sim=0;$sim<count($sim_transdate);$sim++) {
+					if ($sim_kontonr[$sim] == $kontonr[$x]) {
+					print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($sim_transdate[$sim])." </td>";
+				 if ($sim_kladde_id[$sim]) {
+						print "<td onMouseOver=\"this.style.cursor = 'pointer'\"; ";
+						print "onClick=\"javascript:kassekladde=window.open('kassekladde.php?kladde_id=$sim_kladde_id[$sim]&returside=../includes/luk.php',";
+						print "'kassekladde','$jsvars')\">$sim_bilag[$sim]</td>";
+					} else print "<td></td>";
+					print "<td>$sim_kontonr[$sim] : $sim_beskrivelse[$sim] (simuleret) </td>";
+					$xmoms=$sim_debet[$sim]-$sim_kredit[$sim];
+					$xMomsSum+=$xmoms;
+					if ($kontovaluta[$x]) {
+						if ($transvaluta[$tr]=='-1') $tmp=0;
+						else $tmp=$sim_debet[$sim]*100/$sim_transkurs[$sim];
+						$title="DKK ".dkdecimal($sim_debet[$sim]*1,2)." Kurs: ".dkdecimal($sim_transkurs[$sim],2);
+					}	else {
+						$tmp=$sim_debet[$sim]-$sim_kredit[$sim];
+						$title=NULL;
+					}
+					$xMomsSum+=$tmp;
+					print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td>";
+					if ($kontovaluta[$x]) {
+						$tmp=$sim_moms[$sim]*100/$sim_transkurs[$sim];
+						$title="DKK ".dkdecimal($sim_kredit[$sim]*1,2)." Kurs: ".dkdecimal($sim_transkurs[$sim],2);
+					}	else {
+						$tmp=$sim_moms[$sim];
+						$title=NULL;
+					}
+					$momsSum+=$tmp;
+					print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td>";
+					$kontosum=$kontosum+afrund($sim_debet[$sim],2)-afrund($sim_kredit[$sim],2);
+					if ($kontovaluta[$x]) {
+						$tmp=$kontosum*100/$sim_transkurs[$sim];
+						$title="DKK ".dkdecimal($kontosum*1,2)." Kurs: ".dkdecimal($sim_transkurs[$sim],2);
+					}	else {
+						$tmp=$kontosum;
+						$title=NULL;
+					}
+					print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td>";
+				}
+			}}
 
 			for ($tr=0;$tr<count($transdate);$tr++) {		
 				($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
-				print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])." $kladde_id[$tr]</td>";
+				print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($transdate[$tr])."</td>";
+				if ($kladde_id[$tr]) {
 				print "<td onMouseOver=\"this.style.cursor = 'pointer'\"; ";
-				print "onClick=\"javascript:kassekladde=window.open('kassekladde.php?id=$kladde_id[$tr]&returside=../includes/luk.php',";
-				print "'kassekladde','$jsvars')\">$bilag[$tr]</td><td>$kontonr[$x] : $beskrivelse[$tr]</td>";
+					print "onClick=\"javascript:kassekladde=window.open('kassekladde.php?kladde_id=$kladde_id[$tr]&returside=../includes/luk.php',";
+					print "'kassekladde','$jsvars')\">$bilag[$tr]</td>";
+				} else print "<td></td>";
+				print "<td>$kontonr[$x] : $beskrivelse[$tr]</td>";
 				fwrite($csv, "\"". dkdato($transdate[$tr]) ."\";\"\";\"". utf8_decode("$kontonr[$x] : $beskrivelse[$tr]"). "\";");
 				$xmoms=$debet[$tr]-$kredit[$tr];
 			$xMomsSum+=$xmoms;
@@ -349,7 +410,8 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 				fwrite($csv, "\"".dkdecimal($xmoms,2)."\";");
 #				$moms=$moms[$tr];
 				if (!$moms[$tr] && $moms[$tr]!='0.000' && $bilag[$tr]&& $kladde_id[$tr]) {
-					$q2=db_select("select * from transaktioner where transdate='$transdate[$tr]' and bilag='$bilag[$tr]' and logdate='$logdate[$tr]' and logtime='$logtime[$tr]'and beskrivelse='$beskrivelse[$tr]' $momsq",__FILE__ . " linje " . __LINE__);
+					$qtxt = "select * from transaktioner where transdate='$transdate[$tr]' and bilag='$bilag[$tr]' and logdate='$logdate[$tr]' and logtime='$logtime[$tr]'and beskrivelse='$beskrivelse[$tr]' $momsq";
+					$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 					while ($r2=db_fetch_array($q2)){
 						$amount=$r2['debet']-$r2['kredit'];
 						for ($i=1;$i<=$momsantal;$i++) {
@@ -365,10 +427,8 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 				$mmoms=$xmoms+$moms[$tr];
 				print "<td align=right>".dkdecimal($mmoms,2)."</td></tr>";
 				fwrite($csv, "\"".dkdecimal($mmoms,2)."\"\n");
-#cho "$kontonr[$x] - $transdate[$tr]<br>";
 				if (in_array($kontonr[$x],$sim_kontonr) && $transdate[$tr]!=$transdate[$tr+1]) {
 					for ($sim=0;$sim<count($sim_kontonr);$sim++) {
-#cho "$kontonr[$x]==$sim_kontonr[$sim] && $transdate[$tr] == $sim_transdate[$sim]<br>";
 						if ($kontonr[$x]==$sim_kontonr[$sim] && $transdate[$tr] == $sim_transdate[$sim]) {
 							print "<tr bgcolor=\"$linjebg\"><td>  ".dkdato($sim_transdate[$sim])." </td><td>$sim_bilag[$sim] </td><td>$sim_kontonr[$sim] : $sim_beskrivelse[$sim] (simuleret) </td>";
 							if ($kontovaluta[$x]) {
@@ -379,6 +439,7 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 								$tmp=$sim_debet[$sim];
 								$title=NULL;
 							}
+							$xMomsSum+=$tmp;
 							print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td>";
 							if ($kontovaluta[$x]) {
 								if ($transvaluta[$tr]=='-1') $tmp=0;
@@ -388,6 +449,7 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 								$tmp=$sim_kredit[$sim];
 								$title=NULL;
 							}
+							$momsSum+=$tmp;
 							print "<td align=\"right\" title=\"$title\">".dkdecimal($tmp,2)."</td>";
 							$kontosum=$kontosum+afrund($sim_debet[$sim],2)-afrund($sim_kredit[$sim],2);
 							if ($kontovaluta[$x]) {
@@ -417,6 +479,13 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 	print "<tr><td colspan=6><hr></td></tr>";
 	print "</tbody></table>";
 	fclose($csv);
+
+	if ($menu=='T') {
+		include_once '../includes/topmenu/footer.php';
+	} else {
+		include_once '../includes/oldDesign/footer.php';
 }
+}
+ 
 #################################################################################################
 ?>

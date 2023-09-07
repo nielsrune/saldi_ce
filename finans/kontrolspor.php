@@ -4,35 +4,36 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------finans/kontrolspor.php-------------lap 3.7.7-----2019-03-15-----
-// LICENS
+// ----------finans/kontrolspor.php-------------lap 4.0.1-----2023-04-21-----
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20160226 PHR Diverse oprydning...
 // 20170424 PHR Medtager nu transaktioner selvom konto mangler i kontoplan.
 // 20170509 PHR Søgning med wildcards i beskrivelse dysfunktionel
 // 20170524 PHR Rettet lidt i CSV.
-// 2019.01.07 MSC Rettet isset fejl og tilpasset topmenu designet
-// 2019.02.07 MSC - Rettet topmenu design til
-// 2019.02.12 MSC - Rettet topmenu design til
-// 2019.03.19	PHR - Changed 'udvaelg' to search in '(debet or kredit)' if both filled.
+// 20190107 MSC Rettet isset fejl og tilpasset topmenu designet
+// 20190207 MSC - Rettet topmenu design til
+// 20190212 MSC - Rettet topmenu design til
+// 20190319	PHR - Changed 'udvaelg' to search in '(debet or kredit)' if both filled.
+// 20210708 LOE - Translated some of these texts from Danish to English and Norsk
+// 20210709 LOE - Bug fixed findtekst function wasn't working here
+// 20210721 LOE - Did translations on title tags
+
 
 ob_start();
 @session_start();
@@ -158,17 +159,14 @@ if (!isset ($projekt_fra)) $projekt_fra = 0;
 if (!isset ($projekt_til)) $projekt_til = 0;
 
 if ($menu=='T') {
-	$leftbutton="<a class='button red small' title=\"Klik her for at komme til forsiden af rapporter\" href=\"rapport.php?rapportart=kontokort&regnaar=$regnaar&dato_fra=$startdato&maaned_fra=$mf&aar_fra=$aar_fra&dato_til=$slutdato&maaned_til=$mt&aar_til=$aar_til&konto_fra=$konto_fra&konto_til=$konto_til&ansat_fra=$ansat_fra&ansat_til=$ansat_til&afd=$afd&projekt_fra=$projekt_fra&projekt_til=$projekt_til\" accesskey=\"L\">Luk</a>";
-	$rightbutton="";
-	include("../includes/top_header.php");
-	include("../includes/top_menu.php");
-	print "<div id=\"header\"> 
-			<div class=\"headerbtnLft\">$leftbutton</div>
-			<span class=\"headerTxt\">Kontrolspor</span>";     
-	print "<div class=\"headerbtnRght\"></div>";       
-	print "</div><!-- end of header -->
-			<div class=\"maincontentLargeHolder\">\n";
-	print  "<table class='dataTable2' border='0' cellspacing='1' width='100%'>";
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=rapport.php accesskey=L title='Klik for at komme tilbage til rapporter'><i class='fa fa-close'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 } elseif ($menu=='S') {
 	include("../includes/sidemenu.php");
 } else {
@@ -177,14 +175,15 @@ print "<tr><td height = 25 align=center valign=top>";
 print "<table width=100% align=center border=0 cellspacing=2 cellpadding=0><tbody>";
 print "<tr>";
 print "<td width=10% $top_bund>";
-	if ($popup) print "<a href=../includes/luk.php accesskey=L>Luk</a></td>";
-	else print "<a href=rapport.php accesskey=L>Luk</a></td>";
-print "<td width=80% $top_bund>Kontrolspor</td>";
+	if ($popup) print "<a href=../includes/luk.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
+	else print "<a href=rapport.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>";
+	print "<td width=80% $top_bund>".findtekst(905,$sprog_id)."</td>";
 	print "<td width=10% $top_bund><a href=kontrolspor.php?csv=1&valg=$valg $hreftext' title=\"".findtekst(505,$sprog_id)."\">CSV</a></td>";
 print "</tr>\n";
 	print "</tbody></table></td></tr>";
+	print "<tr style='height: 10px;'><td>";
 }	
-print "<tr style='height: 10px;'><td><table width=100% align=center border=0 cellspacing=2 cellpadding=0><tbody>";
+print "<table width=100% align=center border=0 cellspacing=2 cellpadding=0 class='dataTable'><tbody>";
 
 print "<form name=transaktionsliste action=kontrolspor.php method=post>";
 if (!$linjeantal) $linjeantal=50;
@@ -195,7 +194,7 @@ if ($start>=$linjeantal) {
 	$tmp=$start-$linjeantal;
 	print "<td width=10%><a href='kontrolspor.php?sort=$sort&start=$tmp'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 } else print  "<td></td>";
-print "<td  width=80% align=center><span title= 'Angiv maksimale antal linjer, som skal vises pr. side'><input class=\"inputbox\" type=text style=\"text-align:right;width:30px\" name=\"linjeantal\" value=\"$linjeantal\"></td>";
+print "<td  width=80% align=center><span title= '".findtekst(1609, $sprog_id)."'><input class=\"inputbox\" type=text style=\"text-align:center;width:100px\" name=\"linjeantal\" value=\"$linjeantal\"></td>";
 $tmp=$start+$linjeantal;
 if ($next>0) {
 	print "<td  width=10% align=\"right\"><a href='kontrolspor.php?sort=$sort&start=$tmp'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
@@ -204,25 +203,25 @@ print "</tr>\n";
 
 print "</tbody></table>";
 print " </td></tr><tr><td align=center valign=top>";
-print "<table cellpadding=1 cellspacing=1 border=0 width=100% valign = top>";
+print "<table cellpadding=1 cellspacing=1 border=0 width=100% valign='top' class='dataTable'>";
 
 print "<tbody>";
 
 
 print "<tr>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=id&sort=$sort&valg=$valg$hreftext'>Id</b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=transdate&sort=$sort&valg=$valg$hreftext'>Dato</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=logdate&sort=$sort&valg=$valg$hreftext'>Log. dato</a></b></td>";
-print "<td align=center><b>Tidspkt.</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=kladde_id&sort=$sort&valg=$valg$hreftext'>Kladde</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=bilag&sort=$sort&valg=$valg$hreftext'>Bilag</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=kontonr&sort=$sort&valg=$valg$hreftext'>Konto</b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=faktura&sort=$sort&valg=$valg$hreftext'>Fakturanr</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=debet&sort=$sort&valg=$valg$hreftext'>Debet</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=kredit&sort=$sort&valg=$valg$hreftext'>Kredit</a></b></td>";
-if($vis_projekt) print "<td align=center><b><a href='kontrolspor.php?nysort=projekt&sort=$sort&valg=$valg$hreftext'>Projekt</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=kasse&sort=$sort&valg=$valg$hreftext'>Kasse</a></b></td>";
-print "<td align=center><b><a href='kontrolspor.php?nysort=beskrivelse&sort=$sort&valg=$valg$hreftext'>S&oslash;getekst</a></b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=id&sort=$sort&valg=$valg$hreftext'>Id</b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=transdate&sort=$sort&valg=$valg$hreftext'>".findtekst(635,$sprog_id)."</a></b></td>"; #20210708
+print "<td align=right><b><a href='kontrolspor.php?nysort=logdate&sort=$sort&valg=$valg$hreftext'>".findtekst(1202,$sprog_id).". ".findtekst(635,$sprog_id)."</a></b></td>";
+print "<td align=right><b>Tidspkt.</a></b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=kladde_id&sort=$sort&valg=$valg$hreftext'>".findtekst(1087,$sprog_id)."</a></b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=bilag&sort=$sort&valg=$valg$hreftext'>".findtekst(671,$sprog_id)."</a></b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=kontonr&sort=$sort&valg=$valg$hreftext'>".findtekst(592,$sprog_id)."</b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=faktura&sort=$sort&valg=$valg$hreftext'>".findtekst(828,$sprog_id)."</a></b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=debet&sort=$sort&valg=$valg$hreftext'>".findtekst(1000,$sprog_id)."</a></b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=kredit&sort=$sort&valg=$valg$hreftext'>".findtekst(1001,$sprog_id)."</a></b></td>";
+if($vis_projekt) print "<td align=right><b><a href='kontrolspor.php?nysort=projekt&sort=$sort&valg=$valg$hreftext'>".findtekst(533,$sprog_id)."</a></b></td>";
+print "<td align=right><b><a href='kontrolspor.php?nysort=kasse&sort=$sort&valg=$valg$hreftext'>".findtekst(931,$sprog_id)."</a></b></td>";
+print "<td align=center><b><a href='kontrolspor.php?nysort=beskrivelse&sort=$sort&valg=$valg$hreftext'>".findtekst(1203,$sprog_id)."</a></b></td>";
 print "</tr>\n";
 
 print "<form name=ordreliste action=kontrolspor.php method=post>";
@@ -232,19 +231,19 @@ print "<input type=hidden name=sort value=\"$sort\">";
 print "<input type=hidden name=kontoid value=\"$kontoid\">";
 print "<input type=hidden name=start value=\"$start\">";
 print "<tr>";
-print "<td align=\"right\"><span title= 'Angiv et id-nummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"idnumre\" value=\"$idnumre\"></td>";
-print "<td align=\"right\"><span title= 'Angiv en dato eller angiv to adskilt af kolon (f.eks 010605:300605)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"transdatoer\" value=\"$transdatoer\"></td>";
-print "<td align=\"right\"><span title= 'Angiv en dato eller angiv to adskilt af kolon (f.eks 010605:300605)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"logdatoer\" value=\"$logdatoer\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et tidspunkt  (f.eks 17:35)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"logtid\" value=\"$logtid\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et kassekladdenummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"kladdenumre\" value=\"$kladdenumre\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et bilagsnummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"bilagsnumre\" value=\"$bilagsnumre\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et kontonummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"kontonumre\" value=\"$kontonumre\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et fakturanummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"fakturanumre\" value=\"$fakturanumre\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et bel&oslash;b eller angiv to adskilt af kolon (f.eks 10000,00:14999,99)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"debetbelob\" value=\"$debetbelob\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et bel&oslash;b eller angiv to adskilt af kolon (f.eks 10000,00:14999,99)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"kreditbelob\" value=\"$kreditbelob\"></td>";
-if ($vis_projekt) print "<td align=\"right\"><span title= 'Angiv et projektnummer eller angiv to adskilt af kolon (f.eks 5:7)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:200px\" name=\"projektnumre\" value=\"$projektnumre\"></td>";
-print "<td align=\"right\"><span title= 'Angiv et kassenummer eller angiv to adskilt af kolon (f.eks 1:3)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"kassenumre\" value=\"$kassenumre\"></td>";
-print "<td><span title= 'Angiv en s&oslash;getekst. Der kan anvendes * f&oslash;r og efter teksten'><input class=\"inputbox\" type=\"text\"  style=\"text-align:left;width:200px\" name=beskrivelse value=\"$beskrivelse\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1610, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"idnumre\" value=\"$idnumre\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1611, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"transdatoer\" value=\"$transdatoer\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1611, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"logdatoer\" value=\"$logdatoer\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1612, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"logtid\" value=\"$logtid\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1613, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"kladdenumre\" value=\"$kladdenumre\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1614, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"bilagsnumre\" value=\"$bilagsnumre\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1615, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"kontonumre\" value=\"$kontonumre\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1616, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"fakturanumre\" value=\"$fakturanumre\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1617, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"debetbelob\" value=\"$debetbelob\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1617, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:80px\" name=\"kreditbelob\" value=\"$kreditbelob\"></td>";
+if ($vis_projekt) print "<td align=\"right\"><span title= '".findtekst(1618, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:200px\" name=\"projektnumre\" value=\"$projektnumre\"></td>";
+print "<td align=\"right\"><span title= '".findtekst(1619, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px\" name=\"kassenumre\" value=\"$kassenumre\"></td>";
+print "<td><span title= '".findtekst(1620, $sprog_id)."'><input class=\"inputbox\" type=\"text\"  style=\"text-align:left;width:100%\" name=beskrivelse value=\"$beskrivelse\"></td>"; #20210721
 print "<td><input class='button green small' type=submit value=\"OK\" name=\"submit\"></td>";
 
 print "</form></tr>\n";
@@ -259,6 +258,7 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 	global $vis_projekt;
 	global $rettigheder;
 	global $csv;
+	global $sprog_id; #20210709
 
 	if ($sort=='id') $sort='transaktioner.id';
 	$ret_projekt=substr($rettigheder,1,1);
@@ -343,6 +343,7 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 	if (!isset ($id)) $id = NULL;
 	$x=0;
 #cho "select transaktioner.*, kontoplan.beskrivelse as kontonavn from transaktioner, kontoplan $udvaelg kontoplan.regnskabsaar='$regnaar' and kontoplan.kontonr = transaktioner.kontonr order by $sort<br>";
+	if(isset($id)){
 	for ($z=0;$z<count($id);$z++) {
 /*
 		if ($beskrivelse && in_array($kontonr[$z],$kpnr)) {
@@ -388,7 +389,9 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 						}
 					}
 				} elseif ($kontonr[$z] && !in_array($kontonr[$z],$kpnr)) {
-					print "<BODY onLoad=\"javascript:alert('Kontroller konto $kontonr[$z]!')\">";
+							$alert= findtekst(1622, $sprog_id);
+							#print "<BODY onLoad=\"javascript:alert('Kontroller konto $kontonr[$z]!')\">";
+							print "<BODY onLoad=\"javascript:alert('$alert $kontonr[$z]!')\">"; #20210721
 				}
 			if (!$csv)	{
 					if ($linjebg!=$bgcolor) {$linjebg=$bgcolor; $color='#000000';}
@@ -414,12 +417,12 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 					if ($kredit[$z]) print "<td align=\"right\"> ".dkdecimal($kredit[$z],2)."<br></td>";
 					else print "<td>&nbsp;</td>";
 					if ($vis_projekt) {
-						($row['projekt'] && $ret_projekt)?$title="Projektnummeret kan rettes ved at klikke her":$title=NULL;
+								($row['projekt'] && $ret_projekt)?$title="".findtekst(1621, $sprog_id)."":$title=NULL;
 						($ret_projekt)?$tmp="<a href=\"../includes/ret_transaktion.php?id=$row[id]&felt=projekt\">$row[projekt]</a>":$tmp=$row['projekt'];
 						print "<td align=\"right\" title=\"$title\">$tmp<br></td>";
 					}
 					print "<td align=\"right\">$kasse[$z]<br></td>";
-					print "<td> &nbsp; $transtxt[$z]<br></td>";
+							print "<td colspan='2'> &nbsp; $transtxt[$z]<br></td>";
 					print "</tr>\n";
 				}
 				}
@@ -429,8 +432,9 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 			}
 		}
 	}
+	}
 	if ($csv && $skriv){ fclose($fp);
-		print "<tr></tr><td></td><tr><td colspan='12' align='center'><a href=\"../temp/$db/kontrolspor.csv\">Klik for at åbne, højreklik fra at gemme</a></td></tr>";
+		print "<tr></tr><td></td><tr><td colspan='12' align='center'><a href=\"../temp/$db/kontrolspor.csv\">".findtekst(1204,$sprog_id)."</a></td></tr>";
 	}
 	
 	if (!isset ($debetsum)) $debetsum = 0;
@@ -438,17 +442,25 @@ function udskriv($idnumre, $bilagsnumre, $kladdenumre, $fakturanumre,$kontonumre
 	if (!isset ($y)) $y = 0;
 
 	if (!$csv && ($debetsum || $kreditsum)) {
-		($vis_projekt)?$colspan=13:$colspan=12;
+		($vis_projekt)?$colspan=14:$colspan=13;
 		print "<tr><td colspan=\"$colspan\"><hr></td></tr>";
-		print "<td colspan=8>Kontrolsum<br></td><td align=\"right\">".dkdecimal($debetsum,2)."<br></td><td align=\"right\">".dkdecimal($kreditsum,2)."<br></td><td><br></td></tr>";
+		print "<td colspan=8><b>".findtekst(1084,$sprog_id).":</b><br></td><td align=\"right\">".dkdecimal($debetsum,2)."<br></td><td align=\"right\">".dkdecimal($kreditsum,2)."<br></td><td><br></td></tr>";
 	}
 
 	return ($y);
 } #endfunction udskriv()
-?>
+print "
 </tbody>
 </table>
 	</td></tr>
 </tbody></table>
+";
 
-</body></html>
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
+?>
+

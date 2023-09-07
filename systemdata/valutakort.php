@@ -1,39 +1,42 @@
 <?php
-// -------------systemdata/valutakort.php ----------- lap 3.6.2 -- 2016.01.16
-// LICENS
+// -- -------------systemdata/valutakort.php----------- ver 4.0.1 -- 2021-08-02 --
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2021 Saldi.DK ApS
 // ----------------------------------------------------------------------------
-// 2013.05.13 - Opdateret liste over valutakoder
+// 20130513 - Opdateret liste over valutakoder
 // 20150313 CA  Topmenudesign tilføjet                             søg 20150313
 // 20150327 CA  Dansk valutakode ændret DKR -> DKK                søg 20150327d
 // 20150327 CA  Valutakoder opdateret fra ISO 4217 samt tilføjet XBT Bitcoin søg 20150327v
 // 20160116	PHR	Kursgevinst / tab bogføres ved kursændringer og kursændringer blokeres hvis der er bogført efter anført dato søg 20160116
-// 2019.02.21 MSC - Rettet topmenu design
-// 2019.02.25 MSC - Rettet topmenu design
+// 20190221 MSC - Rettet topmenu design
+// 20190225 MSC - Rettet topmenu design
+// 20210706 LOE - Translated some  texts
+// 20210708 LOE - Added this variable for javascript dialog box when ret is clicked and also added redirection to ../valuta.php
+// 20210802 LOE - Translated title and alert texts
+// 20220614 MSC - Implementing new design
+
 
 @session_start();
 $s_id=session_id();
 
 $modulnr=2;
-$title="valutakort";
+$title="Valutakort";
 $css="../css/standard.css";
+$disabled = NULL;
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -44,14 +47,18 @@ include("../includes/genberegn.php");
 if ($menu=='T') {  # 20150313 start
         include_once '../includes/top_header.php';
         include_once '../includes/top_menu.php';
-        print "<div id=\"header\">\n";
-        print "<div class=\"headerbtnLft\"></div>\n";
-        print "</div><!-- end of header -->";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=valuta.php accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
         print "<div id=\"leftmenuholder\">";
         include_once 'left_menu.php';
         print "</div><!-- end of leftmenuholder -->\n";
 		print "<div class=\"maincontentLargeHolder\">\n";
-        print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable2\"><tbody>";
+	print "<div class='divSys'>";
+    print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTableSys\"><tbody>";
 } else {
         include("top.php");
         print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
@@ -61,9 +68,10 @@ $bgcolor=NULL; $bgcolor1=NULL; $dato=date("d-m-Y"); $kurs=NULL; $valuta=NULL; $b
 $kodenr=if_isset($_GET['kodenr']);
 $id=if_isset($_GET['id']);
 
+$rettext = findtekst(1207,$sprog_id); #20210708
 
-
-if (isset($_GET['ret'])) print "<BODY onLoad=\"javascript:alert('Ved kursændring skal du ikke rette kursen, men tilføje en ny kurs med angivelse af dato for kursændringen.\\nEllers risikerer du at lave rod i dit regnskab ')\">";
+if (isset($_GET['ret'])) print "<BODY onLoad=\"javascript:alert('$rettext ')\"><meta http-equiv=refresh content=0;url=valuta.php>";
+#print "<meta http-equiv=refresh content=2;url=valutakort.php>";
 
 if (isset($_POST['submit'])) {
 	$dato=addslashes(if_isset($_POST['dato']));
@@ -77,15 +85,21 @@ if (isset($_POST['submit'])) {
 	$r=db_fetch_array(db_select("select max(transdate) as transdate from transaktioner where valuta = '$kodenr'",__FILE__ . " linje " . __LINE__));
 	$transdate=$r['transdate'];
 	if ($ny_valdate <= $transdate) {
-		print "<BODY onLoad=\"javascript:alert('Det er foretaget posteringer i $vauta efter $dato! Kursændring afbrudt')\">";
+    $alert = findtekst(1706, $sprog_id);
+	$alert1 = findtekst(1707, $sprog_id);
+	$alert2 = findtekst(1708, $sprog_id);
+		print "<BODY onLoad=\"javascript:alert('$alert $vauta $alert1 $dato! $alert2')\">";
 		$dato=NULL;
 	}
 	$qtxt="select id from kontoplan where kontonr='$difkto' and kontotype = 'D' and regnskabsaar= '$regnaar'";
 	if (!$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
-		print "<BODY onLoad=\"javascript:alert('Driftkonto $difkto eksisterer ikke')\">";
+		$alert = findtekst(1709, $sprog_id);
+		$alert1 = findtekst(1594, $sprog_id);
+		print "<BODY onLoad=\"javascript:alert('$alert $difkto $alert1')\">";
 		$difkto='';$kodenr=-1;
 	}	
 #cho "$difkto && is_numeric($kodenr) && $dato && $kurs && $dato!=\"-\" && $kurs!=\"-\"<br>";
+	$gl_kurs = 0;
 	if ($difkto && is_numeric($kodenr) && $dato && $kurs && $dato!="-" && $kurs!="-") {
 		if ($id) {
 			$r = db_fetch_array(db_select("select kurs from valuta where id = '$id'",__FILE__ . " linje " . __LINE__));
@@ -94,12 +108,13 @@ if (isset($_POST['submit'])) {
 			$id=$r['id'];
 			$gl_kurs=$r['kurs'];
 		} else {
-			$r = db_fetch_array(db_select("select kurs from valuta where gruppe = '$kodenr' order by valdate desc limit 1",__FILE__ . " linje " . __LINE__));
-			$gl_kurs=$r['kurs'];
+			$qtxt = "select kurs from valuta where gruppe = '$kodenr' order by valdate desc limit 1";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $gl_kurs=$r['kurs'];
 		}
 #cho  "$ny_kurs && $gl_kurs<br>";	
 #cho "RA $regnaar<br>";
 		$x=0;
+		$konto_id = array();
 		$qtxt="select id,kontonr,saldo from kontoplan where valuta = '$kodenr' and regnskabsaar='$regnaar'";
 #cho "$qtxt<br>";
 		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
@@ -110,10 +125,15 @@ if (isset($_POST['submit'])) {
 			$x++;
 		}
 		for ($x=0;$x<count($konto_id);$x++){
-			$r=db_fetch_array(db_select("select max(transdate) as transdate from transaktioner where kontonr = '$kontonr[$x]'",__FILE__ . " linje " . __LINE__));
+			$qtxt = "select max(transdate) as transdate from transaktioner where kontonr = '$kontonr[$x]'";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$transdate=$r['transdate'];
 			if ($ny_valdate <= $transdate) {
-				print "<BODY onLoad=\"javascript:alert('Det er foretaget posteringer på ".$valuta."konto $kontonr[$x] efter $dato! Kursændring afbrudt')\">";
+				$alert = findtekst(1710, $sprog_id);
+				$alert1 = findtekst(592, $sprog_id);
+				$alert2 = findtekst(1707, $sprog_id);
+				$alert3 = findtekst(1708, $sprog_id);
+				print "<BODY onLoad=\"javascript:alert('$alert ".$valuta."$alert1 $kontonr[$x] $alert2 $dato! $alert3')\">";
 				$dato=NULL;
 			}
 		}
@@ -175,8 +195,9 @@ if (isset($_POST['submit'])) {
 					}
 				}
 			}
-			if ($id) db_modify("update valuta set kurs='$ny_kurs', valdate='$ny_valdate' where id = '$id'");
-			else db_modify("insert into valuta(kurs, valdate, gruppe) values('$ny_kurs', '$ny_valdate', '$kodenr')",__FILE__ . " linje " . __LINE__); 
+			if ($id) $qtxt = "update valuta set kurs='$ny_kurs', valdate='$ny_valdate' where id = '$id'";
+			else $qtxt = "insert into valuta(kurs, valdate, gruppe) values('$ny_kurs', '$ny_valdate', '$kodenr')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
 #exit;
 			transaktion('commit');
 		} elseif ($dato && $ny_kurs){ #20160119
@@ -189,24 +210,29 @@ if (isset($_POST['submit'])) {
 	} elseif ($difkto && $kodenr == 'ny') {
 		if ($r = db_fetch_array(db_select("select kodenr from grupper where box1 = '$valuta' and art = 'VK'",__FILE__ . " linje " . __LINE__))) {
 			$kodenr=$r['kodenr'];
-			print "<BODY onLoad=\"javascript:alert('$valuta eksisterer allerede.')\">";
+			$alert = findtekst(1715, $sprog_id);
+			print "<BODY onLoad=\"javascript:alert('$valuta $alert.')\">";
 		}	elseif ($valuta=='DKK') { # 20150327d
 			$kodenr="-1";
-			print "<BODY onLoad=\"javascript:alert('$valuta er reserveret og kan ikke anvendes som valutakode.')\">";
+			$alert2 = findtekst(1716, $sprog_id);
+			print "<BODY onLoad=\"javascript:alert('$valuta $alert2.')\">";
 		}	else {	
-			$r = db_fetch_array(db_select("select kodenr from grupper where art = 'VK' order by kodenr desc",__FILE__ . " linje " . __LINE__));
-			$kodenr=$r['kodenr']+1;
-			db_modify("insert into grupper(art, kodenr, beskrivelse, box1, box3) values('VK', '$kodenr', '$beskrivelse', '$valuta', '$difkto')",__FILE__ . " linje " . __LINE__);
+			$qtxt = "select kodenr from grupper where art = 'VK' order by kodenr desc";
+			($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$kodenr=$r['kodenr']+1:$kodenr=0;
+			$qtxt = "insert into grupper(art, kodenr, beskrivelse, box1, box3) ";
+			$qtxt.= "values ('VK', '$kodenr', '$beskrivelse', '$valuta', '$difkto')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
-	if ($difkto && $r = db_fetch_array(db_select("select kurs from valuta where gruppe = '$kodenr' order by valdate desc",__FILE__ . " linje " . __LINE__))) {
+	$qtxt = "select kurs from valuta where gruppe = '$kodenr' order by valdate desc";
+	if ($difkto && $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 		$kurs=dkdecimal($r['kurs']);	
 		db_modify("update grupper set box2 = '$kurs', box3 = '$difkto' where art = 'VK' and kodenr = '$kodenr'",__FILE__ . " linje " . __LINE__);
 	}
 	$dato="";
 	$kurs="";
 	$id=0;
-	echo "genberegn($regnaar)<br>";
+#	echo "genberegn($regnaar)<br>";
 	genberegn($regnaar) ;
 }
 
@@ -226,24 +252,24 @@ if ($kodenr) {
 	$difkto=$r['box3'];
 
 	print "<tr><td colspan=3 align=center><b> $r[box1] - $r[beskrivelse]</b></td></tr>\n";
-	print "<tr><td title='Den dato kursen er g&aelig;ldende fra'> Dato</td>\n";
-	print "	<td align=center title='V&aelig;rdien i DKK af 100 $valuta'> Kurs</td>\n"; # 20150327d 
-	print "	<td align=center title='Kontonummer fra kontoplanen som skal bruges til valutakursdifferencer og &oslash;reafrunding'> Diff. konto</td>\n";
+	print "<tr><td title='".findtekst(1703, $sprog_id)."'> ".findtekst(635,$sprog_id)."</td>\n"; #20210802
+	print "	<td align=center title='".findtekst(1704, $sprog_id)." $valuta'> ".findtekst(3018,$sprog_id)."</td>\n"; # 20150327d
+	print "	<td align=center title='".findtekst(1705, $sprog_id)."'> ".findtekst(1205,$sprog_id)."</td>\n";
 	print "</tr>\n";
 	print "<form name=valutakort action=valutakort.php?kodenr=$kodenr&id=$id method=post>\n";
 	if ($id) {
 		$r = db_fetch_array(db_select("select * from valuta where id = '$id'"));
 		$dato=dkdato($r['valdate']);
 		$kurs=dkdecimal($r['kurs']);
-		$knaptext="Opdater";
+		$knaptext=findtekst(1091,$sprog_id);
 	} else {
 		$dato=date("d-m-Y");
 		$kurs="";
-		$knaptext="Tilf&oslash;j";
+		$knaptext= findtekst(1175,$sprog_id);
 	}
-	print "<tr><td title='Den dato kursen er g&aelig;ldende fra'><input type=text name=dato size=16 value=$dato></td>\n";
-	print "<td align=right title='V&aelig;rdien i DKK af 100 $valuta'><input type=text name=kurs size=8 value=$kurs></td>\n"; # 20150327d
-	print "	<td align=right title='Kontonummer fra kontoplanen som skal bruges til valutakursdifferencer og &oslash;reafrunding'><input type=text name=difkto size=8 value=$difkto></td>\n";
+	print "<tr><td title='".findtekst(1703, $sprog_id)."'><input type=text name=dato size=16 value=$dato></td>\n";
+	print "<td align=right title='".findtekst(1704, $sprog_id)." $valuta'><input type=text name=kurs size=8 value=$kurs></td>\n"; # 20150327d
+	print "	<td align=right title='".findtekst(1705, $sprog_id)."'><input type=text name=difkto size=8 value=$difkto></td>\n";
 	print "	<td align=center><input type=submit name=submit value=$knaptext></td>\n";
 	print "</tr>\n";
 	print "</form>\n";	
@@ -261,18 +287,20 @@ if ($kodenr) {
 		$dato=dkdato($r['valdate']);
 		print "<td> $dato</td>";
 		print "<td align=\"right\"> $kurs &nbsp;</td>";
-		if ($r['valdate']>=$transdate) print "<td align=\"center\"><a $disabled href=\"valutakort.php?id=$r[id]&kodenr=$kodenr&ret=1\"> Ret</a><br></td>";
+		if ($r['valdate']>=$transdate) print "<td align=\"center\"><a $disabled href=\"valutakort.php?id=$r[id]&kodenr=$kodenr&ret=1\">".findtekst(1206,$sprog_id)." </a><br></td>";
 		print "</tr>";
 	}
 }
 
 function ny_valuta() {
+	global $menu,$sprog_id;
+
 	$isovaluta = array("AED","AFN","ALL","AMD","ANG","AOA","ARS","AUD","AWG","AZN","BAM","BBD","BDT","BGN","BHD","BIF","BMD","BND","BOB","BOV","BRL","BSD","BTN","BWP","BYR","BZD","CAD","CDF","CHE","CHF","CHW","CLF","CLP","CNY","COP","COU","CRC","CUC","CUP","CVE","CZK","DJF","DKK","DOP","DZD","EGP","ERN","ETB","EUR","FJD","FKP","GBP","GEL","GHS","GIP","GMD","GNF","GTQ","GYD","HKD","HNL","HRK","HTG","HUF","IDR","ILS","INR","IQD","IRR","ISK","JMD","JOD","JPY","KES","KGS","KHR","KMF","KPW","KRW","KWD","KYD","KZT","LAK","LBP","LKR","LRD","LSL","LYD","MAD","MDL","MGA","MKD","MMK","MNT","MOP","MRO","MUR","MVR","MWK","MXN","MXV","MYR","MZN","NAD","NGN","NIO","NOK","NPR","NZD","OMR","PAB","PEN","PGK","PHP","PKR","PLN","PYG","QAR","RON","RSD","RUB","RWF","SAR","SBD","SDG","SEK","SGD","SHP","SLL","SOS","SRD","SSP","STD","SYP","SZL","THB","TJS","TMT","TND","TOP","TRY","TTD","TWD","TZS","UAH","UGX","USD","UYU","UZS","VEF","VND","VUV","XAF","XBT","XCD","XOF","XPF","XUA","YER","ZAR","ZMW","ZWL"); # 20150327v
 	
-	$r = db_fetch_array(db_select("select * from grupper where art = 'VK'",__FILE__ . " linje " . __LINE__));
-	$difkto=$r['box3'];
+	$qtxt = "select * from grupper where art = 'VK'";
+	($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$difkto=$r['box3']:$difkto=0;
 	print "<form name=valutakort action=valutakort.php?kodenr=ny method=post>";
-	print "<tr><td>Valutabetegnelse&nbsp;-&nbsp;f.eks.&nbsp;USD</td>";
+	print "<tr><td>".findtekst(1172,$sprog_id)."</td>"; #20210706
 	print "<td><select name=valuta>";
 	$x=0;
 	while ($isovaluta[$x]) {
@@ -280,15 +308,37 @@ function ny_valuta() {
 		$x++;
 	}
 	print "</td></tr>";
-	print "<tr><td>Valutabeskrivelse&nbsp;-&nbsp;f.eks.&nbsp;Amerikanske&nbsp;dollar</td><td><input type=text name=beskrivelse size=30></td></tr>";
-	print "<tr><td>Kontonummer&nbsp;til&nbsp;valutakursdifferencer&nbsp;og&nbsp;&oslash;reafrunding</td><td title='Kontonummer fra kontoplanen som skal bruges til valutakursdifferencer og &oslash;reafrunding'><input type=text name=difkto size=8 value=$difkto></td>";
-	print "<tr><td colspan=2 align=center><input class='button green medium'  type=submit name=submit value=Tilf&oslash;j></td></tr>";
+	print "<tr><td>".findtekst(1173,$sprog_id)."</td><td><input type=text name=beskrivelse size=30></td></tr>";
+	print "<tr><td>".findtekst(1174,$sprog_id)."</td><td title='".findtekst(1705, $sprog_id)."'><input type=text name=difkto size=8 value=$difkto></td>";
+	print "<tr><td colspan=2 align=center><input class='button green medium'  type=submit name=submit value=".findtekst(1175,$sprog_id)."></td></tr>";
 	print "</form>";	
+	print "
+		</tbody>
+		</table>
+		</td></tr>
+		</tbody></table>
+		</div></div>
+		";
+
+	if ($menu=='T') {
+		include_once '../includes/topmenu/footer.php';
+	} else {
+		include_once '../includes/oldDesign/footer.php';
+	}
 	exit;
 }
-?>
+
+print "
 </tbody>
 </table>
 </td></tr>
 </tbody></table>
-</body></html>
+</div></div>
+";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+?>

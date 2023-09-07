@@ -40,7 +40,7 @@ function autoudlign($udlign) {
 	else $periodeslut=usdate($dato_til);
 		
 transaktion('begin');
-		$udlign=$udlign*1;
+		$udlign=(float)$udlign;
 #cho "udlign $udlign<br>";
 		if ($udlign>0) { #sker kun når kontoens saldo er 0
 			db_modify("update openpost set udlignet='0' where udlignet is NULL and konto_id='$udlign'",__FILE__ . " linje " . __LINE__);
@@ -96,7 +96,7 @@ transaktion('begin');
 				$z=0;
 #cho __line__." X $x $qtxt<br>";
 				$q1=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-				if (($r1=db_fetch_array($q1))&&(!in_array($r1[id], $kontrol))) {
+				if (($r1=db_fetch_array($q1))&&(!in_array($r1['id'], $kontrol))) {
 					$z++;
 					$id2=$r1['id'];	
 #cho "ID2 $id2<br>	";

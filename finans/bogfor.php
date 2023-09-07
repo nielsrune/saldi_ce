@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------------finans/bogfor.php------ lap 3.9.8 -- 2020-12-05 -----
+// --------------------finans/bogfor.php------ lap 4.0.8 -- 2023-06-26 -----
 // LICENS
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20121122 - Åbne poster udlignes ikke mere automatisk hvis forskelligt projektnummer. Søg 20121122
 // 20130210 - Break ændret til break 1
@@ -37,13 +37,18 @@
 // 20141128 -	Fejl i kontrolfunktion minus ændret til plus.
 // 20150527	- Som ovenstående minus ændret til plus.
 // 20170516 - Linjer uden indhold i debet og kredit slettes fra kladde ved bøgføring. 20170516
-// 2019.01.16 MSC - Rettet topmenu design til og rettet isset fejl
-// 2019.02.01 MSC - Rettet topmenu design til og gjort bogføring mere overskueligt med ny style.
-// 2019.02.05 MSC - Rettet isset fejl
-// 2019.02.13 MSC - Rettet topmenu design til
-// 2019.03.21 PHR Added call to equalizeMatchingRecords (in 'genberegn.php') to matches open records.
-// 2019.04.26 PHR Added 'genberegn' below includes includes to ensure that values in kontoplan is up to date.
-// 2020.12.05 PHR Added alert for missing account nr in EU VAT
+// 20190116 MSC - Rettet topmenu design til og rettet isset fejl
+// 20190201 MSC - Rettet topmenu design til og gjort bogføring mere overskueligt med ny style.
+// 20190205 MSC - Rettet isset fejl
+// 20190213 MSC - Rettet topmenu design til
+// 20190321 PHR Added call to equalizeMatchingRecords (in 'genberegn.php') to matches open records.
+// 20190426 PHR Added 'genberegn' below includes includes to ensure that values in kontoplan is up to date.
+// 20201205 PHR Added alert for missing account nr in EU VAT
+// 20201205 PHR Lots of cleanup and rewriting of currency diff. handling
+// 20210319 LOE - Translated some of these texts from Danish to English
+// 20221018	PHR - Some cleanup.
+// 20230324	PHR - Correted errors in 'findtekst' (wrong text ID) 
+// 20230626 PHR - Moved this part into 'if ($r = db_fetch_array($q)) {' from below as amount was aligned
 
 @session_start();
 $s_id=session_id();
@@ -96,7 +101,7 @@ if ($funktion=='bogfor') {
 	$overskrift="Bogf&oslash;r kassekladde $kladde_id";
 	$href="<a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>";
 } elseif ($funktion=='simuler') {
-	$overskrift="Simuleret bogf&oslash;ring, kladde $kladde_id";
+	$overskrift="".findtekst(1085,$sprog_id)." ".findtekst(1086,$sprog_id).", ".findtekst(1087,$sprog_id)." $kladde_id"; #20210319
 	$href="<a href=$returside accesskey=L>";
 } else $href="<a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>";
 if ($menu=='T') {
@@ -116,7 +121,7 @@ if ($menu=='T') {
 } else {
 print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$href Luk</a></td>";
+print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$href ".findtekst(30,$sprog_id)."</a></td>";
 print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$overskrift</td>";
 print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\"></a></td>";
 print "</tbody></table>";
@@ -380,13 +385,13 @@ if ($funktion=='bogfor') {
 }
 $d_sum=0; $k_sum=0;
 print "<tr><td align = center valign=\"top\"><table class='dataTable2' border=1 cellspacing=0 cellpadding=0><tbody>";
-print "<tr><td colspan=\"6\" class='tableHeader'><b>Finansbev&aelig;gelser</b></td></tr>
-	<tr><td class='tableText'>$font Konto</td>
-	<td class='tableText'>$font Beskrivelse</td>
-	<td align=\"center\" class='tableText'>$font Saldo</td>
-	<td align=\"center\" class='tableText'>$font Debet</td>
-	<td align=\"center\" class='tableText'>$font Kredit</td>
-	<td align=\"center\" class='tableText'>$font Ny saldo</td></tr>";
+print "<tr><td colspan=\"6\" class='tableHeader'><b>".findtekst(1088,$sprog_id)."</b></td></tr>
+	<tr><td class='tableText'>$font ".findtekst(440,$sprog_id)."</td>
+	<td class='tableText'>$font ".(findtekst(914,$sprog_id))."</td>
+	<td align=\"center\" class='tableText'>$font ".findtekst(1073,$sprog_id)."</td>
+	<td align=\"center\" class='tableText'>$font ".ucfirst(findtekst(1000,$sprog_id))."</td>
+	<td align=\"center\" class='tableText'>$font ".ucfirst(findtekst(1001,$sprog_id))."</td>
+	<td align=\"center\" class='tableText'>$font ".findtekst(39,$sprog_id)." ".lcfirst(findtekst(1073,$sprog_id))."</td></tr>";
 for ($y=0; $y<$kontoantal; $y++) {
 	$d_sum=$d_sum+afrund($kontodebet[$y],2);
 	$k_sum=$k_sum+afrund($kontokredit[$y],2);
@@ -452,7 +457,7 @@ $b=dkdecimal($d_sum);
 $c=dkdecimal($k_sum);
 #cho "VD $valutadiff<br>";
 #cho "($diff==abs($valutadiff))<br>";
-print "<tr><td><br></td><td>$font Kontrolsum</td><td align=right><br></td><td align=right>$font $b</td><td align=right>$font $c</td><td align=right><br></td></tr>";
+print "<tr><td><br></td><td>$font ".findtekst(1084,$sprog_id)."</td><td align=right><br></td><td align=right>$font $b</td><td align=right>$font $c</td><td align=right><br></td></tr>";
 
 # 20131115 ->
 $x=0;
@@ -622,9 +627,9 @@ if (!$fejl) { #20140228
 				}
 			} 
 		}
-		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button green medium' type=submit $onclick accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"bogfor\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"&nbsp;&nbsp;Luk&nbsp;&nbsp;\" name=\"luk\"></td></tr>";
+		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button green medium' type=submit $onclick accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"bogfor\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"".findtekst(30,$sprog_id)."\" name=\"luk\"></td></tr>";
 	} else {
-		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button white medium' type=submit $onclick accesskey=\"b\" value=\"Simuleret bogføring\" name=\"simuler\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"&nbsp;&nbsp;Luk&nbsp;&nbsp;\" name=\"luk\"></td></tr>";
+		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button white medium' type=submit $onclick accesskey=\"b\" value=\"".findtekst(1085,$sprog_id)." ".findtekst(1086,$sprog_id)."\" name=\"simuler\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"".findtekst(30,$sprog_id)."\" name=\"luk\"></td></tr>";
 	}
 	print "</form>";
 }
@@ -652,7 +657,7 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 	}
 	
 	$d_momsart=array(); $k_momsart=array();
-	db_modify("update kladdeliste set kladdenote = '$kladdenote' where id = '$kladde_id'",__FILE__ . " linje " . __LINE__);
+	if ($kladdenote) db_modify("update kladdeliste set kladdenote = '$kladdenote' where id = '$kladde_id'",__FILE__ . " linje " . __LINE__);
 	$y=0;
 	$v_antal=0;
 	$b_diff=0;
@@ -988,7 +993,6 @@ function bogfor($kladde_id,$kladdenote,$simuler) {
 			} 
 		}
 	}
-	
 	if (abs($tjeksum)<=0.01) { # && $transtjek==$transantal){
 		$dato=date("Y-m-d");
 		if ($simuler) {
@@ -1030,30 +1034,56 @@ function openpost($art,$debet,$bilag,$faktura,$amount,$beskrivelse,$transdate,$b
 	$dato=date("Y-m-d");
 	$belob=$amount*-1;
 	$debet=str_replace(" ","",$debet);
-	$query = db_select("select id from adresser where kontonr = '$debet' and art ='$art'",__FILE__ . " linje " . __LINE__);
-	while($row = db_fetch_array($query)){
+	$qtxt = "select id from adresser where kontonr = '$debet' and art ='$art'";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while($row = db_fetch_array($q)){
 		$konto_id=$row['id'];
 		$query = db_select("select MAX(udlign_id) as udlign_id from openpost",__FILE__ . " linje " . __LINE__);
 		if ($row = db_fetch_array($query)) $udlign_id=$row['udlign_id']+1;
 # -> 2009.05.04		
 		$min=$belob-0.005; 
 		$max=$belob+0.005;
+		if (strpos($faktura,";")) {
+			$invoices = explode(';',$faktura);
+		} else $invoices[0] = $faktura; 
+		
 # 20121122 >>and projekt='$projekt'<< indsat herunder.
-		$query = db_select("select id,transdate from openpost where konto_id='$konto_id' and faktnr='$faktura' and projekt='$projekt' and amount >= '$min' and amount < '$max' and udlignet!='1'",__FILE__ . " linje " . __LINE__);
-		if ($row = db_fetch_array($query)) {
-# $udlign_date infort 2011.02.22 -udligningsdato skal altid vaere seneste dato. 
-			$udlign_date=$row['transdate'];
 			if ($udlign_date<$transdate) $udlign_date=$transdate;
-			db_modify("update openpost set udlignet = '1',udlign_date= '$udlign_date',udlign_id='$udlign_id' where id = '$row[id]'",__FILE__ . " linje " . __LINE__);
-			if ($forfaldsdate) db_modify("insert into openpost (konto_id,konto_nr,faktnr,amount,refnr,beskrivelse,udlignet,udlign_date,kladde_id,transdate,udlign_id,bilag_id,valuta,valutakurs,forfaldsdate,betal_id,projekt)values('$konto_id','$debet','$faktura','$amount','$bilag','$beskrivelse','1','$udlign_date','$kladde_id', '$transdate','$udlign_id','$bilag_id','$valuta','$valutakurs','$forfaldsdate','$betal_id','$projekt')",__FILE__ . " linje " . __LINE__);
-			else db_modify("insert into openpost (konto_id,konto_nr,faktnr,amount,refnr,beskrivelse,udlignet,udlign_date,kladde_id,transdate,udlign_id,bilag_id,valuta,valutakurs,projekt)values('$konto_id','$debet','$faktura','$amount','$bilag','$beskrivelse','1','$udlign_date','$kladde_id', '$transdate','$udlign_id','$bilag_id','$valuta','$valutakurs','$projekt')",__FILE__ . " linje " . __LINE__);
+		for ($x=0;$x<count($invoices);$x++) {
+			$qtxt = "select id,transdate from openpost where konto_id='$konto_id' and projekt='$projekt' and udlignet!='1' and ";
+			$qtxt.= " faktnr='$invoices[$x]'";
+			if (count($invoices) == 1) $qtxt.= " and amount >= '$min' and amount < '$max'";  
+			$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+			if ($r = db_fetch_array($q)) {
+# $udlign_date infort 2011.02.22 -udligningsdato skal altid vaere seneste dato. 
+				$udlign_date=$r['transdate'];
+				$qtxt = "update openpost set udlignet = '1',udlign_date= '$udlign_date',udlign_id='$udlign_id' ";
+				$qtxt.= "where id = '$r[id]'";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				// 20230626 -->
+				$qtxt = "insert into openpost
+				(konto_id,konto_nr,faktnr,amount,refnr,beskrivelse,udlignet,udlign_date,kladde_id,";
+				if ($forfaldsdate) $qtxt.= "forfaldsdate,betal_id,";
+				$qtxt.= "transdate,udlign_id,bilag_id,valuta,valutakurs,projekt) "; 
+				$qtxt.= "values ";
+				$qtxt.= "('$konto_id','$debet','$faktura','$amount','$bilag','$beskrivelse','1','$udlign_date','$kladde_id',";
+				if ($forfaldsdate) $qtxt.= "'$forfaldsdate','$betal_id',";
+				$qtxt.= "'$transdate','$udlign_id','$bilag_id','$valuta','$valutakurs','$projekt')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$udlignet=1;
+				// <-- 20230626
+			}
 		}
 	}
 	if ($udlignet<1)	{
 		if ($faktura=="-") $faktura="";
-		if ($forfaldsdate) db_modify("insert into openpost (konto_id,konto_nr,faktnr,amount,refnr,beskrivelse,udlignet,transdate,kladde_id,bilag_id,valuta,valutakurs,forfaldsdate,betal_id,projekt)values('$konto_id','$debet','$faktura','$amount','$bilag','$beskrivelse','0','$transdate','$kladde_id','$bilag_id','$valuta','$valutakurs','$forfaldsdate','$betal_id','$projekt')",__FILE__ . " linje " . __LINE__);
-		else db_modify("insert into openpost (konto_id,konto_nr,faktnr,amount,refnr,beskrivelse,udlignet,transdate,kladde_id,bilag_id,valuta,valutakurs,projekt)values('$konto_id','$debet','$faktura','$amount','$bilag','$beskrivelse','0','$transdate','$kladde_id','$bilag_id','$valuta','$valutakurs','$projekt')",__FILE__ . " linje " . __LINE__);
+		$qtxt = "insert into openpost (konto_id,konto_nr,faktnr,amount,refnr,beskrivelse,udlignet,transdate,kladde_id,";
+		if ($forfaldsdate) $qtxt.= "forfaldsdate,betal_id,";
+		$qtxt.= "bilag_id,valuta,valutakurs,projekt)";
+		$qtxt.= " values ('$konto_id','$debet','$faktura','$amount','$bilag','$beskrivelse','0','$transdate','$kladde_id',";
+		if ($forfaldsdate) $qtxt.= "'$forfaldsdate','$betal_id',";
+		$qtxt.= "'$bilag_id','$valuta','$valutakurs','$projekt')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
 }
 ######################################################################################################################################
@@ -1066,8 +1096,8 @@ function momsberegning($konto,$amount,$momsart,$kontrol) {
 	$nettoamount=$amount;
 	$errorTxt=$moms=$momskto=$modkto=NULL;
 		
-	$a=$momsart[0]; #Foerste tegn i strengen
-	$b=$momsart[1]; #Andet tegn i strengen
+	$a=substr($momsart,0,1); #Foerste tegn i strengen
+	$b=substr($momsart,1,1); #Andet tegn i strengen
 	
 	$r=db_fetch_array(db_select("select moms from kontoplan where kontonr='$konto' and regnskabsaar='$regnaar'",__FILE__ . " linje " . __LINE__));
 	if (trim($r['moms'])) {
@@ -1092,9 +1122,9 @@ function momsberegning($konto,$amount,$momsart,$kontrol) {
 		}
 #Hvis en momspligtig vare koebes i EU beregnes der EU moms. $kontrol er kun sat hvis der er tale om en kreditor
 # og nedenst&aring;ende tr&aelig;der s&aring;ledes ikke i kraft naar der er tale om en finanskonto med EU moms.
-		if ($a && ($a!='E' || $a!='Y') && ($kontrol[0]=='E' || $kontrol[0]=='Y')) {
-			$a=$kontrol[0];	
-			$b=$kontrol[1];
+			if ($a && ($a!='E' || $a!='Y') && (substr($kontrol,0,1)=='E' || substr($kontrol,0,1)=='Y')) {
+				$a=substr($kontrol,0,1);	
+				$b=substr($kontrol,1.1);
 		} 
 		$c=$a.'M';
 			$qtxt = "select box1,box2,box3 from grupper where kode='$a' and kodenr='$b' and art='$c'";
@@ -1108,7 +1138,7 @@ function momsberegning($konto,$amount,$momsart,$kontrol) {
 				$moms=$amount/100*$x;
 					$momskto=trim($r['box3']);
 					$modkto=trim($r['box1']);
-				} elseif ($kontrol[0]=='E' || $kontrol[0]=='Y'){
+				} elseif (substr($kontrol,0,1)=='E' || substr($kontrol,0,1)=='Y'){
 					$momskto=trim($r['box1']);
 					$modkto=trim($r['box1']);
 				$moms=$amount/100*$x;

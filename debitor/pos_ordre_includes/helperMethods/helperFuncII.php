@@ -28,6 +28,7 @@
 // 20200211	PHR	function getUniqueBoxId. Corrected function as it destroyed the global $db var.
 
 function getVatArray($linjeantal, $dkkpris, $vatArray) {
+	$vatRate = array();
 	for($x=1; $x<=$linjeantal; $x++) { # 20190123 LN
 		$price = $dkkpris[$x];
 		$price = floatval(str_replace(',', '.', str_replace('.', '', $price)));

@@ -40,10 +40,10 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 
  if ($_GET) {
-	$id = $_GET['id'];
-	$returside= $_GET['returside'];
-	$fokus = $_GET['fokus'];
-	$konto_id=$_GET['konto_id'];
+	$id        = if_isset($_GET['id']);
+	$returside = if_isset($_GET['returside']);
+	$fokus     = if_isset($_GET['fokus']);
+	$konto_id  = if_isset($_GET['konto_id']);
  }
 if ($_POST) {
 	include("ansatte_save.php");

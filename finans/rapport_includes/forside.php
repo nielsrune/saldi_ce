@@ -350,8 +350,8 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 		print "<tr><td colspan=3 ALIGN=center onClick=\"javascript:provisionsrapport=window.open('provisionsrapport.php','provisionsrapport','scrollbars=1,resizable=1');provisionsrapport.focus();\"><span title='Rapport over medarbejdernes provisionsindtjening'><input class='button blue medium' type=submit value=".findtekst(906,$sprog_id)." name='submit'></span></td></tr>";
 		
 	} else {
-		print "<tr><td colspan=3 ALIGN=center><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value=".findtekst(905,$sprog_id)." name='submit'></span></td></tr>";
-		print "<tr><td colspan=3 ALIGN=center><span title='Rapport over medarbejdernes provisionsindtjening'>  <input class='button blue medium' type=submit value=".findtekst(906,$sprog_id)." name='submit'></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center><span title='Vilk&aring;rlig s&oslash;gning i transaktioner'><input class='button orange medium' type=submit value=".findtekst(905,$sprog_id)." name='kontrolspor'></span></td></tr>";
+		print "<tr><td colspan=3 ALIGN=center><span title='Rapport over medarbejdernes provisionsindtjening'>  <input class='button blue medium' type=submit value=".findtekst(906,$sprog_id)." name='provisionsrapport'></span></td></tr>";
 	} 
 	
 	print "</form>\n";

@@ -4,7 +4,7 @@
 //               \__ \/ ^ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/projekter.php --- lap 3.9.9 --- 2021-02-11 ---
+// --- systemdata/projekter.php --- lap 3.9.9 --- 2023-03-23 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -24,6 +24,7 @@
 // ----------------------------------------------------------------------
 // 20160118 div smårettelser.
 // 20210211 PHR Some cleanup
+// 20230323 PBLM Fixed minor error
 
 @session_start();
 $s_id=session_id();
@@ -146,7 +147,8 @@ function rediger($id) {
 		print "<td><input class=\"inputbox\" type=\"text\" name=\"projektnr[$y]\" style=\"width:$width\" value=\"".mb_substr($projektnr,$pos,$prcfg[$y],$db_encode)."\"></td>";
 		$pos+=$prcfg[$y];
 	}
-	print "<td><input class=\"inputbox\" type=\"text\" name=\"beskrivelse\" style=\"width:200px\" value=\"$beskrivelse\"></td>
+	$new_beskrivelse = if_isset($beskrivelse, 0);
+	print "<td><input class=\"inputbox\" type=\"text\" name=\"beskrivelse\" style=\"width:200px\" value=\"$new_beskrivelse\"></td>
 					<td colspan=\"2\"><input type=submit accesskey=\"g\" value=\"Gem\" name=\"submit\"></td>
 				</tr>\n";
 	print "</form>";

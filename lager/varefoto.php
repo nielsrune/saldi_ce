@@ -1,32 +1,31 @@
 <?php
-// ------------- lager/varefoto.php ---------- ver 3.6.1----2016.01.06-------
-// LICENS
-//		if ($bordnr) $bordnr=$_COOKIE['saldi_bordnr'];
-
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// --- lager/varefoto.php --- ver 3.6.1 --- 2016.01.06 ---
+// LICENSE
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2015-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 @session_start();
 $s_id=session_id();
-
 $modulnr=9;
 $title="Varefoto";
 $css="../css/standard.css";
+
+if (file_exists("../documents/")) $docfolder="../documents/";
+elseif (file_exists("../bilag/")) $docfolder="../bilag/";
+elseif (file_exists($docfolder)) $docfolder=$docfolder;
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -51,6 +50,7 @@ print "</tbody></table>\n";
 print "</td></tr>\n";
 
 if($submit) {
+echo $_FILES['uploadedfile']['name'];
 	if ($fotonavn=db_escape_string(basename($_FILES['uploadedfile']['name']))) {
 		echo "$fotonavn<br>";
 		$filnavn="../temp/".$db."_".str_replace(" ","_",$brugernavn).".csv";
@@ -61,11 +61,11 @@ if($submit) {
 		}
 	}
 } elseif ($sletfoto==1) {
-	if (file_exists("../owncloud/".$db."/varefotos/".$id)) unlink ("../owncloud/".$db."/varefotos/".$id);
+	if (file_exists($docfolder.$db."/varefotos/".$id)) unlink ($docfolder.$db."/varefotos/".$id);
 	db_modify("update varer set fotonavn='' where id='$id'",__FILE__ . " linje " . __LINE__);
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=varefoto.php?id=$id\">";
-} elseif (file_exists("../owncloud/".$db."/varefotos/".$id)) {
-	$fotourl="../owncloud/".$db."/varefotos/".$id;
+} elseif (file_exists($docfolder.$db."/varefotos/".$id)) {
+	$fotourl=$docfolder.$db."/varefotos/".$id;
 	print "<tr><td align=\"center\"><img style=\"border:0px solid;width:100%;\" alt=\"$fotonavn\" src=\"$fotourl\"></td></tr>";
 	print "<tr><td align=\"center\"><a href=\"varefoto.php?id=$id&sletfoto=1\">Slet foto</a></td></tr>";
 } else upload($id);
@@ -88,26 +88,26 @@ function upload($id){
 
 function upload_foto($id,$filnavn,$fotonavn){
 	global $charset;
-	global $db;
+	global $db,$docfolder;
 	global $bruger_id;
 	global $exec_path;
 
 	if (!isset($exec_path)) $exec_path="/usr/bin";
 	
-	if (!file_exists("../owncloud/".$db)) {
-	  mkdir ("../owncloud/".$db,0777);
-	  if (!file_exists("../owncloud/".$db)) {
+	if (!file_exists($docfolder.$db)) {
+	  mkdir ($docfolder.$db,0777);
+	  if (!file_exists($docfolder.$db)) {
 			print tekstboks("Det er sket en fejl, bilag ikke gemt\nRing venligst på 46902208 så problemet kan blive løst");
-			print "<meta http-equiv=\"refresh\" content=\"0;URL=varekort.php?id=$id\">";
+			print "<meta http-equiv=\"refresh\" content=\"3;URL=varekort.php?id=$id\">";
 			exit;
 		}
   }
 	$mappe='varefotos';
-	if (!file_exists("../owncloud/".$db."/".$mappe)) {
-		mkdir ("../owncloud/".$db."/".$mappe,0777);
+	if (!file_exists($docfolder.$db."/".$mappe)) {
+		mkdir ($docfolder.$db."/".$mappe,0777);
 	}
 	$fra=$filnavn;
-	$til="../owncloud/".$db ."/".$mappe ."/".$id;
+	$til = $docfolder.$db ."/".$mappe ."/".$id;
 	rename ($filnavn,$til);
 	echo "flytter '$fra' '$til'<br>";
 	db_modify("update varer set fotonavn='".db_escape_string($fotonavn)."' where id='$id'",__FILE__ . " linje " . __LINE__);

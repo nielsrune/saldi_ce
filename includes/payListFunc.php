@@ -27,7 +27,7 @@
 
 function betalingskontrol($erh,$fra_kto,$egen_ref,$til_kto,$kort_ref,$modt_navn,$belob,$valuta,$betalingsdato) {
 	global $myCtry;
-	
+		if (!$betalingsdato) $betalingsdato = date('dmY');
 		$x=0;
 		$k1[$x]=$k2[$x]=$k3[$x]=$k4[$x]=$k5[$x]=$k6[$x]=$k7[$x]=$k8[$x]=$k9[$x]=NULL;
 
@@ -76,7 +76,6 @@ function betalingskontrol($erh,$fra_kto,$egen_ref,$til_kto,$kort_ref,$modt_navn,
 	if ($dd>$bd) $k8[$x]="Betalingsdato er overskredet";
 	if (!checkdate($md, $dag, $aar)) $k8[$x]="ugyldig dato - skal v&aelig;re i formatet ddmmyyyy";
 	#	echo "$kort_ref,$kommentar -- ";
-
 	return(array($kort_ref,$k1[$x],$k2[$x],$k3[$x],$k4[$x],$k5[$x],$k6[$x],$k7[$x],$k8[$x],$k9[$x]));
 }
 

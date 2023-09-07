@@ -1,6 +1,6 @@
 <?php
 
-// --- kreditor/rapport.php --- patch 4.0.5 --- 2022-01-04 ---
+// --- kreditor/rapport.php --- patch 4.0.5 --- 2023-03-23 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -18,6 +18,8 @@
 //
 // Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
+// 2023.03.23 PBLM Fixed minor errors
+
 
 @session_start();
 $s_id=session_id();
@@ -45,11 +47,13 @@ if (isset($_GET['ny_rykker'])) {
 	openpost($dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, 'K');
 	exit;
 } elseif ($rapportart=if_isset($_GET['rapportart'])) {
-	$dato_fra=$_GET['dato_fra'];
-	$dato_til=$_GET['dato_til'];
-	$konto_fra=$_GET['konto_fra'];
-	$konto_til=$_GET['konto_til'];
-	if ($udlign=$_GET['udlign']) autoudlign($udlign);
+	$dato_fra  = if_isset($_GET['dato_fra'],NULL);
+	$dato_til  = if_isset($_GET['dato_til'],NULL);
+	$konto_fra = if_isset($_GET['konto_fra'],NULL);
+	$konto_til = if_isset($_GET['konto_til'],NULL);
+	$udlign    = if_isset($_GET['udlign'],NULL);
+	if ($udlign) autoudlign($udlign);
+	if ($rapportart == 'accountChart') include ('../includes/reportFunc/accountChart.php');
 	$rapportart($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart, 'K');
 	exit;
 }
@@ -59,10 +63,10 @@ if (isset($_POST['find'])) {
 }
 if (isset($_POST['openpost'])) $rapportart='openpost';
 if (isset($_POST['kontosaldo'])) $rapportart='kontosaldo';
-if (isset($_POST['kontokort'])) $rapportart='kontokort'; 
+if (isset($_POST['accountChart'])) $rapportart='accountChart'; 
 if (isset($_POST['dato'])) {
 	$dato=$_POST['dato'];
-	list($dato_fra,$dato_til)=explode(":",$dato);
+	list($dato_fra,$dato_til)=($dato != 0 ? explode(":",$dato) : 0);
 #	if (!$dato_til) {
 #		$dato_til=$dato_fra;
 #		$dato_fra='010100';
@@ -74,13 +78,13 @@ if (isset($_POST['dato'])) {
 }
 if (isset($_POST['konto'])) {
 	$konto=$_POST['konto'];
-	list($konto_fra,$konto_til)=explode(":",$konto);
+	echo $konto;
+	list($konto_fra,$konto_til)=($konto != "" ? explode(":",$konto) : "");
 	if(is_numeric($konto_fra) && !$konto_til) $konto_til=$konto_fra; 
 # echo "konto $dato | $konto_fra | $konto_til<br>"; 
 }
 
 #echo "R $rapportart<br>";
-
 $husk=if_isset($_POST['husk']);
 if (isset($_POST['salgsstat']) && $_POST['salgsstat']) {
  	if ($husk) db_modify("update grupper set box1='$husk',box2='$dato_fra',box3='$dato_til',box4='$konto_fra',box5='$konto_til',box6='$rapportart' where art='DRV' and kodenr='$bruger_id'",__FILE__ . " linje " . __LINE__);
@@ -110,7 +114,7 @@ if (isset($_POST['submit']) || $rapportart) {
 #	}
 #	if (isset($_POST['regnaar']) && strpos($_POST['regnaar'],"-")) {
 #		list ($regnaar, $firmanavn)= explode("-", $_POST['regnaar']);
-		$firmanavn = trim($firmanavn);
+		$firmanavn = (isset($firmanavn) ? trim($firmanavn) : "");
 #	}
 	if (($submit=="mail kontoudtog")||($submit=="opret rykker")||($submit=="ryk alle")){
 		$kontoantal=$_POST['kontoantal'];
@@ -221,13 +225,13 @@ if (isset($_POST['submit']) || $rapportart) {
 } 
 #if ($dato_fra) $dato_fra=find_maaned_nr($dato_fra); 
 #if ($dato_til) $dato_til=find_maaned_nr($dato_til); 
-
+$submit = if_isset($submit,'forside');
 if (strstr($rapportart, "ben post")) $rapportart="openpost";
 if ($submit != 'ok') $submit='forside';
 elseif ($rapportart) $submit=$rapportart;
 
 #echo "$dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,'K'<br>";
-$submit($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,'K');
+$submit(if_isset($dato_fra), if_isset($dato_til), if_isset($konto_fra), if_isset($konto_til),$rapportart,'K');
 
 ?>
 	

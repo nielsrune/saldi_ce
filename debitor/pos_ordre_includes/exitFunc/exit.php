@@ -28,7 +28,7 @@
 // 20211203 PHR drawer will now remail closed if no cash is involved
 
 
-function afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn) {
+function afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn,$payment_id=null) {
 print "\n<!-- Function afslut (start)-->\n";
 	global $afd;
 	global $betalingsbet,$bruger_id,$brugernavn;
@@ -42,6 +42,11 @@ print "\n<!-- Function afslut (start)-->\n";
 	global $tracelog;
 
 	list($modtaget,$valmodt,$betvaluta,$betvalkurs)=explode(chr(9),posvaluta($modtaget));
+
+	$modtaget  = (float)$modtaget;
+	$modtaget2 = (float)$modtaget2;
+
+
 
 	if ($id && $betaling) {
 		include('../debitor/pos_ordre_includes/voucherFunc/voucherPay.php');
@@ -136,11 +141,14 @@ print "\n<!-- Function afslut (start)-->\n";
 				if (!$printserver) $printserver='localhost';
 				$belob=dkdecimal($amount,2); 
 				$belob=str_replace(".","",$belob);
+
 				if ($_SERVER['HTTPS']) $server='https://';
 				else $server='http://';
+
 				$server.=$_SERVER['SERVER_NAME'];
 				$serverfile=$_SERVER['PHP_SELF'];
 				$url=$server.$serverfile;
+
 				if ($_COOKIE['salditerm']) $terminal_ip=$_COOKIE['salditerm'];
 				#Her skal laves noget javascript hejs til tjek af lokal IP
 				if ($terminal_ip=='box' || $terminal_ip=='saldibox') {
@@ -158,6 +166,23 @@ print "\n<!-- Function afslut (start)-->\n";
 				$qtxt="select max(id) as pos_bet_id from pos_betalinger where ordre_id='$id' and betalingstype='!'";
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
 				$pos_bet_id=$r['pos_bet_id'];
+
+        # Check for flatpay or ip term
+        $qtxt = "SELECT var_value FROM settings WHERE var_name='terminal_type' AND pos_id=$kasse";
+		    $r = db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__)); 
+
+        if ($r[0] == "Flatpay") {
+          $tmp="payments/flatpay.php?amount=$belob&id=$id";
+          setcookie("saldi_bet",$tmp,time()+60*60*24*7);
+          print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">\n";
+          exit;
+        } else if (str_starts_with($r[0], "Vibrant")) {
+          $tmp="payments/vibrant.php?amount=$belob&id=$id";
+          setcookie("saldi_bet",$tmp,time()+60*60*24*7);
+          print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">\n";
+          exit;
+        }
+
 				$tmp="http://$terminal_ip/pointd/kvittering.php?url=$url&server=$server&serverfile=$serverfile&id=$id&db=$db&pos_bet_id=$pos_bet_id&kommando=kortbetaling&belob=$belob&betaling=$betaling&betaling2=$betaling2&modtaget=$modtaget&modtaget2=$modtaget2&indbetaling=$indbetaling&tidspkt=$tidspkt";
 				setcookie("saldi_bet",$tmp,time()+60*60*24*7);
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">\n";

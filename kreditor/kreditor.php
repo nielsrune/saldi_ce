@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------------kreditor/kreditor.php---lap 3.7.2------2018-03-08----
+// ---------------kreditor/kreditor.php---lap 4.0.8------2023-05-22----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -28,7 +28,8 @@
 // 2018.03.08 Indhold kopieret dra debitor/debitor.php og tilrettet til kreditor
 // 20210331 LOE Translated some of these texts to English
 // 20210705 LOE Created switch case function for box6 to translate langue and also reassigned valg variable for creditor
-
+// 20230323 PBLM Fixed minor errors
+// 20230522 PHR php8
 
 
 #ob_start();
@@ -37,8 +38,8 @@ $s_id=session_id();
 
 global $menu;
 
-$check_all=NULL; $ny_sort=NULL;
-$find=array();$dg_id=array();$dg_navn=array();$selectfelter=array();
+$check_all = $ny_sort = $skjul_lukkede = NULL;
+$dg_id = $dg_liste =$dg_navn = $find = $selectfelter=array();
 
 print "
 <script LANGUAGE=\"JavaScript\">
@@ -91,6 +92,7 @@ $jobkort=$r['box7'];
 
  #>>>>>>>>>>>>>>>>>>>>>
  function select_valg( $valg, $box ){ 
+ global $kreditor1, $sprog_id;
 	if ($valg=="$kreditor1") {
 		switch($box){
 			case "box3":
@@ -184,7 +186,9 @@ if (!$r=db_fetch_array(db_select("select id from grupper where art = 'KLV' and k
 
 	$r=db_fetch_array(db_select("select box1,box2,box7,box9,box10,box11 from grupper where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__)); 
 	$dg_liste=explode(chr(9),$r['box1']);
+	if(!empty($r["box2"])){
 	$cat_liste=explode(chr(9),$r['box2']);
+	}
 	$skjul_lukkede=$r['box11'];
 	$linjeantal=$r['box7'];
 	if (!$sort) $sort=$r['box9'];
@@ -246,33 +250,36 @@ print "<table width=100% align=center border=0 cellspacing=2 cellpadding=0><tbod
 print "</tbody></table>";
 print " </td></tr>\n<tr><td align=\"center\" valign=\"top\" width=\"100%\">";
 	}
-
-$r = db_fetch_array(db_select("select box3,box4,box5,box6,box8,box11 from grupper where art = 'KLV' and kodenr = '$bruger_id' and kode='$valg'",__FILE__ . " linje " . __LINE__));
+$vis_felt = array();
+$qtxt = "select box3,box4,box5,box6,box8,box11 from grupper where art = 'KLV' and kodenr = '$bruger_id' and kode='$valg'";
+if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 $vis_felt=explode(chr(9),$r['box3']);
 $feltbredde=explode(chr(9),$r['box4']);
 $justering=explode(chr(9),$r['box5']);
 $feltnavn=explode(chr(9),$r['box6']);
-$vis_feltantal=count($vis_felt);
 $select=explode(chr(9),$r['box8']);
+}
 
 $y=0;
-for ($x=0;$x<=$vis_feltantal;$x++) {
-	
-	if ($select[$x]) {
+for ($x=0;$x<=count($vis_felt);$x++) {
+	if (!empty($select[$x])) {
 		$selectfelter[$y]=$vis_felt[$x];
 		$y++;
 	}
 }
+
 $numfelter=array("rabat","momskonto","kreditmax","betalingsdage","gruppe","kontoansvarlig");
 ####################################################################################
 $udvaelg=NULL;
-$tmp=trim($find[0]);
-for ($x=1;$x<$vis_feltantal;$x++) $tmp=$tmp."\n".trim($find[$x]);
-$tmp=addslashes($tmp);
-db_modify("update grupper set box10='$tmp' where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__);
-
+$tmp=trim(if_isset($find[0],NULL));
+for ($x=1;$x<count($vis_felt);$x++) {
+	$tmp=$tmp."\n".trim(if_isset($find[$x],NULL));
+}
+$tmp=db_escape_string(if_isset($tmp,NULL));
+$qtxt = "update grupper set box10='$tmp' where art = 'KLV' and kode='$valg' and kodenr = '$bruger_id'";
+db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 if ($skjul_lukkede) $udvaelg = " and lukket != 'on'";
-for ($x=0;$x<$vis_feltantal;$x++) {
+for ($x=0;$x<count($vis_felt);$x++) {
 	$find[$x]=addslashes(trim($find[$x]));
 	$tmp=$vis_felt[$x];
 	if ($find[$x] && !in_array($tmp,$numfelter)) {
@@ -296,7 +303,7 @@ if (count($dg_liste)) {
 	$dg_antal=$x;
 }
 
-if (count($cat_liste)) {
+if (isset($cat_liste)) {
 	$r=db_fetch_array(db_select("select box1,box2 from grupper where art='KredInfo'",__FILE__ . " linje " . __LINE__));
 	$cat_id=explode(chr(9),$r['box1']);
 	$cat_beskrivelse=explode(chr(9),$r['box2']);
@@ -324,12 +331,12 @@ if ($start>0) {
 	if (file_exists("rotary_addrsync.php")) print "<a href=\"rotary_addrsync.php\" target=\"blank\" title=\"Klik her for at synkronisere medlemsinfo\">!</a>";
 	print "</td>";
 }
-for ($x=0;$x<$vis_feltantal;$x++) {
+for ($x=0;$x<count($feltnavn);$x++) {
 	if ($feltbredde[$x]) $width="width=$feltbredde[$x]";
 	else $width="";
 	print "<td align=$justering[$x] $width><b><a href='kreditor.php?nysort=$vis_felt[$x]&sort=$sort&valg=$valg'>$feltnavn[$x]</b></td>\n";
 }
-if ($antal>$slut && !$dg_liste[0] && !$cat_liste[0]) {
+if ($antal>$slut && !$dg_liste[0] && !isset($cat_liste[0])) {
 	$nextpil=$start+$linjeantal;
 	print "<td align=right><a href=kreditor.php?start=$nextpil&valg=$valg><img class='imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
 }
@@ -342,11 +349,11 @@ print "<form name=kreditorliste action=kreditor.php method=post>";
 print "<input type=hidden name=valg value=$valg>";
 print "<input type=hidden name=sort value='$ny_sort'>";
 print "<input type=hidden name=nysort value='$sort'>";
-print "<input type=hidden name=kontoid value=$kontoid>";
+print "<input type=hidden name=kontoid value=".if_isset($kontoid, 0).">";
 
-print "<tr><td></td>"; #giver plase til venstrepil v. flere sider
+print "<tr><td></td>"; #giver plads til venstrepil v. flere sider
 if (!$start) {
-	for ($x=0;$x<$vis_feltantal;$x++) {
+	for ($x=0;$x<count($vis_felt);$x++) {
 		$span=''; 
 		print "<td align=$justering[$x]><span title= '$span'>";
 		if ($vis_felt[$x]=="kontoansvarlig") {
@@ -411,7 +418,7 @@ print "</form></tr><td></td>\n";
 }
 ######################################################################################################################
 $udv1=$udvaelg;
-$colspan=$vis_feltantal+1;
+$colspan = count($vis_felt) + 1;
 $dgcount=count($dg_liste);
 (!$dgcount)?$dgcount=1:NULL; 
 for($i=0;$i<$dgcount;$i++) {
@@ -431,10 +438,14 @@ for($i=0;$i<$dgcount;$i++) {
 			} 
 		}	
 	}
+	if(isset($cat_liste)){
 	$catcount=count($cat_liste);
+  }else{
+		$catcount = 0;
+  }
 	(!$catcount)?$catcount=1:NULL; 
 	for($i3=0;$i3<$catcount;$i3++) {
-		if ($cat_liste[$i3]) {
+		if (isset($cat_liste) && $cat_liste[$i3]) {
 			for($i4=0;$i4<=$cat_antal;$i4++	) {
 				if($cat_liste[$i3]==$cat_id[$i4]) {
 					if (!$start && !$lnr) {
@@ -455,16 +466,16 @@ for($i=0;$i<$dgcount;$i++) {
 			}	
 		}
 	
-	if (!$udv2) $udv2=$udv1;	
+	if (!isset($udv2)) $udv2=$udv1;
 	if (!$udv2) $udv2=$udvaelg;	
-
+	$adresseantal = 0;
 	$query = db_select("select * from adresser where art = 'K' $udv2 order by $sortering",__FILE__ . " linje " . __LINE__);
 	while ($row=db_fetch_array($query)) {
 		$kreditorkort="kreditorkort".$row['id'];
 		$lnr++;
 		if(($lnr>=$start && $lnr<$slut) || $udv2) { 
 			$adresseantal++;
-			if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
+			#if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)) {
 #				if ($popup) {
 #					$javascript="onClick=\"javascript:".$valg."kort=window.open('".$valg."kort.php?tjek=$row[id]&id=$row[id]&returside=kreditor.php','$kreditorkort','scrollbars=1,resizable=1');$kreditorkort.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
 #					$understreg='<span style="text-decoration: underline;">';
@@ -475,16 +486,17 @@ for($i=0;$i<$dgcount;$i++) {
 					$hrefslut="</a>";
 #				}
 				$linjetext="";
-			}	else {
+			/*}	
+			else {
 				$javascript="onClick=\"javascript:$kreditorkort.focus();\"";
 				$understreg='';
 				$linjetext="<span title= 'Kortet er l&aring;st af $row[hvem]'>";
-			}
-	if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
+			}*/
+			if (isset($linjebg) && $linjebg!=$bgcolor) {$linjebg=$bgcolor; $color='#000000';}
 	else {$linjebg=$bgcolor5; $color='#000000';}
 			print "<tr bgcolor=\"$linjebg\"><td></td>";
 			print "<td align=$justering[0] $javascript> $linjetext $understreg $row[kontonr]$hrefslut</span><br></td>";
-			for ($x=1;$x<$vis_feltantal;$x++) {
+			for ($x=1;$x<count($vis_felt);$x++) {
 				print "<td align=$justering[$x]>";
 				$tmp=$vis_felt[$x];
 				if ($vis_felt[$x]=='kontoansvarlig') {
@@ -500,7 +512,7 @@ for($i=0;$i<$dgcount;$i++) {
 			}
 			print "<td></td>";
 			print "<input type=hidden name=adresse_id[$adresseantal] value=$row[id]>";
-#			$colspan=$vis_feltantal+2;
+#			$colspan = count($vis_felt) + 2;
 
 #		if ($r=db_fetch_array(db_select("select id from grupper where art = 'KLV' and kode = '$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__))) {
 #			db_modify("update grupper set box1='$kreditorliste' where id='$r[id]'",__FILE__ . " linje " . __LINE__);
@@ -511,9 +523,9 @@ for($i=0;$i<$dgcount;$i++) {
 #$cols--;
 
 print "<tr>";
-if ($prepil || $prepil=='0')	print "<td colspan=$colspan><a href=kreditor.php?start=$prepil&valg=$valg><img class='imgFade' src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+if (isset($prepil))	print "<td colspan=$colspan><a href=kreditor.php?start=$prepil&valg=$valg><img class='imgFade' src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 else print "<td colspan=$colspan></td>";
-if ($nextpil) print "<td align=right><a href=kreditor.php?start=$nextpil&valg=$valg><img class='imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
+if (isset($nextpil)) print "<td align=right><a href=kreditor.php?start=$nextpil&valg=$valg><img class='imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
 else print "<td></td>";
 print "</tr>";
 $colspan++;

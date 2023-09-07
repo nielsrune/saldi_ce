@@ -1,30 +1,31 @@
 <?php
-	@session_start();
-	$s_id=session_id();
-
-// --------------debitor/sync_stamkort.php--------lap 3.2.5-------2011.01.29--------------
-// LICENS
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// --------------debitor/sync_stamkort.php--------lap 5.0.7-------2023.01.23--------------
+// LICENSE
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2004-2011 DANOSOFT ApS
+// Copyright (c) 2008-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
+// 20230123 PHR Replaced addslashes by db_escape_string
 
-
+@session_start();
+$s_id=session_id();
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -35,22 +36,34 @@ $konto_id=if_isset($_GET['konto_id']);
 $retning=if_isset($_GET['retning']);
 
 if ($ordre_id && $konto_id) {
-	if ($retning=='op') $r=db_fetch_array(db_select("select * from ordrer where id='$ordre_id'",__FILE__ . " linje " . __LINE__));
-	else $r=db_fetch_array(db_select("select * from adresser where id='$konto_id'",__FILE__ . " linje " . __LINE__));
-	$firmanavn=addslashes($r['firmanavn']);
-	$addr1=addslashes($r['addr1']);
-	$addr2=addslashes($r['addr2']);
-	$postnr=addslashes($r['postnr']);
-	$bynavn=addslashes($r['bynavn']);
-	$land=addslashes($r['land']);
-	$cvrnr=addslashes($r['cvrnr']);
-	$betalingsbet=addslashes($r['betalingsbet']);
+	if ($retning=='op') $qtxt = "select * from ordrer where id='$ordre_id'";
+	else $qtxt = "select * from adresser where id='$konto_id'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	$firmanavn=db_escape_string($r['firmanavn']);
+	$addr1=db_escape_string($r['addr1']);
+	$addr2=db_escape_string($r['addr2']);
+	$postnr=db_escape_string($r['postnr']);
+	$bynavn=db_escape_string($r['bynavn']);
+	$land=db_escape_string($r['land']);
+	$cvrnr=db_escape_string($r['cvrnr']);
+	$betalingsbet=db_escape_string($r['betalingsbet']);
 	$betalingsdage=$r['betalingsdage']*1;
-	$email=addslashes($r['email']);
-	$ean=addslashes($r['ean']);
-	$institution=addslashes($r['institution']);
-	if ($retning=='op') db_modify("update adresser set firmanavn='$firmanavn',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',land='$land',cvrnr='$cvrnr',betalingsbet='$betalingsbet',betalingsdage='$betalingsdage',email='$email',ean='$ean',institution='$institution' where id='$konto_id'",__FILE__ . " linje " . __LINE__);
-	else db_modify("update ordrer set firmanavn='$firmanavn',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',land='$land',cvrnr='$cvrnr',betalingsbet='$betalingsbet',betalingsdage='$betalingsdage',email='$email',ean='$ean',institution='$institution' where id='$ordre_id'",__FILE__ . " linje " . __LINE__);
+	$email=db_escape_string($r['email']);
+	$ean=db_escape_string($r['ean']);
+	$institution=db_escape_string($r['institution']);
+	if ($retning=='op') {
+		$qtxt = "update adresser set ";
+		$qtxt.= "firmanavn='$firmanavn',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',land='$land',";
+		$qtxt.= "cvrnr='$cvrnr',betalingsbet='$betalingsbet',betalingsdage='$betalingsdage',email='$email',ean='$ean',";
+		$qtxt.= "institution='$institution' where id='$konto_id'";
+	} else {
+		$qtxt = "update ordrer set ";
+		$qtxt.= "firmanavn='$firmanavn',addr1='$addr1',addr2='$addr2',postnr='$postnr',bynavn='$bynavn',land='$land',";
+		$qtxt.= "cvrnr='$cvrnr',betalingsbet='$betalingsbet',betalingsdage='$betalingsdage',email='$email',ean='$ean',";
+		$qtxt.= "institution='$institution' where id='$ordre_id'";
+	}
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	
 }
 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$ordre_id\">";
 

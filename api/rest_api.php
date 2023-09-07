@@ -356,6 +356,7 @@ function insert_shop_order($brugernavn,$shopOrderId,$shop_fakturanr,$shop_addr_i
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$r=db_fetch_array(db_select("select id from adresser where kontonr='$kontonr' and art = 'D'",__FILE__ . " linje " . __LINE__));
 			$saldi_addr_id=$r['id'];
+        		fwrite($log,__line__." saldi_addr_id $saldi_addr_id\n");
 			} 
 			if ($shop_addr_id) {
 			fwrite($log,__line__." insert into shop_adresser(saldi_id,shop_id)values('$saldi_addr_id','$shop_addr_id')\n");
@@ -883,8 +884,9 @@ if (isset($_GET['action'])){# && in_array($_GET['action'], $possible_url)){
 			$addr2=if_isset($_GET['addr2']);
 			$afd=if_isset($_GET['afd'])*1;
 			$betalings_id=if_isset($_GET['betalings_id']);
-			$betalingsbet=if_isset($_GET['betalingsbet']);
-			$betalingsdage=if_isset($_GET['betalingsdage']);
+			$betalingsbet=if_isset($_GET['betalingsbet'],'Kontant');
+			$betalingsdage=if_isset($_GET['betalingsdage'],0);
+			fwrite($log,__line__." betalingsdage $betalingsdage\n");
 			$bynavn=if_isset($_GET['bynavn']);
 			$cvr=if_isset($_GET['cvr']);
 			$firmanavn=if_isset($_GET['firmanavn']);

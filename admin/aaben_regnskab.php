@@ -33,7 +33,7 @@ $s_id=session_id();
 
 $css="../css/standard.css";
 $title="Aaben regnskab";
-$nextver=NULL;
+$nextver= $globalId = NULL;
 		
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -100,7 +100,7 @@ if ($r['id']) {
 		include("../includes/connect.php");
 		if ($a[0] && !$r['global_id']) $qtxt = "update regnskab set global_id = '$a[0]' where id = '$db_id'";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-		include("../includes/include.php");
+		include("../includes/online.php"); 
 	}
 }
 

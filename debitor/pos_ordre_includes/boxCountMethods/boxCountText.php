@@ -4,26 +4,24 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/boxCountMethods/boxCountText.php --- lap 3.7.7 --- 2022.05.24 ---
-// LICENS
+// --- debitor/pos_ordre_includes/boxCountMethods/boxCountText.php --patch 4.0.8 --2023-07-22--------------
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2022 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // LN 20190312 Make functions to count the money in the box
@@ -50,25 +48,27 @@ function myData () {
 
 
 function setPrintHeaderTxt($FromCharset, $ToCharset, $fp, $dd, $tid, $kasse, $brugernavn) {
-		global $languageId;
+		global $sprog_id;
 		$headerTxt = setSpecifiedPrintHeaderTxt();
     $kassopgorelse = $headerTxt['cashStatement'];
     $tmp = iconv($FromCharset, $ToCharset,$kassopgorelse);
     fwrite($fp,"\n\n$tmp\n\n");
-    fwrite($log,"\n\n$tmp\n\n");
+ #   fwrite($log,"\n\n$tmp\n\n");
 		$myData = explode("\t",myData());
-    fwrite($fp,"$myData[0]\n");
-    $txt = Findtekst(48,$languageId);
+    $tmp = iconv($FromCharset, $ToCharset,$myData[0]);
+    fwrite($fp,"$tmp\n");
+    $txt = findtekst(48,$sprog_id);
     while (strlen($txt) < 9) $txt.=' ';
-    fwrite($fp,"$txt : $myData[1]\n");
+    $tmp = iconv($FromCharset, $ToCharset,$myData[1]);
+    fwrite($fp,"$txt : $tmp\n");
     fwrite($fp,"System ID : SaldiPOS $myData[2]\n\n");
     fwrite($fp,"Den $dd kl. $tid\n");
-    fwrite($log,"Den $dd kl. $tid\n");
+ #   fwrite($log,"Den $dd kl. $tid\n");
     fwrite($fp,"$headerTxt[boxNr] $kasse\n");
-    fwrite($log,"$headerTxt[boxNr] $kasse\n");
+ #   fwrite($log,"$headerTxt[boxNr] $kasse\n");
     $tmp = iconv($FromCharset, $ToCharset,$brugernavn);
     fwrite($fp,"$headerTxt[countBy] $tmp\n");
-    fwrite($log,"$headerTxt[countBy] $tmp\n");
+ #   fwrite($log,"$headerTxt[countBy] $tmp\n");
 }
 
 function getSpecifiedSignatureText()

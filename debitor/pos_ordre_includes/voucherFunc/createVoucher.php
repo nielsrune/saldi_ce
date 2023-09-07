@@ -23,7 +23,7 @@
 // Copyright (c) 2021 saldi.dk aps
 // --------------------------------------------------------------------------
 
-if (!function_exists(createVoucher)) {
+if (!function_exists('createVoucher')) {
 function createVoucher($orderLineId) {
 	
 	if (!$printserver) {

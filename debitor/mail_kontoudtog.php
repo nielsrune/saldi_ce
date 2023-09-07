@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/mail_kontoudtog.php --- ver 4.0.5 --- 2022-08-09 --
+// --- debitor/mail_kontoudtog.php --- ver 4.0.7 --- 2022-11-24 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -39,6 +39,7 @@
 // 20210805 LOE Translated texts
 // 20220226 PHR function send_htmlmails, Added: $mail->CharSet = "$charset";
 // 20220809 PHR	Changed if($charset=="UTF-8") to if($charset != "UTF-8") and utf8_decode to utf8_encode
+// 20221124 PHR Changed 'from' address to $db@$_SERVER_NAME  + added $mail->ReturnPath = $afsendermail;
 
 @session_start();
 $s_id=session_id();
@@ -489,14 +490,14 @@ function send_htmlmails($kontoantal, $konto_id, $email, $fra, $til) {
 			} else {
 				$mail->SMTPAuth = false;
 				if (strpos($_SERVER['SERVER_NAME'],'saldi.dk')) { #20121016
-					if ($_SERVER['SERVER_NAME']=='ssl.saldi.dk') $from = $db.'@ssl.saldi.dk'; #20130731
-					elseif ($_SERVER['SERVER_NAME']=='ssl2.saldi.dk') $from = $db.'@ssl2.saldi.dk'; #20130731
-					else $from = 'kanikkebesvares@saldi.dk';
+					$from = $db.'@'.$_SERVER['SERVER_NAME']; #20130731
 					$from=str_replace('bizsys_','post_',$from);
 				}  
 			}
 			$mail->From = $from;
 			$mail->FromName = $afsendernavn;
+			$mail->AddReplyTo($afsendermail,"$afsendernavn");
+			$mail->ReturnPath = $afsendermail;
 			$splitter=NULL;
 			if (strpos($email[$x],";")) $splitter=';';
 			elseif (strpos($email[$x],",")) $splitter=',';
@@ -509,7 +510,6 @@ function send_htmlmails($kontoantal, $konto_id, $email, $fra, $til) {
 			} else $mail->AddAddress($email[$x]); 
 			$mail->AddBCC($afsendermail); 
 			$mail->AddReplyTo($afsendermail,$afsendernavn);
-
 			$mail->WordWrap = 50;                              // set word wrap
 			$mail->AddAttachment("$tmpmappe/$x/kontoudtog.html");      // attachment
 			$mail->IsHTML(true);                               // send as HTML

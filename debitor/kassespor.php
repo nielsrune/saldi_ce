@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/kassespor.php --- lap 4.0.0 --- 2021-03-05 ---
+// --- debitor/kassespor.php --- lap 4.0.8 --- 2023-04-27 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2008-2021 Saldi.dk ApS
+// Copyright (c) 2008-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20141119 PHR Tilføjet summer og bord
 // 20150305 PHR Tilføjet status.
@@ -37,6 +37,7 @@
 // 20200624 PHR Added time as search posibility.
 // 20201024 PHR Added lokk to pos_ordre.
 // 20210305 PHR Added limit 10000 to query.
+// 20230427 PHR Extendet cookie lifetime to 1 year.
 
 ob_start();
 @session_start();
@@ -45,13 +46,13 @@ $title="Kassespor";
 $modulnr=12;
 $css="../css/standard.css";
 $hreftext=0;
-$udskriv=NULL;
-$valg=NULL;
+$udskriv = $valg = NULL;
 
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
+
 
 $status = if_isset($_GET['status']);
 $id = if_isset($_GET['id']);
@@ -99,7 +100,7 @@ if ($submit= if_isset($_POST['submit'])){
 	$linjeantal = if_isset($_POST['linjeantal']);
 
 	$cookievalue="$sort;$nysort;$fakturadatoer;$logtimes;$afdelinger;$sort;$nysort;$idnumre;$fakturanumre;$summer;$betalinger;$betalinger2;$modtagelser;$modtagelser2;$kasser;$refs;$linjeantal;$borde;$status";
-	setcookie("saldi_kassespor", $cookievalue);
+	setcookie("saldi_kassespor", $cookievalue, time()+3600*24*365);
 } else {
 	list ($sort,$nysort,$fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$borde,$status) = array_pad(explode(";", $_COOKIE['saldi_kassespor']),19,NULL);
 	$beskrivelse=str_replace("semikolon",";",$beskrivelse);
@@ -137,7 +138,8 @@ while ($r=db_fetch_array($q)) {
 	}
 }
 $r = db_fetch_array(db_select("select box7 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
-($r['box7'])?$bordnavn=explode(chr(9),$r['box7']):$bordnavn=NULL; #20141119
+($r['box7'])?$bordnavn=explode(chr(9),$r['box7']):$bordnavn=array(); #20141119
+
 if ($menu=='T') {
 	print "<center><table width=75% height=5% border=0 cellspacing=0 cellpadding=0><tbody>";
 } else {
@@ -325,7 +327,6 @@ function udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fa
 
 	$linjebg=NULL;
 	$y=0;
-
 	$sort=str_replace('+',' ',$sort);
 	if ($borde && count($bordnavn)) {
 		for ($x=0;$x<count($bordnavn);$x++) {
@@ -378,6 +379,7 @@ function udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fa
 		$moms[$x]=$r['moms'];
 		$art[$x]=$r['art'];
 		$dkksum[$x]=dkdecimal($sum[$x]+$moms[$x],2);
+		if (!$bord[$x]) $bord[$x] = 0;
 		$x++;
 	}
 	for ($x=0;$x<count($id);$x++) {

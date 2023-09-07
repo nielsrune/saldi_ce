@@ -32,7 +32,7 @@ $bgcolor=NULL; $bgcolor1=NULL; $kurs=NULL;
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/settings.php");
-include("../includes/dkdecimal.php");
+#include("../includes/dkdecimal.php");
 include("../includes/std_func.php");#20210706
 
 if ($menu=='T') {  # 20150313 start

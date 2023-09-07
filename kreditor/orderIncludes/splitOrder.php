@@ -4,10 +4,11 @@ print "splitOrder.php<br>";
 print "<table cellpadding='1' cellspacing='0' bordercolor='#ffffff' border='1' valign = 'top'><tbody>";
 
 $x=0;
+$newOrderId = array();
 $qtxt = "select * from ordrer where konto_id = '$konto_id' and status < '3' and art = 'KO' and id != '$id'";
 $q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r = db_fetch_array($q)) {
-	$newOrderId[$x]=$r['id'];
+	$newOrderId[$x]=if_isset($r['id']);
 	$newOrderNo[$x]=$r['ordrenr'];
 	$newOrderDate[$x]=$r['ordredate'];
 	$x++;

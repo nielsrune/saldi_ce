@@ -58,13 +58,14 @@ while ($r=db_fetch_array($q)) {
 }
 
 #echo "$kladde_id && $modkonto && $fra && $til && $vareprefix && $provision<br>";
-if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
-	$qtxt="select varer.varenr,varer.gruppe,batch_salg.pris,batch_salg.antal,ordrelinjer.momssats,ordrelinjer.momsfri ";
+if ($kladde_id && $fra && $til && $provision && $vareprefix) {
+	$qtxt = "select varer.varenr, varer.gruppe, batch_salg.pris, batch_salg.antal, ";
+	$qtxt.= "ordrelinjer.momssats, ordrelinjer.momsfri, ordrelinjer.kostpris ";
 	$qtxt.="from batch_salg,varer,ordrelinjer ";
-	$qtxt.="where varer.varenr like '".$vareprefix."%' and ordrelinjer.id=batch_salg.linje_id ";
+	$qtxt.= "where varer.varenr like '".$vareprefix."%' and ordrelinjer.id=batch_salg.linje_id and batch_salg.antal != 0 ";
 	if ($varegruppe) $qtxt.="and varer.gruppe='$varegruppe' "; 
 	$qtxt.="and batch_salg.vare_id=varer.id and batch_salg.fakturadate >='".usdate($fra)."' "; 
-	$qtxt.="and batch_salg.fakturadate <='".usdate($til)."' order by varer.gruppe,varer.varenr";
+	$qtxt.="and batch_salg.fakturadate <='".usdate($til)."' order by varer.gruppe,varer.varenr,batch_salg.id";
 	$dd=date("Y-m-d");
 	$x=0;
 	$y=0;
@@ -74,9 +75,12 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 	while ($r=db_fetch_array($q)) {
 		if (in_array($r['varenr'],$varenr)) {
 			$sum[$x]+=$r['antal']*$r['pris'];
+			$cost[$x]+=$r['antal']*$r['kostpris'];
 			$gruppesum[$y]+=$r['antal']*$r['pris'];
+			$costSum[$y]+=$r['antal']*$r['kostpris'];
 			if (!$r['momsfri']) {
 				$sum[$x]+=$r['antal']*$r['pris']*$r['momssats']/100;
+				$cost[$x]+=$r['antal']*$r['kostpris']*$r['momssats']/100;
 				$gruppesum[$y]+=$r['antal']*$r['pris']*$r['momssats']/100;
 			}
 		} else {
@@ -84,38 +88,37 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 			$varenr[$x]=$r['varenr'];
 			$konto[$x]=str_replace($vareprefix,'',$varenr[$x])*1;
 			$sum[$x]=$r['antal']*$r['pris'];
-			if (!$r['momsfri']) $sum[$x]+=$r['antal']*$r['pris']*$r['momssats']/100;
+			$cost[$x]=$r['antal']*$r['kostpris'];
+			if (!$r['momsfri']) {
+				$sum[$x]+=$r['antal']*$r['pris']*$r['momssats']/100;
+				$cost[$x]=$r['antal']*$r['kostpris']*$r['momssats']/100;
+			}
 			$gruppe[$x]=$r['gruppe'];
 			if ($x>1 && $gruppe[$x]!=$gruppe[$x-1]) $y++;
 			$gruppesum[$y]+=$r['antal']*$r['pris'];
-			if (!$r['momsfri']) $gruppesum[$y]+=$r['antal']*$r['pris']*$r['momssats']/100;
+			$costSum[$y]+=$r['antal']*$r['kostpris'];
+			if (!$r['momsfri']) {
+				$gruppesum[$y]+=$r['antal']*$r['pris']*$r['momssats']/100;
+				$costSum[$y]+=$r['antal']*$r['kostpris']*$r['momssats']/100;
+			}
 		}
 	}
 #	if ($x) $gruppesum[$y]+=$sum[$x];
 	$y=0;
 	for ($x=1;$x<=count($varenr);$x++) {
-		$udbetales[$x]=afrund($sum[$x]/100*$kundedel,2);
+		if (is_numeric($provision)) $udbetales[$x]=afrund($sum[$x]/100*$kundedel,2);
+		else $udbetales[$x]=afrund($cost[$x],2);
 		$totalsum+=$udbetales[$x];
 #		$konto=str_replace($vareprefix,'',$varenr[$x]);
 		$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
 		$qtxt.="  values ";
 		$qtxt.="('$bilag','$dd','Afr: $konto[$x] $fra - $til','','0','D','$konto[$x]','','$udbetales[$x]','$kladde_id','0')";
-#cho "$qtxt<br>";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-#		if ($x>1 && $gruppe[$x]!=$gruppe[$x-1]) {
-#			for ($z=0;$z<count($v_gr);$z++) {
-#				if ($v_gr[$z]==$gruppe[$x-1] && $gruppesum[$y]) {
-#					$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
-#					$qtxt.="  values ";
-#					$qtxt.="('$bilag','$dd','$afregning $fra - $til','F','$vg_modkonto[$z],'','0'','','$gruppesum[$y]','$kladde_id','0')";
-#					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-#				}
-#			}
-#		}	
 	}
 	for ($z=0;$z<count($v_gr);$z++) {
 		if ($v_gr[$z]==$gruppe[$x-1] && $gruppesum[$y]) {
-			$gruppesum[$y]=afrund($gruppesum[$y]/100*$kundedel,2);
+			if (is_numeric($provision)) $gruppesum[$y]=afrund($gruppesum[$y]/100*$kundedel,2);
+			else $gruppesum[$y]=afrund($costSum[$y],2);
 			if (abs($gruppesum[$y]-$totalsum) < 0.1) $gruppesum[$y] = $totalsum; #20211020
 			$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
 			$qtxt.="  values ";
@@ -123,15 +126,6 @@ if ($kladde_id && $fra && $til && $vareprefix && $provision && $varegruppe) {
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
-/*	
-	if ($totalsum) {
-		$qtxt="insert into kassekladde (bilag,transdate,beskrivelse,d_type,debet,k_type,kredit,faktura,amount,kladde_id,valuta)";
-		$qtxt.="  values ";
-		$qtxt.="('$bilag','$dd','$afregning $fra - $til','','0','F','$modkonto','','$totalsum','$kladde_id','0')";
-#cho "$qtxt<br>";
-		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-	}
-*/	
 	print count($varenr)." afregninger indsat i kasseklasse!<br><br>";
 	print "<a href='kassekladde.php?kladde_id=$kladde_id'>Tilbage til kassekladde</a>";
 } else {

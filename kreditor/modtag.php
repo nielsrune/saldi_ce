@@ -4,26 +4,23 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------kreditor/modtag.php------- patch 3.7.2 ------- 2018.10.03 -----
-// LICENS
+// --- kreditor/modtag.php --- patch 4.0.7 --- 2022.11.06 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2018 saldi.dk ApS
+// Copyright (c) 2003-2022 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2013.08.30 Fejl v. "interne shops" (Rotary) de der blev forsøgt kald til ikke eksisterende url.Søn 20130830
@@ -35,6 +32,7 @@
 // 20161022 PHR - tilretning iht flere afd pr lager. 20161022
 // 20170123 PHR - Diverse i forhold til varianter
 // 20181003 PHR - Lille udefinerbar rettelse
+// 20221106 PHR - Various changes to fit php8 / MySQLi
 
 @session_start();
 $s_id=session_id();
@@ -112,7 +110,8 @@ if ($fejl==0) {
 			$leveres[$x]=$row['leveres'];
 #			$pris[$x]=$row['pris']-($row['pris']*$row['rabat']/100);
 			$serienr[$x]=trim($row['serienr']);
-			$variant_id[$x]=$row['variant_id']*1;
+			$variant_id[$x]=$row['variant_id'];
+			if (!$variant_id[$x]) $variant_id[$x] = 0; 
 			$lager[$x]=$row['lager']*1;
 			if (!$lager[$x]) $lager[$x]=1;
 		}

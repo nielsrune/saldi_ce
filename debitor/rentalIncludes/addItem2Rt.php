@@ -34,15 +34,19 @@ $editRtName   = if_isset($_GET['editRtName']);
 $addSubItemTo = if_isset($_POST['addSubItemTo']);
 $nextRtId     = if_isset($_POST['nextRtId']);
 
+echo "$addSubItemTo && $subItemId && $nextRtId<br>";
 if (is_numeric($addSubItemTo) && $subItemId) {
 	$qtxt="insert into rentalitems (rt_item_id,item_id,unit,qty) values ('$addSubItemTo','$subItemId','m','1')";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	print "<meta http-equiv=\"refresh\" content=\"0;URL='rental.php?rtItemId=0'\">\n";
 } elseif ($addSubItemTo == 'new' && $nextRtId) {
+echo __line__." $addSubItemTo && $subItemId && $nextRtId<br>";
 	
 	$newRtName ='rental_' . $nextRtId;
 	$qtxt = "insert into settings (var_name,var_grp,var_value,var_description,user_id) values ";
 	$qtxt.= "('$newRtName','rental','". db_escape_string($subItemName) ."','Given header name for rental items','0')"; 
+echo "$qtxt<br>";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 }
 
 $qtxt = "select varenr,beskrivelse from varer where id = '$subItemId'";
@@ -57,6 +61,7 @@ $nextRtId = 0;
 $qtxt = "select * from settings where var_name like 'rental_%' and var_grp = 'rental' order by var_value";
 $q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
+echo "$r[id] | $r[var_name] | $r[var_value]<br>";
 	$rtIds[$x]   = $r['id'];
 	if ($rtIds[$x] >= $nextRtId) $nextRtId = $rtIds[$x]+1;
 	$rtNos[$x]   = str_replace('rental_','',$r['var_name']);
@@ -79,7 +84,7 @@ if (count($rtNames)==0) {
 	$linebg=$bgcolor;
 	print "<center><table>";
 	print "<form name = 'rentalItem' action='rental.php?subItemId=$subItemId&page=rtSettings' method='post'>";
-	print "<tr><td colspan='2' align='center'><input type = 'hidden' name = 'nextRtId' value = 'nextRtId'>";
+	print "<tr><td colspan='2' align='center'><input type = 'hidden' name = 'nextRtId' value = '$nextRtId'>";
 	print "Tilknyt $subItemNo $subtemname til:</tr></td>";
 	print "<tr><td><select name = 'addSubItemTo'>";
 	for ($x=0;$x<count($rtIds);$x++) print "<option value = '$rtNos[$x]'>$rtNames[$x]</option>";

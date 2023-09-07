@@ -1,5 +1,5 @@
 <?php
-// --- kreditor/ordreliste.php --- lap 4.0.4 --- 2014-09-16 ---
+// --- kreditor/ordreliste.php --- lap 4.0.8 --- 2023-04-25 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,11 +15,14 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2014.03.19 addslashes erstattet med db_escape_string
 // 2104.09.16	Tilføjet oioublimport i bunden
 // 20211125 PHR Added 'Skan Bilag'
+// 20220728 MSC - Implementing new design
+// 20221106 PHR - Various changes to fit php8 / MySQLi
+// 20230525 PHR - php8
 
 ob_start();
 @session_start();
@@ -28,7 +31,7 @@ $s_id=session_id();
 $css="../css/std.css";
 $modulnr=5;
 $title="Leverandører • Ordreliste";
-$dk_dg=$firmanavn=$firmanavn_ant=$hurtigfakt=$konto_id=$linjebg=NULL;
+$dk_dg=$firmanavn=$firmanavn_ant=$hrefslut=$hurtigfakt=$konto_id=$linjebg=NULL;
 $checked=$returside=$totalkost=$understreg=$vis_projekt=NULL;
 
 include("../includes/connect.php");
@@ -113,7 +116,7 @@ if ($valg) {
 	$cookievalue="$ordrenumre;$kontonumre;$fakturanumre;$ordredatoer;$lev_datoer;$fakturadatoer;$genfaktdatoer;$summer;$firma;$kontoid;$ref[0];$sort;$valg;$nysort;$modtagelsesnumre";
 	setcookie("kred_ord_lst", $cookievalue);
 }
-else {
+elseif (isset($_COOKIE['kred_ord_lst']) && $_COOKIE['kred_ord_lst']) {
 	list ($ordrenumre, $kontonumre, $fakturanumre, $ordredatoer, $lev_datoer, $fakturadatoer, $genfaktdatoer, $summer, $firma, $kontoid, $ref[0], $sort, $valg, $nysort, $modtagelsesnumre) = explode(";", $_COOKIE['kred_ord_lst']);#
 }
 ob_end_flush();	//Sender det "bufferede" output afsted...
@@ -131,13 +134,13 @@ if ($valg=="forslag") $status="status = 0";
 elseif ($valg=="faktura") $status="status >= 3";
 else $status="status = 1 or status = 2";
 
+$paperflow=NULL;
 $qtxt="select var_value from settings where var_grp='creditor' and var_name='paperflow'";
-$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-($r['var_value'])?$paperflow="checked='checked'":$paperflow=NULL;
+if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $paperflow = $r['var_value'];
+if ($paperflow) $paperflow="checked='checked'";
 
 if (db_fetch_array(db_select("select distinct id from ordrer where (art='DK' or art='KK') and projekt > '0' and $status",__FILE__ . " linje " . __LINE__))) $vis_projekt='on';
 if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '3' and box4='on'",__FILE__ . " linje " . __LINE__))) $hurtigfakt='on';
-
 
 $hreftext="&ordrenumre=$ordrenumre&kontonumre=$kontonumre&fakturanumre=$fakturanumre&ordredatoer=$ordredatoer&lev_datoer=$lev_datoer&fakturadatoer=$fakturadatoer&genfaktdatoer=$genfaktdatoer&summer=$summer&ref=$ref[0]&kontoid=$kontoid&modtagelsesnumre=$modtagelsesnumre";
 #if ($valg!="faktura") print "<meta http-equiv=\"refresh\" content=\"60;URL='ordreliste.php?sort=$sort&valg=$valg$hreftext'\">";
@@ -172,7 +175,7 @@ if ($menu=='T') {
 	print "<div id=\"header\">"; 
 	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
 	print "<div class=\"headerTxt\">$title</div>";     
-	print "<div class=\"headerbtnRght headLink\"><a accesskey=N href='ordre.php?returside=ordreliste.php' title='Opret ny ordre'><i class='fa fa-plus-square'></i></a></div>";     
+	print "<div class=\"headerbtnRght headLink\"><a accesskey=N href='ordre.php?returside=ordreliste.php' title='Opret ny ordre'><i class='fa fa-plus-square fa-lg'></i></a></div>";     
 	print "</div>";
 	print "<div class='content-noside'>";
 } else {
@@ -371,7 +374,9 @@ if ($valg=="forslag") {
 		$sum=$row['sum'];
 		$kostpris=$row['kostpris'];
 		$valutakurs=$row['valutakurs'];
-		if (($tidspkt-($row[tidspkt])>3600)||($row[hvem]==$brugernavn)) {
+		$orderTime  = $row['tidspkt'];
+		if (!$orderTime) $orderTime = 0; 
+		if (($tidspkt-($orderTime)>3600)||($row['hvem']==$brugernavn)){
 			if ($popup) {
 				$javascript="onClick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\" ";
 				$understreg='<span style="text-decoration: underline;">';
@@ -418,14 +423,18 @@ if ($valg=="forslag") {
 	}
 } elseif ($valg=='ordrer') {
 	$ialt=0;
-	if ($hurtigfakt) $query = db_select("select * from ordrer where (art = 'KO' or art = 'KK') and (status < 3) $udvaelg order by $sort",__FILE__ . " linje " . __LINE__);
-	else $query = db_select("select * from ordrer where (art = 'KO' or art = 'KK') and (status = 1 or status = 2) $udvaelg order by $sort",__FILE__ . " linje " . __LINE__);
-	while ($row =db_fetch_array($query)){
+	
+	if ($hurtigfakt) $qtxt = "select * from ordrer where (art = 'KO' or art = 'KK') and (status < 3) $udvaelg order by $sort";
+	else $qtxt = "select * from ordrer where (art = 'KO' or art = 'KK') and (status = 1 or status = 2) $udvaelg order by $sort";
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($row =db_fetch_array($q)){
 		$ordre="ordre".$row['id'];
 		$sum=$row['sum'];
 		$kostpris=$row['kostpris'];
 		$valutakurs=$row['valutakurs'];
-		if (($tidspkt-($row['tidspkt'])>3600)||($row['hvem']==$brugernavn)){
+		$orderTime  = $row['tidspkt'];
+		if (!$orderTime) $orderTime = 0; 
+		if (($tidspkt-($orderTime)>3600)||($row['hvem']==$brugernavn)){
 			if ($popup) {
 				$javascript="onClick=\"javascript:$ordre=window.open('ordre.php?tjek=$row[id]&id=$row[id]&returside=ordreliste.php','$ordre','scrollbars=1,resizable=1');$ordre.focus();\" onMouseOver=\"this.style.cursor = 'pointer'\"";
 				$understreg='<span style="text-decoration: underline;">';
@@ -569,7 +578,8 @@ if ($valg=="forslag") {
 			$sum=$sum*$valutakurs/100;
 		} 
 		$ialt=$ialt+$sum;
-		print "<td align=right>".dkdecimal($sum)."<br></td></tr>\n";
+		print "<td align=right>".dkdecimal($sum)." <br></td>";
+		print "<td></td></tr>\n";
 	}
 	$colspan=12;
 	if ($vis_projekt) $colspan++;

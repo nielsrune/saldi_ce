@@ -37,7 +37,6 @@
 // 20180313	-	PHR Kontoopslag ændret til debitorposlag og kreditoropslag tilføjet.
 // 20181030 CA  Håndtering af gavekort og tilgodebeviser med nummerering # 20181030
 // 20181216 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
-// 20181216 PHR	Tilføjet 'card_enabled' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$card_enabled'
 // 20190107	PHR	Tilføjet systemknapknap til totalrabat Søg totalrabat
 // 20190107 PHR	Tilføjet 'change_cardvalue' på betalingskort (Pos_valg) og mulighed for ændring af rækkefølge. Søg '$change_cardvalue'
 // 20190305	LN Added new button: Z-Rapport
@@ -103,14 +102,27 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 	$terminal_ip=strtolower(trim($tmp[$x]));
 	$tmp=explode(chr(9),$r['box10']); #20140820
 	$koekkenprint=strtolower(trim($tmp[$x]));
-	($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=array(); #20140508
+  if ($r['box7']){
+    $bord=explode(chr(9),$r['box7']);
+  } else {
+    # Select all the tables from the table plan table
+    $qtxt = "select * from table_plan";
+    $q = db_select($qtxt, __FILE__ . " linje " . __LINE__);
+    $x = 0;
+    $bord=array();
+    # Loop over all the tables and add their html
+    while ($r = db_fetch_array($q)) {
+      $bord[$x] = $r["id"];
+      $x++;
+    }
+  }
 
 	if ($varenr_ny && $plads=='H') { #20140702
 		$tmp=strtolower($varenr_ny);
 		$r=db_fetch_array(db_select("select id,folgevare from varer where lower(varenr) = '$tmp' or lower(stregkode) = '$tmp'",__FILE__ . " linje " . __LINE__));
 		$vare_id=$r['id'];
 		if ($r['folgevare']<0) {
-			$menu_id=$r['folgevare']*-1;
+			$menu_id=(int)$r['folgevare']*-1;
 			$folger=$vare_id;
 		} 
 	} elseif ($folger && $plads=='H') {
@@ -139,13 +151,14 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 		if ($afd) $qtxt.=" and (box12='$afd' or box12='') order by box12 desc limit 1";
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$menu_id=$r['kodenr'];
-		if (!$menu_id && $menu_id!='0') { #her tages højde for at slut tidspkt kan være mindre en starttidspkt
+		if (!$menu_id && $menu_id!='0') {  # Her tages højde for at slut tidspkt kan være mindre en starttidspkt
 			$qtxt="select kodenr from grupper where art='POSBUT' and (box7 > box8) and ((box7>='$tid' and box8>='$tid') or (box7<='$tid' and box8<='$tid'))";
 			if ($afd) $qtxt.=" and (box12='$afd' or box12='') order by box12 desc limit 1";
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$menu_id=$r['kodenr'];
 		}
 	}
+  $menu_id = (int)$menu_id;
 	$qtxt="select * from grupper where art='POSBUT' and kodenr='$menu_id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	($r['kode']=='H')?$menu='sidemenu':$menu='bundmenu'; 
@@ -161,8 +174,20 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 	if (!$fontsize) $fontsize=$height*$width/200;
 
 #	$stil="style=\"width:".$width."px;height:".$height."px;text-align:center;font-size:".$fontsize."px; background-color:#$b;\"";
-	$stil="STYLE=\"display: table-cell;moz-border-radius:".$radius."px;-webkit-border-radius:".$radius."px;width:".$width."px;height:".$height."px;";
-	$stil.="text-align:center;vertical-align:middle;font-size:".$fontsize."px;border: 1px solid $bgcolor2;white-space: normal;background-color: $b;\"";
+  $stil="STYLE=\"
+    display: table-cell;
+    moz-border-radius:".$radius."px;
+    -webkit-border-radius:".$radius."px;
+    width:".$width."px;
+    height:".$height."px;";
+  $stil.="
+    text-align:center;
+    vertical-align:middle;
+    font-size:".$fontsize."px;
+    border: 1px solid $bgcolor2;
+    white-space: normal;
+    background-color: $b;
+    setcolor: ;\"";
 	$nostil="STYLE=\"display: table-cell;moz-border-radius:0px;-webkit-border-radius:0px;width:".$width."px;height:".$height."px;text-align:center;";
 	$nostil.="vertical-align:middle;font-size:".$fontsize."px;white-space: normal;border: 0px solid $bgcolor;\"";
 #		background-color: $bgcolor;\"";
@@ -178,6 +203,8 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			$a=str_replace("\n","\n ",$r['beskrivelse']);
 			$b=$r['color'];
+				$b_font=$r['fontcolor'];
+				$knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 			$c=$r['vare_id']*1;
 			$d=$r['funktion']*1;
 			}
@@ -197,6 +224,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					}
 */
 					$knap="<input type=\"button\" $stil value= \"$a\">";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 					$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 
 				}
@@ -246,11 +274,35 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 				  
 				} elseif ($d==6) {
 					if ($c==1) {
+            # Check if the old system is in use.
+            $r=db_fetch_array(db_select("select box7 from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
+            if ($r[0]) {
+              $bord = explode(chr(9), str_replace("\n", "  ", $r[0]));
+            } else {
+              $bord = array();
+            }
+
+            if (count($bord) != 0) {
                         $txt = $buttonTextArr['table'];
 						for ($z=0;$z<count($bord);$z++) {
 							if ($bordnr==$z) $txt=$bord[$z];
 						}
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+            } else {
+              $bordnr=if_isset($_GET['bordnr'], -1);
+              echo "xxx$bordnr";
+              if ($bordnr == -1) {
+                $bordnr=if_isset($_COOKIE["saldi_bordnr"], 1);
+                #echo "SELECT name FROM table_plan ORDER BY id DESC LIMIT 1";
+                #$r=db_fetch_array(db_select("SELECT id FROM table_plan ORDER BY id LIMIT 1",__FILE__ . " linje " . __LINE__));
+                #$bordnr = $r[0];
+              }
+              echo "select name from table_plan where id = $bordnr";
+              $r=db_fetch_array(db_select("select name from table_plan where id = $bordnr",__FILE__ . " linje " . __LINE__));
+              $txt = $r[0];
+            }
+
+
 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"bordvalg\" VALUE=\"$txt\">";
 					} elseif ($c=='2') {
 						$txt=str_replace('$brugernavn',$buttonTextArr['user'],$a);
@@ -276,10 +328,12 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='7') {
                         $txt = $buttonTextArr['boxCount'];
 						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php?id=$id&kasse=$kasse&kassebeholdning=on&bordnr=$bordnr'\" $stil value=\"$txt\">\n";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} elseif ($c=='8') {
 						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php?id=$id&kasse=?&bordnr=$bordnr'\" $stil value=\"Kasse $kasse\">\n";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} elseif ($c=='9' || $c=='23') {
@@ -296,6 +350,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='10') { #Luk
                         $txt = $buttonTextArr['close'];
 						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='../index/menu.php'\" $stil value=\"$txt\">\n";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} elseif ($c=='11') {
@@ -312,6 +367,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						print "<td onclick=\"return confirm('Slet alt og start forfra')\"><INPUT TYPE=\"submit\" $tmp NAME=\"forfra\" VALUE=\"$txt\" OnClick=\"pos_ordre.$fokus.value += 'f';pos_ordre.$fokus.focus();\">\n";
 					} elseif ($c=='14') {
 						$knap="<input $disabled onclick=\"window.location.href='pos_ordre.php?id=$id&skift_bruger=2&brugernavn=$a&bordnr=$bordnr&$menu=$menu_id'\" type=\"button\" $stil value= \"$a\">\n";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 						if (strtolower($brugernavn)==strtolower($a)) $knap=str_replace("background-color: ;","background-color: #00ff00;",$knap);
 						else $knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
@@ -339,6 +395,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='20') {
                         $txt = $buttonTextArr['newCustomer'];
 						$knap="<input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php'\" $stil value=\"$txt\">\n";
+					  $knap=str_replace("newcolor: ;","color: $b_font;",$knap); 
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 						$r = db_fetch_array(db_select("select box13 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
@@ -458,11 +515,13 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='44') {
 						$txt = "Hent bestilling";
 						$knap="<input type=\"submit\" name=\"getOrder\" onclick=\"window.location.href='pos_ordre.php?id=$id&getOrder=true\" $disabled $tmp value=\"$txt\">\n";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} elseif ($c=='45') {
 						$txt = "Gem bestilling";
 						$knap="<input type=\"submit\" name=\"saveOrder\" onclick=\"window.location.href='pos_ordre.php?id=$id&saveOrder=true\" $disabled $tmp value=\"$txt\">\n";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 					} else {
@@ -473,7 +532,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						else $knap=str_replace("type=\"button\"",$tmp,$knap);
 						print "<td>".$knap;
 					}
-				} elseif ($d==7) {
+				} elseif ($d==7) { #PaymentOption
 					$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 					(((!$id && !$varenr_ny) || $betalingsbet!='Kontant') && !$indbetaling)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp; #20160927 $kontonr rettet til $betalingsbet.:: 20161006
 					if ($a=='Kontant') {
@@ -494,7 +553,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						#if ($betvaluta && $betvaluta!='DKK') $tmp2="disabled=\"disabled\" ".$tmp;
 						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" OnClick=\"pos_ordre.$fokus.value += 'd';pos_ordre.$fokus.focus();\">\n"; #20160418
 					}
-				} elseif ($d==8) {
+			    } elseif ($d==8) { #Valuta / Currency
 					$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
 					(((!$id && !$varenr_ny) || !$sum || $kontonr) && !$indbetaling)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp;
 						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp2 NAME=\"betvaluta\" VALUE=\"$a\"></TD>\n";
@@ -517,10 +576,10 @@ function systemknap($system_id) {
 	if ($system_id==2) {
 		$href="pos_ordre.php?id=$id&skift_bruger=1&bordnr=$bordnr";
 		$return="onclick=\"window.location.href='$href'\"";
-	} elseif ($system_id==7) {
+	} elseif ($system_id==7) { #PaymentCard
 		$href="pos_ordre.php?id=$id&kasse=$kasse&kassebeholdning=on&bordnr=$bordnr";
 		$return="onclick=\"window.location.href='$href'\"";
-	} elseif ($system_id==8) {
+	} elseif ($system_id==8) { #Valuta
 		$tmp='Bord';
 		for ($x=0;$x<count($bord);$x++) {
 			if ($bordnr==$x) $tmp=$bord[$x]; 
@@ -574,12 +633,23 @@ function tastatur($kasse,$status) {
 	$terminal_ip=strtolower(trim($tmp[$x]));
 	$tmp=explode(chr(9),$r['box10']); #20140820
 	$koekkenprint=strtolower(trim($tmp[$x]));
-	($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=NULL; #20140508
+  $bord = array();
+	($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=array(); #20140508
+	$b=0;
+	if (!count($bord)) {
+		$qtxt = "select id from table_plan where type = 'table'";
+		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		while ($r = db_fetch_array($q)) {
+			$bord[$b] = $r['id'];
+			$b++;
+		}
+	}
 
 	($vare_id && $vare_id_ny)?$disabled="disabled=\"disabled\"":$disabled=NULL; 
 
 	$stil=find_stil('knap',1,0.7);
 	if (isset($a)) $knap="<input type=\"button\" $stil value= \"$a\">\n";
+					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 	
 	if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']) $url='https://';
 	else $url='http://';

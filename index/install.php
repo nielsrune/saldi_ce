@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//------------index/install.php----lap 4.0.5---2022-08-23---
+//------------index/install.php----lap 4.0.7---2022-11-06---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -29,7 +29,8 @@
 // 20210125 PHR Added table mysale
 // 20211013 PHR Added colunm language_id to online.
 // 20220207 PHR Changed varchar size in 'regnskab'
-// 20220823 PHR Changer email to varchar(60) in 'regnskab'
+// 20220823 PHR Changed email to varchar(60) in 'regnskab'
+// 20221106 PHR - Various changes to fit php8 / MySQLi
 
 session_start();
 ob_start(); //Starter output buffering
@@ -37,7 +38,7 @@ ob_start(); //Starter output buffering
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-	<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+	<meta content="text/html; charset=UTF-8" http-equiv="content-type">
 	<title>SALDI - det frie danske finansprogram</title>
 <?php
 if (file_exists("../includes/connect.php")) {
@@ -172,6 +173,7 @@ if (isset($_POST['opret'])){
 	$tempdb="template0";
 
 	if ($db_type=="mysqli") {
+		echo "$host , $db_bruger' '$db_password<br>";
 		$connection = db_connect ("$host", "$db_bruger", "$db_password");
 	} else {
 		$connection = db_connect ("$host", "$db_bruger", "$db_password", "template1");
@@ -181,18 +183,21 @@ if (isset($_POST['opret'])){
 		if ($db_type=="mysqli") die( "Kan ikke oprette forbindelse til MySQLi\n");
 		else die( "Kan ikke oprette forbindelse til PostgreSQL\n");
 	}
+
+	if ($db_type=="mysqli") {
+		$qtxt = "CREATE DATABASE if not exists $db_navn";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		mysqli_select_db($connection,$db_navn);
+	} else {
 	if (db_exists($db_navn)) {
 		$txt="$db_type databasen $db_navn eksisterer i forvejen";
 		alert($txt);
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=install.php\">";
 		exit;
 	}
-	if ($db_type=="mysqli") {
-		db_modify("CREATE DATABASE $db_navn",__FILE__ . " linje " . __LINE__);
-		mysqli_select_db($connection,$db_navn);
-	} else {
-		if ($db_encode=="UTF8") db_modify("CREATE DATABASE $db_navn encoding = 'UTF8' template $tempdb",__FILE__ . " linje " . __LINE__);
-		else db_modify("CREATE DATABASE $db_navn encoding = 'LATIN9' template $tempdb",__FILE__ . " linje " . __LINE__);
+		if ($db_encode=="UTF8") $qtxt = "CREATE DATABASE $db_navn encoding = 'UTF8' template $tempdb";
+		else $qtxt = "CREATE DATABASE $db_navn encoding = 'LATIN9' template $tempdb";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		db_close($connection);
 		$connection = db_connect ("$host", "$db_bruger", "$db_password", "$db_navn");
 	}

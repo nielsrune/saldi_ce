@@ -6,7 +6,7 @@ $s_id=session_id();
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------------kreditor/bogfor.php-------lap 3.9.2----2020-06-21--
+// --- kreditor/bogfor.php --- lap 4.0.8 --- 2023-08-24 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -22,7 +22,7 @@ $s_id=session_id();
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 Saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // -------------------------------------------------------------------------
 //
 // 2013.11.08 Fejl v. fifo og varetilgang på varekøb.Søg #20131108
@@ -34,19 +34,28 @@ $s_id=session_id();
 // 2017.04.04	PHR - Straksbogfør skelner nu mellem debitor og kreditorordrer. Dvs debitor;kreditor - Søg # 20170404
 // 2017.10.26	PHR Udkommenteret 4 linjer da lagerførte varer fra udland blev bogført på varekøb DK
 // 2020.06.21 PHR adresser.invoiced is updated when order is invoiced.  
+// 20221106 PHR - Various changes to fit php8 / MySQLi
+// 20230616 PHR - php8
+// 20230626 PHR - Outcommented section as it is overloading the system and I don't think it is neccesary.
+// 20230824	PHR - Added call to productsIncludes & updateProductPrice. 
+
 
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 
+$afd = 0;
+
 $id=$_GET['id'];
 
-$query = db_select("select levdate, status from ordrer where id = $id",__FILE__ . " linje " . __LINE__);
-$row = db_fetch_array($query);
-if ($row[status]>2){
+$qtxt = "select levdate, status from ordrer where id = '$id'";
+if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+	$status = $r['status'];
+	if ($status > 2) { 
 	print "Hmmm - har du brugt browserens opdater eller tilbageknap???";
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 	exit;
+}
 }
 
 $query = db_select("select box1, box2, box3, box4 from grupper where art='RA' and kodenr='$regnaar'",__FILE__ . " linje " . __LINE__);
@@ -201,7 +210,7 @@ if (!$row['levdate']){
 						$query = db_select("select * from batch_kob where linje_id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
 						while ($row = db_fetch_array($query)) { # if ændret til while grundet fejl ved meotagelse af flere omgange på samme ordrelinje 2012.04.18 saldi_2 ordre id 4226
 							$batch_id=$row['id']*1;
-						# Herunder IS NOT indsat 20100811 da lgerværdi kun skal reguleres hvis varen er solgt (faktureret). 
+						# Herunder IS NOT indsat 20100811 da lagerværdi kun skal reguleres hvis varen er solgt (faktureret).
 #cho "B select linje_id from batch_salg where batch_kob_id=$batch_id and fakturadate is not NULL<br>";
 						$q2 = db_select("select linje_id from batch_salg where batch_kob_id=$batch_id and fakturadate is not NULL",__FILE__ . " linje " . __LINE__);
 							while ($r2 = db_fetch_array($q2)) { #Kun aktuel hvis batch_kontrol er aktiv.
@@ -233,19 +242,21 @@ if (!$row['levdate']){
 #xit;
 #cho "F update batch_kob set pris = '$dkpris[$x]', fakturadate='$levdate' where linje_id=$linje_id[$x]<br>";
 							db_modify("update batch_kob set pris = '$dkpris[$x]', fakturadate='$levdate' where linje_id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
+/* 20230626 Outcommented this as it is overloading the system and I don't think it is neccesary.
 #cho "G select id from batch_kob where linje_id=$linje_id[$x]<br>";
 							$q2 = db_select("select id from batch_kob where linje_id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
 							while ($r2 = db_fetch_array($q2)) {
-								$tmp=$r['id']*1;
+								($r2['id'])?$tmp=$r2['id']:$tmp=0;
 									if ($tmp) {
 #cho "H select linje_id from batch_salg where batch_kob_id=$tmp<br>";
-									$q3 = db_select("select linje_id from batch_salg where batch_kob_id=$tmp",__FILE__ . " linje " . __LINE__);
+##									$q3 = db_select("select linje_id from batch_salg where batch_kob_id=$tmp",__FILE__ . " linje " . __LINE__);
 									while ($r3 = db_fetch_array($q3)) {
 #cho "I update ordrelinjer set kostpris = '$dkpris[$x]' where id=$r3[linje_id]<br>";
 										db_modify("update ordrelinjer set kostpris = '$dkpris[$x]' where id=$r3[linje_id]",__FILE__ . " linje " . __LINE__);
 									}
 								}
 							}
+*/
 						}
 						if ($fifo) {
 								$bogf_beh=0;
@@ -254,15 +265,14 @@ if (!$row['levdate']){
 								if ($r['fakturadate']) $bogf_beh+=$r['rest'];
 							}
 							if ($bogf_beh>0 && $kostmetode=='1') {
-								echo "G $gl_kostpris[$x]<br>";
 								$ny_kostpris=($bogf_beh*$gl_kostpris[$x]+$antal[$x]*$snitpris[$x])/($bogf_beh+$antal[$x]);
 							} else $ny_kostpris=$snitpris[$x];
 							#cho "select id from batch_kob where vare_id=$vare_id[$x] and fakturadate>'$levdate'<br>";
 /*
 							if (!db_fetch_array(db_select("select id from batch_kob where vare_id=$vare_id[$x] and fakturadate>'$levdate'",__FILE__ . " linje " . __LINE__))){
-echo "update varer set kostpris='$ny_kostpris' where id='$vare_id[$x]'<br>";
+#cho "update varer set kostpris='$ny_kostpris' where id='$vare_id[$x]'<br>";
 								db_modify("update varer set kostpris='$ny_kostpris' where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
-echo "update vare_lev set kostpris='$dkpris[$x]' where vare_id='$vare_id[$x]' and lev_id='$konto_id'<br>";
+#cho "update vare_lev set kostpris='$dkpris[$x]' where vare_id='$vare_id[$x]' and lev_id='$konto_id'<br>";
 								db_modify("update vare_lev set kostpris='$dkpris[$x]' where vare_id='$vare_id[$x]' and lev_id='$konto_id'",__FILE__ . " linje " . __LINE__);
 							}
 */							
@@ -285,15 +295,11 @@ echo "update vare_lev set kostpris='$dkpris[$x]' where vare_id='$vare_id[$x]' an
 						else $ny_kostpris=$snitpris[$x];
 						if ($kostmetode) {
 							if ($ny_kostpris!=$gl_kostpris[$x]) {
-								$qtxt=NULL;	
-								$r=db_fetch_array(db_select("select id,kostpris,transdate from kostpriser where id='$vare_id[$x]' order by transdate desc limit 1",__FILE__ . " linje " . __LINE__));
-								if ($r['transdate'] != $levdate && $r['kostpris'] != $dkpris[$x]) $qtxt="insert into kostpriser (vare_id,kostpris,transdate) values ('$vare_id[$x]','$dkpris[$x]','$levdate')";
-								elseif ($r['transdate'] == $levdate && $r['kostpris'] != $dkpris[$x]) $qtxt="update kostpriser set kostpris='$dkpris[$x]' where id = '$r[id]'";
-								if ($qtxt) db_modify("$qtxt",__FILE__ . " linje " . __LINE__);
-								db_modify("update varer set kostpris='$snitpris[$x]' where id='$vare_id[$x]'",__FILE__ . " linje " . __LINE__);
+								include_once("../lager/productsIncludes/updateProductPrice.php");
+								updateProductPrice($vare_id[$x],$ny_kostpris,$levdate);
 							}
 						}	
-						echo "update vare_lev set kostpris='$snitpris[$x]' where vare_id='$vare_id[$x]' and lev_id='$konto_id'<br>";
+#						#cho "update vare_lev set kostpris='$snitpris[$x]' where vare_id='$vare_id[$x]' and lev_id='$konto_id'<br>";
 						db_modify("update vare_lev set kostpris='$snitpris[$x]' where vare_id='$vare_id[$x]' and lev_id='$konto_id'",__FILE__ . " linje " . __LINE__);
 					} else {
 						$kred_linje_id[$x]=$kred_linje_id[$x]*1; # patch 2.0.2a
@@ -345,18 +351,13 @@ echo "update vare_lev set kostpris='$dkpris[$x]' where vare_id='$vare_id[$x]' an
 print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";
 
 function bogfor($id) {
-	global $regnaar;
-	global $valuta;
-	global $valutakurs;
+	
 	global $difkto;
+	global $regnaar;
 	global $sprog_id;
+	global $valuta, $valutakurs;
 	
-	$d_kontrol=0; 
-	$k_kontrol=0;
-	
-	$linjesum=0;
-	$fakturasum=0;
-	$momssum=0;
+	$afd=$ansat=$d_kontrol=$k_kontrol=$linjesum=$fakturasum=$momssum=$smoms=0;
 	
 	$logdate=date("Y-m-d");
 	$logtime=date("H:i");
@@ -390,9 +391,13 @@ function bogfor($id) {
 		$sum=$r['sum'];
 		$omlev=$r['omvbet'];
 		$ordreantal=$x;
-		if ($r= db_fetch_array(db_select("select afd from ansatte where navn = '$r[ref]'",__FILE__ . " linje " . __LINE__))) {$afd=$r['afd'];}
-		$afd=$afd*1; #sikkerhed for at 'afd' har en vaerdi 
-		$ansat=$r['id']*1;
+		$qtxt = "select id,afd from ansatte where navn = '$r[ref]'";
+		if ($r= db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			$afd=$r['afd'];
+			$ansat=$r['id'];
+		}
+		if (!$afd) $afd=0; #sikkerhed for at 'afd' har en vaerdi 
+		if (!$ansat) $$ansat=0;
 		if ($no_faktbill==1) $bilag='0';
 		else $bilag=trim($fakturanr);
 		$r = db_fetch_array(db_select("select gruppe from adresser where id='$konto_id'",__FILE__ . " linje " . __LINE__));
@@ -491,8 +496,9 @@ function bogfor($id) {
 			}
 		}
 		$r = db_fetch_array(db_select("select gruppe from adresser where id='$konto_id'",__FILE__ . " linje " . __LINE__));
-		$r = db_fetch_array(db_select("select box1,box6 from grupper where art='KG' and kodenr='$r[gruppe]'",__FILE__ . " linje " . __LINE__));
-		$box1=substr(trim($r['box1']),1,1);
+		$qtxt = "select box1,box6 from grupper where art='KG' and kodenr='". (int)$r['gruppe'] ."'";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$box1=(int)substr(trim($r['box1']),1,1);
 		$smomsnr=substr(trim($r['box6']),1,1);
 		if (!$box1)$moms=0;
 

@@ -33,7 +33,7 @@ $top=$txt='';
 $cols=$rows=1;
 $txtlen=100;
 $endbottom=$endtop=0;
-$ip=NULL;
+$createdate=$ip=$ipLine=NULL;
 for ($x=0;$x<count($line);$x++) {
 	if (substr($line[$x],0,3)=='$ip') {
 		list($tmp,$ip)=explode("=",$line[$x]);
@@ -41,13 +41,13 @@ for ($x=0;$x<count($line);$x++) {
 	} 
 	if (substr($line[$x],0,5)=='$cols') {
 		list($tmp,$cols)=explode("=",$line[$x]);
-		$cols*=1;
+		$cols=(int)$cols;
 	} elseif (substr($line[$x],0,5)=='$rows') {
 		list($tmp,$rows)=explode("=",$line[$x]);
-		$rows*=1;
+		$rows=(int)$rows;
 	} elseif (substr($line[$x],0,7)=='$txtlen') {
 		list($tmp,$txtlen)=explode("=",$line[$x]);
-		$txtlen*=1;
+		$txtlen=(int)$txtlen;
 	} elseif (trim($line[$x])=='<top>') {
 		$top = $line[$x];
 #cho __line__ ." ". urlencode($line[$x]) ."<br>";
@@ -132,6 +132,7 @@ for ($l=0;$l<count($labels);$l++) {
 				}
 				$barcode[$row][$col]=$r['barcode'];
 				$description[$row][$col]=$r['description'];
+				$createdate[$row][$col]=date('dmy',$r['created']);
 				$price[$row][$col]=$r['price'];
 				if ($price[$row][$col]) {
 					$price[$row][$col]=dkdecimal($price[$row][$col]);
@@ -176,6 +177,8 @@ for ($l=0;$l<count($labels);$l++) {
 			$labelTxt=str_replace('$minpris',$price[$a][$b],$labelTxt);
 			$labelTxt=str_replace('$varenr',$r['varenr'],$labelTxt);
 			$labelTxt=str_replace('$trademark',$r['trademark'],$labelTxt);
+			$labelTxt=str_replace('$barcode',$barcode[$a][$b],$labelTxt);
+			$labelTxt=str_replace('$createdate',if_isset($createdate[$a][$b],NULL),$labelTxt);
 			if ($brotherTD) $labelTxt=str_replace('$stregkode',$barcode[$a][$b],$labelTxt);
 			elseif ($stregkode) {
 				$labelTxt=str_replace('$stregkode',$stregkode,$labelTxt);

@@ -1,6 +1,6 @@
 <?php
 
-// ------------lager/optalling.php------------patch 3.9.3------2020.06.06---
+// -- lager/optalling.php ------------------- patch 4.0.7 -- 2023-02-24 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -16,7 +16,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 20120913 Der kan nu optaelles til 0
@@ -42,6 +42,7 @@
 // 20200629	PHR Speed optimizing.Look for 20200629 twice
 // 20200905 PHR varenr not found wher seraching for barcode. Inserted: or stregkode = '$varenr'
 // 20200905 PHR Updating api now witten to apilog and & removed from  exec command as call was interrupted?
+// 20230224 CA  Case insensitive and 'like' search using % and _. Searching for _vd% gets DVD, Vd, dvd-player
 
 @session_start();
 $s_id=session_id();
@@ -101,15 +102,15 @@ if ($slet && $vare_id && $varenr) {
 } else {
 	$vare_id=if_isset($_POST['vare_id']);
 	if (!$varenr) {
-		$varenr=db_escape_string(if_isset($_POST['varenr']));
+		$varenr=strtolower(db_escape_string(if_isset($_POST['varenr'])));
 		if ($varenr) {
-			$qtxt="select variant_varer.id from varer,variant_varer where varer.varenr='$varenr' and variant_varer.vare_id=varer.id limit 1";
+			$qtxt="select variant_varer.id from varer,variant_varer where lower(varer.varenr) like '$varenr' and variant_varer.vare_id=varer.id limit 1"; # 20230224
 			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-				alert("varenr: $varenr indeholder varianter og kan kun reguleres på varekort eller gennem csv fil");
+				alert("varenr: $varenr indeholder varianter og kan kun reguleres på varekort eller gennem csv fil");  # 20230224
 				$varenr=NULL;
 			}
 			if ($varenr) {
-				$qtxt="select varenr from varer where varenr='$varenr' or stregkode='$varenr'";
+				$qtxt="select varenr from varer where lower(varenr) like '$varenr' or stregkode='$varenr'";
 					if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $varenr=$r['varenr'];
 				else {
 					alert("varenr: $varenr ikke fundet");
@@ -315,7 +316,10 @@ if ($varenr=trim($varenr)) {
 		print "</select></td>";	
 	}
 	
-	print "<td align=\"center\"><input style=\"width:300px;text-align:left;\" type=\"text\" name=\"varenr\"></td>\n";
+	$titletxt="Opslag tager ikke hensyn til store og små bogstaver. ";
+	$titletxt.="Ønskes opslag på blot en del af varenummeret, så brug % for et antal vilkårlige tegn og _ for et enkelt vilkårligt tegn.";
+	$titletxt.="Eksempel: d_d% vil finde dvd, Dvd-afspiller og Dadida.";
+	print "<td align=\"center\" title=\"$titletxt\"><input style=\"width:300px;text-align:left;\" type=\"text\" name=\"varenr\"></td>\n";
 }
 
 print "</tr><tr><td colspan=\"5\" align=\"center\"><input type=\"submit\" value=\"OK\"></form>";
@@ -1175,11 +1179,20 @@ function importer($lager,$dato){
 					if (is_numeric($antal)) {
 						$vare_id=NULL;
 						for ($x=0;$x<count($v_id);$x++) {
+							if ($v_str[$x]==$varenr)	{
+								$vare_id=$v_id[$x];
+								$variant_id=0;
+#cho __line__." $vare_id -> $variant_id<br>";
+							}
+						}
+						if (!$vare_id) {
+							for ($x=0;$x<count($v_id);$x++) {
 							if ($v_nr[$x]==$varenr) {
 								$vare_id=$v_id[$x];
 								$variant_id=0;
 #cho __line__." $vare_id -> $variant_id<br>";
 							}
+						}
 						}
 						if (!$vare_id) {
 							for ($x=0;$x<count($v_id);$x++) {

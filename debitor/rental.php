@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------debitor/rental.php-------------lap 4.0.1-----2021-03-25-----
+// --- debitor/rental.php --- lap 4.0.1 --- 2021-03-25 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -22,6 +22,8 @@
 //
 // Copyright (c) 2020-2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
+/*print "<!-- debitor/rental.php -->\n"*/;
+// 20220926 MSC - Implementing new design
 
 ob_start();
 @session_start();
@@ -38,7 +40,25 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
 
+global $menu;
+
+echo $db;
+
+if ($menu=='T') {
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=../lager/varer.php accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
+} else {
+	print "";
+}
+
 $rtItemId = if_isset($_GET['rtItemId']);
+$addItem  = if_isset($_GET['addItem']);
 $newRt    = if_isset($_GET['newRt']);
 $modRt    = if_isset($_GET['modRt']);
 $thisRpId = if_isset($_GET['thisRpId']);
@@ -92,6 +112,7 @@ if (isset($_POST['newRtTo']))          $newRtTo          = $_POST['newRtTo'];
 if (isset($_POST['editRpId']))         $editRpId         = $_POST['editRpId'];
 if (isset($_POST['delete']))           $delete           = $_POST['delete'];
 if (isset($_POST['newRtName']))        $newRtName        = $_POST['newRtName'];
+if (isset($_POST['newRtQty']))         $newRtName        = $_POST['newRtQty'];
 if (isset($_POST['cancel']))           $cancel           = $_POST['cancel'];
 
 if ($newRt)                       include ("rentalIncludes/rtItem.php");
@@ -127,14 +148,32 @@ if ($rtPeriodCustomer && $newRtFrom && $newRtTo) {
 	$rtPeriodFrom=$rtPeriodTo=NULL;
 }
 
-if ($newRtName) {
+if ($newRtName && $newRtQty) {
+	for ($x=1;$x<=$newRtQty;$x++) {
 	if ($modRt) $qtxt="update rental set rt_name = '$newRtName' where id = '$modRt'";
-	else $qtxt="insert into rental (rt_item_id,rt_name) values ('$rtItemId','$newRtName')";
+		else $qtxt="insert into rental (rt_item_id,rt_name,rt_no) values ('$rtItemId','$newRtName','$x')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	}
+	if ($addItem && is_numeric($addItem)) {
+		for ($x=0;$x<=$addItem;$x++) {
+			$qtxt="insert into rental (rt_item_id,rt_name) values ('$rtItemId','$newRtName')";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 }
+	}
+}
 
-$var_name = "rental_".$rtItemId;
+echo "Cust Id $customerId<br>";
+$x=0;
+$qtxt = "select distinct(rt_item_id) as rt_item_id from rental order by rt_item_id";
+$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+while ($r=db_fetch_array($q)) {
+	$rtItId[$x] = $r['rt_item_id'] ."<br>";
+	$x++;
+}
+for ($x=0;$x<=count($rtItId);$x++) {
+$var_name = "rental_".$rtItId[$x];
 $qtxt = "select var_value from settings where var_name = '$var_name' and var_grp = 'rental'"; 
+echo "$qtxt<br>";
 if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
 	$itemName=$r['var_value'];
 } elseif ($subItemId) {
@@ -195,13 +234,15 @@ if ($customerId == '*') {
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$rtId[$x]=$r['id']*1;
+echo "$rtId[$x]<br>";		
 		$rtName[$x] = $r['rt_name'];
 		if (!$rtName[$x]) $rtName[$x] = $x;
 		$x++;
 	}
-	for ($x=0;$x<count($rtId);$x++) {
+	for ($xa=0;$xa<count($rtId);$xa++) {
 		$y=0;
-		$qtxt = "select * from rentalperiod where rt_id = '$rtId[$x]' order by id"; 
+		$qtxt = "select * from rentalperiod where rt_id = '$rtId[$xa]' order by id"; 
+echo "$qtxt<br>";		
 		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__); 
 		while ($r=db_fetch_array($q)) {
 			$rpId[$x][$y]          = $r['id'];
@@ -229,6 +270,8 @@ if ($customerId == '*') {
 */
 	include ("rentalIncludes/showItemList.php");
 }
+}
+
 ?>
 </body></html>
 

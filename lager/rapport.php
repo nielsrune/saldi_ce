@@ -76,7 +76,6 @@
 	include("../includes/forfaldsdag.php");
 	include("../includes/ordrefunc.php");
 #	include("../includes/db_query.php");
-$lagerstatus1=findtekst(992,$sprog_id); #20210402
 
 	if (!isset ($_GET['detaljer'])) $_GET['detaljer'] = NULL;
 	if (!isset ($_GET['kun_salg'])) $_GET['kun_salg'] = NULL;
@@ -131,7 +130,8 @@ if (isset($_POST['submit']) && $_POST['submit']) {
 #if (strstr($varegruppe, "ben post")) {$varegruppe="openpost";}
 #cho "$date_from, $date_to, $varenr, $varenavn, $varegruppe,$detaljer<br>";
 if ($submit == 'ok') varegruppe ($date_from, $date_to, $varenr, $varenavn, $varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref); 
-elseif ($submit == "$lagerstatus1") print print "<meta http-equiv=\"refresh\" content=\"0;URL=lagerstatus.php?varegruppe=$varegruppe\">";
+elseif ($submit == findtekst(992,$sprog_id)) print print "<meta http-equiv=\"refresh\" content=\"0;URL=lagerstatus.php?varegruppe=$varegruppe\">";
+elseif ($submit == findtekst(2082,$sprog_id)) print print "<meta http-equiv=\"refresh\" content=\"0;URL=pricelist.php?varegruppe=$varegruppe\">";
 elseif ($inventoryCount) print print "<meta http-equiv=\"refresh\" content=\"0;URL=optalling.php?varegruppe=$varegruppe\">";
 else 	forside ($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref);
 #cho "$submit($regnaar, $date_from, $date_to, $varenr, $varenavn, $varegruppe)";
@@ -304,11 +304,13 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	if (count($ref_nr)>1) {
 		($trbg==$bgcolor)?$trbg=$bgcolor5:$trbg=$bgcolor;
 		print "<tr bgcolor='$trbg'><td> ".findtekst(884,$sprog_id)."</td><td colspan=\"2\"><select class=\"inputbox\" name=\"ref\" style=\"width:200px;\">";
-		for ($x=0;$x<count($ref_nr);$x++) {
+		for ($x=0;$x<=count($ref_nr);$x++) {
 			if ($ref == $ref_nr[$x]) print "<option value=$ref_nr[$x]>$ref_brugernavn[$x]</option>";
 		}
-		for ($x=0;$x<count($ref_nr);$x++) {
+		for ($x=0;$x<=count($ref_nr);$x++) {
+			if(isset($ref_brugernavn[$x])){
 			if ($ref != $ref_nr[$x]) print "<option value=$ref_nr[$x]>$ref_brugernavn[$x]</option>";
+		}
 		}
 		print "</select></td></tr>\n";
 	}
@@ -346,6 +348,11 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	$txt.= "<input class='button gray medium' style=\"width:350px;\" ";
 	$txt.= "type = 'submit' value='".findtekst(1956,$sprog_id)."' name='inventoryCount'>";
 	$txt.=  "</td></tr>\n";
+	print $txt;
+	print "<tr><td><hr></td></tr>\n";
+	$txt = "<tr><td ALIGN=center title='".findtekst(971,$sprog_id)."'>";
+	$txt.= "<input class='button blue medium' style='width:350px;' type='submit' value=\"".findtekst(2082,$sprog_id)."\" name='submit'>";
+	$txt.= "</td></tr>\n";
 	print $txt;
 	print "</form>";
 	print "</tbody></table></center>\n";

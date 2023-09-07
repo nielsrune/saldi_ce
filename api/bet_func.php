@@ -11,7 +11,7 @@ function logon($s_id,$regnskab,$brugernavn,$password,$sqhost,$squser,$sqpass,$sq
 			$connection = db_connect ($sqhost,$squser,$sqpass,$db);
 			if ($connection) {
 #cho "select id from brugere where brugernavn='PBS_TILMELDING'<br>";
-				$r=db_fetch_array(db_select("select id from brugere where brugernavn='PBS_TILMELDING'",__FILE__ . " linje " . __LINE__));
+				$r=db_fetch_array(db_select("select id from brugere where brugernavn='$brugernavn'",__FILE__ . " linje " . __LINE__));
 				if ($r['id']) {
 				#				db_modify("insert into online (session_id, brugernavn, db, dbuser) values ('$s_id', '$brugernavn', '$db', '$squser')",__FILE__ . " linje " . __LINE__);
 #				include ("../includes/online.php");
@@ -36,7 +36,7 @@ function logon($s_id,$regnskab,$brugernavn,$password,$sqhost,$squser,$sqpass,$sq
 
 function tjek($metode,$belob,$bank_navn,$bank_reg,$bank_konto,$kontakt,$cvrnr,$firmanavn,$addr1,$postnr,$bynavn,$email,$tlf) {
 	$alert='OK';
-	if (!$belob || $belob<50) $alert="Beløb ($belob) skal være min. 50,-"; 
+	
 	if ($metode=='PBS') {
 		if (!$bank_navn) $alert="Pengeinstitut navn ikke angivet";
 		if (!$bank_reg) $alert="Reg nr. ikke angivet";
@@ -50,6 +50,7 @@ function tjek($metode,$belob,$bank_navn,$bank_reg,$bank_konto,$kontakt,$cvrnr,$f
 	if (!$postnr) $alert="Postnr ikke angivet"; 
 	if (!$bynavn) $alert="By ikke angivet"; 
 	if (!$email) $alert="email ikke angivet"; 
+	if (!$tlf)    $alert = "tlf ikke angivet"; 
 	return ("$alert");
 }
 ?>

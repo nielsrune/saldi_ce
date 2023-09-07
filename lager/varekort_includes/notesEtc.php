@@ -23,13 +23,14 @@
 // Copyright (c) 2003-2020 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2020.11.22 PHR - Created this file from notes section of ../varekort.php
+// 17/05-2023 PBLM - Fixed made rental button work
 
 print "<!-- varekort_includes/notsEtc.php start -->"; 
 
 print "<tr><td valign='top' colspan='3'><table border='0' width='100%'><tbody>"; # Notetabel ->
 print "<tr><td valign='top'>".findtekst(391,$sprog_id)."</td>";
 print "<td colspan='6'><textarea name='notes' rows='4' cols='100'>$notes</textarea></td>";
-print "<td><a href='../debitor/rental.php?subItemId=$id'><button type='button'>".findtekst(2050,$sprog_id)."</button></a></td>";
+print "<td><button type='button' id='rentItem'>".findtekst(2050,$sprog_id)."</button></td>";
 print "</tr><tr>";
 if ($serienr == 'on') print "<td>Serienr.&nbsp;<input class='inputbox' type=checkbox name=serienr checked></td>";
 elseif  ($box8 == 'on') print "<td>Serienr&nbsp;<input class='inputbox' type=checkbox name=serienr></td>";
@@ -51,3 +52,12 @@ print "</tbody></table></td></tr>";# <- Note tabel
 print "<!-- varekort_includes/notsEtc.php end -->"; 
 
 ?>
+<script>
+    document.getElementById('rentItem').addEventListener('click', () => {
+        fetch("../rental/rental.php?subItemId=<?php print $id; ?>")
+        .then(res => res.json())
+        .then(res => {
+            alert(res.message)
+        })
+    });
+</script>

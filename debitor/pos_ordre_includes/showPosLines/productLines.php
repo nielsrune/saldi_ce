@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.2 --- 2021.08.21 ---
+// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.7 --- 2023.02.25 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2019-2021 saldi.dk aps
+// Copyright (c) 2019-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190508	LN Move function vis-pos_linjer here
@@ -33,10 +33,21 @@
 // 20210815 LOE Set up $default_discounttxt for initial rabat on the frontend 
 // 20210816 LOE and also added a block of code to function with it $default_discounttxt
 // 20210822 PHR added $discounttxt and removed $default_discounttxt from above code.
-
+// 20220812 PHR If both quantity discount and ordinary discount the quaitity discount is now regulated to fit the discountprice
+//              see also ordrefunc.php & settlePOS.php
+// 20230216 PHR	Removed all sum & nettosum calculations to ordrelinjerDataII.php    
+// 20230225 PHR	Added decimal values to del_bord
+// 20230421 PHR Added ImachimeCustomDisplay
+// 20230531 PHR Added Discount to ImachimeCustomDisplay
 
 	print "<!-- ---------- start productLines.php ---------- -->\n";
-
+	$customerDisplay = NULL;
+	$qtxt = "select var_value from settings where var_name = 'customerDisplay'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $customerDisplay=$r['var_value'];
+	unlink("../temp/$db/customerDisplay.txt");
+	file_put_contents("../temp/$db/customerDisplay.txt",date("H-i-s")."\n",FILE_APPEND);
+	$displayTxt = $displayQty = $displayPrice = array();
+	$dx=0;
 	if (isset($_GET['vare_id']) && $_GET['vare_id']) {
 		$itemIdNew=$_GET['vare_id'];	
 	} elseif ($varenr_ny) {
@@ -60,6 +71,7 @@
 	}
 
 	$s=0;
+	$stockGrp = array();
 	$qtxt = "select kodenr from grupper where art = 'VG' and box8 = 'on'";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
@@ -82,7 +94,7 @@
 			$qtyTitle = "Obs!! Beholdning (". dkdecimal($beholdning[$x],0) .") mindre end ". dkdecimal($min_lager[$x],0);
 		}	elseif ($beholdning[$x]) $qtyTitle = "Beholdning: ". dkdecimal($beholdning[$x],0);
 
-		if (!isset($antal[$x])) $antal[$x]=0;
+		(isset($antal[$x]))?$antal[$x]*=1:$antal[$x]=0;
 		($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 		if ($posnr[$x] && $show) {
 			if (!$samlevare[$x]) {
@@ -95,8 +107,19 @@
 				print "<td style=\"width:10%;text-align:right\" title=\"Kostpris ex. moms: ".dkdecimal($kostpris[$x],2)."\">";
 				print dkdecimal($pris[$x],2);
 				print "</td>";
-
-				
+				file_put_contents("../temp/$db/customerDisplay.txt",$antal[$x]."\t".$beskrivelse[$x]."\t".$pris[$x]."\n",FILE_APPEND);
+				if ($rabat[$x]) {
+					$displayLine[$dx]  = $linje_id[$x];
+					$displayTxt[$dx]   = 'Rabat '.$rabat[$x];
+					$displayQty[$dx]   = $antal[$x];
+					$displayPrice[$dx] = -$pris[$x]/100*$rabat[$x]*$antal[$x];
+					$dx++;
+				}
+				$displayLine[$dx]  = $linje_id[$x];
+				$displayTxt[$dx]   = $beskrivelse[$x];
+				$displayQty[$dx]   = $antal[$x]; 
+				$displayPrice[$dx] = $pris[$x]*$antal[$x];
+				$dx++;
 			}
 			if ($saet[$x]) {
 				if (!isset($saet[$x-1]) || $saet[$x-1] != $saet[$x]) $saetpris=0;
@@ -109,7 +132,13 @@
 			}
 			if ($del_bord) {
 				print "<select style=\"width:60px;height:30px;text-align:right;font-size:20px;\" name=\"delflyt[$x]\">\n";
-				for ($a=0;$a<=$antal[$x];$a++) print "<option style=\"text-align:right\" value=\"$linje_id[$x]:$vare_id[$x]:$a\">$a</option>";
+				for ($a=0;$a<=$antal[$x];$a++) {
+					print "<option style=\"text-align:right\" value=\"$linje_id[$x]:$vare_id[$x]:$a\">$a</option>";
+				}
+				for ($a=0;$a<=10;$a++) { #20230225
+					($a==0)?$b = 0:$b = 1/$a;
+					print "<option style=\"text-align:right\" value=\"$linje_id[$x]:$vare_id[$x]:$b\">1/$a</option>";
+				}
 				print "</select>";
 			} elseif ($status<'3' && !$varenr_ny && !$saet[$x]) {
 				$href="pos_ordre.php?id=$id&ret=$linje_id[$x]&antal=$antal[$x]&leveret=$leveret[$x]"; #20210320 Added antal
@@ -128,7 +157,7 @@
 					print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>Rabat</td>";
 					print "<td align=\"right\">".dkdecimal($rabat[$x],2)."</td><td align=\"right\">".dkdecimal($rabat[$x]*$antal[$x],2)."</td></tr>\n";
 				}
-				$sum+=afrund($tmp*$antal[$x],2);
+#				$sum+=afrund($tmp*$antal[$x],2);
 			} else {
 				$tmp=afrund($pris[$x]*$rabat[$x]/-100,2);
 				#if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabats</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>$rabat[$x]% rabat</td><td align=\"right\">".dkdecimal($tmp,2)."</td><td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n";
@@ -137,6 +166,12 @@
 						print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td>";
 						print "<td>$discounttxt[$x] $rabat[$x]%</td><td align=\"right\">".dkdecimal($tmp,2)."</td>";
 						print "<td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n"; #20210815 + 20210816
+						file_put_contents("../temp/$db/customerDisplay.txt",$antal[$x]."\t".$discounttxt[$x]."\t".$tmp*$antal[$x]."\n",FILE_APPEND);
+						$displayLine[$dx]  = $linje_id[$x];
+						$displayTxt[$dx]   = $discounttxt[$x];
+						$displayQty[$dx]   = $antal[$x]; 
+						$displayPrice[$dx] = $tmp*$antal[$x];
+						$dx++;
 					}
 				} else {
 				#if ($posnr[$x]) print "<tr bgcolor=\"$linjebg\"><td>rabats</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>$rabat[$x]% $credit_type</td><td align=\"right\">".dkdecimal($tmp,2)."</td><td align=\"right\">".dkdecimal($tmp*$antal[$x],2)."</td></tr>\n"; #20210813
@@ -185,8 +220,24 @@
 						$f_pris=$r['salgspris']+$r['salgspris']*$f_momssats/100;
 					}
 				}
-				if ($posnr[$x] && $r['varenr'] && $show) print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>".stripslashes($r['beskrivelse'])."</td><td align=\"right\">".dkdecimal($f_pris,2)."</td><td align=\"right\">".dkdecimal($antal[$x]*$f_pris,2)."</td>";
+				if ($posnr[$x] && $r['varenr'] && $show) {
+					print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td>";
+					print "<td align=\"right\">".dkdecimal($antal[$x],2)."</td>";
+					print "<td>".stripslashes($r['beskrivelse'])."</td>";
+					print "<td align=\"right\">".dkdecimal($f_pris,2)."</td>";
+					print "<td align=\"right\">".dkdecimal($antal[$x]*$f_pris,2)."</td>";
+					file_put_contents("../temp/$db/customerDisplay.txt",$antal[$x]."\t"
+					.$r['beskrivelse']."\t".$f_pris*$antal[$x]."\n",FILE_APPEND);
+					$displayLine[$dx]  = $linje_id[$x];
+					$displayTxt[$dx]   = $r['beskrivelse'];
+					$displayQty[$dx]   = $antal[$x]; 
+					$displayPrice[$dx] = $f_pris*$antal[$x];
+					$dx++;
+#					kundedisplay($r['beskrivelse'],$antal[$x]*$f_pris,0,$antal[$x]);
+				}# print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td><td>".stripslashes($r['beskrivelse'])."</td><td align=\"right\">".dkdecimal($f_pris,2)."</td><td align=\"right\">".dkdecimal($antal[$x]*$f_pris,2)."</td>";
+#cho __line__." S $sum<br>";
 				$sum+=afrund($antal[$x]*$f_pris,2);
+#cho __line__." S $sum<br>";
 				}
 			}
 			if ($rabatantal[$x]) {
@@ -197,21 +248,58 @@
 						print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($rabatantal[$x],2)."</td><td>Rabat</td>";
 						print "<td align=\"right\">".dkdecimal($grupperabat,2)."</td>";
 						print "<td align=\"right\">".dkdecimal($grupperabat*$rabatantal[$x],2)."</td>\n";
+						$txt = $rabatantal[$x]."\trabat\t".$grupperabat*$rabatantal[$x];
+						file_put_contents("../temp/$db/customerDisplay.txt","$txt\n",FILE_APPEND);
+						$displayLine[$dx]  = $linje_id[$x];
+						$displayTxt[$dx]   = 'Rabat';
+						$displayQty[$dx]   = $rabatantal[$x]; 
+						$displayPrice[$dx] = $grupperabat*$rabatantal[$x];
+						$dx++;
+	#					kundedisplay('rabat',$grupperabat*$rabatantal[$x],0,$rabatantal[$x]);
 					}
+#cho __line__." S $sum<br>";
 					$sum+=afrund($grupperabat*$rabatantal[$x],2);
+#cho __line__." S $sum<br>";
 				}
 			} elseif ($m_rabat[$x] && !$rabatgruppe[$x]) {
 				if ($posnr[$x] && $show) {
 					if (!isset($antal[$x]))	   $antal[$x]   = 0;
 					if (!isset($r['varenr'])) $r['varenr'] = NULL;
+					if ($m_rabat[$x] && $rabat[$x]) {
+						$m_rabat[$x] = $m_rabat[$x] - $m_rabat[$x]*$rabat[$x]/100; #20220812
+					}
 					(isset($r['beskrivelse']) && $r['beskrivelse'])?$tmp=$r['beskrivelse']:$tmp='Rabat';
 					print "<tr bgcolor=\"$linjebg\"><td>$r[varenr]</td><td align=\"right\">".dkdecimal($antal[$x],2)."</td>";
 					print "<td>".stripslashes($tmp)."</td><td align=\"right\">".dkdecimal($m_rabat[$x],2)."</td>";
 					print "<td align=\"right\">".dkdecimal($antal[$x]*$m_rabat[$x],2)."</td>\n";
 				}
-				 $sum+=afrund($m_rabat[$x]*$antal[$x],2);
+#echo __line__." S $sum<br>";
+#				$sum+=afrund($m_rabat[$x]*$antal[$x],2);
+#echo __line__." S $sum<br>";
+			}
 			}
 		}
+	if ($customerDisplay == 'iMachine') {
+#	$printserver='localhost';
+		print "<script type=\"text/javascript\">
+			console.log('running'); 
+			fetch('http://localhost:5000/', {
+				method:'POST', 
+				headers:{'Content-Type':'application/json'}, 
+				body:JSON.stringify([";
+				for ($dx=0;$dx<count($displayTxt);$dx++) {
+					print "{
+						line: ".json_encode($displayLine[$dx]).",
+						description: ".json_encode($displayTxt[$dx]).", 
+						price: ".json_encode($displayPrice[$dx]).", 
+						amount: ".json_encode($displayQty[$dx]).", 
+					},";
+				}
+				print "])
+			}).then(res => {
+				console.log('Request sent')
+			});
+		</script>";
 	}
 	print "<!-- ---------- end productLines.php ---------- -->\n";
 ?>

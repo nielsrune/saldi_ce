@@ -137,15 +137,16 @@ print "</tr>\n";
  
 	if ($vis == 'alle') $vis = ''; 
 	else $vis="and oprettet_af = '".$brugernavn."'";
-	$tidspkt=date("U");
+	$timestamp=date("U");
 	$qtxt="select * from betalingsliste where bogfort = '-' $vis order by $sort $rf";
 	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)){
 		$liste="liste".$r['id'];
+		$tidspkt = substr($r['tidspkt'],-10);
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if (($tidspkt-($r['tidspkt'])>3600)||($r['hvem']==$brugernavn)) {
+		if ($timestamp-$tidspkt > 3600 || $r['hvem']==$brugernavn ) {
 			print "<td><a href=\"betalinger.php?tjek=$r[id]&liste_id=$r[id]&returside=betalingsliste.php\">$r[id]</a></td>";
 		}
 		else print "<td><span title= 'liste er l&aring;st af $r[hvem]'>$r[id]</span></td>";
@@ -173,7 +174,7 @@ print "</tr>\n";
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		if (($tidspkt-($r['tidspkt'])>3600)||($r[hvem]==$brugernavn)) {
+		if (($timestamp-($r['tidspkt'])>3600)||($r[hvem]==$brugernavn)) {
 			print "<td><a href=\"betalinger.php?liste_id=$r[id]&returside=betalingsliste.php\">$r[id]</a></td>";
 		}
 		else print "<td><span title= 'liste er l&aring;st af $r[hvem]'>$r[id]</span></td>";
@@ -202,9 +203,9 @@ print "</tr>\n";
 		$listedato=dkdato($r['listedate']);
 		print "<td>$listedato<br></td>";
                 print "<td>".htmlentities(stripslashes($r['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
-                print "<td>".htmlentities(stripslashes($r['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
+#                print "<td>".htmlentities(stripslashes($r['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
 ## Da der ikke blev sat bogfringsdato foer ver. 0.23 skal det saettes hak ved lister bogfrt fr denne version...
-		if ($r['bogforingsdate']){
+		if (isset($r['bogforingsdate']) && $r['bogforingsdate']){
 			$bogforingsdato=dkdato($r['bogforingsdate']);
 			print "<td align = center>$bogforingsdato<br></td>";
 		}	else {

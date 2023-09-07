@@ -22,6 +22,8 @@
 // ----------------------------------------------------------------------
 // 20141030 CA  Understøttelse for andre vinduesstørrelser. Søg 20141030
 
+global $regnskab;
+
 if ( ! isset($viewport_width) ) $viewport_width=1024;
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -43,6 +45,14 @@ if(isset($meta_returside)) print "$meta_returside";
         <script type="text/javascript" src="../javascript/jquery.tablednd.js"></script>
         <script type="text/javascript" src="../javascript/jquery.tablesorter.min.js"></script>
         <script type="text/javascript" src="../javascript/jquery.placeholder.min.js"></script>
+        <link rel='ICON' href='../img/topmenu/favicon.ico?=v1' type='image/ico' />
+        <link href='../css/topmenu/bootstrap.min.css' rel='stylesheet'>
+        <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
+        <link rel="stylesheet" type="text/css" title="lightcolor" href="../css/topmenu/lightcolor-v1.css">
+        <link rel="stylesheet" type="text/css" title="lightcolor" href="../css/topmenu/responsive-navigation-v1.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Exo:wght@600&display=swap" rel="stylesheet">
         <!--[if lt IE 9]>
 				<script src="http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE9.js"></script>
 				<![endif]-->
@@ -81,6 +91,7 @@ if(isset($meta_returside)) print "$meta_returside";
 				function stykliste(vare_id){
 					window.open("../lager/fuld_stykliste.php?id="+ vare_id,"","left=10,top=10,width=400,height=400,scrollbars=yes,resizable=yes,menubar=no,location=no")
 				}
+        
         </script>
         <!--[if IE 9]>
         <style>
@@ -89,7 +100,6 @@ if(isset($meta_returside)) print "$meta_returside";
         }
         </style>
         <![endif]-->
-        <title>= Saldi =</title>
+        <title><?php if (isset($title)) {echo "◖ Saldi • $title ◗";} else {echo "◖ Saldi ◗";} ?></title>
     </head>
     <body>
-        <div id="wrapper"> 

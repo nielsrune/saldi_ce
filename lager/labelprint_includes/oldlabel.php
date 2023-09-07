@@ -26,7 +26,7 @@
 $r=db_fetch_array(db_select("select * from varer where id='$id'",__FILE__ . " linje " . __LINE__));
 $momsfri='on';
 $salgspris=$r['salgspris']; #20160505
-$gruppe=$r['gruppe'];
+$gruppe=(int)$r['gruppe'];
 #$salgspris2=$r['salgspris2'];
 $special_price=$r['special_price'];
 $qtxt="select var_value from settings where var_name = 'vatOnItemCard' and var_grp = 'items'";
@@ -63,7 +63,8 @@ if (strpos($txt,'$enhedspris/$enhed')) {
 		$txt=str_replace('$enhedspris/$enhed','',$txt);
 	}
 } else {
-	$txt=str_replace('$enhedspris',dkdecimal(($r['pris']/$r['indhold']),2),$txt);
+	if ($r['indhold']) $txt=str_replace('$enhedspris',dkdecimal(($r['pris']/$r['indhold']),2),$txt);
+	else $txt=str_replace('$enhedspris',dkdecimal(($r['pris']),2),$txt);
 	$txt=str_replace('$enhed',$r['enhed'],$txt);
 }
 if (strpos($txt,'$lev_varenr[')) { #20170628
