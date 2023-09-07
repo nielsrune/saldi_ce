@@ -51,21 +51,22 @@ if (isset($_POST['submit'])) {
 	$rediger="on";
 	$db_antal=if_isset($_POST['db_antal']);
 	$id=if_isset($_POST['id']);
-	$gl_brugerantal=if_isset($_POST['gl_brugerantal']);
-	$gl_posteringer=if_isset($_POST['gl_posteringer']);
-	$brugerantal=if_isset($_POST['brugerantal']);
-	$posteringer=if_isset($_POST['posteringer']);
-	$gl_lukket=if_isset($_POST['gl_lukket']);
-	$lukket=if_isset($_POST['lukket']);
-	$gl_lukkes=if_isset($_POST['gl_lukkes']);
-	$lukkes=if_isset($_POST['lukkes']);
-	$gl_betalt_til=if_isset($_POST['gl_betalt_til']);
-	$betalt_til=if_isset($_POST['betalt_til']);
-	$gl_logintekst=if_isset($_POST['gl_logintekst']);
-	$logintekst=if_isset($_POST['logintekst']);
+	$gl_brugerantal = if_isset($_POST['gl_brugerantal'],array());
+	$gl_posteringer = if_isset($_POST['gl_posteringer'],array());
+	$brugerantal    = if_isset($_POST['brugerantal'],array());
+	$posteringer    = if_isset($_POST['posteringer'],array());
+	$gl_lukket      = if_isset($_POST['gl_lukket'],array());
+	$lukket         = if_isset($_POST['lukket'],array());
+	$gl_lukkes      = if_isset($_POST['gl_lukkes'],array());
+	$lukkes         = if_isset($_POST['lukkes'],array());
+	$gl_betalt_til  = if_isset($_POST['gl_betalt_til'],array());
+	$betalt_til     = if_isset($_POST['betalt_til'],array());
+	$gl_logintekst  = if_isset($_POST['gl_logintekst'],array());
+	$logintekst     = if_isset($_POST['logintekst'],array());
 
 
-	for ($x=1;$x<=$db_antal; $x++) {
+	for ($x=1;$x<=count($id); $x++) {
+		$brugerantal[$x] = (int)$brugerantal[$x];
 		if (!isset($lukket[$x]) || !$lukkes[$x]) $lukkes[$x]="2099-12-31"; 
 		else $lukkes[$x]=usdate($lukkes[$x]);
 		if (!isset($betalt_til[$x]) || !$betalt_til[$x]) $betalt_til[$x]="2099-12-31"; 

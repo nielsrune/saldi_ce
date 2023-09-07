@@ -210,8 +210,8 @@ if (isset($_POST['linje_id']) && $linje_id=$_POST['linje_id']) {
 	($r['box10'])?$koekkenprintere=explode(chr(9),$r['box10']):$koekkenprintere=NULL;
 	$koekkenprinter=$koekkenprintere[$kasse-1];
 	if (($bordnr || $bordnr=='0') && !$bordnavn) {
-		($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=NULL;
-		$bordnavn=$bord[$bordnr];
+		($r['box7'])?$bord=explode(chr(9),$r['box7']):$bord=array();
+		$bordnavn=if_isset($bord[$bordnr], NULL);
 	}
 	$x=0;
 	if ($db == 'develop_22' || $db == 'pos_41') {

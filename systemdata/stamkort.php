@@ -1,5 +1,5 @@
 <?php
-// -- ---------systemdata/stamdata.php------------------ ver 4.0.1 -- 2021-08-20 --
+// -- ---------systemdata/stamdata.php------------------ ver 4.0.8 -- 2023-05-30 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,7 +15,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2012.08.21 Tilføjet leverandørservice - PBS
 // 2014.11.20 Opdater mastersystem ved ændring af email.
@@ -24,6 +24,7 @@
 // 2018.12.20 MSC - Rettet isset fejl
 // 20190304 Set countryConfig depending on the users permission
 // 20210628 LOE Translated some texts to English and Norsk
+// 20230530 PHR Employee no is now shown.
 
 @session_start();
 $s_id=session_id();
@@ -216,15 +217,19 @@ if ($id) {
 	if (! $menu=='T') print "<tr><td colspan='5'><hr></td></tr>";  # 20150331
 			
 	$taeller=0;
+	$qtxt = "update ansatte set lukket = '' where konto_id = '$id' and lukket is NULL";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
 	while ($taeller < 1) {
 		$x=0;
-		if ($vis_lukket) $qtxt="select * from ansatte where konto_id = '$id' and lukket != 'on' order by posnr";
-		else $qtxt="select * from ansatte where konto_id = '$id' and (lukket != 'on' or lukket is NULL) order by posnr";
+		$qtxt = "select * from ansatte where konto_id = '$id' ";
+		if (!$vis_lukket) $qtxt.= "and lukket != 'on' ";
+		$qtxt.= " order by posnr";
 		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r = db_fetch_array($q)) {
 			$x++;
 #		if ($x > 0) {print "<tr><td><br></td><td><br></td>";}
-			print "<td><input class=\"inputbox\" type=\"text\" size=\"1\" name=\"posnr[$x]\" value=\"$x\">&nbsp;<a href=\"ansatte.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=$id&id=$r[id]\">$r[navn]</a></td>";
+			print "<td><input class=\"inputbox\" type=\"text\" size=\"1\" name=\"posnr[$x]\" value=\"$x\">&nbsp;<a href=\"ansatte.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=$id&id=$r[id]\">$r[nummer] $r[navn]</a></td>";
 			print "<td>$r[tlf] / $r[mobil]</td><td colspan=2>$r[email]</td></tr>";
 			print "<input type=\"hidden\" name=\"ans_id[$x]\" value=\"$r[id]\">";
 		}

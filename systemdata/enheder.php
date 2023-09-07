@@ -165,7 +165,7 @@
 	print "<form name=enheder action=enheder.php method=post>";
 
 
-	print "<tr><td align=center valign=top class='tableHeader'> Enhed</td><td align=center valign=top class='tableHeader'> Beskrivelse</td></tr>";
+	print "<tr><td align=center valign=top class='tableHeader'> ".findtekst(945,$sprog_id)."</td><td align=center valign=top class='tableHeader'>".findtekst(914,$sprog_id)."</td></tr>";
 	for ($x=1; $x<=$max_antal; $x++)
 	{
 		if ($enh_id[$x]) {print "<tr><td><a href=enheder.php?enh_id=$enh_id[$x]> $enh_betegnelse[$x]</a></td><td> $enh_beskrivelse[$x]</td></tr>";}
@@ -183,14 +183,14 @@
 	}
 	else {print "<tr><td><input type=text size=3 name=enh_betegnelse[0]></td><td><input type=text size=25 name=enh_beskrivelse[0]></td></tr>";}
 
-	print "<tr><td align = center colspan=2><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"enheder\"></td></tr>";
+	print "<tr><td align = center colspan=2><input class='button green medium' type=submit accesskey=\"g\" value=\"".findtekst(471,$sprog_id)."\" name=\"enheder\"></td></tr>";
 	print "</tbody></table border=1>";
 
 	print "<td width=50% valign=top><table class='dataTable' cellpadding=\"1\" cellspacing=\"1\" border=\"$border\"><tbody>";
 	print "<form name=materialer action=enheder.php method=post>";
 
 
-	print "<tr><td align=center valign=top class='tableHeader'> Materiale</td><td align=center valign=top class='tableHeader'> Densitet</td></tr>";
+	print "<tr><td align=center valign=top class='tableHeader'> ".findtekst(570,$sprog_id)."</td><td align=center valign=top class='tableHeader'>".findtekst(569,$sprog_id)."</td></tr>";
 	for ($x=1; $x<=$max_antal; $x++) {
 		if (isset($mat_id[$x])) {
 			print "<tr><td> $mat_beskrivelse[$x]</td><td><a href=enheder.php?mat_id=$mat_id[$x]> $mat_densitet[$x]</a></td></tr>";
@@ -207,7 +207,7 @@
 	}
 	else {print "<tr><td><input type=text size=25 name=mat_beskrivelse[0]></td><td><input type=text size=3 name=mat_densitet[0]></td><tr>";}
 
-	print "<tr><td align = center colspan=2><input class='button green medium' type=submit accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"materialer\"></td></tr>";
+	print "<tr><td align = center colspan=2><input class='button green medium' type=submit accesskey=\"g\" value=\"".findtekst(471,$sprog_id)."\" name=\"materialer\"></td></tr>";
 	print "</tbody></table>";
 	print "</tbody></table>";
 

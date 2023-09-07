@@ -27,7 +27,7 @@
 // ----------------------------------------------------------------------
 // 2013.02.10 Break ændret til break 1
 // 2013.09.16 Tilføjet import fra pulje
-// Rettet puljesti - søg nfs_mount
+// 2016-12-07 Rettet puljesti - søg nfs_mount
 
 @session_start();
 $s_id=session_id();
@@ -126,6 +126,7 @@ function importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe){
 	global $cvrnr;
 	global $ordredate;
 	global $fakturadate;
+	global $fakturanr;
 	global $l_varenr;
 	global $l_pris;
 	global $l_tekst;
@@ -151,7 +152,10 @@ function importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe){
 		db_modify("insert into adresser (firmanavn,kontonr,addr1,postnr,bynavn,land,cvrnr,gruppe,art) values ('".db_escape_string($firmanavn)."','$kontonr','".db_escape_string($vejnavn." ".$husnr)."','".db_escape_string($postnr)."','".db_escape_string($bynavn)."','".db_escape_string($land)."','".db_escape_string($cvrnr)."','$opret_lev','K')",__FILE__ . " linje " . __LINE__);
 	}
 	if (!$konto_id) {
-		$r = db_fetch_array(db_select("select * from adresser where art = 'K' and cvrnr='$cvrnr'",__FILE__ . " linje " . __LINE__));
+		(strtolower(substr($cvrnr,0,2)) == 'dk')?$cvr2 = substr($cvrnr,2):$cvr2=NULL;
+		$qtxt = "select * from adresser where art = 'K' and cvrnr='$cvrnr'";
+		if ($cvr2) $qtxt.= " or cvrnr = '$cvr2'";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		if ($r['id']) {
 			$konto_id=$r['id']; 
 			$kontonr=$r['kontonr'];
@@ -290,7 +294,13 @@ function importer($filnavn,$opret_lev,$opret_vare,$nfs_mappe){
 		$r=db_fetch_array(db_select("select max(ordrenr) as ordrenr from ordrer where art='KO' or art='KK'",__FILE__ . " linje " . __LINE__));
 		$ordrenr=$r['ordrenr']+1;
 
-		db_modify("insert into ordrer (ordrenr,konto_id,kontonr,firmanavn,addr1,postnr,bynavn,land,betalingsdage,betalingsbet,cvrnr,art,ordredate,levdate,momssats,status,hvem,tidspkt,valuta,fakturanr) values ('$ordrenr','$konto_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($vejnavn)." $husnr','$postnr','$bynavn','$land','$betalingsdage','$betalingsbet','$cvrnr','KO','$ordredate','$ordredate','$momssats','1','$brugernavn','$tidspkt','$valuta','$fakturanr')",__FILE__ . " linje " . __LINE__);
+		$qtxt = "insert into ordrer "; 
+		$qtxt.= "(ordrenr,konto_id,kontonr,firmanavn,addr1,postnr,bynavn,land,betalingsdage,betalingsbet,";
+		$qtxt.= "cvrnr,art,ordredate,levdate,momssats,status,hvem,tidspkt,valuta,fakturanr) values ";
+		$qtxt.= "('$ordrenr','$konto_id','$kontonr','".db_escape_string($firmanavn)."','".db_escape_string($vejnavn)." $husnr',";
+		$qtxt.= "'$postnr','$bynavn','$land','$betalingsdage','$betalingsbet','$cvrnr','KO','$ordredate','$ordredate',";
+		$qtxt.= "'$momssats','1','$brugernavn','$tidspkt','$valuta','$fakturanr')";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$r=db_fetch_array(db_select("select id from ordrer where art='KO' and ordrenr = '$ordrenr'",__FILE__ . " linje " . __LINE__));
 		$ordre_id=$r['id'];
 		$pos=0;
@@ -331,6 +341,7 @@ function vis_oioubl($filnavn,$nfs_mappe) {
 	global $cvrnr;
 	global $ordredate;
 	global $fakturadate;
+	global $fakturanr;
 	global $l_varenr;
 	global $l_pris;
 	global $l_tekst;

@@ -2,26 +2,23 @@
 #	@session_start();
 #	$s_id=session_id();
 
-// ----------/systemdata/formularimport.php-----lap 3.3.2------2013.08.19---------------------------------
-// LICENS
+// --- systemdata/formularimport.php --- lap 3.3.2 --- 2013.08.19 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
-//
-// Copyright (c) 2004-2013 DANOSOFT ApS
+// Copyright (c) 2003-2022 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20130510, Tilføjet $formularnr.
 // 20130819, Tilføjet sporingsdata. Søg 20130819.
@@ -34,8 +31,10 @@ $fp=fopen($filnavn,"r");
 		if ($formularnr) $qtxt="delete from formularer where formular='$formularnr'";
 		else $qtxt="delete from formularer";
 		db_modify("$qtxt",__FILE__ . " linje " . __LINE__); # 20130819
+		$x=0;
 		while (!feof($fp)) {
-			$linje=fgets($fp);
+			$linje=trim(fgets($fp));
+			if ($linje) {
 			$linje=str_replace("\n","",$linje);
 			if ($db_encode=="UTF8") $linje=utf8_encode($linje);
 			list($formular, $art, $beskrivelse, $justering, $xa, $ya, $xb, $yb, $str, $color, $font, $fed, $kursiv, $side, $sprog) = explode(chr(9),$linje);
@@ -57,11 +56,18 @@ $fp=fopen($filnavn,"r");
 			$beskrivelse=addslashes($beskrivelse);
 			if ($xa>0) {
 				$justering=trim($justering); $form=trim($font); $fed=trim($fed); $kursiv=trim($kursiv); $side=trim($side); $sprog=trim($sprog);
-				$xa= $xa*1; $ya= $ya*1; $xb= $xb*1; $yb=$yb*1; $str=$str*1; $color=$color*1;
+					(is_numeric($xa)   )?$xa*=    1: $xa    = 0; 
+					(is_numeric($xb)   )?$xb*=    1: $xb    = 0; 
+					(is_numeric($ya)   )?$ya*=    1: $ya    = 0; 
+					(is_numeric($yb)   )?$yb*=    1: $yb    = 0; 
+					(is_numeric($yb)   )?$yb*=    1: $yb    = 0; 
+					(is_numeric($str)  )?$str*=   1: $str   = 0; 
+					(is_numeric($color))?$color*= 1: $color = 0; 
 				if (($formularnr && $formular==$formularnr) || !$formularnr) {
 					db_modify("insert into formularer (formular,art,beskrivelse,xa,ya,xb,yb,justering,str,color,font,fed,kursiv,side,sprog)values('$formular','$art','$beskrivelse','$xa','$ya','$xb','$yb','$justering','$str','$color','$font','$fed','$kursiv','$side','$sprog')",__FILE__ . " linje " . __LINE__); 
 				}
 			}
+		}
 		}
 		fclose($fp);
 #		print "<div style=\"text-align: center;\">$font<small>Import succesfuld - vindue lukkes</small></font><br></div>";

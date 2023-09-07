@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------------- systemdata/diverse.php ------------------ ver 4.0.5 -- 2022-05-14 --
+// --- systemdata/diverse.php -----patch 4.0.8 ----2023-07-23------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2012.09.20 Tilføjet integration med ebconnect
 // 2013.01.19 funktioner lagt i selvstændig fil (../includes/sys_div_func.php)
@@ -76,6 +77,7 @@
 // 20211123 PHR added paperflow
 // 20211123 PHR added paperflowId & paperflowBearer
 // 20220514 PHR mailText is now removed when account is reset.  
+// 20221231 PHR	sektion 'bilag' box3 (ftp passwd) is now urlencoded as it failed with special characters in password. 
 
 @session_start();
 $s_id=session_id();
@@ -153,7 +155,7 @@ if ($_POST) {
 		}
 	#######################################################################################
 	} elseif ($sektion=='div_valg') {
-		$id=$_POST['id']*1;
+		$id      = (int)$_POST['id'];
 		$box1=$_POST['box1']; #gruppevalg
 		$box2=$_POST['box2']; #kuansvalg
 		$box3=$_POST['box3']; #extra_ansat
@@ -190,9 +192,50 @@ if ($_POST) {
 		$dfm_pickup_town=if_isset($_POST['dfm_pickup_town']);
 		$dfm_pickup_zipcode=if_isset($_POST['dfm_pickup_zipcode']);
 		$mySale=if_isset($_POST['mySale']);
+		$mySaleLabel        = if_isset($_POST['mySaleLabel']);
 		$paperflow          = if_isset($_POST['paperflow']);
 		$paperflowId        = if_isset($_POST['paperflowId']);
 		$paperflowBearer    = if_isset($_POST['paperflowBearer']);
+		$qp_agreement_id    = if_isset($_POST['qp_agreement_id']);
+		$qp_merchant        = if_isset($_POST['qp_merchant']);
+		$qp_md5secret       = if_isset($_POST['qp_md5secret']);
+		$qp_itemGrp         = if_isset($_POST['qp_itemGrp']);
+    $vibrant_api        = if_isset($_POST['vibrant_id']);
+    $copay_api          = if_isset($_POST['copay_id']);
+    
+    # Vibrant API save
+    if ($vibrant_api) {
+      # Expect a posted ID
+      $qtxt = "SELECT var_value FROM settings WHERE var_name='vibrant_auth'";
+      $r = db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__));
+
+      # If the row already exsists
+      if ($r) {
+        $qtxt = "UPDATE settings SET var_value='$vibrant_api' WHERE var_name='vibrant_auth'";
+        db_modify($qtxt, __FILE__ . " linje " . __LINE__);
+      # If the row needs to be created in the database
+      } else {
+        $qtxt = "INSERT INTO settings(var_name, var_grp, var_value, var_description) VALUES ('vibrant_auth', 'globals', '$vibrant_api', 'The vibrant API key')";
+        db_modify($qtxt, __FILE__ . " linje " . __LINE__);
+      }
+    }
+
+    # Copayone API save
+    if ($copay_api) {
+      # Expect a posted ID
+      $qtxt = "SELECT var_value FROM settings WHERE var_name='copayone_auth'";
+      $r = db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__));
+
+      # If the row already exsists
+      if ($r) {
+        $qtxt = "UPDATE settings SET var_value='$copay_api' WHERE var_name='copayone_auth'";
+        db_modify($qtxt, __FILE__ . " linje " . __LINE__);
+      # If the row needs to be created in the database
+      } else {
+        $qtxt = "INSERT INTO settings(var_name, var_grp, var_value, var_description) VALUES ('copayone_auth', 'globals', '$copay_api', 'The copayone API key')";
+        db_modify($qtxt, __FILE__ . " linje " . __LINE__);
+      }
+    }
 
 		if ($box8) {
 			ftptest($_POST['oiourl'],$_POST['oiobruger'],$_POST['oiokode']);
@@ -244,6 +287,20 @@ if ($_POST) {
 			} else $qtxt = NULL;
 			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
+		$var_name=array('qp_agreement_id','qp_merchant','qp_md5secret','qp_itemGrp');
+		$var_value=array($qp_agreement_id,$qp_merchant,$qp_md5secret,$qp_itemGrp);
+		$var_description=array('Agreement id from','Merchant no from','md5secret from','Item Group in Saldi for items paid using');
+		for ($x=0;$x<count($var_name);$x++){
+			$var_description[$x].=', Quickpay';
+			$qtxt="select id from settings where var_grp='quickpay' and var_name='$var_name[$x]'";
+			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				$qtxt="update settings set var_value='$var_value[$x]' where id='$r[id]'";
+			} elseif ($var_value[$x]) {
+				$qtxt="insert into settings (var_grp,var_name,var_value,var_description,user_id) values ";
+				$qtxt.="('quickpay','$var_name[$x]','$var_value[$x]','$var_description[$x]','0')";
+			} else $qtxt = NULL;
+			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		}
 		$qtxt = "select id from settings where var_grp='debitor' and var_name='mySale'";
 		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
 			$qtxt = "update settings set var_value='$mySale' where id='$r[id]'";
@@ -252,6 +309,16 @@ if ($_POST) {
 				$qtxt.= "('debitor','mySale','$mySale','Use mySale to allow customers acces to own salesdata (provision)','0')";
 		}	else $qtxt = NULL;
 			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
+		$qtxt = "select id from settings where var_grp='debitor' and var_name='mySaleLabel'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
+			$qtxt = "update settings set var_value='$mySaleLabel' where id='$r[id]'";
+		} elseif ($mySaleLabel) {
+			$qtxt = "insert into settings (var_grp,var_name,var_value,var_description,user_id) values ";
+			$qtxt.= "('debitor','mySaleLabel','$mySaleLabel','Disable labels from Mysale, so that only the owner can create labels','0')";
+		}	else $qtxt = NULL;
+		if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
 		$qtxt = "select id from settings where var_grp='creditor' and var_name='paperflow'";
 		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
 		$qtxt = "update settings set var_value='$paperflow' where id='$r[id]'";
@@ -260,6 +327,7 @@ if ($_POST) {
 			$qtxt.= "('creditor','paperflow','$paperflow','Use Paperflow to read text from scanned invoices','0')";
 		}	else $qtxt = NULL;
 		if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
 		$qtxt = "select id from settings where var_grp='creditor' and var_name='paperflowId'";
 		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { 
 			$qtxt = "update settings set var_value='$paperflowId' where id='$r[id]'";
@@ -821,24 +889,29 @@ if ($_POST) {
 		if (!$ValutaKode) $ValutaKode = array();
 		
 
-		$id2=if_isset($_POST['id2'])*1;
+		$id2                = (int)if_isset($_POST['id2']);
 		$enabled=if_isset($_POST['enabled']);
 		$change_cardvalue=if_isset($_POST['change_cardvalue']);
 		$deactivateBonprint=if_isset($_POST['deactivateBonprint']);
 		$betalingskort=if_isset($_POST['betalingskort']); #20131210
+
+		$planamount         = if_isset($_POST['planamount']);
+		$plan               = if_isset($_POST['plan'],array()); 
 		$bord=if_isset($_POST['bord']); #20140508
 		$bordantal=if_isset($_POST['bordantal']); #20140508
 		$bordvalg=if_isset($_POST['bordvalg']);
+
 		$diffkonti=if_isset($_POST['diffkonti']);
 		$div_kort_kto=if_isset($_POST['div_kort_kto']); #20140129
 		$jump2price         = if_isset($_POST['jump2price']);
 		$kasseprimo=if_isset($_POST['kasseprimo']);
-		$kasseprimo=usdecimal($kasseprimo)*1;
+		$kasseprimo         = (int)usdecimal($kasseprimo);
 		$koekkenprinter=if_isset($_POST['koekkenprinter']);
 		$kortno=if_isset($_POST['kortno']);
 		$mellemkonti=if_isset($_POST['mellemkonti']);
 		$optalassist=if_isset($_POST['optalassist']);
 		$printer_ip=if_isset($_POST['printer_ip']);
+		$terminal_type      = if_isset($_POST['terminal_type']);
 		$terminal_ip=if_isset($_POST['terminal_ip']);
 		$varenr=if_isset($_POST['varenr']);
 		$vis_saet=if_isset($_POST['vis_saet']);
@@ -848,6 +921,34 @@ if ($_POST) {
 
 		$box14_2=if_isset($_POST['udtag0']);
 
+    # Table plan logic
+    # Get the amount of tables currently in the system
+    $plans = 1;
+    $q = db_select("select id, name from table_pages ORDER BY id", __FILE__ . " linje " . __LINE__);
+    while ($r = db_fetch_array($q)) {
+      $plans++;
+    }
+    # If the system has more plans than the inp
+    if ($planamount > $plans-1) {
+      # For every difference in plans we add an empty one
+      for ($i = 0; $i <= $planamount-$plans; $i++) {
+        $id = $plans + $i;
+        $qtxt = "INSERT INTO table_pages(id, name) VALUES ($id, '')";
+			  db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      }
+    # If it has less plans
+    } else if ($planamount < $plans-1) {
+			db_modify("DELETE FROM table_pages WHERE id > $planamount",__FILE__ . " linje " . __LINE__);
+    }
+    # Save the created fields
+    for ($i = 1; $i <= count($plan)+1; $i++) {
+      if (isset ($plan[$i])) {
+				$id = $i;
+				$name = $plan[$i];
+				$qtxt = "UPDATE table_pages SET name='$name' WHERE id=$id";
+      db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			}
+    }
 		for ($x=0;$x<count($kortno);$x++) { // Removes noise in log
 			if (!isset($betalingskort[$x])) $betalingskort[$x] = '';
 			if (!isset($enabled[$x])) $enabled[$x] = '';
@@ -903,6 +1004,64 @@ if ($_POST) {
 				else $txt = findtekst(718,$sprog_id);
 				if ($txt) print "<BODY onload=\"JavaScript:alert('$txt')\">";
 			}
+
+      # Flatpay setup
+      $kasse_id = $x + 1;
+      $qtxt = "SELECT var_value FROM settings WHERE pos_id=$kasse_id and var_name='terminal_type'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+      $termtype = $terminal_type[$x];
+
+      # Check if a payment type has been setup on this term
+      if ($r) {
+        # It does exist, edit the row
+        # Check if it has a vibrant thingy setup
+				# $qtxt = "SELECT id FROM vibrant_terms WHERE pos_id=$kasse_id";
+        $qtxt = "SELECT var_value FROM settings WHERE pos_id=$kasse_id AND var_grp='vibrant_terms'";
+        $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+
+        # If the terminal has vibrant setup we want to set its terminal id to be -1 as we save the vibrant terminal ids for later user
+        if ($r) {
+          $qtxt = "UPDATE settings SET pos_id=-1 WHERE pos_id=$kasse_id AND var_grp='vibrant_terms'";
+          db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+        }
+
+        # Modify to use the right payment method on the selected terminal
+        $qtxt = "UPDATE settings SET var_value='$termtype' WHERE pos_id=$kasse_id and var_name='terminal_type'";
+			  db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      } else {
+        # It has not been setup yet, create the row
+        $qtxt = "INSERT INTO settings(var_name, var_grp, var_value, var_description, pos_id) 
+                 VALUES ('terminal_type', 'POS', '$termtype', 'What the main payment system should be.', $kasse_id)";
+			  db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      }
+
+      # Vibrant setup
+      $termtype = $terminal_type[$x];
+      if (str_starts_with($termtype, "Vibrant: ")) {
+        $term_name = str_replace("Vibrant: ", "", $termtype);
+        $kasse_id = $x + 1;
+
+        $qtxt = "UPDATE settings SET pos_id='$kasse_id' WHERE var_name='$term_name' AND var_grp='vibrant_terms'";
+			  db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      } 
+      
+      $kasse_id = $x + 1;
+      $qtxt = "SELECT var_value FROM settings WHERE pos_id=$kasse_id and var_name='terminal_type'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+
+      # Check if another payment type has been setup on this term
+      if ($r) {
+        # It does exist, edit the row
+        $qtxt = "UPDATE settings SET var_value='$termtype' WHERE pos_id=$kasse_id and var_name='terminal_type'";
+			  db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      } else {
+        # It has not been setup yet, create the row
+        $qtxt = "INSERT INTO settings(var_name, var_grp, var_value, var_description, pos_id) 
+                 VALUES ('terminal_type', 'POS', '$termtype', 'What the main payment system should be.', $kasse_id)";
+			  db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      }
+       
+
 			if ($box2) {
 				$box2.=chr(9).$kassekonti[$x];
 				$box3.=chr(9).$afd_nr[$x];
@@ -992,6 +1151,10 @@ if ($_POST) {
 					$card_enabled=trim($enabled[$x]);	 #20181215
 				}
 			}
+
+
+      
+
 		}
 		$box7_2=NULL;
 		for ($x=0;$x<$bordantal;$x++) { #20140508
@@ -1091,6 +1254,7 @@ if ($_POST) {
 			$qtxt.= "('jump2price','globals','$jump2price','Cursor jumps direct to price and sets quantity to 1 if price is 0','0')";
 		}
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+
 		#######################################################################################
 	} elseif ($sektion=='docubizz') {
 		$id=$_POST['id'];
@@ -1119,6 +1283,7 @@ if ($_POST) {
 		$box1 = if_isset($_POST['box1']);
 		$box2 = if_isset($_POST['box2']);
 		$box3 = if_isset($_POST['box3']);
+		if ($box3 && $box3 != '********') $box3 = urlencode($box3); 
 		$box4 = if_isset($_POST['box4']);
 		$box5 = if_isset($_POST['box5']);
 		$storageType = if_isset($_POST['storageType']);
@@ -1289,10 +1454,12 @@ if ($_POST) {
 				setcookie("timezone",$timezone,time()+60*60*24*30,'/');
 			}
 		} elseif (isset($_POST['nulstil']) && $_POST['nulstil']) { #20170731
-			$qtxt="TRUNCATE batch_kob,batch_salg,betalinger,betalingsliste,budget,corrections,deleted_order,drawer,jobkort,kassekladde,";
-			$qtxt.="kladdeliste,kostpriser,lagerstatus,mylabel,openpost,ordrelinjer,ordrer,pos_betalinger,report,price_correction,";
-			$qtxt.="paperflow,proforma,rental,rentalitems,rentalperiod,shop_ordrer,transaktioner,tekster,variant_typer,variant_varer,";
-			$qtxt.="varianter,voucher,voucheruse";
+			$qtxt = "TRUNCATE ansatmappe,ansatmappebilag,batch_kob,batch_salg,betalinger,betalingsliste,bilag,bilag_tjekskema,budget,"; 
+			$qtxt.= "corrections,crm,deleted_order,drawer,gavekort,gavekortbrug,historik,jobkort,jobkort_felter,kassekladde,kladdeliste,";
+			$qtxt.= "kontokort,kostpriser,loen,loen_enheder,lagerstatus,mappe,mappebilag,misc_meta_data,modtageliste,modtagelser,";
+			$qtxt.= "navigator,noter,opgaver,ordrelinjer,ordrer,ordretekster,pbs_kunder,pbs_linjer,pbs_liste,pbs_ordrer,pos_betalinger,";
+			$qtxt.= "price_correction,proforma,provision,queries,rabat,regulering,reservation,returnings,sager,sagstekster,serienr,"; 
+			$qtxt.= "shop_adresser,shop_ordrer,shop_varer,simulering,tabeller,tidsreg,tjekpunkter,tmpkassekl,transaktioner,report,valuta";
 			$qtxt.=" restart identity";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			db_modify("DELETE FROM grupper WHERE art='RA' and kodenr !='1'",__FILE__ . " linje " . __LINE__);
@@ -1306,11 +1473,11 @@ if ($_POST) {
 				$eget_id=$r['id'];
 				$qtxt="DELETE FROM adresser WHERE id!='$eget_id'";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-				$qtxt="TRUNCATE ansatte, vare_lev,shop_adresser restart identity";
+				$qtxt="TRUNCATE ansatte,ansatmappe,ansatmappebilag,vare_lev,shop_adresser restart identity";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 			if ($_POST['behold_varer']=='') {
-				$qtxt="TRUNCATE varer,vare_lev,shop_varer restart identity";
+				$qtxt="TRUNCATE shop_varer,styklister,varer,vare_lev,varetilbud,variant_typer,variant_varer,varianter restart identity";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 			print tekstboks('regnskab nulstillet');
@@ -1432,7 +1599,7 @@ if ($sektion=="api_valg") api_valg();
 if ($sektion=="labels") labels($valg);
 if ($sektion=="prislister") prislister();
 if ($sektion=="rykker_valg") rykker_valg();
-if ($sektion=="div_valg") div_valg();
+if ($sektion=="div_valg") div_valg(); # Kalder sys_div_valg.php
 if ($sektion=="docubizz") docubizz();
 if ($sektion=="bilag") bilag();
 //if ($sektion=="paperflow") activatePaperflow();

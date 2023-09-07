@@ -254,7 +254,10 @@ if ( $db && $db!=$sqdb ) {
 			include("../includes/online.php"); #20211008 moved from line 259
 	}
 	}
-	if ($dbver<$version) tjek4opdat($dbver,$version);
+	if ($dbver<$version) {
+		tjek4opdat($dbver,$version);
+		include("../includes/online.php");
+	}
 }
 #$qtxt = "select id, var_value from settings where var_name = 'languageId'";
 #$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
@@ -321,6 +324,13 @@ if ($userId) {
 #		$qtxt.= "where session_id = '$s_id'";
 #	} else $qtxt = "update online set rettigheder='$rettigheder', language_id='$languageId' where session_id = '$s_id'";
 	
+	$qtxt = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS ";
+	$qtxt.= "WHERE table_name = 'online' AND column_name = 'rettigheder' ";
+	$qtxt.= "AND DATA_TYPE = 'character varying' AND CHARACTER_MAXIMUM_LENGTH < 50";
+	if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+		$qtxt = "ALTER TABLE online ALTER COLUMN rettigheder type varchar(50)";
+		db_modify($qtxt, __FILE__ . "linje" . __LINE__);
+	}
 	$qtxt = "update online set rettigheder='$rettigheder' ";
 	if (($regnskabsaar)&&($db)) $qtxt.= ", regnskabsaar='$regnskabsaar' ";
 	if ($dbver > '4.0.4') $qtxt.= ", language_id='$languageId' ";

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- finans/rapport.php --- lap 3.9.9 --- 2021-01-10 ---
+// --- finans/rapport.php --- lap 4.0.8 --- 2023-06-19 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk ApS
+// Copyright (c) 2003-2023 saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 20120927 Hvis budgettal indsat og konto lukket blev konto alligevel vist under budget
@@ -48,6 +48,7 @@
 // 2019.04.12 PHR Moved functions to 'rapport_includes' and added 'Resultat/Sidste år' 
 // 20190924 PHR Added option 'Poster uden afd". when "afdelinger" is used. $afd='0' 
 // 20210110 PHR some minor changes related til 'deferred financial year'
+// 20230611+20230619 PHR php8
 
 $title="Finansrapport";
 @session_start();
@@ -67,17 +68,16 @@ if (!isset ($prj_navn_til)) $prj_navn_til = NULL;
 if (!isset ($prj_navn_fra)) $prj_navn_fra = NULL;
 
 if ($_POST){
-
-	$submit=str2low(trim($_POST['submit']));
-	if (!$popup) {
-		if ($submit=='kontrolspor') {
+	if (isset($_POST['kontrolspor']) && $_POST['kontrolspor']) {
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=kontrolspor.php\">";
 			exit;
-		} elseif ($submit=='provisionsrapport') {
+	}
+	if (isset($_POST['provisionsrapport']) && $_POST['provisionsrapport']) {
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=provisionsrapport.php\">";
 			exit;
 		}
-	}
+	
+	$submit=str2low(trim($_POST['submit']));
 	$rapportart=if_isset($_POST['rapportart']);
 	$aar_fra=if_isset($_POST['aar_fra']);
 	$aar_til=if_isset($_POST['aar_til']);
@@ -220,8 +220,8 @@ if ($_POST){
 	$projekt_til=if_isset($_GET['projekt_til']);
 	$simulering=if_isset($_GET['simulering']);
 	$lagerbev=if_isset($_GET['lagerbev']);
-
 }
+$regnaar = (int)$regnaar;
 $md[1]="januar"; $md[2]="februar"; $md[3]="marts"; $md[4]="april"; $md[5]="maj"; $md[6]="juni"; $md[7]="juli"; $md[8]="august"; $md[9]="september"; $md[10]="oktober"; $md[11]="november"; $md[12]="december";
 
 if ($submit != 'ok') $submit='forside';

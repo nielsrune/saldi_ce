@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/debitor.php --- lap 4.0.5 --- 2022-02-26 ----
+// --- debitor/debitor.php -----patch 4.0.8 ----2023-07-12--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20130210 Break ændret til break 1
 // 20160218 Udvælg fungerer nu også hvis debitor er med i flere kategorier. Søg 20160218
@@ -45,13 +46,17 @@
 // 20210907 MSC - Implementing new design
 // 20211102 MSC - Implementing new design
 // 20220226 PHR - Added: 	$mail->CharSet = "$charset";
+// 20230402 PHR - Added  '&& $cat_liste[0] != '0'' 
+// 20230611 PHP - Fixed missing pre & nextpil 
+// 20230717 PBLM - Added link to booking on line 375
 
 #ob_start();
 @session_start();
 $s_id=session_id();
 
-$adresseantal=$check_all=$hrefslut=$javascript=$kontoid=$linjebg=$linjetext=$nextpil=$ny_sort=$prepil=$tidspkt=$understreg=$udv2=NULL;
-$find=$dg_id=$dg_navn=$selectfelter=array();
+$adresseantal=$check_all=$hrefslut=$javascript=$kontoid=$linjebg=$linjetext=NULL;
+$nextpil=$ny_sort=$prepil=$skjul_lukkede=$tidspkt=$understreg=$udv2=NULL;
+$cat_liste=$dg_liste=$find=$dg_id=$dg_navn=$selectfelter=array();
 
 print "
 <script LANGUAGE=\"JavaScript\">
@@ -70,7 +75,8 @@ function MasseFakt(tekst)
 $css="../css/standard.css";
 $modulnr=6;
 $title="Debitorliste";
-$firmanavn=NULL;
+$firmanavn=NULL; 
+$ansat_id = array();
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -363,10 +369,8 @@ print "<td width=80% $top_bund align=center><table border=0 cellspacing=2 cellpa
 	elseif ($showMySale) {
 		print "<td width = 20% align=center><a href='debitor.php?valg=kommission&returside=$returside'>".findtekst(909,$sprog_id)."</a></td>";
 	}	
-	if ($valg=='rental') print "<td width = 20% align=center $knap_ind>".findtekst(1116,$sprog_id)."</td>";
-	elseif ($showRental) {
-		print "<td width = 20% align=center><a href='debitor.php?valg=rental&returside=$returside'>".findtekst(1116,$sprog_id)."</a></td>";
-	}	
+#		print "<td width = 20% align=center><a href='debitor.php?valg=rental&returside=$returside'>".findtekst(1116,$sprog_id)."</a></td>";
+	print "<td width = 20% align=center><a href='../rental/index.php?vare'>Booking</a></td>";
 	$title=findtekst(1664, $sprog_id); #20210728
 	if ($jobkort)	print "<td width = 20% align=center><a href='jobliste.php' title ='$title'>".findtekst(38,$sprog_id)."</a></td>";
 print "</tbody></table></td>\n";
@@ -397,7 +401,7 @@ for ($x=0;$x<=$vis_feltantal;$x++) {
 $numfelter=array("rabat","momskonto","kreditmax","betalingsdage","gruppe","kontoansvarlig","postnr","kontonr");
 ####################################################################################
 $udvaelg=NULL;
-$tmp=trim($find[0]);
+$tmp=trim(if_isset($find[0],NULL));
 for ($x=1;$x<$vis_feltantal;$x++) {
 	if (isset($find[$x])) {
 		$tmp=$tmp."\n".trim($find[$x]);
@@ -453,7 +457,8 @@ if (!$linjeantal) $linjeantal=100;
 $slut=$start+$linjeantal;
 $adresserantal=0;
 
-$r=db_fetch_array(db_select("select count(id) as antal from adresser where art = 'D' $udvaelg",__FILE__ . " linje " . __LINE__));
+$qtxt = "select count(id) as antal from adresser where art = 'D' $udvaelg";
+$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $antal=$r['antal'];
 if ($menu=='T'){
 	print "<div class=\"maincontentLargeHolder\">\n";
@@ -470,11 +475,15 @@ if ($start>0) {
 	if (file_exists("rotary_addrsync.php")) print "<a href=\"rotary_addrsync.php\" target=\"blank\" title=\"".findtekst(1665, $sprog_id)."\">!</a>";
 	print "</td>";
 }
-if ($valg != 'rental' || $start == 0) {
+if ($valg != 'rental' && $start == 0) {
 for ($x=0;$x<$vis_feltantal;$x++) {
+		if (substr($vis_felt[$x],0,4) == 'cat_') {
+			print "<td align=$justering[$x]><b>$feltnavn[$x]</b></td>\n";
+		} else {
 	if ($feltbredde[$x]) $width="width=$feltbredde[$x]";
 	else $width="";
 		print "<td align=$justering[$x] $width style='padding: 20px'><b><a href='debitor.php?nysort=$vis_felt[$x]&sort=$sort&valg=$valg'>$feltnavn[$x]</b></td>\n";
+}
 }
 }
 if ($valg=='kommission') {
@@ -485,9 +494,10 @@ if ($valg=='kommission') {
 	print "<td align='center'><b>Aktiv</b></td>";
 	print "<td align='center'><b>Inviter</b></td>";
 }
-if ($antal>$slut && !$dg_liste[0] && !$cat_liste[0]) {
+
+if ($antal>$slut && !$dg_liste[0] && !$cat_liste[0] && $cat_liste[0] != '0' && $valg=='debitor') { #20230402
 	$nextpil=$start+$linjeantal;
-	print "<td align=right class='imgNoTextDeco' style='padding: 20px' colspan='4'><a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret nyt kundekort'><i class='fa fa-plus-square'></i></a> &nbsp; <a accesskey=V href='debitorvisning.php?valg=$valg' title='Ændre visning'><i class='fa fa-gear'></i></a> &nbsp; <a href=debitor.php?start=$nextpil&valg=$valg><img class='imgInvert imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
+	print "<td align=right class='imgNoTextDeco' style='padding: 20px' colspan='$vis_feltantal'><a href=debitor.php?start=$nextpil&valg=$valg><img class='imgInvert imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td><tr>";
 }
 print "</tr>\n";
 if ($dg_antal || $cat_antal) $linjeantal=0;
@@ -509,7 +519,9 @@ print "<input type=hidden name=kontoid value=$kontoid>\n";
 		if (!isset($justering[$x])) $justering[$x]=0;
 		if (!isset($find[$x])) $find[$x]=NULL;
 		print "<td align=$justering[$x]><span title= '$span'>";
-		if ($vis_felt[$x]=="kontoansvarlig") {
+		if (substr($vis_felt[$x],0,4) == 'cat_') {
+			print '';
+		} elseif ($vis_felt[$x]=="kontoansvarlig") {
 			$ansat_id=array();$ansat_init=array();
 			$y=0;
 			$qtxt = "select distinct(ansatte.id) as ansat_id,ansatte.initialer as initialer from ansatte,adresser where ";
@@ -557,6 +569,7 @@ print "<input type=hidden name=kontoid value=$kontoid>\n";
 		} elseif (in_array($vis_felt[$x],$selectfelter)) {
 			$tmp=$vis_felt[$x];
 			print "<SELECT NAME=\"find[$x]\">";
+			$qtxt = "select distinct($tmp) from adresser where art = 'D'";
 			$q=db_select("select distinct($tmp) from adresser where art = 'D'");
 			print "<option>".stripslashes($find[$x])."</option>";
 			if ($find[$x]) print "<option></option>";

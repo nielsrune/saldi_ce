@@ -49,10 +49,10 @@ if (!isset ($b)) $b = null;
 			if (isset($box4[$i]) && $box4[$i]) $box4[$i]=dkdecimal($box4[$i],2);
 		}
 		if ($art[$i]=='VTG') {
-			if ($box1[$i]) $box1[$i]=dkdecimal($box1[$i],2);
-			if ($box2[$i]) $box2[$i]=dkdecimal($box2[$i],2);
-			if ($box3[$i]) $box3[$i]=dkdato($box3[$i]);
-			if ($box4[$i]) $box4[$i]=dkdato($box4[$i]);
+			if (isset($box1[$i]) && $box1[$i]) $box1[$i]=dkdecimal($box1[$i],2);
+			if (isset($box2[$i]) && $box2[$i]) $box2[$i]=dkdecimal($box2[$i],2);
+			if (isset($box3[$i]) && $box3[$i]) $box3[$i]=dkdato($box3[$i]);
+			if (isset($box4[$i]) && $box4[$i]) $box4[$i]=dkdato($box4[$i]);
 		}
 		if ($valg=='projekter'||$art[$i]=='PRJ') $size=$feltbredde*10;
 		else $size=20;

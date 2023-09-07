@@ -1,5 +1,7 @@
 <?php
 
+// 20210712 LOE - Translated Some texts 
+
 function items($defaultProvision) {
 	global $sprog_id;
 	global $bgcolor;
@@ -131,93 +133,92 @@ function items($defaultProvision) {
 	print "</select></td></tr>";
 	*/
 
-	$text="Vis priser med moms på varekort";
-	$title="Når dette felt er afmærket bliver varen vist incl. moms på varekortet";
+	$text=findtekst(1273, $sprog_id); #20210712
+	$title=findtekst(1274, $sprog_id);
 	print "<tr><td title='$title'>$text</td>";
 	print "<td title='$title'><input type='checkbox' class='inputbox' name='vatOnItemCard' $vatOnItemCard></td></tr>";
 	print "<td><br></td><td><br></td><td><br></td>";
 
-	$text="Bekræft ændring af beskrivelse på varekort";
-	$title="Når dette felt er afmærket skal ændring af beskrivelse på varekort bekræftes";
+	$text=findtekst(1275, $sprog_id);
+	$title=findtekst(1276, $sprog_id);
 	print "<tr><td title='$title'>$text</td>";
 	print "<td title='$title'><input type='checkbox' class='inputbox' name='confirmDescriptionChange' $confirmDescriptionChange></td></tr>";
-	$text="Kvittèr ved ændring af beholdning på varekort";
-	$title="Når dette felt er afmærket skal kvitteres ved ændring af beholdning på varekort";
+	$text=findtekst(1277, $sprog_id);
+	$title=findtekst(1278, $sprog_id);
 	print "<tr><td title='$title'>$text</td>";
 	print "<td title='$title'><input type='checkbox' class='inputbox' name='confirmStockChange' $confirmStockChange></td></tr>";
 	print "<td><br></td><td><br></td><td><br></td>";
 
-	$text="Sæt vare til udgået, når beholdning bliver negativ";
-	$title="Når dette felt er afmærket bliver varen markeret som udgået når beholdningen bliver negativ";
+	$text=findtekst(1279, $sprog_id);
+	$title=findtekst(1280, $sprog_id);
 	print "<tr><td title='$title'>$text</td>";
 	print "<td title='$title'><input type='checkbox' class='inputbox' name='DisItemIfNeg' $DisItemIfNeg></td></tr>";
 	#chooseProvisionForProductGroup($defaultProvision);
-	$text="Kommisionsvarer.<br>Afmærk hvis der anvendes POS og der sælges varer i kommission ";
-	$title="Når dette felt er afmærket vises 'Afregn kommission på kasseoptælling' og 'Kommissionsvare' på varekort ";
+	$text=findtekst(1281, $sprog_id);
+	$title=findtekst(1282, $sprog_id);
 	print "<tr><td title='$title'>$text</td>";
 	print "<td title='$title'><input type='checkbox' class='inputbox' name='useCommission' $useCommission></td></tr>";
 	if ($useCommission) {
-		$text  = "Standard kommissionssats";
-		$title = "Sættes en værdi her, anvendes denne sats som udgangspunkt ved oprettelse af varer.\n";
-		$title.= "Er feltet tomt beregnes skal satses skrives manuelt.";
+		$text  = findtekst(1283, $sprog_id);
+		$title = findtekst(1284, $sprog_id);
+		$title.= findtekst(1285, $sprog_id);
 		list($a,$b) = explode("|",$numberFormat);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' style='width:50px;text-align:right;' class='inputbox' ";
 		print "name='defaultCommission' value= '". $defaultCommission ."'></td></tr>";
 
-		$text  = "Indtægtskonto for kommisionssalg, nye varer";
-		$title = "Angiv den konto i kontoplanen hvor indtægter fra kommissionssalg af nye skal bogføres.\n";
-		$title.= "Er feltet tomt skal beløbet overføres manuelt i en kassekladde.";
+		$text  = findtekst(1286, $sprog_id);
+		$title = findtekst(1287, $sprog_id);
+		$title.= findtekst(1288, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' style='width:75px;text-align:right;' class='inputbox' ";
 		print "name='commissionAccountNew' value= '$commissionAccountNew'></td></tr>";
 
-		$text  = "Afregningskonto for kommisionssalg, nye varer";
-		$title = "Angiv den konto i kontoplanen hvorfra afregning for kommissionssalg af nye varer skal trækkes.\n";
-		$title.= "Er feltet tomt skal beløbet overføres manuelt i en kassekladde.";
+		$text  = findtekst(1289, $sprog_id);
+		$title = findtekst(1290, $sprog_id);
+		$title.= findtekst(1288, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' style='width:75px;text-align:right;' class='inputbox' ";
 		print "name='customerCommissionAccountNew' value= '$customerCommissionAccountNew'></td></tr>";
 
-		$text  = "Egen konto for kommisionssalg, nye varer";
-		$title = "Angiv den konto i kontoplanen hvorfra kommission af salg af nye varer skal trækkes.\n";
-		$title.= "Er feltet tomt skal beløbet overføres manuelt i en kassekladde.";
+		$text  = findtekst(1291, $sprog_id);
+		$title = findtekst(1292, $sprog_id);
+		$title.= findtekst(1288, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' style='width:75px;text-align:right;' class='inputbox' ";
 		print "name='ownCommissionAccountNew' value= '$ownCommissionAccountNew'></td></tr>";
 
-		$text  = "Indtægtskonto for kommisionssalg, brugte varer";
-		$title = "Angiv den konto i kontoplanen hvor indtægter fra kommissionssalg af brugte skal bogføres.\n";
-		$title.= "Er feltet tomt skal beløbet overføres manuelt i en kassekladde.";
+		$text  = findtekst(1293, $sprog_id);
+		$title = findtekst(1294, $sprog_id);
+		$title.= findtekst(1288, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' style='width:75px;text-align:right;' class='inputbox' ";
 		print "name='commissionAccountUsed' value= '$commissionAccountUsed'></td></tr>";
 
-		$text  = "Afregningskonto for kommisionssalg, brugte varer";
-		$title = "Angiv den konto i kontoplanen hvorfra afregning for kommissionssalg af brugte skal bogføres.\n";
-		$title.= "Er feltet tomt skal beløbet overføres manuelt i en kassekladde.";
+		$text  = findtekst(1295, $sprog_id);
+		$title = findtekst(1296, $sprog_id);
+		$title.= findtekst(1288, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' style='width:75px;text-align:right;' class='inputbox' ";
 		print "name='customerCommissionAccountUsed' value= '$customerCommissionAccountUsed'></td></tr>";
-
-		$text  = "Egen konto for kommisionssalg, brugte varer";
-		$title = "Angiv den konto i kontoplanen hvorfra kommission af salg af brugte varer skal trækkes.\n";
-		$title.= "Er feltet tomt skal beløbet overføres manuelt i en kassekladde.";
+		$text  = findtekst(1297, $sprog_id);
+		$title = findtekst(1298, $sprog_id);
+		$title.= findtekst(1288, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' style='width:75px;text-align:right;' class='inputbox' ";
 		print "name='ownCommissionAccountUsed' value= '$ownCommissionAccountUsed'></td></tr>";
 		
-		$text  = "Konverter eksisterende varer?";
-		$title = "Denne funktion anvendes til konvertering af varer oprettet til brug med programmet Loppestatus hvor kostprisen ";
-		$title.= "blev brugt som kommissions procent.\n";   
-		$title = "Afmærkes dette felt ændres alle varer hvor salgspris er 0, kostpris er mellem 0,10 og 0,50 og vareummeret starter med ";
-		$title.= " &apos;kb&apos; eller &apos;kn&apos;.\n";
-		$title.= "Hvis kostprisen f.eks. er 0,15 blive denne ændret til 0.85 og kommisionssatsen bliver sat til 15%";
-		$title.= "Kontakt os gerne for assistance - +45 4690 2208";
+		$text  = findtekst(1299, $sprog_id);
+		$title = findtekst(1300, $sprog_id);
+		$title.= findtekst(1301, $sprog_id);
+		$title = findtekst(1302, $sprog_id);
+		$title.= findtekst(1303, $sprog_id);
+		$title.= findtekst(1304, $sprog_id);
+		$title.= findtekst(1305, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='checkbox' class='inputbox' name='convertExisting'></td></tr>";
-		$text  = "Startdato for afregning til kommissionskunder?";
-		$title = "Næste afregning til  kommissionskunder vil vlive beregnet fra og med den dato der angives her.\n";
+		$text  = findtekst(1306, $sprog_id);
+		$title = findtekst(1307, $sprog_id);
 		print "<tr><td title='$title'>$text</td>";
 		print "<td title='$title'><input type='text' class='inputbox' style='width:75px;' name='comissionFromDate' ";
 		print "value='$commissionFromDate' placeholder='01-01-2020'></td></tr>";

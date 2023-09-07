@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/exitFunc/settlePOS.php --- lap 4.0.2 --- 2021.07.10 ---
+// --- debitor/pos_ordre_includes/exitFunc/settlePOS.php --- lap 4.0.6 --- 2022.08.12 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2019-2021 saldi.dk aps
+// Copyright (c) 2019-2022 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190510 LN Get data from grupper depending on the $status
@@ -30,23 +30,31 @@
 // 20210125 PHR Renamed from status.php and various changes related to voucher
 // 20210710 PHR	Added "|| ($incl_moms == 0 && count($vare_id)" as order was not settled if order contained items from diffent groups with different 
 //  groups with differentaccounts and total sum including VAT was 0;
-// 20210713 PHR Added varioan_id to m_rabat
+// 20210713 PHR Added variiant_id to m_rabat
+// 20220812 PHR If both quantity discount and ordinary discount the quaitity discount is now regulated to fit the discountprice
+//              see also ordrefunc.php & productLines.php    
+
 	$x=0;
 	if ($status<3) {
+		$linje_id = array();
 		$r=db_fetch_array(db_select("select box2 from grupper where art='OreDif'",__FILE__ . " linje " . __LINE__));
 		$difkto=$r['box2'];
-		$r=db_fetch_array(db_select("select box8 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
+		$qtxt = "select box8 from grupper where art = 'POS' and kodenr = '1'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$rabatvareid=$r['box8'];
-		$q=db_select("select * from ordrelinjer where ordre_id = '$id' order by rabatgruppe, id desc",__FILE__ . " linje " . __LINE__);
+		$qtxt = "select * from ordrelinjer where ordre_id = '$id' order by rabatgruppe, id desc";
+		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while($r=db_fetch_array($q)) {
 			$x++;
 			$linje_id[$x]=$r['id'];
 			$vare_id[$x]=$r['vare_id'];
 			$varenr[$x]=$r['varenr'];
 			$pris[$x]=$r['pris'];
+			$kostpris[$x]     = $r['kostpris'];
 			$antal[$x]=$r['antal'];
 			$momsfri[$x]=$r['momsfri'];
 			$varemomssats[$x]=$r['momssats'];
+			$fast_db[$x]      = $r['fast_db'];
 			$folgevare[$x]=$r['folgevare'];
 			$tilfravalg[$x]=$r['tilfravalg'];
 			$rabat[$x]=$r['rabat'];
@@ -62,15 +70,27 @@
 				} else $rabatantal[$x]=$antal[$x];
 			} else $rabatantal[$x]=0;
 			$m_rabat[$x]=$r['m_rabat']*-1;
+			$m_rabat[$x]=$m_rabat[$x]-($m_rabat[$x]*$rabat[$x]/100); #20220812
 #cho "m_rabat $m_rabat[$x]<br>";
 		}
 		$linjeantal=$x;
+		transaktion("begin");
+		for($x=1;$x<=count($linje_id);$x++) {
+#			if ($pris[$x] != 0 && $rabat[$x] != 0 && $kostpris[$x] != 0 && $fast_db[$x] != 0) {
+				$qtxt = "select salgspris,kostpris from varer where id = '$vare_id[$x]'";
+				$r  = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+				if ($r['salgspris'] == 0 && $r['kostpris'] > 0  && $r['kostpris'] < 1 && $r['kostpris'] == $fast_db[$x]) {
+					$kostpris[$x] = ($pris[$x]-($pris[$x]*$rabat[$x]/100)) * $fast_db[$x];
+					$qtxt = "update ordrelinjer set kostpris  = '$kostpris[$x]' where id = $linje_id[$x]";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				}
+			}
+#		}
 		$pos=0;
 		$sum=0;
 		$moms=0;
 		$incl_moms=0;
 #cho __FILE__." ".__LINE__."<br>";	
-		transaktion("begin");
 		for($x=1;$x<=count($linje_id);$x++) {
 			$pos++;
 			$qtxt="update ordrelinjer set posnr='$pos',projekt='$projekt' where id='$linje_id[$x]'";
@@ -197,7 +217,7 @@
 			$qtxt="select id from ordrer where fakturanr='$fakturanr' and art = 'PO' and id != '$id'";
 			db_modify ("update ordrer set fakturanr='$fakturanr' where id='$id'",__FILE__ . " linje " . __LINE__);
 		}
-		$sum*=1; $moms*=1;
+		$sum=(float)$sum; $moms=(float)$moms;
 #cho __line__." Sum $sum<br>";	
 		$betalt=$modtaget+$modtaget2;
 		$retur=afrund($betalt-($sum+$moms),2); #20140613
@@ -291,13 +311,19 @@
 	$qtxt = "select sum (amount*valutakurs/100) as paid from pos_betalinger where ordre_id='$id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$leftToPay = $_POST['sum'] - $r['paid'];
-	
 	if (is_numeric($modtaget) && ($modtaget || ($modtaget == 0 && ($ms == 0 || $leftToPay== 0)))) {
 		if ($betaling == 'Cash' || $betaling == 'Cash on amount') $betaling='Kontant';
+			if (!is_array($vare_id)) $vare_id = array();
 			if ($modtaget || ($incl_moms == 0 && count($vare_id) > 0)) { #20210710
+			$qtxt = "SELECT table_name FROM information_schema.columns WHERE table_name='pos_betalinger' ";
+			$qtxt.= "and column_name='payment_id'";
+			if (!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
+				db_modify("ALTER TABLE pos_betalinger ADD column payment_id integer",__FILE__ . " linje " . __LINE__);
+			}
 			$qtxt="select id  from pos_betalinger where ordre_id='$id'and betalingstype ='!'";
 			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-				$qtxt="update pos_betalinger set betalingstype='$betaling',amount='$modtaget',valuta='$betvaluta',valutakurs='$betvalkurs' ";	
+				$qtxt = "update pos_betalinger set betalingstype='$betaling',amount='$modtaget',valuta='$betvaluta',";
+				$qtxt.= "valutakurs='$betvalkurs',payment_id='". (int)$payment_id ."' ";
 				$qtxt.="where id='$r[id]'";
 			} else {
 				$qtxt="insert into pos_betalinger(ordre_id,betalingstype,amount,valuta,valutakurs) values ";

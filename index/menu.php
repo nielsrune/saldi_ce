@@ -26,12 +26,14 @@
 // 20210223 LOE replaced string Sikkerhedskopi with findtekst value
 // 20210721 LOE Fixed a bug and alsoo updated some texts not translated
 // 20210817 LOE Quotation mark added to some database variables where they were missing
-// 20211011 PHR Ramoved paperflow link as it is in 'kreditor'
+// 20211011 PHR Removed paperflow link as it is in 'kreditor'
+// 20230320 MSC Added redicret to mobile version
 
 @session_start();	# Skal angives oeverst i filen??!!
 $s_id=session_id();
-$title="Oversigt";
+$title="$regnskab Oversigt";
 $css="../css/standard.css";
+
 
 $produktion=0; # Menucolumn PRODUKTION id disabled until module is reasy for use
 $ansat_id=$popup=NULL;
@@ -53,14 +55,36 @@ if (file_exists("../doc/vejledning.pdf")) $vejledning="../doc/vejledning.pdf";
 else $vejledning="http://saldi.dk/dok/komigang.html";
 
 if ($menu=='T') {
-include_once '../includes/topmenu/header.php';
-include_once '../includes/topmenu/footer.php';
+	$android = strpos($_SERVER['HTTP_USER_AGENT'],"Android");
+	$bberry = strpos($_SERVER['HTTP_USER_AGENT'],"BlackBerry");
+	$iphone = strpos($_SERVER['HTTP_USER_AGENT'],"iPhone");
+	$ipod = strpos($_SERVER['HTTP_USER_AGENT'],"iPod");
+	$webos = strpos($_SERVER['HTTP_USER_AGENT'],"webOS");
+	if ($android || $bberry || $iphone || $ipod || $webos== true) 
+	{ 
+	header('Location: ../mobile/menu.php');
+	}
+
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">$regnskab &nbsp;•&nbsp; $title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 } elseif ($menu=='S') {
 	include("../includes/sidemenu.php");
 } else {
 	oldmenu();
 } 
-print	"</div><!-- end of wrapper --></body></html>\n";
+#print	"</div><!-- end of wrapper --></body></html>\n";
+
+if ($menu=='T') {
+	print "<center><input type='button' onclick=\"location.href='../debitor/pos_ordre.php'\" accesskey='L' class='blue' style='width:500px;' value='Kassesystem'></center>";
+} else {
+	print "";
+}
 
 function oldmenu() {
 	global $ansat_id;
@@ -332,6 +356,12 @@ if (!$row = db_fetch_array($query)) {
 	if ($popup) print "<body onload=\"JavaScript:regnaar=window.open('../systemdata/regnskabsaar.php?returside=../includes/luk.php','regnaar',',.$jsvars.,alwaysraised=yes');regnaar.focus();regnaar.focus();\">\n";
 	else print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/regnskabskort.php?returside=../index/menu.php\">\n";
 }
+}
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
 }
 ?>
 

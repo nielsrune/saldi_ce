@@ -44,6 +44,7 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 
 $aktiver=if_isset($_GET['aktiver']);
+$deleteYear=if_isset($_GET['deleteYear']);
 $set_alle=if_isset($_GET['set_alle']);
 
 if ($set_alle) {
@@ -61,6 +62,10 @@ if ($aktiver) {
 	}
 	include("../includes/online.php");
 	if (!$revisor) db_modify("update brugere set regnskabsaar = '$aktiver' where id = '$bruger_id'",__FILE__ . " linje " . __LINE__);
+}
+if ($deleteYear) {
+	include ("financialYearInc/deleteFinancialYear.php");
+	deleteFinancialYear($deleteYear);
 }
 
 if ($menu=='T') {  # 20150327 start
@@ -102,23 +107,38 @@ while($r = db_fetch_array($q)) {
 }
 
 $x=0;
+$deleted = array();
 $query = db_select("select * from grupper where art = 'RA' order by box2,box1",__FILE__ . " linje " . __LINE__);
 while ($row = db_fetch_array($query)) {
 	$x++;
+	($row['box10'] == 'on')?$deleted[$x] = 1:$deleted[$x] = 0; 
 	($bgcolor1!=$bgcolor)?$bgcolor1=$bgcolor:$bgcolor1=$bgcolor5;
 	print "<tr bgcolor=\"$bgcolor1\">";
 	$title="".findtekst(1793, $sprog_id)." $row[kodenr]";  #20210805
-	print "<td><a href='regnskabskort.php?id=$row[id]' title=\"$title\"> $row[kodenr]</a><br></td>";
+	print "<td>";
+	if ($row['box10'] !='on') print "<a href='regnskabskort.php?id=$row[id]' title=\"$title\"> $row[kodenr]</a>";
+	else print $row['kodenr'];
+	print "<br></td>";
 	print "<td> $row[beskrivelse]<br></td>";
 	print "<td> $row[box1]<br></td>";
 	print "<td> $row[box2]<br></td>";
 	print "<td> $row[box3]<br></td>";
 	print "<td> $row[box4]<br></td>";
-	if (($row['kodenr']!=$regnaar)&&($row['box5']=='on')) {
+	if ($row['box10'] =='on') {
+		print "<td> Slettet<br></td><td></td>";
+	} elseif ( $row['kodenr']!=$regnaar && $row['box5']=='on' ) {
 		print "<td><a href='regnskabsaar.php?aktiver=$row[kodenr]'> ".findtekst(1213,$sprog_id)."</a><br></td><td></td>";
 	}
-	elseif ($row['kodenr']!=$regnaar) print "<td> ".findtekst(387,$sprog_id)."</td><td></td>";
-	else {
+	elseif ($row['kodenr']!=$regnaar) {
+		print "<td>".findtekst(387,$sprog_id)."</td><td>";
+		if (($x==1 || $deleted[$x-1] == '1') && $row['box5']!='on') {
+			$txt1="Slet";
+			$txt2="slet";
+			print "<a href='regnskabsaar.php?deleteYear=$row[kodenr]' title='$txt1' onclick=\"return confirm('$txt2')\">";
+			print "$txt1</a>";
+		}
+		print "</td>";
+	} else {
 		print "<td><font color=#ff0000>".findtekst(1214,$sprog_id)."</font></td><td>";
 		if ($set_alle) {
 			$title="".findtekst(1794, $sprog_id)." $regnaar ".findtekst(1795, $sprog_id)."";

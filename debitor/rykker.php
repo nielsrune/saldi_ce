@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------debitor/rykker.php---------lap 3.6.7-------2017-03-03--------
+// -----------debitor/rykker.php---------lap 4.0.7-------2023-02-28--------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 // 
-// Copyright (c) 2003 - 2021 saldi.dk aps
+// Copyright (c) 2003 - 2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20140628 - Diverse rettelser da rykkergebyr altid vistes i DKK Søg 20140628
 // 20140707 - Opdatering virkede kun når der blev ændret valuta 20140707
@@ -28,6 +28,7 @@
 // 20170303	-	Tilføjet inkasso - Søg inkasso
 // 20210701 - LOE - Translated some of these texts from Danish to English and Norsk
 // 20211110 MSC - Implementing new design
+// 20230228 PHR Implementing formular language $formularsprog, $newFormLanguage & FormLangId
 
 @session_start();
 $s_id=session_id();
@@ -66,7 +67,9 @@ if ($submit || $inkasso) {
 	$email=db_escape_string(trim($_POST['email']));
 	$valuta=trim($_POST['valuta']);
 	if (!isset($felt_5)) $felt=trim($_POST['felt_5']);
-	$ny_valuta=trim($_POST['ny_valuta']); #21040628
+	$ny_valuta=$_POST['ny_valuta']; #21040628
+	$formularsprog   = $_POST['formularsprog'];
+	$newFormLanguage = $_POST['newFormLanguage'];
 	if ($mail_fakt && (!strpos($email,"@") || !strpos($email,".") || !strlen($email)>5)) { 
 		$mail_fakt=NULL;
 		print "<BODY onload=\"javascript:alert('e-mail ikke gyldig')\">";
@@ -103,7 +106,9 @@ if ($submit || $inkasso) {
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
 	#20140707
-	db_modify("update ordrer set email ='$email',mail_fakt='$mail_fakt',kontakt='$kontakt' where id='$rykker_id'",__FILE__ . " linje " . __LINE__);
+	$qtxt = "update ordrer set email ='$email',mail_fakt='$mail_fakt',kontakt='$kontakt',sprog = '$newFormLanguage' ";
+	$qtxt.= "where id='$rykker_id'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	if ($submit=="Send" && $mail_fakt) {
 		#	print "<BODY onload=\"return confirm('Dokumentet sendes pr. mail til $email')\">";
 	}
@@ -122,16 +127,38 @@ if ($submit || $inkasso) {
 			$rykker_id=0;
 		} 
 	} elseif ($submit=="Opdater" && $status < 3) { #20140903
-		
+		if ($newFormLanguage != $formularsprog) {
+			$qtxt = "select kodenr from grupper where art = 'VSPR' and box1 = '$newFormLanguage'"; 
+			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $FormLangId=$r['kodenr'];
+			else $FormLangId = 0;
+			$qtxt = "select distinct(vare_id) as vare_id from ordrelinjer where ordre_id = '$rykker_id'"; 
+			$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+			while ($r = db_fetch_array($q)) {
+				if ($r['vare_id']) {
+					$qtxt = "select * from varetekster where vare_id='$r[vare_id]' and sprog_id = '$FormLangId'"; 
+					if ($r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+						$qtxt = "update ordrelinjer set beskrivelse = '";
+						$qtxt.= db_escape_string($r2['tekst']);
+						$qtxt.= "' where ordre_id = '$rykker_id' and vare_id = '$r[vare_id]'";
+						db_modify($qtxt,__FILE__ . " linje " . __LINE__);	
+					}
+				}
+			}
+		} else {
+			$formularsprog = 	$newFormLanguage;
 		$beskrivelse=$_POST['beskrivelse'];
 		$dkpris=$_POST['dkpris'];
 		$ny_beskrivelse=db_escape_string(trim($_POST['ny_beskrivelse']));
-		if ($ny_beskrivelse) db_modify("insert into ordrelinjer(ordre_id, beskrivelse) values ($rykker_id, '$ny_beskrivelse')",__FILE__ . " linje " . __LINE__);
-		else {
+			if ($ny_beskrivelse) {
+				$qtxt = "insert into ordrelinjer(ordre_id, beskrivelse) values ($rykker_id, '$ny_beskrivelse')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			}	else {
 			for ($x=1; $x<=$linjeantal; $x++) {
 				$beskrivelse[$x]=db_escape_string($beskrivelse[$x]);
 #			$pris[$x]=usdecimal($dkpris[$x]); 2009.02.05 - Pris fjernet fra update da den elles bogfoerer hele beloebet.
-			db_modify("update ordrelinjer set beskrivelse = '$beskrivelse[$x]' where id=$linje_id[$x]",__FILE__ . " linje " . __LINE__);
+					$qtxt = "update ordrelinjer set beskrivelse = '$beskrivelse[$x]' where id=$linje_id[$x]";
+					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				}	
 			}	
 		}
 	} elseif (strstr($submit,"Udskriv") || $submit=="Send" || $_POST['inkasso']) {
@@ -142,7 +169,10 @@ if ($submit || $inkasso) {
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=inkassoprint.php?rykker_id=$rykker_id&inkasso=$r[box9]\">";
 				exit;
 			} 
-		} else print "<meta http-equiv=\"refresh\" content=\"0;URL=rykkerprint.php?rykker_id=$rykker_id&rykkernr=$rykkernr&kontoantal=1'\">";
+		} else {
+			print "<meta http-equiv=\"refresh\" content=\"0;URL=rykkerprint.php?";
+			print "rykker_id=$rykker_id&rykkernr=$rykkernr&kontoantal=1&formularsprog=$formularsprog\">";
+		}
 	} elseif (strstr($submit,"Tilbage")) {
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=rapport.php?rapportart=openpost\">";
 		exit;
@@ -167,6 +197,7 @@ if ($rykker_id) {
 	$valuta = htmlentities($row['valuta'],ENT_COMPAT,$charset);
 	$mail_fakt = htmlentities($row['mail_fakt'],ENT_COMPAT,$charset);
 	$kundeordnr = htmlentities($row['kundeordnr'],ENT_COMPAT,$charset);
+	$formularsprog = $row['sprog'];
 	$cvrnr = $row['cvrnr'];
 	$ean = htmlentities($row['ean'],ENT_COMPAT,$charset);
 	$institution = htmlentities($row['institution'],ENT_COMPAT,$charset);
@@ -239,10 +270,11 @@ while ($r=db_fetch_array($q)){
 }
 
 print "<form name=\"rykker\" action=\"rykker.php?rykker_id=$rykker_id\" method=\"post\">";
-print "<input type=hidden name=rykker_id value=$rykker_id>";
-print "<input type=hidden name=rykkernr value=$rykkernr>";
-print "<input type=hidden name=valuta value=$valuta>"; #21040628
-print "<input type=hidden name=felt_5 value=$felt_5>"; #21070303
+print "<input type = 'hidden' name='formularsprog' value=\"$formularsprog\">";
+print "<input type = 'hidden' name='rykker_id'     value=\"$rykker_id\">";
+print "<input type = 'hidden' name='rykkernr'      value=\"$rykkernr\">";
+print "<input type = 'hidden' name='valuta'        value=\"$valuta\">"; #21040628
+print "<input type = 'hidden' name='felt_5'        value=\"$felt_5\">"; #21070303
 
 $ordre_id=if_isset($id);
 if ($menu=='T') {
@@ -319,6 +351,16 @@ for ($x=0;$x<count($valutakode);$x++) {
 	if ($valuta!=$valutakode[$x]) print "<option title=\"$valutabesk[$x]\" onchange=\"javascript:docChange = true;\">$valutakode[$x]</option>";
 }
 print "</SELECT></td></tr>";
+	$qtxt = "select distinct sprog from formularer where sprog != 'Dansk'";
+	if (db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+		print "<tr><td title=\"".findtekst(1468, $sprog_id)."\"><b>&nbsp;".findtekst(801, $sprog_id)."</b></span></td>\n";
+		print "<td><select class=\"inputbox\" style=\"width:130px\" name=\"newFormLanguage\" onchange='this.form.submit()'>\n";
+		print "<option>$formularsprog</option>\n";
+		$q=db_select("select distinct sprog from formularer order by sprog",__FILE__ . " linje " . __LINE__);
+		while ($r=db_fetch_array($q)) print "<option>$r[sprog]</option>\n";
+		print "</SELECT></td></tr>";
+	} 
+
 print "</tbody></table></td>";
 print "</td></tr><tr><td align=center colspan=3><table cellpadding=0 cellspacing=0 border=1 width=100%><tbody>";
 	print "<tr><td colspan=4></td></tr><tr>";
@@ -366,15 +408,15 @@ print "</td></tr><tr><td align=center colspan=3><table cellpadding=0 cellspacing
 			$inputtype[$x]="readonly";
 		} else $inputtype[$x]="text";
 		 $ialt=$ialt+$pris[$x];
-	print "<input type=hidden name=linje_id value=$linje_id[$x]>";
+#		print "<input type = 'hidden' name = 'linje_id[$x]' value = \"$linje_id[$x]\">";
 	}
 	$linjeantal=$x;
-	print "<input type=hidden name=linjeantal value=$x>";
+	print "<input type = 'hidden' name='linjeantal' value=\"$x\">";
 	for ($x=1; $x<=$linjeantal; $x++) {
 		if ($pris[$x]) $dkpris[$x]=dkdecimal($pris[$x],2);
 		else $dkpris[$x]='';
 #		print "<tr bgcolor=\"$linjebg\">";
-		print "<tr><input type=hidden name=linje_id[$x] value=$linje_id[$x]>";
+		print "<tr><input type = 'hidden' name = 'linje_id[$x]' value = \"$linje_id[$x]\">";
 		if ($dato[$x]) {
 			print "<td align=center>$dato[$x]</td>";
 			print "<td align=center>$faktnr[$x]</td>";

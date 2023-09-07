@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- kreditor/ordre.php --- lap 4.0.5 --- 2022.02.18 ---
+// --- kreditor/orderIncludes/closedOrder.php --- lap 4.0.7 --- 2022.11.06 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -22,7 +22,7 @@
 //
 // Copyright (c) 2022 saldi.dk aps
 // ----------------------------------------------------------------------
-		
+// 20221106 PHR - Various changes to fit php8 / MySQLi		
 	
 print "<input type=\"hidden\" name=\"konto_id\" value=$konto_id>";
 print "<input type=\"hidden\" name=\"kontonr\" value=\"$kontonr\">";
@@ -98,7 +98,7 @@ print "<tr><td colspan=7></td></tr><tr>";
 print "<td align=center title='".findtekst(1502, $sprog_id)."'><b>Pos.</td><td align=center><b>".findtekst(917, $sprog_id).".</td><td align=center><b>".findtekst(916, $sprog_id)."</td><td align=center><b>".findtekst(945, $sprog_id)."</td><td align=center><b>".findtekst(914, $sprog_id)."</td><td align=center><b>".findtekst(915,$sprog_id)."</td><td align=center title='".findtekst(1503, $sprog_id)."'><b>%</td><td align=center><b>".findtekst(947, $sprog_id)."</td>"; #20210716
 if (db_fetch_array(db_select("select * from grupper where art = 'PRJ' order by kodenr",__FILE__ . " linje " . __LINE__))) {
 	$vis_projekt='1';
-}
+} else $vis_projekt='0';
 if ($vis_projekt && !$projekt[0]) print "<td align=center title='".findtekst(1504, $sprog_id)."'><b>proj.</b></td>";
 else print "<td></td>";
 if (!$hurtigfakt) print "<td align=\"center\"><b>solgt</b></td>";
@@ -145,9 +145,10 @@ for ($x=1; $x<=$linjeantal; $x++) {
 	}
 	if (($varenr[$x])&&($vare_id[$x]))	{
 		$rest[$x]=0;
-		$qtxt = "select id, rest from batch_kob where linje_id = '$linje_id[$x]' and ordre_id = '$ordre_id' and vare_id = '$vare_id[$x]'";
+		$qtxt = "select id, rest from batch_kob where linje_id = '$linje_id[$x]' ";
+		$qtxt.= "and ordre_id = '$ordre_id' and vare_id = '$vare_id[$x]'";
 		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
-		while ($r = db_fetch_array($q)) $rest[$x]=$rest[$x]+$row['rest'];
+		while ($r = db_fetch_array($q)) $rest[$x]+=$r['rest'];
 		$solgt[$x]=$antal[$x]-$rest[$x];
 		$totalrest=$totalrest+$rest[$x];
 

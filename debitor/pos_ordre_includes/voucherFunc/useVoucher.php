@@ -68,7 +68,8 @@ function useVoucher($orderId, $voucherName) {
 #			alert("Betalingen bliver gennemført");
 			$subAmount = -1 * $price;
 			($vat)?$subVat = afrund($subAmount / (($amount+$vat)/$vat),2):$subVat = 0;
-#cho "$vat -> $subVat<br>";			
+#cho "$subAmount -> $subVat<br>";			
+#xit;
 			$subAmount-= $subVat;
 			if ($subAmount) {
 				$qtxt = "insert into voucheruse (voucher_id, order_id, amount, vat) values ('$voucherId', '$orderId', '$subAmount', '$subVat')";

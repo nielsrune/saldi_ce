@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------------------includes/formfunk.php ------patch 4.0.3 ----2021-10-28--------------
+// ---------------------includes/formfunk.php ------patch 4.0.8 ----2023-07-12--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2021 Saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2012.09.06 Tilføjet mulighed for at vise momssats på ordrelinjer. 
@@ -84,6 +84,8 @@
 // 2020.05.05 PHR Insert if to avoid mutiple similar lines (saldi_390 reminder 1489 #2)  20200505
 // 2020.06.08	PHR Some correction regarding currency / rate in reminders 
 // 2021.10.28 PHR ordrer.notes will now linebreak if line length > 5 chars  
+// 20230421 PHR Function modulus10 - cuts beginning of customer no instead of end, if too long
+// 20230712 PHR Added $creditedinvoice;
 
 if (!function_exists('skriv')) {
 function skriv($id,$str, $fed, $italic, $color, $tekst, $tekstinfo, $x, $y, $format, $form_font,$formular,$line) {
@@ -254,6 +256,11 @@ print "<!--function skriv start-->";
 						$streng[$i]=substr($streng[$i],1);
 						list($tabel,$variabel)=explode("_",$streng[$i],2);
 						if ($tabel=="ordre") {
+							if ($variabel == 'creditedinvoice') {
+								$qtxt = "kred_ord_id from ordrer where id=$id";
+								echo db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+								exit;
+							}
 							if ($variabel=="rykkerdate") $variabel="fakturadate";
 							$q2 = db_select("select $variabel from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
 						} elseif ($tabel=="eget" || $tabel=="egen") {
@@ -524,9 +531,19 @@ print "<!--function find_form_tekst start-->";
 					$variabel=tjek_lev_addr($variabel, $id);
 				}
 				if ($tabel=="ordre") {
-					if ($variabel=="rykkerdate") $variabel="fakturadate";
+					if (strtolower($variabel) == 'creditedinvoice') {
+						$qtxt = "select kred_ord_id from ordrer where id=$id";
+						if ($tmp = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))[0]) {
+							$qtxt = "select fakturanr from ordrer  where id = '$tmp'";
+							$streng[$x] = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))[0];
+							$q2 = $variabel = NULL;
+						}
+					}
+					elseif ($variabel=="rykkerdate") $variabel="fakturadate";
+					if ($variabel) {
 					$qtxt = "select $variabel from ordrer where id=$id";
 					$q2 = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+					}
 				} elseif ($tabel=="eget" || $tabel=="egen") {
 					$q2 = db_select("select $variabel from adresser where art='S'",__FILE__ . " linje " . __LINE__);
 				} elseif ($tabel=="adresser" || $tabel=="konto") {
@@ -552,7 +569,7 @@ print "<!--function find_form_tekst start-->";
 						if (!$r2['valuta']) $r2['valuta']='DKK';
 						if (!$r2['valutakurs']) $r2['valutakurs']=100;
 						$valuta=$r2['valuta'];
-						$valutakurs=$r2['valutakurs']*1;
+						$valutakurs=(float)$r2['valutakurs'];
 						$dkkamount=$r2['amount']*$valutakurs/100;
 						if ($deb_valuta!="DKK" && $deb_valuta!=$valuta) $amount=$dkkamount*100/$deb_valutakurs;
 						elseif ($deb_valuta==$valuta) $amount=$r2['amount'];
@@ -566,10 +583,10 @@ print "<!--function find_form_tekst start-->";
 				}	elseif ($tabel=="forfalden" || $tabel=="rykker") {# finder forfalden_sum på rykker - $tabel=="rykker" indsat 14.04.08
  					$qtxt = "select * from varer where id IN (select xb from formularer where beskrivelse='GEBYR' and formular='$formular')";
 					$r2 = db_fetch_array(db_select ($qtxt,__FILE__ . " linje " . __LINE__));
-					$gebyr=$r2['salgspris']*1;
+					$gebyr=(float)$r2['salgspris'];
 					if ($deb_valutakurs!='100') $gebyr*=100/$deb_valutakurs; #20140628
 					$r2 = db_fetch_array(db_select ("select yb from formularer where beskrivelse='GEBYR' and formular='$formular'",__FILE__ . " linje " . __LINE__));
-					$rentevare=$r2['yb']*1;	
+					$rentevare=(int)$r2['yb'];	
 					$rente=0; #20141211
 					$q2=db_select("select * from ordrelinjer where ordre_id = '$id' and vare_id = '$rentevare'",__FILE__ . " linje " . __LINE__);
 					while ($r2=db_fetch_array($q2)) $rente+=$r2['pris'];
@@ -584,7 +601,7 @@ print "<!--function find_form_tekst start-->";
 							if (!$r3['valuta']) $r3['valuta']='DKK';
 							if (!$r3['valutakurs']) $r3['valutakurs']=100;
 							$valuta=$r3['valuta'];
-							$valutakurs=$r3['valutakurs']*1;
+							$valutakurs=(float)$r3['valutakurs'];
 							$dkkamount=$r3['amount']*$valutakurs/100;
 							if ($deb_valuta!="DKK" && $deb_valuta!=$valuta) $amount=$dkkamount*100/$deb_valutakurs;
 							elseif ($deb_valuta==$valuta) $amount=$r3['amount'];
@@ -604,7 +621,7 @@ print "<!--function find_form_tekst start-->";
 						$streng[$x]=dkdato($r2[$variabel]);
 					} elseif ($variabel=='momssats') {
 						list($streng[$x],$tmp)=explode(",",dkdecimal($r2[$variabel],2));
-						$tmp=$tmp*1;
+						$tmp=(float)$tmp;
 						if ($tmp) $streng[$x].=",".$tmp;
 					} elseif ($vis_saet && substr($variabel,0,5)=='felt_') { #20150302
 						if ($variabel=="felt_2") {
@@ -679,18 +696,18 @@ print "<!--function find_form_tekst slut-->";
 if (!function_exists('find_forfaldsdato')) {
 function find_forfaldsdato($id) {
 print "<!--function find_forfaldsdato start-->";
-	$query = db_select("select fakturadate, betalingsbet, betalingsdage from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
-	$row = db_fetch_array($query);
-	$fakturadate=$row['fakturadate'];
-	$betalingsbet=$row['betalingsbet'];
-	$betalingsdage=$row['betalingsdage'];
-
+	$q = db_select("select fakturadate, betalingsbet, betalingsdage from ordrer where id=$id",__FILE__ . " linje " . __LINE__);
+	$r = db_fetch_array($q);
+	if ($r['fakturadate']) {
+	 $fakturadate   = $r['fakturadate'];
+	 $betalingsbet  = $r['betalingsbet'];
+	 $betalingsdage = $r['betalingsdage'];
+	} else return '';
 	list($faktaar, $faktmd, $faktdag) = explode("-", $fakturadate);
 	$forfaldsaar=$faktaar;
 	$forfaldsmd=$faktmd;
 	$forfaldsdag=$faktdag;
 	$slutdag=31;
-
 	if (($fakturadate)&&($betalingsbet=="Netto"||$betalingsbet=="Lb. md.")) {
 		while (!checkdate($forfaldsmd, $slutdag, $forfaldsaar)) {
 			$slutdag--;
@@ -737,8 +754,8 @@ print "<!--function modulus_10 start-->";
 	$faktlen=14;
 	$kontolen=0;
 	if ($r=db_fetch_array(db_select("select xa,ya from formularer where formular=4 and art=0",__FILE__ . " linje " . __LINE__))) {
-		$faktlen=$r['xa']*1;
-		$kontolen=$r['ya']*1;
+		$faktlen=(int)$r['xa'];
+		$kontolen=(int)$r['ya'];
 	} elseif ($r=db_fetch_array(db_select("select beskrivelse from formularer where formular=4 and beskrivelse like '%betalingsid(%'",__FILE__ . " linje " . __LINE__))) {
 		$streng=$r['beskrivelse'];
 		$start=strpos($streng,'betalingsid(')+12; # 1 karakter efter startparantesen
@@ -747,13 +764,12 @@ print "<!--function modulus_10 start-->";
 		$streng=substr($streng,$start,$len);
 		list($kontolen,$faktlen)=explode(",",$streng);
 	}
-
 	$r=db_fetch_array(db_select("select fakturanr, kontonr from ordrer where id='$id'",__FILE__ . " linje " . __LINE__));
 	$fakturanr=trim($r['fakturanr']);
 	$kontonr=trim($r['kontonr']);
 	if (strpos($fakturanr,'-')) $fakturanr='0';
-	if (strlen($fakturanr)>$faktlen) $fakturanr=substr($fakturanr,-$kontolen);
-	if (strlen($kontonr)>$kontolen) $kontonr=substr($kontonr,0,$kontolen);
+	if (strlen($fakturanr) > $faktlen) $fakturanr=substr($fakturanr,-$faktlen);
+	if (strlen($kontonr) > $kontolen) $kontonr=substr($kontonr,-$kontolen);
 	$y=0;
 
 	
@@ -765,7 +781,7 @@ print "<!--function modulus_10 start-->";
 
 	if (strlen($betalingsid)>14) $betalingsid=substr($betalingsid,-14); #betalingsid reduceres til 14 cifre;
 	elseif (strlen($betalingsid)<14) {
-		while (strlen($betalingsid)<14) $betalingsid='0'.$betalingsid; #betalingsid reduceres til 14 cifre;
+		while (strlen($betalingsid)<14) $betalingsid='0'.$betalingsid; #betalingsid øges til 14 cifre;
 	}
 
 	$kontrol=array();
@@ -833,7 +849,7 @@ $form=array();
 
 $q = db_SELECT("select box2,box14 from grupper where art = 'DIV' and kodenr = '3'",__FILE__ . " linje " . __LINE__);
 $r=db_fetch_array($q);
-$rabatvare_id=$r['box2']*1;
+	$rabatvare_id=if_isset($r['box2'],0);
 $brugsamletpris=$r['box14'];
 if ($vis_saet) $brugsamletpris='on';
 
@@ -946,7 +962,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 		$mail_subj=$row['mail_subj'];
 		$mail_text=$row['mail_text'];
 		$mail_bilag=$row['dokument'];
-		$procenttillag=$row['procenttillag']*1;
+		$procenttillag=(float)$row['procenttillag'];
 #	$ordresum=$row['sum'];
 #	$ordremomssum=$row['moms'];
 		$formularsprog=strtolower($row['sprog']);
@@ -1010,6 +1026,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 	print "-->\n";
 
 	if ($logoart != 'PDF') {
+		if (file_exists($logo)) {
 		$fsize=filesize($logo);
 		$logofil=fopen($logo,"r");
 		$translate=0;
@@ -1034,6 +1051,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 			}
 		}
 		fclose($logofil);
+	}
 	}
 #cho "select * from formularer where formular = '$formular' and art = '3' and lower(sprog)='$formularsprog'<br>";
 	$query = db_select("select * from formularer where formular = '$formular' and art = '3' and lower(sprog)='$formularsprog'",__FILE__ . " linje " . __LINE__);
@@ -1063,7 +1081,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 	if ($formular==3 && !$lev_nr) {
 		$qtxt="select MAX(lev_nr) as lev_nr from batch_salg where ordre_id = $ordre_id[$o]";
 		$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-		$lev_nr=$r2['lev_nr']*1;
+		$lev_nr=(int)$r2['lev_nr'];
 	}
 	if ($formular==3 || $formular==9) $udskriv_til='PDF';
 	if ($mail_fakt && $formular!=3 && $udskriv_til=='email') {
@@ -1091,6 +1109,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 			if ($formular<=1) $printfilnavn="tilbud".$ordrenr;
 			if ($formular==2) $printfilnavn="ordrebek".$ordrenr;
 			if ($formular==3) $printfilnavn="flgs".$ordrenr."_".$lev_nr;
+			if ($formular==3 && $fakturanr) $printfilnavn="flgs".$fakturanr."_".$lev_nr;
 			if ($formular==4) $printfilnavn="fakt".$fakturanr;
 			if ($formular==5) $printfilnavn="kn".$fakturanr;
 			if ($formular==9) $printfilnavn="plukliste".$ordrenr;
@@ -1187,16 +1206,16 @@ for ($o=0; $o<$ordre_antal; $o++) {
 					$pris[$x]=$procent[$x]=$rabat[$x]=$saet[$x]=$samlevare[$x]=$lager[$x]=$varemomssats[$x]=NULL;
 					if ($varenr[$x]){
 						$vare_id[$x]=$row['vare_id'];
-						$antal[$x]=$row['antal']*1;
-						$leveres[$x]=$row['leveres']*1;
+						$antal[$x]=(float)$row['antal'];
+						$leveres[$x]=(float)$row['leveres'];
 						$dkantal[$x]=str_replace(".",",",$antal[$x]);
 						$momsfri[$x]=$row['momsfri'];
 						$omvbet[$x]=$row['omvbet'];
 						$saet[$x]=$row['saet'];
 						$samlevare[$x]=$row['samlevare'];
-						$lager[$x]=$row['lager']*1;
+						$lager[$x]=(int)$row['lager'];
 						if (!$lager[$x] && $afd_lager) $lager[$x] = $afd_lager;
-						$varemomssats[$x]=$row['momssats']*1;
+						$varemomssats[$x]=(float)$row['momssats'];
 						if (!$momsfri[$x] && !$varemomssats[$x]) $varemomssats[$x]=$momssats;
 						if ($varemomssats[$x] > $momssats) $varemomssats[$x]=$momssats;
 							
@@ -1245,7 +1264,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 							$rabat[$x]=$row['rabat'];
 #						}
 						$procent[$x]=($row['procent']);
-						($row['rabat']!=0)?$m_rabat[$x]=0:$m_rabat[$x]=$row['m_rabat']*1;
+					($row['rabat']!=0)?$m_rabat[$x]=0:$m_rabat[$x]=(float)$row['m_rabat'];
 						$rabatart[$x]=$row['rabatart'];
 						if ($rabatart[$x]=="amount") {
 							$l_sum[$x]=afrund(($pris[$x]-$rabat[$x])*$antal[$x],2);
@@ -1324,7 +1343,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 				$saetpris=0;
 			}  
 */
-			$tmp=$row['rabat']*1;
+				$tmp=(float)$row['rabat'];
 			if ($x>0 && $formular<4 && !$tmp && $m_rabat[$x] && $status < 3) {
 				$y=$x;
 				$x++;
@@ -1493,11 +1512,11 @@ for ($o=0; $o<$ordre_antal; $o++) {
 		fclose($psfp);
 		fclose($htmfp);
 }
-#xit; # UDSKRIVNING
+// UDSKRIVNING
 if ($mailantal>0) {
 		if(!class_exists('phpmailer')) {
 	ini_set("include_path", ".:../phpmailer");
-	require("class.phpmailer.php");
+			require_once("class.phpmailer.php");
 		}
 		include("../includes/connect.php");
 	if (!isset($exec_path)) $exec_path="/usr/bin";
@@ -1668,271 +1687,7 @@ return ($y); #indsat 2011.01.27 grundet tomme sider v. sideskift i kommentar. sa
 #cho 
 print "<!--function bundtekst slut-->";
 }}
-
-if (!function_exists('send_mails')) {
-function send_mails($ordre_id,$filnavn,$email,$mailsprog,$form_nr,$subjekt,$mailtext,$mailbilag,$mailnr) {
-print "<!--function send_mails start-->";
-	global $charset;
-	global $db,$db_id,$deb_valuta,$deb_valutakurs;
-	global $mailantal;
-	global $formular,$formularsprog;
-	global $webservice;
-	global $ansat_id;
-	global $bruger_id;
-	global $exec_path;
-#	global $id; // hent 'mail_bilag' fra ordrer + leveringsaddr.
-	global $returside;
-
-	$email=str_replace(' ','',$email);
-	if (strpos($email,';')) $emails=explode(';',$email);
-	elseif (strpos($email,',')) $emails=explode(',',$email);
-	else $emails[0]=$email;
-	for ($x=0;$x<count($emails);$x++) {
-		if (!filter_var($emails[$x], FILTER_VALIDATE_EMAIL)) { #20200122
-			alert("Invalid email format in $emails[$x]");
-			return ("Invalid email format in $emails[$x]");
-		}
-	}
-	$bilag=$brugermail=$mail_bilag=NULL;
-	
-#cho __line__." sender $ordre_id,$filnavn,$email,$mailsprog,$form_nr,$subjekt,$mailtext,$mailbilag,$mailnr<br>";
-#cho __line__."<br>";
-	$ordre_id*=1; #21040423
-#cho __line__."<br>";
- 	$qtxt="select mail_bilag,lev_addr1,lev_postnr,lev_bynavn,sag_id from ordrer where id='$ordre_id'";
-#cho __line__."<br>";
-#cho __line__." $qtxt<br>";	
-	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	$mail_bilag=$r['mail_bilag'];
-	$lev_addr1=$r['lev_addr1']; # 2013.11.27 Henter leveringsaddr.
-	$lev_postnr=$r['lev_postnr'];
-	$lev_bynavn=$r['lev_bynavn'];
-	$sag_id=$r['sag_id']; # 2013.11.27 Henter sags_id 
-	//$mail_bilag='on'; // skal hentes fra ordrer
-	
-	#2013.11.19 Her finder vi hvilket bilag der skal hentes
-	if($formular<=1) $bilag="tilbud_bilag"; 
-	if($formular==2) $bilag="ordrer_bilag";
-	if($formular==4) $bilag="faktura_bilag";
-	if ($bilag) $mail_bilag='on'; #20191216
-	
-	if(!$bilag || !file_exists("../logolib/$db_id/$bilag.pdf")) { #2013.11.21 Hvis fil(bilag) IKKE eksistere sættes $mail_bilag til NULL, selvom $mail_bilag er sat til 'on'
-		$mail_bilag=NULL;
-	}
-	
-	$emails=array();
-	$email=str_replace(",",";",$email);
-	if (strpos($email,";")) {
-		$emails=explode(";",$email);
-	} else $emails[0]=$email;
-	
-	$qtxt="select * from formularer where formular='$form_nr' and art='5' and lower(sprog)='".strtolower($formularsprog)."'";
-#cho __line__." $qtxt<br>";	
-	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($r = db_fetch_array($q)) {
-		if (!$subjekt && $r['xa']=='1') $subjekt=$r['beskrivelse'];
-		elseif (!$mailtext && $r['xa']=='2') $mailtext=$r['beskrivelse'];
-		elseif ($r['xa']=='3') $bilagnavn=$r['beskrivelse']; #2013.11.21 Finder bilag-navn
-	}
-	(isset($bilagnavn) && $bilagnavn)?$bilagnavn=$bilagnavn:$bilagnavn="Bilag"; #2013.11.21 Hvis bilag-navn er tom, insættes 'Bilag' som navn
-	if ($sag_id) $subjekt=$subjekt." vedr.: $lev_addr1, $lev_postnr $lev_bynavn"; #2013.11.27 Her tilføjes leveringsaddr. til subjekt hvis der er sag_id
-	
-	$qtxt="select * from adresser where art='S'";
-#cho __line__." $qtxt<br>";	
-	$row = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	$afsendermail=$row['email'];
-	$afsendernavn=$row['firmanavn'];
-	$afsendermail=str_replace(",",";",$afsendermail);
-	$afsendermails=explode(";",$afsendermail);
-	$from=$afsendermails[0];
-	($row['felt_1'])?$smtp=$row['felt_1']:$smtp='localhost';
-	($row['felt_2'])?$smtp_user=$row['felt_2']:$smtp_user=NULL;
-	($row['felt_3'])?$smtp_pwd=$row['felt_3']:$smtp_pwd=NULL;
-	($row['felt_4'])?$smtp_enc=$row['felt_4']:$smtp_enc=NULL;
-
-	if ($row['mailfakt'] && $ansat_id) {
-		$r = db_fetch_array(db_select("select * from ansatte where id='$ansat_id'",__FILE__ . " linje " . __LINE__));
-		$brugermail=$r['email'];
-	}
-	if (!$afsendermails[0] || !$afsendernavn) {
-		if (!$webservice) {
-			print "<BODY onload=\"javascript:alert('Firmanavn eller e-mail for afsender ikke udfyldt.\\nSe (Indstillinger -> stamdata).\\nMail ikke afsendt!')\">";
-		}
-		return("Missing sender mail");
-	}
-	$fakturanavn=basename($filnavn);
-	
-	if ($mailbilag && $ordre_id) {
-		$ftpfilnavn="bilag_".$ordre_id;
-		$r=db_fetch_array(db_select("select * from grupper where art='bilag'",__FILE__ . " linje " . __LINE__));
-			if($box6=$r['box6']) {
-			$mappe='bilag';
-			$undermappe="ordrer";
-			$bilagfilnavn="bilag_".$bilag_id;
-			$google_docs=$r['box7'];
-			$fra="../owncloud/".$db."/".$mappe."/".$undermappe."/".$ftpfilnavn;
-			$til="../temp/".$db."/".$mailbilag;
-			system ("cp '$fra' '$til'\n");
-		} else {
-			$r=db_fetch_array(db_select("select * from grupper where art='FTP'",__FILE__ . " linje " . __LINE__));
-			$box1=$r['box1'];
-			$box2=$r['box2'];
-			$box3=$r['box3'];
-			$mappe=$r['box4'];
-			$undermappe="ordrer";
-			$ftpfilnavn="bilag_".$ordre_id;
-			$fp=fopen("../temp/$db/ftpscript.$bruger_id","w");
-			if ($fp) {
-			fwrite ($fp, "cd $mappe\ncd $undermappe\nget $ftpfilnavn\nbye\n");
-			}
-			fclose($fp);
-			$kommando="cd ../temp/$db\n$exec_path/ncftp ftp://".$box2.":".$box3."@".$box1." < ftpscript.$bruger_id > ftplog\nmv \"$ftpfilnavn\" \"$mailbilag\"\n";
-			system ($kommando);
-		}
-	}
-	#cho "B $mailbilag<br>";
-	
-	if (strpos($subjekt,'$')!== false) {
-		$ordliste=explode(" ",$subjekt);
-		$subjekt='';
-		for ($a=0;$a<count($ordliste);$a++) {
-			if (substr($ordliste[$a],0,1)=='$') {
-				$tmp=substr($ordliste[$a],1);
-				$r=db_fetch_array(db_select("select $tmp from ordrer where id='$ordre_id'",__FILE__ . " linje " . __LINE__));
-				$ordliste[$a]=$r[$tmp];
-			} 
-			$subjekt.=$ordliste[$a]." ";
-		}
-	}
-	if (strpos($mailtext,'$')!== false) {
-		$mailtext=str_replace('<br>$','<br> $',$mailtext);
-		$ordliste=explode(" ",$mailtext);
-		$mailtext='';
-		for ($a=0;$a<count($ordliste);$a++) {
-			if (substr($ordliste[$a],0,1)=='$') {
-				$tmp=substr($ordliste[$a],1);
-				$br='';
-				if (strpos($tmp,'<br>')) {
-					list($tmp,$br)=explode("<br>",$tmp,2);
-					if (!$br) $br=" ".$br; #Eller æder den linjeskiftet hvis der ikke er noget efter <br>  
-				}
-				$tmp=trim($tmp);
-				$qtxt="select $tmp from ordrer where id='$ordre_id'";
-				#cho "$qtxt<br>";
-				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-				$ordliste[$a]=$r[$tmp];
-				if ($br) {
-					$ordliste[$a].="<br>".$br;
-				}
-			} 
-			$mailtext.=$ordliste[$a]." ";
-		}
-	}
-	$tidspkt=date('U');
-	if (file_exists("../temp/$db/mailchk.php")) {
-		include ("../temp/$db/mailchk.php");
-		if ($ordre_id == $chkOid && $email == $chkMail && $subjekt == $chkSubj && $filnavn == $chkFil && $tidspkt < $chkTid+30) {
-			alert("Vent 30 sekunder inden du sender samme mail igen");
-			return;
-			exit;
-		}
-	}
-	$chkfil=fopen("../temp/$db/mailchk.php",'w');
-	fwrite ($chkfil, "<?php\n");
-	fwrite ($chkfil, "$"."chkOid='$ordre_id';\n");
-	fwrite ($chkfil, "$"."chkMail='$email';\n");
-	fwrite ($chkfil, "$"."chkSubj='$subjekt';\n");
-	fwrite ($chkfil, "$"."chkTid='$tidspkt';\n");
-	fwrite ($chkfil, "$"."chkFil='$filnavn';\n");
-	fwrite ($chkfil, "?>\n");
-	fclose($chkfil);	
-	
-	if ($charset=="UTF-8" || $webservice) {
-#		$subjekt=utf8_decode($subjekt);
-#		$mailtext=utf8_decode($mailtext);
-#		$bilagnavn=utf8_decode($bilagnavn);
-#		$afsendernavn=utf8_decode($afsendernavn);
-	}
-	if (file_exists ("../temp/$db/mailCheck.txt")) {
-		$fp=fopen("../temp/$db/mailCheck.txt","r");
-		while($line=fgets($fp)) {
-			$chk[$x]=$line;
-		}
-	}
-	$mail = new PHPMailer();
-	$mail->IsSMTP();                                   // send via SMTP
-	$mail->SMTPDebug  = 2;
-	$mail->Host  = $smtp; // SMTP servers 
-	if ($smtp!='localhost') {
-	if ($smtp_user) {
-		$mail->SMTPAuth = true;     // turn on SMTP authentication
-		$mail->Username = $smtp_user;  // SMTP username
-		$mail->Password = $smtp_pwd; // SMTP password
-			if ($smtp_enc) $mail->SMTPSecure = $smtp_enc; // SMTP kryptering
-		}
-	} else {
-		$mail->SMTPAuth = false;
-#	if (strpos($_SERVER['SERVER_NAME'],'saldi.dk')) $mail->Sender = 'mailer@saldi.dk';
-	if (strpos($_SERVER['SERVER_NAME'],'saldi.dk')) { #20121016
-			$from = $db.'@'.$_SERVER['SERVER_NAME']; #20130731
-		}
-	}
-	$mail->From = $from;
-	$mail->FromName = $afsendernavn;
-	$mail->AddReplyTo($afsendermails[0],$afsendernavn);
-	$mail->AddAddress($emails[0]);
-	for ($i=1;$i<count($emails);$i++) $mail->AddCC($emails[$i]); 
-	for ($i=0;$i<count($afsendermails);$i++) $mail->AddBCC($afsendermails[$i]); 
-#	$mail->AddBCC($afsendermail);
-	if ($brugermail) $mail->AddBCC($brugermail);
-	#	$mail->AddAddress("ellen@site.com");               // optional name
-	#	$mail->AddReplyTo("info@site.com","Information");
-
-	$mail->WordWrap = 50;  // set word wrap
-#	$mail->AddAttachment("$mappe/mailtext.html");
-	$mail->AddAttachment("$filnavn","$fakturanavn","base64","application/pdf");      // attachment
-	if ($mailbilag) $mail->AddAttachment("../temp/$db/$mailbilag","$mailbilag","base64","application/pdf");      // attachment
-	if ($mail_bilag) $mail->AddAttachment("../logolib/$db_id/$bilag.pdf","$bilagnavn.pdf"); // kun hvis checkbox er 'on'.
-	#	$mail->AddAttachment("/tmp/image.jpg", "new.jpg");
-	$mail->IsHTML(true);                               // send as HTML
-
-	$ren_text=html_entity_decode($mailtext,ENT_COMPAT,$charset);
-	$ren_text=str_replace("<br>","\n",$ren_text);
-	$ren_text=str_replace("<b>","*",$ren_text);
-	$ren_text=str_replace("</b>","*",$ren_text);
-	$ren_text=str_replace("<hr>","------------------------------",$ren_text);
-	$mail->Subject  =  "$subjekt";
-	$mail->Body     =  "$mailtext";
-	$mail->AltBody  =  "$ren_text";
-#cho "<br>from $from<br>";
-	$svar=NULL;
-	print "<!--";
-	if(!$mail->Send()){
- 		$svar = "Mailer Error: " . $mail->ErrorInfo;
-	}
-	print "-->";
-	if ($svar) {
-		echo $svar."<br>";
-		exit;
-	}
-	if (!$webservice) {
-/*
-	if ($mailantal>=100) {
-			if ($brugermail) $tekst="Mail sendt til $email\\nBCC til $afsendermail\\nBCC til $brugermail.";
-			else $tekst="Mail sendt til $email\\nBCC til $afsendermail.";
-			alert($tekst);
-		}	else 
-	*/	
-		if ($mailantal>1 && $mailnr==$mailantal) {
-			if ($brugermail) $tekst="$mailantal mails sendt\\nBCC til $afsendermail\\nBCC til $brugermail.";
-			else $tekst="$mailantal mails sendt\\nBCC til $afsendermail.";
-			alert($tekst);
-		}
-	}
-	#cho "Mail sent to $email<br>";
-	return("Mail sent to $email");
-print "<!--function send_mails slut-->";
-}}
+if (!function_exists('send_mails')) include ("../includes/formFuncIncludes/sendMail.php");
 
 if (!function_exists('find_saldo')) {
 	function find_saldo($ordre_id) {
@@ -1944,7 +1699,7 @@ if (!function_exists('find_saldo')) {
 		($fakturadate)?$transdate=$fakturadate:$transdate=$ordredate;
 	
 		$r=db_fetch_array(db_select("select sum(amount) as saldo from openpost where konto_id = '$konto_id' and transdate<='$transdate'",__FILE__ . " linje " . __LINE__));
-		$kontosaldo=$r['saldo']*1;
+		$kontosaldo=(float)$r['saldo'];
 		return ($kontosaldo);
 	print "<!--function find_saldo slut-->";
 	}
@@ -2165,7 +1920,7 @@ function rykkerprint($konto_id,$rykker_id,$rykkernr,$maaned_fra,$maaned_til,$reg
 						if (!$r2['valuta']) $r2['valuta']='DKK';
 						if (!$r2['valutakurs']) $r2['valutakurs']=100;
 						$valuta=$r2['valuta'];
-						$valutakurs=$r2['valutakurs']*1;
+					$valutakurs=(float)$r2['valutakurs'];
 					$dkkamount=$r2['amount']*$valutakurs/100;
 					if ($deb_valuta!="DKK") $amount=$dkkamount*100/$deb_valutakurs;
 					else $amount=$r2['amount'];
@@ -2219,7 +1974,7 @@ function rykkerprint($konto_id,$rykker_id,$rykkernr,$maaned_fra,$maaned_til,$reg
 	if ($mailantal>0) {
 		if(!class_exists('phpmailer')) {
 		ini_set("include_path", ".:../phpmailer");
-		require("class.phpmailer.php");
+			require_once("class.phpmailer.php");
 		}
     if (!isset($exec_path)) $exec_path="/usr/bin";
 		if (!isset($exec_path)) $exec_path="/usr/bin";
@@ -2416,7 +2171,7 @@ for ($i=0;$i<count($konto_id);$i++) {
 #cho "PSFP $psfp<br>";
 				$valuta=$r1['valuta'];
 				$amount=$r1['amount'];
-				$valutakurs=$r1['valutakurs']*1;
+				$valutakurs=(float)$r1['valutakurs'];
 				$ordre_id=$r1['refnr'];
 				if (!$valuta) $valuta='DKK';
 				if (!$valutakurs) $valutakurs=100;
@@ -2526,8 +2281,10 @@ fclose($htmfp);
 	if ($r['var_value']) $pdftk=$r['var_value'];
 	else $pdftk="$exec_path/pdftk";
 	include("../includes/online.php");
+	if(!class_exists('phpmailer')) {
 			ini_set("include_path", ".:../phpmailer");
 			require_once("class.phpmailer.php");
+	}
 		for($x=1;$x<=$mailantal;$x++) {
 #				print "<!-- kommentar for at skjule uddata til siden \n";$db/$printfilnavn
 				system ("$ps2pdf $printfilnavn.ps $printfilnavn.pdf");

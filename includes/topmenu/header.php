@@ -6,15 +6,8 @@ if ($rapportart == "openpost") $title = "Poster";
 
 if ($menu=='T') {
   $top_bund = "";
-  #Top table padding
-  $padding = "style='padding: 25px 20px 10px 20px;'";
-  #Info table padding
-  $padding2 = "style='padding: 20px 10px 5px 10px;'";
-  $padding1_5 = "padding: 20px 10px 5px 10px;";
 } else {
   $top_bund = $top_bund;
-  $padding = "";
-  $padding2 = "";
 }
 
 ?>
@@ -56,14 +49,14 @@ if ($menu=='T') {
 
     $classtable='class="tableTopmenu"';
     $border='border:0px';
-    $bgcolor='';
+    $bgcolor='#5e5e5e';
     $textcolor='';
     $textcolor2='';
     $textcolor3='';
     $bgcolor2='';
     $bgcolor3='';
     $bgcolor4='';
-    $bgcolor5='#5e5e5e';
+    $bgcolor5='';
     $bgcolor01='';
     $bgnuance1 ='';
     $bgnuance = '';

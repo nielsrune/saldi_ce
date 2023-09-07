@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor(debLstIncludes/debLst.php --- lap 4.0.1 --- 2021-03-23 ----
+// --- debitor(debLstIncludes/debLst.php --- lap 4.0.8 --- 2023-04-01 ----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,13 +20,21 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20210812 MSC Implementing new top menu design 
+// 20211102 MSC Implementing new top menu design 
+// 20230401 PHR	Changed category viewing and fixed some errors
+
+$r = db_fetch_array(db_select("select id,box1,box2,box11 from grupper where art = 'DLV' and kode ='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__));
+$dg_liste=explode(chr(9),$r['box1']);
+($r['box2'])?$cat_liste=explode(chr(9),$r['box2']):$cat_liste=array();
+
 
 $udv1=$udvaelg;
 $colspan=$vis_feltantal+1;
 $dgcount=count($dg_liste);
-(!$dgcount)?$dgcount=1:NULL; 
+if (!$dgcount) $dgcount=1; 
 for($i=0;$i<$dgcount;$i++) {
 	if ($dg_liste[$i]) {
 		for($i2=0;$i2<=$dg_antal;$i2++	) {
@@ -45,16 +53,19 @@ for($i=0;$i<$dgcount;$i++) {
 		}	
 	}
 	$catcount=count($cat_liste);
-	(!$catcount)?$catcount=1:NULL; 
+	if (!$catcount) {
+		$catcount=1; 
+		$cat_liste[0] = '';
+	}
 	for($i3=0;$i3<$catcount;$i3++) {
-		if ($cat_liste[$i3]) {
+		if ($cat_liste[$i3] || $cat_liste[$i3] == 0) {
 			for($i4=0;$i4<=$cat_antal;$i4++	) {
 				if($cat_liste[$i3]==$cat_id[$i4]) {
 					if (!$start && !$lnr) {
 						$tmp=$start+$linjeantal;
 					}
 					print "<tr><td colspan=\"$colspan\"><hr></td></tr><tr>";
-					if ($dg_navn[$i2]) $tmp="<td colspan=\"2\"><b>$dg_navn[$i2]</b></td>";
+					if (isset($i2) && isset($dg_navn[$i2]) && $dg_navn[$i2]) $tmp="<td colspan=\"2\"><b>$dg_navn[$i2]</b></td>";
 					else $tmp=""; 
 					print "<tr><td></td>$tmp<td colspan=\"2\"><b>$cat_beskrivelse[$i4]</b></td></tr>\n";
 					print "<tr><td colspan=\"$colspan\"><hr></td>";
@@ -64,6 +75,7 @@ for($i=0;$i<$dgcount;$i++) {
 				} 
 			}	
 		}
+		if (!count($cat_liste) || $cat_liste[0] == '') $udv2 = NULL;
 		$i=0;
 		if (!$udv2) $udv2=$udv1;	
 		if (!$udv2) $udv2=$udvaelg;	
@@ -75,6 +87,7 @@ for($i=0;$i<$dgcount;$i++) {
 			$debId[$i]=$row['id'];
 			$mySale[$i]=$row['mysale'];
 			$email[$i]=$row['email'];
+			$kategori[$i]=explode(chr(9),$row['kategori']);
 			$lnr++;
 			if(($lnr>=$start && $lnr<$slut) || $udv2) { 
 #				$debId[$i]=$row['id'];
@@ -93,7 +106,7 @@ for($i=0;$i<$dgcount;$i++) {
 							$understreg="<a href='$lnk' target='blank' >";
 							$hrefslut="</a>";
 						}
-						fwrite($myFile, $db.chr(9).$email[$i].chr(9).$lnk."\n");
+#						fwrite($myFile, $db.chr(9).$email[$i].chr(9).$lnk."\n");
 					}
 				} else {
 					if ($valg == 'rental') $understreg="<a href=rental.php?tjek=$row[id]&customerId=$row[id]>";
@@ -103,13 +116,13 @@ for($i=0;$i<$dgcount;$i++) {
 				$linjetext="";
 				if ($linjebg!=$bgcolor) {$linjebg=$bgcolor; $color='#000000';}
 				else {$linjebg=$bgcolor5; $color='#000000';}
-				print "<tr bgcolor=\"$linjebg\"><td bgcolor=$bgcolor></td>\n";
+				print "<tr bgcolor=\"$linjebg\"><td></td>\n";
 				print "<td align=$justering[0] $javascript> $linjetext $understreg $row[kontonr]$hrefslut</span><br></td>\n";
 				for ($x=1;$x<$vis_feltantal;$x++) {
 					print "<td align=$justering[$x]>";
 					$tmp=$vis_felt[$x];
 					if ($vis_felt[$x]=='kontoansvarlig') {
-						for ($y=1;$y<=$ansatantal;$y++) {
+						for ($y=1;$y<=count($ansat_id);$y++) {
 							if ($ansat_id[$y]==$row[$tmp]) print stripslashes($ansat_init[$y]);
 						}
 					} elseif ($vis_felt[$x]=='status') {
@@ -119,7 +132,18 @@ for($i=0;$i<$dgcount;$i++) {
 					} elseif ($vis_felt[$x]=='invoiced' || $vis_felt[$x]=='kontaktet' || $vis_felt[$x]=='kontaktes') {
 						if ($row[$tmp]=='1970-01-01') print "";
 						else print dkdato($row[$tmp]);
-					} else print $row[$tmp];
+					} 
+					elseif (substr($vis_felt[$x],0,4)=='cat_') {
+						for ($c = 0; $c < count($kategori[$i]); $c++) {
+							if ($vis_felt[$x] == 'cat_'.$kategori[$i][$c]) {
+								if ($kategori[$i][$c] || $kategori[$i][$c] == '0') {
+									print "&nbsp;<img src=\"../ikoner/checkmrk.png\" style=\"border: 0px solid;\">";
+								} else {
+									print "&nbsp;<img src=\"../ikoner/slet.png\" style=\"border: 0px solid; \">";
+								}
+							}
+						}
+					} else print "$row[$tmp]";
 					print "</td>"; 
 				}
 				print "<input type=hidden name=adresse_id[$adresseantal] value=$row[id]>";
@@ -132,16 +156,18 @@ for($i=0;$i<$dgcount;$i++) {
 					($email[$i])?$dis=NULL:$dis="disabled title='email mangler på  konto'";
  					if (!$dis && isset($_POST['chooseAll']) && $_POST['chooseAll']) $dis = "checked='checked'";				
 					if ($valg=='kommission') print "<td align='center'><input type='checkbox' name='invite[$i]' $dis></td>";
-					else print "<td align='center'><input type='checkbox' name='mailTo[$i]' $dis></td>";
+					else print "<td align='center'><label class='checkContainerOrdreliste'><input type='checkbox' name='mailTo[$i]' $dis><span class='checkmarkOrdreliste'></span></label></td>";
 				} 
 				$i++;
 				print "</tr>";
+/*
 			} elseif($myFile && $mySale[$i]) {
 				$txt = $row['id'] .'|'. $row['kontonr'] .'@'. $db .'@'. $_SERVER['HTTP_HOST'];
 				$lnk=$myLink;
 				for ($x=0;$x<strlen($txt);$x++) {
 					$lnk.=dechex(ord(substr($txt,$x,1)));
 				}
+*/
 			}
 		}
 		if ($search && !$lnr) {

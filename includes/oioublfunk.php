@@ -1,5 +1,5 @@
 <?php
-// --- includes/oioublfunk.php --- patch 4.0.5 --- 2022-06-08 ---
+// --- includes/oioublfunk.php --- patch 4.0.6 --- 2023-06-12 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,7 +15,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20140206 Afrundingsfejl,saldi_390 ordre id 16090 differ 1 øre på linjesum. 
@@ -29,6 +29,10 @@
 // 20190204	- PHR lidt ændringer i forhold til kommentarer. 20190204 
 // 20210526 - PHR Changed CustomizationID from OIOUBL-2.01 to OIOUBL-2.02. Requirement from ebConnect
 // 20220608 - PHR Replaced outdated ereg function with own solution
+// 20220926 - PHR taxcategoryid-1.1 changed from 'StandardRated' to '$taxcategoryid as invoice without tax
+//                was rejected
+// 20220929 - PHR corrected division by zero if no tax 
+// 20230612 _ PHR if $creditnote 'antal' was set to 1 if 0. Now it is set to 1.
 
 $oioxmlubl="OIOUBL";
 
@@ -105,11 +109,12 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 
 	if (!$kundeordnr) $kundeordnr='0'; # phr 20090803
 	while (strlen($cvrnr)<8) $cvrnr="0".$cvrnr;
+	if (is_numeric($cvrnr)) $cvrnr = 'DK'.$cvrnr;
 
 	$l_momsbeloeb=afrund(abs($r_faktura['moms']),2);
 	$l_momssats=$r_faktura['momssats']*1;
 	$l_sumbeloeb=afrund(abs($r_faktura['sum']),2);
-	$l_momspligtigt=(100*$l_momsbeloeb)/$l_momssats;
+	($l_momssats)?$l_momspligtigt=(100*$l_momsbeloeb)/$l_momssats:$l_momspligtigt = 0; #20220929
 	$l_momsfrit=$l_sumbeloeb-$l_momspligtigt;
 	if ($l_momsfrit<0.02) { #20150618
 		$l_momsfrit=0;
@@ -132,6 +137,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	} else {
 		$l_valutakurs=100;
 	}
+	($l_momssats > 0)?$taxcategoryid='StandardRated':$taxcategoryid='ZeroRated'; #20220926
 
 	$query = db_select("select * from adresser where art='S'",__FILE__ . " linje " . __LINE__);
 	$r_egen = db_fetch_array($query);
@@ -167,6 +173,8 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$egen_tlf=htmlspecialchars($egen_tlf, ENT_QUOTES);
 	$egen_cvrnr=str_replace(" ","",$r_egen['cvrnr']);
 
+	if (is_numeric($egen_cvrnr)) $egen_cvrnr = 'DK'.$egen_cvrnr;
+
 	$l_retur.="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	$l_retur.="<".$l_doctype." xsi:schemaLocation=\"urn:oasis:names:specification:ubl:schema:xsd:".$l_doctype."-2 UBL-".$l_doctype."-2.0.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:oasis:names:specification:ubl:schema:xsd:".$l_doctype."-2\" xmlns:cac=\"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2\" xmlns:cbc=\"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2\" xmlns:ccts=\"urn:oasis:names:specification:ubl:schema:xsd:CoreComponentParameters-2\" xmlns:sdt=\"urn:oasis:names:specification:ubl:schema:xsd:SpecializedDatatypes-2\" xmlns:udt=\"urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2\">\n";
 	$l_retur.="<cbc:UBLVersionID>2.0</cbc:UBLVersionID>\n";
@@ -187,9 +195,9 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="</cac:OrderReference>\n";
 	$l_retur.="<cac:AccountingSupplierParty>\n";
 	$l_retur.="<cac:Party>\n";
-	$l_retur.="<cbc:EndpointID schemeID=\"DK:CVR\">DK".$egen_cvrnr."</cbc:EndpointID>\n";
+	$l_retur.="<cbc:EndpointID schemeID=\"DK:CVR\">".$egen_cvrnr."</cbc:EndpointID>\n";
 	$l_retur.="<cac:PartyIdentification>\n";
-	$l_retur.="<cbc:ID schemeID=\"DK:CVR\">DK".$egen_cvrnr."</cbc:ID>\n";
+	$l_retur.="<cbc:ID schemeID=\"DK:CVR\">".$egen_cvrnr."</cbc:ID>\n";
 	$l_retur.="</cac:PartyIdentification>\n";
 	$l_retur.="<cac:PartyName>\n";
 	$l_retur.="<cbc:Name>".$egen_firmanavn."</cbc:Name>\n";
@@ -205,7 +213,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="</cac:Country>\n";
 	$l_retur.="</cac:PostalAddress>\n";
 	$l_retur.="<cac:PartyTaxScheme>\n";
-	$l_retur.="<cbc:CompanyID schemeID=\"DK:SE\">DK".$egen_cvrnr."</cbc:CompanyID>\n";
+	$l_retur.="<cbc:CompanyID schemeID=\"DK:SE\">".$egen_cvrnr."</cbc:CompanyID>\n";
 	$l_retur.="<cac:TaxScheme>\n";
 	$l_retur.="<cbc:ID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:taxschemeid-1.1\">63</cbc:ID>\n";
 	$l_retur.="<cbc:Name>Moms</cbc:Name>\n";
@@ -213,7 +221,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="</cac:PartyTaxScheme>\n";
 	$l_retur.="<cac:PartyLegalEntity>\n";
 	$l_retur.="<cbc:RegistrationName>".$egen_firmanavn."</cbc:RegistrationName>\n";
-	$l_retur.="<cbc:CompanyID schemeID=\"DK:CVR\">DK".$egen_cvrnr."</cbc:CompanyID>\n";
+	$l_retur.="<cbc:CompanyID schemeID=\"DK:CVR\">".$egen_cvrnr."</cbc:CompanyID>\n";
 	$l_retur.="</cac:PartyLegalEntity>\n";
 	$l_retur.="</cac:Party>\n";
 	$l_retur.="</cac:AccountingSupplierParty>\n";
@@ -221,7 +229,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="<cac:Party>\n";
 	$l_retur.="<cbc:EndpointID schemeAgencyID=\"9\" schemeID=\"GLN\">".$r_faktura['ean']."</cbc:EndpointID>\n";
 	$l_retur.="<cac:PartyIdentification>\n";
-	$l_retur.="<cbc:ID schemeID=\"DK:CVR\">DK".$cvrnr."</cbc:ID>\n";
+	$l_retur.="<cbc:ID schemeID=\"DK:CVR\">".$cvrnr."</cbc:ID>\n";
 	$l_retur.="</cac:PartyIdentification>\n";
 	$l_retur.="<cac:PartyName>\n";
 	$l_retur.="<cbc:Name>".$firmanavn."</cbc:Name>\n";
@@ -243,7 +251,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="</cac:PostalAddress>\n";
 	$l_retur.="<cac:PartyLegalEntity>\n";
 	$l_retur.="<cbc:RegistrationName>".$firmanavn."</cbc:RegistrationName>\n";
-	$l_retur.="<cbc:CompanyID schemeID=\"DK:CVR\">DK".$cvrnr."</cbc:CompanyID>\n";
+	$l_retur.="<cbc:CompanyID schemeID=\"DK:CVR\">".$cvrnr."</cbc:CompanyID>\n";
 	$l_retur.="</cac:PartyLegalEntity>\n";
 	$l_retur.="<cac:Contact>\n";
 	$l_retur.=oioubl_kontaktinfo($kontakt, "BuyerContact");
@@ -280,7 +288,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 	$l_retur.="<cbc:TaxableAmount currencyID=\"$l_valutakode\">".sprintf("%01.2f", $l_momspligtigt)."</cbc:TaxableAmount>\n";
 	$l_retur.="<cbc:TaxAmount currencyID=\"$l_valutakode\">".sprintf("%01.2f", $l_momsbeloeb)."</cbc:TaxAmount>\n";
 	$l_retur.="<cac:TaxCategory>\n";
-	$l_retur.="<cbc:ID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:taxcategoryid-1.1\">StandardRated</cbc:ID>\n";
+	$l_retur.="<cbc:ID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:taxcategoryid-1.1\">$taxcategoryid</cbc:ID>\n"; #20220926
 	$l_retur.="<cbc:Percent>".$l_momssats."</cbc:Percent>\n";
 	$l_retur.="<cac:TaxScheme>\n";
 	$l_retur.="<cbc:ID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:taxschemeid-1.1\">63</cbc:ID>\n";
@@ -316,8 +324,8 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		$varenr=htmlspecialchars($varenr, ENT_QUOTES);
 		$enhed=htmlspecialchars($enhed, ENT_QUOTES);
 		$beskrivelse=htmlspecialchars(strip_tags($beskrivelse), ENT_QUOTES);
-		$pris=$r_linje['pris']*1;
-		$antal=$r_linje['antal'];
+		$pris=(float)$r_linje['pris'];
+		$antal=(float)$r_linje['antal'];
 #		if(!$antal) { #20150922 removed 20190204
 #			$pris=0;
 #			$antal=1;
@@ -328,7 +336,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		if ($varemomssats > $l_momssats) $varemomssats=$l_momssats;
 		if (!$varenr) { #20190204 Put in 'tuborgs' and added $antal & $pris
 			$varenr='.'; #phr 20080803 + 20150922
-			$antal=1;
+			($l_ptype=="PCM")?$antal = -1:$antal = 1;
 			$pris=0.00;
 		}
 		if ($r_linje['procent']) $pris*=$r_linje['procent']/100; #20150525
@@ -353,7 +361,7 @@ function oioubldoc_faktura ($l_ordreid="", $l_doktype="faktura", $l_testdoc="") 
 		$l_retur.="<cbc:TaxableAmount currencyID=\"$l_valutakode\">".sprintf("%01.2f", $l_fortegn*$linjepris)."</cbc:TaxableAmount>\n";
 		$l_retur.="<cbc:TaxAmount currencyID=\"$l_valutakode\">".sprintf("%01.2f", $l_fortegn*$linjemoms)."</cbc:TaxAmount>\n";
 		$l_retur.="<cac:TaxCategory>\n";
-		if ($momsfri) $l_retur.="<cbc:ID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:taxcategoryid-1.1\">ZeroRated</cbc:ID>\n";
+		if ($momsfri || $taxcategoryid == 'ZeroRated') $l_retur.="<cbc:ID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:taxcategoryid-1.1\">ZeroRated</cbc:ID>\n";
 		else $l_retur.="<cbc:ID schemeAgencyID=\"320\" schemeID=\"urn:oioubl:id:taxcategoryid-1.1\">StandardRated</cbc:ID>\n";
 		$l_retur.="<cbc:Percent>".$varemomssats."</cbc:Percent>\n";
 		$l_retur.="<cac:TaxScheme>\n";
@@ -726,9 +734,10 @@ function oioubl_landekode ($l_land="DK") {
 		if ($l_land=="den") $l_land="dk";
 		if ($l_land=="danmark") $l_land="dk";
 		if ($l_land=="denmark") $l_land="dk";
+		if ($l_land=="færøerne") $l_land="fo";
 	}
 
-	if ($l_land=="dk") {
+	if ($l_land=="dk" || $l_land=="fo") {
 		$l_retur=strtoupper($l_land);
 	} else {
 		if (strlen($l_land)>2) {

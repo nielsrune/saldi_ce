@@ -27,6 +27,7 @@
 // ----------------------------------------------------------------------
 // 20160609 PHR if ($POST) fungerer ikke mere, hvis ikke det angives hvad der postes.
 // 20200308 PHR Varius changes related til Centos 8 / mariadb /postgresql 9x
+// 20222706 MSC - Implementing new design
 
 @session_start();
 $s_id=session_id();
@@ -53,19 +54,22 @@ $backupdate=$backupdb=$backupver=$backupnavn=$filnavn=$menu=$regnskab=$timezone=
 
 include("../includes/connect.php");
 if (isset($_GET['db']) && $_GET['db']) {
-	$db=$_GET['db'];
-	if (!db_exists($db)) {
-		db_create($db);
+	$db=$sqdb;
+	$tmpDb=$_GET['db'];
+	if (!db_exists($tmpDb)) {
+		db_create($tmpDb);		
 	}
 	if (!$regnskab) {
-		$r=db_fetch_array(db_select("select regnskab from regnskab where db='$db'",__FILE__ . " linje " . __LINE__));
+		$r=db_fetch_array(db_select("select regnskab from regnskab where db='$tmpDb'",__FILE__ . " linje " . __LINE__));
 		$regnskab=$r['regnskab'];
 	}
+	$db=$tmpDb;
 	db_connect($sqhost, $squser, $sqpass, $db, "");
 	print "<head><title>$title</title><meta http-equiv=\"content-type\" content=\"text/html; charset=$charset;\">\n";
 	print "<meta http-equiv=\"content-language\" content=\"da\">\n";
-	print "<meta name=\"google\" content=\"notranslate\">\n";
-} else include("../includes/online.php");
+	print "<meta name=\"google\" content=\"notranslate\"></head>\n";
+	
+} else include("../includes/online.php");	
 include("../includes/std_func.php");
 
 if ($popup) $returside="../includes/luk.php";
@@ -77,14 +81,18 @@ print "<div align=\"center\">";
 if ($menu=='T') {
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
-	print "<div id=\"header\">\n";
-	print "<div class=\"headerbtnLft\"></div>\n";
-	print "</div><!-- end of header -->";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=backup.php accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 	print "<div id=\"leftmenuholder\">";
 	include_once 'left_menu.php';
 	print "</div><!-- end of leftmenuholder -->\n";
-	print "<div class=\"maincontent\">\n";
-	print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>"; # -> 1
+	print "<div class=\"maincontentLargeHolder\">\n";
+	print "<div class='divSys'>";
+	print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTableSys\"><tbody>"; # -> 1
 } else {
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
@@ -284,6 +292,13 @@ if ($restore=='OK') {
 }
 
 print "</tbody></table>";
-print "</td></tr>";
+}
+
+print "</div></div></div>";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
 }
 ?>

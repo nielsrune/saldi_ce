@@ -29,7 +29,8 @@
 // 06.05.2019 LN Get data from pos_betalinger and update ordrer 
 	$betalt = 0;
 	$amount = array();
-	$q=db_select("select * from pos_betalinger where ordre_id = '$id' order by id",__FILE__ . " linje " . __LINE__);
+	$qtxt = "select * from pos_betalinger where ordre_id = '$id' order by id";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
 		$betalingstype[$x]=$r['betalingstype'];
 		$amount[$x]=$r['amount'];

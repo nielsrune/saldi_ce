@@ -48,6 +48,7 @@ $r = db_fetch_array(db_select("select box7 from grupper where art = 'POS' and ko
 $flyt=if_isset($_GET['flyt']);
 $id=if_isset($_GET['id']);
 $delflyt=if_isset($_GET['delflyt']);
+
 $optaget=array();
 $bnr=array();
 $dubletter=array();
@@ -141,10 +142,30 @@ if (strpos($bord[$bordnr]," ") && strpos($bord[$bordnr]," ")) list($tmp,$bordnav
 else $bordnavn=$bord[$bordnr];
 (in_array($bordnr,$optaget))?$bgcolor=$bg1:$bgcolor=$bg2;
 	if ($flyt || $flyt=='0') {
-	if ($bordnr!=$flyt && $delflyt) print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\"><a style=\"text-decoration:none\" href=\"../debitor/pos_ordre.php?id=$id&flyt_til=$bordnr&delflyt=$delflyt\"><input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bgcolor;\" value= \"$bordnavn\"></a></td>";
-		elseif ($bgcolor==$bg1 && $bordnr!=$flyt) print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\"><style=\"text-decoration:none\"><input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bgcolor;\" value= \"$bordnavn\"></td>";
-		elseif ($bordnr==$flyt) print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\"><a style=\"text-decoration:none\" href=\"../debitor/pos_ordre.php?id=$id&flyt_til=$bordnr\"><input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bg3;\" value= \"$bordnavn\"></a></td>";
-		else print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\"><a style=\"text-decoration:none\" href=\"../debitor/pos_ordre.php?id=$id&flyt_til=$bordnr\"><input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bgcolor;\" value= \"$bordnavn\"></a></td>";
-	} else print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\"><a style=\"text-decoration:none\" href=\"../debitor/pos_ordre.php?bordnr=$bordnr\"><input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bgcolor;\" value= \"$bordnavn\"></a></td>";
+		if ($bordnr!=$flyt && $delflyt) {
+			print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\"><a style=\"text-decoration:none\" 
+			href=\"../debitor/pos_ordre.php?id=$id&flyt_til=$bordnr&delflyt=$delflyt\">
+			<input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bgcolor;\" value= \"$bordnavn\"></a></td>";
+		} elseif ($bgcolor==$bg1 && $bordnr!=$flyt) {
+			print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\">
+			<style=\"text-decoration:none\">
+			<input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bgcolor;\" 
+			value= \"$bordnavn\"></td>";
+		} elseif ($bordnr==$flyt) {
+			print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\">
+			<a style=\"text-decoration:none\" href=\"../debitor/pos_ordre.php?id=$id&flyt_til=$bordnr\">
+			<input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; 
+			background-color:$bg3;\" value= \"$bordnavn\"></a></td>";
+		} else {
+			print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\">
+			<a style=\"text-decoration:none\" href=\"../debitor/pos_ordre.php?id=$id&flyt_til=$bordnr\">
+			<input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; background-color:$bgcolor;\" value= \"$bordnavn\"></a></td>";
+		} 
+	} else {
+		print "<td align=\"center\" colspan=\"$cs\" rowspan=\"$rs\">
+		<a style=\"text-decoration:none\" href=\"../debitor/pos_ordre.php?bordnr=$bordnr\">
+		<input type=\"button\" style=\"width:$rw;height:$rh;text-align:center;font-size:$th; 
+		background-color:$bgcolor;\" value= \"$bordnavn\"></a></td>";
+	}
 }
 ?>

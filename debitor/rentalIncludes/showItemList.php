@@ -22,19 +22,22 @@
 //
 // Copyright (c) 2021 Saldi.dk ApS
 // ----------------------------------------------------------------------
+// 20220901 MSC - Implementing new design
 
-print "<div style='float:left;'>";
+print "<div style='display: flex; flex-direction: column;'>";
+print "<div style='display: flex; flex-direction: row;'><div style=' width:10%;'>";
 print "<a href='rental.php?rtItemId=$rtItemId&thisRtId=$thisRtId&showPeriodFrom=$prePeriod&";
-print "customerId=$customerId'>Forrige</a><br>";
-if ($customerId) print "<br><a href='rental.php?rtItemId=$rtItemId&thisRtId=$thisRtId&showPeriodFrom=$thisPeriod&customerId=*'>Alle</a><br>";
-print "<br><a href='../lager/varer.php'>Varer</a>";
-print "<br><a href='../debitor/debitor.php?valg=rental'>Kunder</a></div>";
-print "<div style='width:90%;float:left;text-align:center'>$txt</div>";
-print "<div style='float:right;text-align:right'>";
+print "customerId=$customerId'>Forrige</a></div>";
+print "<div style='width:90%;text-align:center;'>$txt</div>";
+print "<div style='text-align:right; width:10%;'>";
 print "<a href='rental.php?rtItemId=$rtItemId&thisRtId=$thisRtId&showPeriodFrom=$nextPeriod&";
 print "rtPeriodFrom=$rtPeriodFrom&customerId=$customerId'>Næste</a>";
-print "</div>";
-print "<div style='float:left;margin:10px;'><table align = 'center'><tbody>";
+print "</div></div>";
+print "<div style='display: flex; flex-direction: row;'><div style='width:5%; text-align:center;'>";
+if ($customerId) print "<br><a href='rental.php?rtItemId=$rtItemId&thisRtId=$thisRtId&showPeriodFrom=$thisPeriod&customerId=*'>Alle</a>";
+print "<a href='../lager/varer.php'>Varer</a><br>";
+print "<a href='../debitor/debitor.php?valg=rental'>Kunder</a></div>";
+print "<div style='margin-left:10px; width:95%;'><table align = 'center' width='100%' class='dataTableSmall'><tbody>";
 print "<tr><td colspan='10'><b>";
 #print "<a href='rental.php?rtItemId=$rtItemId&thisRtId=$thisRtIdd&&showPeriodFrom=$showPeriodFrom&page=rtSettings&customerId=$customerId'>";
 if ($customerId) {
@@ -119,7 +122,13 @@ for ($x=0;$x<count($rtId);$x++) {
 }
 print "<tr><td><a href='rental.php?rtItemId=$rtItemId&newRt=1&customerId=$customerId'>Tilføj enhed</a></td>";
 print "</tr>";
-print "</tbody></table></div>";
+print "</tbody></table></div></div></div>";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
 
 ?>
 

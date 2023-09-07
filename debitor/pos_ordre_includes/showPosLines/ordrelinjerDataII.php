@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/ordrelinjerDataII.php --- lap 4.0.2 --- 2021.08.22 ---
+// --- debitor/pos_ordre_includes/showPosLines/ordrelinjerDataII.php --- lap 4.0.7 --- 2023.02.16 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,12 +20,13 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2019 saldi.dk aps
+// Copyright (c) 2019-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // LN 20190508 Move function vis-pos_linjer here
 // 20210822 PHR - Addded $discounttxt
-
+// 20221123 PHR - nettosum is reduced with m_rabat. See also showPosLinesFunc.php
+// 20230216 PHR - Nettosum was miscalculated as m_rabat was treaded as percent. 
 
 	$linjebg=$bgcolor;
 	$x=0;
@@ -58,6 +59,7 @@
 			$nettorabat[$x]=$rabat[$x];
 			$rabatart[$x]=$r['rabatart'];
 			$m_rabat[$x]=$r['m_rabat']*-1;
+#cho "$m_rabat[$x]<br>";
 			$discounttxt[$x]=$r['discounttxt']; # 20210822
 			$momsfri[$x]=trim($r['momsfri']);
 			($momsfri[$x])?$varemomssats[$x]=0:$varemomssats[$x]=$r['momssats'];
@@ -82,22 +84,31 @@
 			} else $pris[$x]=afrund($nettopris[$x],2);
 			$nettopris[$x]=afrund($nettopris[$x],2);
 			$kostsum+=$kostpris[$x]*$antal[$x];
-			if ($rabatart[$x] == 'amount') {
+#cho __line__." Sum $sum $rabatart[$x]<br>";
+			if ($rabatart[$x] == 'amount' && $rabat[$x]) { # 20230216 added && $rabat.
 				$nettosum+=afrund($antal[$x]*($nettopris[$x]-= $nettorabat[$x]),2);
 				$sum+=afrund($antal[$x]*($pris[$x]-$rabat[$x]),3);
+#cho __line__." Sum $sum<br>";
+			}	else {
+				if ($m_rabat[$x]) {
+#cho __line__." Sum $sum<br>";
+					$sum+=$antal[$x]*($pris[$x]+$m_rabat[$x]);
+#cho __line__." Sum $sum<br>";
+					$nettosum+=$antal[$x]*($nettopris[$x]+$m_rabat[$x]); #20221123
 			}	else {
 			$nettosum+=afrund($antal[$x]*($nettopris[$x]-$nettopris[$x]/100*$rabat[$x]),2);
 			$sum+=afrund($antal[$x]*($pris[$x]-($pris[$x]*$rabat[$x]/100)),3);
 			}
+			}
+#cho __line__." Sum $sum<br>";
 			$bruttosum+=$antal[$x]*$pris[$x];
 			if ($lager[$x]) {
 				for ($l=0;$l<count($lagernr);$l++) {
 					if ($lagernr[$l]==$lager[$x] && strlen($lagernavn[$l])==1) $lager[$x]=$lagernavn[$l]; 
 				}
 			}
-			
 		}
 	}
-
 ?>
 
+	

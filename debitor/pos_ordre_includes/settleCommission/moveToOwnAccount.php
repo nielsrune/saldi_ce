@@ -151,13 +151,13 @@ echo __line__." $qtxt<br>";
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Kommisionssalg, Kasse $kasse','$fromAccount','0','$debet','$kredit',0,'$afd','$dd','$logtime','',";
 			$qtxt.="'$ansat_id','0','$kasse','$reportNumber','$commissionVat')";
-echo __line__." $qtxt<br>";	
+#cho __line__." $qtxt<br>";	
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		if ($commission && $toVatPercent) {
 			if ($fromVatPercent) $toVat = afrund($commission * $toVatPercent / 100,2);
 			else $toVat = afrund($commission * $toVatPercent / (100+$toVatPercent),2);
-echo __line__." $costVat $commission CV $fromVat<br>";
+#cho __line__." $costVat $commission CV $fromVat<br>";
 			$debet=$kredit=0;
 			($toVat > 0)?$kredit=$toVat:$debet=abs($toVat);
 			$qtxt="insert into transaktioner (bilag,transdate,beskrivelse,kontonr,faktura,debet,kredit,kladde_id,afd,logdate,logtime,";
@@ -165,7 +165,7 @@ echo __line__." $costVat $commission CV $fromVat<br>";
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Moms af kommisionssalg, Kasse $kasse','$toVatAccount','0','$debet','$kredit',0,'$afd','$dd','$logtime','',";
 			$qtxt.="'$ansat_id','0','$kasse','$reportNumber','0')";
-echo __line__." $qtxt<br>";	
+#cho __line__." $qtxt<br>";	
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else $toVat = 0;
 		if ($commission) {
@@ -178,7 +178,7 @@ echo __line__." $qtxt<br>";
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Kommisionssalg, Kasse $kasse','$coAc[$co]','0','$debet','$kredit',0,'$afd','$dd','$logtime',";
 			$qtxt.="'','$ansat_id','0','$kasse','$reportNumber','$toVat')";
-echo __line__." $qtxt<br>";	
+#cho __line__." $qtxt<br>";	
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}

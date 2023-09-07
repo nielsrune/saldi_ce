@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.6 -- 2022.06.14 --
+// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.8 -- 2023.06.15 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2014-2022 saldi.dk aps
+// Copyright (c) 2014-2023 saldi.dk aps
 // ----------------------------------------------------------------------------
 //
 // 2014.05.08 - Indsat diverse til bordhåndtering, bruger nr fra ordrer til bordnummer (PHR - Danosoft) Søg 20140508 eller $bordnr 
@@ -60,14 +60,16 @@
 // 20211115	PHR reversed 20211006 and added $low & $high.
 // 20211214	PHR_Removed alert "stregkode ikke genkendt";
 // 20220413 PHR Added jump2price
-// 20220427 PHR Disabled submit button when clicked to avoid doule posting.
+// 20220427 PHR Disabled submit button when clicked to avoid double posting.
 // 20220614 PHR Added hidden input tilfravalgNy as tilfravalg was reset when changing price or rebate. See pos_ordre.php too 
+// 20220726 PHR Added barcodeNew to be inserted into orderline colunm 'barcode'
+// 20230613 PHR php8
 
 function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$rabat_ny,$lager_ny) {
 	print "\n<!-- Function varescan (start)-->\n";
 	global $afd_navn,$afslut;
-	global $betalingsbet,$betvaluta,$bordnr,$brugernavn;
-	global $difkto;
+	global $barcode,$betalingsbet,$betvaluta,$bordnr,$brugernavn;
+	global $db,$difkto;
 	global $fokus;
 	global $voucherNumber;
 	global $ifs;
@@ -82,6 +84,12 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 	global $credit_type; #20210813 
   global $sprog_id;    #20210820
 			
+  $barcodeNew = NULL;
+  
+  if (($fokus == 'rabat_ny' || $fokus == 'pris_ny') && $_POST['barcodeNew']) {
+		$varenr_ny = $_POST['barcodeNew'];
+	}
+	
  	$beskrivelse[0]=$betaling2=$konto_id=$myAc=$myDe=$myPr=$vare_id=NULL;
 	$pris[0]=0;
 	#($fokus == 'textNew')?$textNew = 1:$textNew = 0;
@@ -201,6 +209,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 				$myPr=$r['price'];
 				$myDe=$r['description'];
 				$myCo=$r['condition'];
+				$barcodeNew = $r['barcode'];
 				$qtxt="select kontonr from adresser where id='$myAc'";
 			}	else {
 				$qtxt = "select * from mylabel where id='". substr($varenr_ny,0,6)*1 ."' and price >= '$low'  and price <= '$high'";
@@ -209,6 +218,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 					$myPr=$r['price'];
 					$myDe=$r['description'];
 					$myCo=$r['condition'];
+					$barcodeNew = $r['barcode'];
 					$qtxt="select kontonr from adresser where id='$myAc'";
 					alert('Stregkode ændret, kontroller label');	
 				} else $qtxt=NULL; #20211214
@@ -234,6 +244,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 			}
 		}
 		$s=0;
+		$stockGrp = array();
 		$qtxt = "select kodenr from grupper where art = 'VG' and box8 = 'on'";
 		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r=db_fetch_array($q)) {
@@ -258,9 +269,19 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 			$itemGroup[0]  = $r['gruppe'];
 			$lukket[0]=$r['lukket'];
 			$kostpris[0]=$r['kostpris'];
-			if ($myDe) $beskrivelse[0]=$myDe;
-			elseif ($beskrivelse_ny) $beskrivelse[0] = $beskrivelse_ny; # Test scan from mysale and contineous scan if you change this.
-			else $beskrivelse[0]=$r['beskrivelse'];
+			$beskrivelse[0] = $r['beskrivelse'];
+			if ($varenr_ny != if_isset($_POST['antal_ny'], 0)){ #Then a new item is NOT scannet into the quantity field
+				if ($myDe) $beskrivelse[0] = $myDe; # Then the barcode is scanned from a mysale label
+				elseif (isset($_POST['beskrivelse_old'])) { # Then it is a correction af an existing orderline
+					$beskrivelse[0] = $_POST['beskrivelse_old']; # Test scan from mysale and contineous scan if you change this.
+					$myPr = $_POST['pris_old'];
+				}
+#			} elseif ($_POST['barcodeNew']) {
+#			$qtxt = "select description from mylabel where barcode = '$_POST[barcodeNew]'";
+#			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) { #20211021
+#				echo "$r[description] == $beskrivelse[0]<br>";
+#			}
+			}
 			if ($prisIkode) {
 				$pris[0]=find_pris($varenr_ny)*1;
 				$qtxt = "select box6, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'";
@@ -319,12 +340,11 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
     setItemHeaderTxt($lagerantal, $fokus);
 	if ($status < 3) {
 	$qtxt = "select var_value from settings where var_name = 'jump2price'";
-	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	($r['var_value'])?$jump2price = 1:$jump2price = 0;
+	($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$jump2price = $r['var_value']:$jump2price = 0;
 
 		if(isset($_GET['ret']) && is_numeric($_GET['ret']) && !$antal_ny) {
 			$ret=$_GET['ret']*1;
-			$qtxt = "select varenr,variant_id,antal,lager,beskrivelse,pris,kostpris,momssats,momsfri,rabat,leveret,tilfravalg ";
+			$qtxt = "select varenr,variant_id,antal,lager,beskrivelse,pris,kostpris,momssats,momsfri,rabat,leveret,tilfravalg,barcode ";
 			$qtxt.= "from ordrelinjer where id = '$ret'";
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$varenr_ny=$r['varenr'];
@@ -333,6 +353,11 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 			$rabat_old=dkdecimal($r['rabat'],2);
 			$beskrivelse[0]=$r['beskrivelse'];
 			$leveret[0]=$r['leveret'];
+			$barcodeNew=$r['barcode'];
+			if ($barcodeNew) {
+				$_SESSION['varenr_ny'] = $varenr_ny; 
+				$varenr_ny = $barcodeNew;
+			}
 			$tilfravalgNy=$r['tilfravalg'];
 			$fokus="antal_ny";
 			if ($r['momsfri'] && $r['momssats']==0) $pris[0]=dkdecimal($r['pris'],2);
@@ -365,7 +390,9 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 		#print "<input type=\"hidden\" name = \"vare_id\" value=\"$vare_id[0]\">\n";
 		print "<input type=\"hidden\" name = \"momssats\" value=\"$momssats\">\n";
 		print "<input type='hidden' name = 'beskrivelse_old' value=\"$beskrivelse[0]\">\n"; #20210829
+		print "<input type='hidden' name = 'pris_old' value=\"$pris[0]\">\n"; #20210829
 		if ($myDe) print "<input type='hidden' name = 'beskrivelse_ny' value=\"$myDe\">\n"; #20210829
+		print "<input type='hidden' name = 'barcodeNew' value=\"$barcodeNew\">\n"; #20210829
 		print "<input type=\"hidden\" name = \"leveret\" value=\"$leveret[0]\">\n";
 		print "<input type=\"hidden\" name = \"antal\" value=\"$antal_old\">\n";
 		print "<input type=\"hidden\" name = \"lager\" value=\"$lager_ny\">\n";
@@ -394,6 +421,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 			if ($jump2price && $pris[0] == 0) {
 				$antal_ny = 1;
 				$fokus = 'pris_ny';
+				$pris_old = '';
 			}
 			if ($antal_ny) {
 				if ($textNew) {
@@ -402,6 +430,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 					#print "name=\"textNew\" placeholder=\"$beskrivelse[0]\" value=\"\"></td>\n";
 					print "name=\"beskrivelse_ny\" value=\"$beskrivelse[0]\"></td>\n"; #20210810 + 20210812 + 20210829
 				} else print "<td>".$beskrivelse[0]."</td>\n";
+if (!$pris_old && $myPr) $pris_old = dkdecimal($myPr);
 				$txt = "<input type=hidden name=\"pris_old\" value=\"$pris_old\">\n" ; #20140702
 				$txt.= "<td align=\"right\" title=\"".findtekst(1874, $sprog_id).": ".dkdecimal($kostpris[0],2)."\">";
 				$txt.= "<input class=\"inputbox\" type=\"text\" style=\"text-align:right;font-size:$ifs;width:60px\" ";
@@ -414,7 +443,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 				print "<td align=\"right\" title=\"".findtekst(1874, $sprog_id).": ".dkdecimal($kostpris[0],2)."\">$pris[0]</td>\n";
 			}
 			if ($pris_ny && $fokus=="rabat_ny") {
-
+echo __line__." $barcodeNew<br>";
 #			$r=db_fetch_array(db_select("select box8 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
 #				$rabatvareid=$r['box8']*1;
 #				if (db_fetch_array(db_select("select varenr from varer where id = '$rabatvareid'",__FILE__ . " linje " . __LINE__))) {

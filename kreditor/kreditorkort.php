@@ -26,13 +26,18 @@
 // 2014.05.27 Tilføjet bet.type SDCK020 - FI-kort 71 (SDC) (ca)
 // 2015.01.23 Indhente virksomhedsdata fra CVR via CVRapi - tak Niels Rune https://github.com/nielsrune
 // 20210707   LOE Translated these texts
+// 2022.05.05 MSC - Implementing new top design
+// 2022.07.22 MSC - Implementing new top design
 
 @session_start();
 $s_id=session_id();
 
 $modulnr=8;
-$title="Kreditorkort\n";
+$title="Leverandørkort\n";
 $css="../css/standard.css";
+$felt_1 = $felt_2 = $felt_3 = $felt_4 = $felt_5 = NULL; 
+
+global $menu;
 
 include("../includes/var_def.php");	
 include("../includes/connect.php");
@@ -50,10 +55,10 @@ if (isset($_GET['firmanavn'])) $firmanavn = $_GET['firmanavn'];
 if (isset($_GET['bank_reg'])) $bank_reg = $_GET['bank_reg'];
 if (isset($_GET['bank_konto'])) $bank_konto = $_GET['bank_konto'];
 
-if($_GET['returside']){
+if(isset($_GET['returside'])) {
  	$returside= $_GET['returside'];
- 	$ordre_id = $_GET['ordre_id'];
- 	$fokus = $_GET['fokus'];
+ 	$ordre_id  = if_isset($_GET['ordre_id'],0);
+ 	$fokus     = if_isset($_GET['fokus'],'kontonr');
 } else {
 	if ($popup) $returside="../includes/luk.php";
 	else $returside="kreditor.php";
@@ -99,7 +104,7 @@ if ($_POST) {
 		$felt_3 = db_escape_string(trim($_POST['felt_3']));
 		$felt_4 = db_escape_string(trim($_POST['felt_4']));
 		$felt_5 = db_escape_string(trim($_POST['felt_5']));
-		$lukket=db_escape_string(trim($_POST['lukket']));
+		$lukket=db_escape_string(if_isset($_POST['lukket'],0));
 
 		
 		if (substr($ny_kontonr,0,1)=="=") {
@@ -115,7 +120,7 @@ if ($_POST) {
 			if ((ord($y)<48)||(ord($y)>57)) $y=0;
 			$tmp2=$tmp2.$y;
 		}
-		$tmp2=$tmp2*1;
+		$tmp2=(int)$tmp2;
 		if ($tmp2!=$ny_kontonr) {print "<BODY onload=\"javascript:alert('Kontonummer m&aring; kun best&aring; af heltal uden mellemrum')\">\n";}
 		$ny_kontonr=$tmp2;
 	
@@ -124,10 +129,12 @@ if ($_POST) {
 		if (($firmanavn)&&(($ny_kontonr < 1)||(!$ny_kontonr))) {
 			if (!$id) $id="0";
 			$x=0;
-			$query = db_select("select kontonr from adresser where art = 'K'	and id != $id order by kontonr",__FILE__ . " linje " . __LINE__);
-			while ($row = db_fetch_array($query)) {
+			$ktoliste = array();
+			$qtxt = "select kontonr from adresser where art = 'K'	and id != $id order by kontonr";
+			$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+			while ($r = db_fetch_array($q)) {
 				$x++;
-				$ktoliste[$x]=$row[kontonr];
+				$ktoliste[$x]=$r['kontonr'];
 			}
 			$ny_kontonr=1000;
 			while(in_array($ny_kontonr, $ktoliste)) $ny_kontonr++;
@@ -139,16 +146,16 @@ if ($_POST) {
 		if(!$kreditmax) $kreditmax=0;
 		if(!$betalingsdage) $betalingsdage=0;
 		if ($id==0) {
-			$query = db_select("select id from adresser where kontonr = '$ny_kontonr' and art = 'K'",__FILE__ . " linje " . __LINE__);
-			$row = db_fetch_array($query);
-			if ($row[id]) {
+			$qtxt = "select id from adresser where kontonr = '$ny_kontonr' and art = 'K'";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+#			if ($r['id']) {
 			 print "<BODY onload=\"javascript:alert('Der findes allerede en kreditor med Leverand&oslash;rnr: $ny_kontonr')\">\n";
 				$id=0;
 			} elseif($ny_kontonr) {
 				db_modify("insert into adresser (kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,tlf,fax,email,web,betalingsdage,kreditmax,betalingsbet,cvrnr,notes,art,gruppe,bank_navn,bank_reg,bank_konto,bank_fi,erh,swift,felt_1,felt_2,felt_3,felt_4,felt_5,lukket) values ('$ny_kontonr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$land','$kontakt','$tlf','$fax','$email','$web','$betalingsdage','$kreditmax','$betalingsbet','$cvrnr','$notes','K',$gruppe,'$bank_navn','$bank_reg','$bank_konto','$bank_fi','$erh','$swift','$felt_1','$felt_2','$felt_3','$felt_4','$felt_5','$lukket')",__FILE__ . " linje " . __LINE__);
 				$query = db_select("select id from adresser where kontonr = '$ny_kontonr' and art = 'K'",__FILE__ . " linje " . __LINE__);
 				$row = db_fetch_array($query);
-				$id = $row[id];
+				$id = $row['id'];
 			}
 		} elseif ($id > 0) {
 			if ($ny_kontonr!=$kontonr) {
@@ -178,6 +185,29 @@ if ($_POST) {
 		}
 	}
 }
+
+if ($menu=='T') {
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id') accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
+	print "
+	<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style='width:100%' class='dataTableSmall'><tbody>
+	<tr><td style='width:50%'>
+	<input type='button' style='width:150px;' onclick=\"location.href='rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../kreditor/kreditorkort.php?id=$id'\" value='".findtekst(133,$sprog_id)."'>
+	</td>
+	<td style='width:50%; text-align:right;'>
+	<input type='button' style='width:150px;' onclick=\"location.href='ordreliste.php?kontonumre=$kontonr&valg=faktura&returside=../kreditor/kreditorkort.php?id=$id'\" value='".findtekst(134,$sprog_id)."'>
+	</td></tr>
+	</tbody>
+	</table>
+	";
+	print "<center><table cellpadding=\"0\" cellspacing=\"10\" border=\"0\" class='dataTableForm'><tbody>\n";#tabel 1.2 start
+} else {
 $tekst=findtekst(154,$sprog_id);
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n";#tabel 1 start
 print "<tr bgcolor=$bg><td colspan=\"3\" align=\"center\" valign=\"top\">\n";
@@ -190,6 +220,7 @@ print "</tbody></table>\n";#tabel 1.1 slut
 print "</td></tr>\n";
 print "<td></td><td align = center valign = center>\n";
 print "<table cellpadding=\"0\" cellspacing=\"10\" border=\"1\"><tbody>\n";#tabel 1.2 start
+}
 
 if ($id > 0){
 	$q = db_select("select * from adresser where id = '$id'",__FILE__ . " linje " . __LINE__);
@@ -239,7 +270,8 @@ print "<input type=hidden name=kontonr value='$kontonr'>\n";
 print "<input type=hidden name=ordre_id value='$ordre_id'>\n";
 print "<input type=hidden name=returside value='$returside'>\n";
 print "<input type=hidden name=fokus value='$fokus'>\n";
-print "<tr bgcolor=$bg><td valign=\"top\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>\n"; # tabel 1.2.1 ->
+$bg=$bgcolor5;
+print "<tr bgcolor=$bg><td valign=\"top\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class='dataTableSmall'><tbody>\n"; # tabel 1.2.1 ->
 $bg=$bgcolor5;
 print "<tr bgcolor=$bg><td>".findtekst(1176,$sprog_id)."</td><td><input class=\"inputbox\" type=text size=25 name=ny_kontonr value=\"$kontonr\" onchange=\"javascript:docChange = true;\" title=\"Tast CVR-nr. omsluttet af *, +, eller / for at importere data fra Erhvervsstyrelsen (Data leveres af CVR API)\" style=\"background-image: url('../img/search-white.png'); background-repeat: no-repeat; background-position: right;\"></td></tr>\n";
 ($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
@@ -286,7 +318,7 @@ while ($r = db_fetch_array($q)){
 }
 print "</SELECT></td></tr>\n";
 print "</tbody></table></td>";#  <- tabel 1.2.1 
-print "<td  valign=\"top\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>\n"; # tabel 1.2.2 ->
+print "<td  valign=\"top\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class='dataTableSmall'><tbody>\n"; # tabel 1.2.2 ->
 ($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
 print "<tr bgcolor=$bg><td width=\"25%\"> ".findtekst(376,$sprog_id)."</td><td width=\"75%\"><input class=\"inputbox\" type=text size=\"10\" name='cvrnr' value=\"$cvrnr\" onchange=\"javascript:docChange = true;\" title=\"Tast CVR-nr. omsluttet af *, +, eller / for at importere data fra Erhvervsstyrelsen (Data leveres af CVR API)\" style=\"background-image: url('../img/search-white.png'); background-repeat: no-repeat; background-position: right;\"></td></tr>\n";
 ($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
@@ -308,7 +340,7 @@ print "<tr bgcolor=$bg><td>".findtekst(381,$sprog_id)."</td><td><input class=\"i
 ($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
 print "<tr bgcolor=$bg><td>".findtekst(387,$sprog_id)."</td><td><input class=\"inputbox\" type=checkbox name=lukket $lukket></td></tr>";
 print "</tbody></table></td>";#  <- tabel 1.2.1 
-print "<td valign=\"top\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>\n"; # tabel 1.2.2 ->
+print "<td valign=\"top\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class='dataTableSmall'><tbody>\n"; # tabel 1.2.2 ->
 print "<tr bgcolor=$bg><td colspan=2 height=25px align=center><b>".findtekst(301,$sprog_id)."</b></tr>\n";
 	($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
 	print "<tr bgcolor=$bg><td><span onmouseover=\"return overlib('".findtekst(307,$sprog_id)."', WIDTH=600);\" onmouseout=\"return nd();\">".findtekst(302,$sprog_id)."</td><td><input class=\"inputbox\" type=text name=\"felt_1\" size=\"25\" value=\"$felt_1\"></span></td></tr>\n";
@@ -350,13 +382,11 @@ if ($erh!='ERH400') print "<option>ERH400 = ".findtekst(1180,$sprog_id)."</optio
 if ($erh!='SDC3') print "<option>SDC3 = ".findtekst(1179,$sprog_id)."</option>\n";
 if ($erh!='SDCK020') print "<option>SDCK020 = FI-".findtekst(1178,$sprog_id)." 71 (SDC)</option>\n";
 print "</SELECT></td></tr>\n";
-print "</tbody></table></td><td valign=\"top\"><table cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>\n"; # tabel 1.2.1 ->
-print "\n";
 print "</tbody></table></td></tr>\n";#tabel 1.2.2 slut
-print "<tr bgcolor=$bg><td colspan=3><table><tbody></td></tr>\n";#tabel 1.2.3 start
-print "<tr bgcolor=$bg><td valign=top width=130> ".findtekst(659,$sprog_id)."</td><td colspan=2><textarea name=\"notes\" rows=\"3\" cols=\"100\">$notes</textarea></td></tr>\n";
+print "<tr bgcolor=$bg><td colspan=3><table class='dataTableSmall'><tbody></td></tr>\n";#tabel 1.2.3 start
+print "<tr bgcolor=$bg><td> ".findtekst(659,$sprog_id)."</td><td colspan=2 width=100%><div class='textwrapper'><textarea name=\"notes\" style='width:100%;' rows=\"4\">$notes</textarea></div></td></tr>\n";
 if ($id) {
-	print "<tr bgcolor=$bg><td></td><td colspan=2><table width=700 border=0><tbody>\n"; #tabel 3.3.1 start
+	print "<tr bgcolor=$bg><td></td><td colspan=2><table width=700 border=0 class='dataTableSmall'><tbody>\n"; #tabel 3.3.1 start
 	print "<tr bgcolor=$bg><td> ".findtekst(588,$sprog_id)."</td><td> ".findtekst(654,$sprog_id)."/".findtekst(653,$sprog_id)."</td><td> ".findtekst(652,$sprog_id)."</td><td> <a href=ansatte.php?ordre_id=$ordre_id&fokus=$fokus&konto_id=$id&returside=$returside>".findtekst(39,$sprog_id)."</a></td></tr>\n";
 	$x=0;
 	$q = db_select("select * from ansatte where konto_id = '$id' order by posnr",__FILE__ . " linje " . __LINE__);
@@ -379,11 +409,19 @@ if (db_fetch_array($q)) $slet="NO";
 $q = db_select("select id from ansatte where konto_id = '$id'",__FILE__ . " linje " . __LINE__);
 if (db_fetch_array($q)) $slet="NO";
 		 
+if ($menu=='T') {
+	if ($slet=="NO") {print "<tr><td colspan=3 align = center><input style='width:150px;' class='button green medium'  type=submit accesskey=\"g\" value=\"".findtekst(471,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>\n";}		
+	else {print "<tr><td colspan=3 align = center><input style='width:150px;' class='button green medium'  type=submit accesskey=\"g\" value=\"".findtekst(471,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\">&nbsp;&nbsp;&nbsp;<input type=submit accesskey=\"s\" value=\"".findtekst(1099,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>\n";}
+} else {
 if ($slet=="NO") {print "<tr bgcolor=$bg><td colspan=3 align = center><input type=submit accesskey=\"g\" value=\"".findtekst(471,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>\n";}		
 else {print "<tr bgcolor=$bg><td colspan=3 align = center><input type=submit accesskey=\"g\" value=\"".findtekst(471,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\">&nbsp;&nbsp;&nbsp;<input type=submit accesskey=\"s\" value=\"".findtekst(1099,$sprog_id)."\" name=\"submit\" onclick=\"javascript:docChange = false;\"></td>\n";}
+}
 print	"</tbody></table>";#tabel 1.2.3 slut
 print	"</td></tr>";
 print	"</tbody></table>";#tabel 1.2 slut
+if ($menu=='T') {
+	print "";
+} else {
 print	"<tr><td colspan=\"3\" align=\"center\" valign=\"bottom\">";
 print	"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"1\" cellpadding=\"0\"><tbody>";#tabel 1.3. start
 print "<td width=\"40%\" $top_bund>&nbsp;</td>";
@@ -396,6 +434,7 @@ if (substr($rettigheder,5,1)=='1') {
 	else print "<td width=\"10%\" $top_bund  title=\"$tekst\"><a href=ordreliste.php?kontonumre=$kontonr&valg=faktura&returside=../kreditor/kreditorkort.php?id=$id>".findtekst(134,$sprog_id)."</td>\n";
 } else print "<td width=\"10%\" $stor_knap_bg><span style=\"color:#999;\">".findtekst(134,$sprog_id)."</span></td>\n";
 print "<td width=\"40%\" $top_bund>&nbsp;</td>";
+}
 
 #print	"<td style=\"border: 1px solid #b4b4ff; padding: 0pt 0pt 1px;\" align=\"left\" background=\"../img/grey1.gif\" width=\"100%\"><br></td>";
 print	"</tbody></table>";#tabel 1.3 slut
@@ -406,5 +445,11 @@ print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascr
 if (isset($_GET['cvrnr']) && $cvrnr) {
 	echo "<script type=\"text/javascript\">    cvrapi('$cvrnr', 'dk', 'vat');      </script>";
 }
-print	"</body></html>";
+
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
 ?>

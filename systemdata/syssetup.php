@@ -40,6 +40,8 @@
 // 2020.05.12 PHR	Removed $box5 from 3. instance of skriv_formtabel in 'varegrupper'
 // 2020.05.12 PHR	Different changes for changes 30300308 to look nice in Firefox
 // #20210513  Loe	These texts were translated but not entered here previously
+// 20220607 MSC - Implementing new design
+// 20220614 MSC - Added div class divSys
 
 @session_start();
 $s_id=session_id();
@@ -65,16 +67,17 @@ if ($menu=='T') {
 #	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
-	print "<div id=\"header\">\n";
-	print "<div class=\"headerbtnLft\"></div>\n";
-#	print "<span class=\"headerTxt\">Systemsetup</span>\n";     
-#	print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">Ny debitor</a>--></div>";       
-	print "</div><!-- end of header -->";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 	print "<div id=\"leftmenuholder\">";
 	include_once 'left_menu.php';
 	print "</div><!-- end of leftmenuholder -->\n";
 	print "<div class=\"maincontentLargeHolder\">\n";
-	print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable2\"><tbody>";
+	print "<center><table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTableSys\" width='100%' height='350px'><tbody>";
 } else {
 	include("top.php");
 	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
@@ -132,8 +135,8 @@ if ($_POST){
 		if (isset($kodenr[$x])) $set=1;
 		if (isset($id[$x])) $set=1;
 		if ($set) {
-			$id[$y]=$id[$x]*1;
-			$kodenr[$y]=$kodenr[$x]*1;
+			$id[$y]=(float)$id[$x];
+			$kodenr[$y]=(int)$kodenr[$x];
 			$kode[$y]=$kode[$x]; #20160118
 			$beskrivelse[$y]=db_escape_string(trim($beskrivelse[$x]));
 			$art[$y]=trim($art[$x]);
@@ -195,7 +198,8 @@ if ($_POST){
 			if (!$box3[$x]) $box3[$x]='DKK';
 #cho "SELECT box2 FROM grupper where id='$id[$x]'<br>";
 #cho __line__." ID: $id[$x]<br>";
-			$r=db_fetch_array(db_select("SELECT box2 FROM grupper where id='$id[$x]'",__FILE__ . " linje " . __LINE__));
+			if ($r=db_fetch_array(db_select("SELECT box2 FROM grupper where id='$id[$x]'",__FILE__ . " linje " . __LINE__))) {
+echo "$box2[$x] && $r[box2] && $box2[$x]!=$r[box2]<br>";
 			if($box2[$x] && $r['box2'] && $box2[$x]!=$r['box2']) {
 				list($regnstart,$regnslut)=explode(chr(9),regnstartslut($regnaar));
 				if ($regnstart>$dd || $regnslut<$dd) {
@@ -256,7 +260,7 @@ if ($_POST){
 				}	else $valuta='DKK';
 				$box3[$x]=$valuta;
 				genberegn($regnaar);
-			}
+			}}
 			if ($art[$x]=='DG'&& $box6[$x]) $box6[$x]=usdecimal($box6[$x]);
 			if ($art[$x]=='DG'&& $box6[$x]) $box7[$x]=usdecimal($box7[$x]);
 		}
@@ -378,12 +382,14 @@ if ($_POST){
 #########################################################################################################################################
 if ($nopdat!=1) {
 	$x=0;
-	if ($valg=="projekter") $tmp='kodenr desc';
-	else {
-		if ($db_type=='mysql' || $db_type=='mysqli') $tmp="CAST(kodenr AS SIGNED)";
-		else $tmp="to_number(textcat('0',kodenr),text(99999999))";
-	} 
-	$query = db_select("SELECT * FROM grupper order by $tmp",__FILE__ . " linje " . __LINE__);
+($valg=="projekter")?$sort='kodenr desc':$sort='kodenr';
+#	else {
+#		if ($db_type=='mysql' || $db_type=='mysqli') $tmp="CAST(kodenr AS SIGNED)";
+#		else $tmp="to_number(textcat('0',kodenr),text(99999999))";
+#	} 
+	$qtxt = "SELECT * FROM grupper order by kodenr";
+	if ($valg=="projekter") $qtxt.=' desc';
+	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	$feltbredde=6;
 	$stockIO=NULL;
 	while ($row = db_fetch_array($query)){
@@ -650,7 +656,7 @@ function tjek ($id,$beskrivelse,$kodenr,$kode,$art,$box1,$box2,$box3,$box4,$box5
 function kontotjek ($konto) { 
 	global $regnaar;
 	$fejl=NULL;
-	$konto=$konto*1;	
+	$konto = (int)$konto;
 	if ($konto) {
 		$qtxt="SELECT id FROM kontoplan WHERE kontonr = '$konto' and (kontotype = 'D' or kontotype = 'S') and regnskabsaar='$regnaar'";
 #cho "$qtxt<br>";
@@ -755,10 +761,19 @@ function titletxt($art,$felt) {
 	return($titletxt);
 }
 
-
-?>
+print "
 </tbody>
 </table>
 </td></tr>
 </tbody></table>
-</body></html>
+</div>
+";
+
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
+?>

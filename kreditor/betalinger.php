@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- kreditor/betalinger.php --- Patch 4.0.5 --- 2022.02.01 ---
+// --- kreditor/betalinger.php --- Patch 4.0.8 --- 20230501 ---
 // LICENSE
 // 
 // This program is free software. You can redistribute it and / or
@@ -20,10 +20,12 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // -----------------------------------------------------------------------------------
 //
-// Copied from debitor/betalinger.php and adjusted
+// 20220201 PHR Copied from debitor/betalinger.php and adjusted
+// 20221013 PHR Inserted some 'db_escape_string' in query
+// 20230501 Created kladdeliste option
 
 $dan_liste=$gem=$listenote=$slet_ugyldige=$udskriv=NULL;
 
@@ -43,7 +45,7 @@ include("../includes/forfaldsdag.php");
 include("../includes/payListFunc.php");
 
 $reopen   = if_isset($_GET['reopen']);
-$liste_id = if_isset($_GET['liste_id']);
+$liste_id = if_isset($_GET['liste_id'], null);
 #$sort    = if_isset($_GET['sort']);
 #$rf      = if_isset($_GET['rf']);
 #$vis     = if_isset($_GET['vis']);
@@ -81,6 +83,7 @@ if (isset($_POST['slet_ugyldige']) || isset($_POST['gem']) || isset($_POST['udsk
 
 	(substr($betalingsdato[1],-1) == '*')?$allPayDates=str_replace('*','',$betalingsdato[1]):$allPayDates=NULL;
 	for ($x=1;$x<=$antal;$x++) {
+		if (!isset($slet[$x])) $slet[$x] = '';
 		if ($allPayDates) $betalingsdato[$x]=$allPayDates;
 		if ($slet_ugyldige && $ugyldig[$x] == $id[$x]) $slet[$x]='on';
 		elseif (!isset($slet)) $slet[$x] = NULL;
@@ -88,17 +91,19 @@ if (isset($_POST['slet_ugyldige']) || isset($_POST['gem']) || isset($_POST['udsk
 			#cho "delete from betalinger where id='$id[$x]'<br>";
 			db_modify("delete from betalinger where id='$id[$x]'",__FILE__ . " linje " . __LINE__);
 		} else {
-			$qtxt = "update betalinger set bet_type='$erh[$x]',fra_kto='$fra_kto[$x]',egen_ref='$egen_ref[$x]',til_kto='$til_kto[$x]',";
-			$qtxt.= "kort_ref='$kort_ref[$x]',modt_navn='".db_escape_string($modt_navn[$x])."',belob='$belob[$x]',valuta='$valuta[$x]',";
+			$qtxt = "update betalinger set bet_type='$erh[$x]',fra_kto='$fra_kto[$x]',egen_ref='".db_escape_string($egen_ref[$x])."',";
+			$qtxt.= "til_kto='$til_kto[$x]',kort_ref='".db_escape_string($kort_ref[$x])."',";
+			$qtxt.= "modt_navn='".db_escape_string($modt_navn[$x])."',belob='$belob[$x]',valuta='$valuta[$x]',";
 			$qtxt.= "betalingsdato='$betalingsdato[$x]' where id='$id[$x]'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
-	db_modify("update betalingsliste set listenote='$listenote' where id='$liste_id'",__FILE__ . " linje " . __LINE__);
+	$qtxt = "update betalingsliste set listenote='".db_escape_string($listenote)."' where id='$liste_id'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	if ($udskriv) {
 		$r=db_fetch_array(db_select("select bogfort from betalingsliste where id='$liste_id'",__FILE__ . " linje " . __LINE__)); 
 		if ($r['bogfort']=='-') {
-			$qtxt = "update betalingsliste set bogfort='V', bogfort_af='$brugernavn' where id='$liste_id'";
+			$qtxt = "update betalingsliste set bogfort='V', bogfort_af='".db_escape_string($brugernavn)."' where id='$liste_id'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}
@@ -120,27 +125,25 @@ if ($menu=='T') {
 	print "<div class='dataTablediv'><table cellpadding='1' cellspacing='0' border='0' width='100%' valign = 'top' class='dataTable'><thead>";
 } else {
 	include_once '../includes/oldDesign/header.php';
-	print "<table width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'><tbody>";
-	print "<tr><td height = '25' align='center' valign='top'>";
+	//print "<table width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'><tbody>";
+	//print "<tr><td height = '25' align='center' valign='top'>";
 	print "<table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>";
 	print "<form name='paylist' action='betalinger.php?liste_id=$liste_id' method = 'post'>";
 	print "<td width='10%' $top_bund><font face='Helvetica, Arial, sans-serif' color='#000066'>";
 	print "<a href=../kreditor/betalingsliste.php accesskey=L>Luk</a></td>";
-	print "<td width='80%' $top_bund><font face='Helvetica, Arial, sans-serif' color='#000066'>Betalinger til bank</td>";
+	print "<td width='70%' $top_bund><font face='Helvetica, Arial, sans-serif' color='#000066'>Betalinger til bank</td>";
 	print "<td width='10%' $top_bund><font face='Helvetica, Arial, sans-serif' color='#000066'>";
-	
 	$r=db_fetch_array(db_select("select bogfort from betalingsliste where id='$liste_id'",__FILE__ . " linje " . __LINE__));
-	if ($r['bogfort']!='V') {
-	
+	if (isset($r["bogfort"]) && $r['bogfort']!='V') {	
 		print "<select name = 'find' style = 'width:100%;' onchange='this.form.submit()'>";
-		print "<option value = ''></option>";
+		print "<option value = ''</option>";
 #		print "<option value = 'fromList'>Fra liste</option>";
 		print "<option value = 'saldo'>Kontosum</option>";
 		print "<option value = 'unpaid'>Ubetalte</option>";
+		print "<option value = 'cashRegister'>kladdeliste</option>";
+	}
 		print "</select>";
-	} # else print "<a href = 'betalinger.php?liste_id=$liste_id&reopen=$liste_id'>Lås op</a>";
 	print "</td></tr>";
-	print "</form>";
 	print "</tbody></table>";
 	print "</td></tr>";
 	print "<tr><td valign='top'>";
@@ -155,7 +158,7 @@ if (!$liste_id) {
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$r=db_fetch_array(db_select("select MAX(id) as id from betalingsliste where tidspkt='$tidspkt'",__FILE__ . " linje " . __LINE__));
 	$liste_id=$r['id'];
-	print "<meta http-equiv='refresh' content='0; url=betalinger.php?liste_id=$liste_id'>";
+	//print "<meta http-equiv='refresh' content='0; url=betalinger.php?liste_id=$liste_id'>";
 } 
 
 $tomorrow = date('U')+60*60*24;
@@ -168,7 +171,7 @@ $myEan=$r['ean'];
 $myCtry=$r['land'];
 if (strtolower($myCtry)=='norway') $myCtry = 'NO'; 
 ($myCtry == 'NO')?$currency = 'NOK':$currency = 'DKK';
-if ($find) {
+if ($find || isset($_GET["kladde_id"])) {
 	$bilag_id_list=array();
 	$ordre_id_list=array();
 	$x=0; $y=0;
@@ -207,6 +210,7 @@ if ($find) {
 			$myRef="Afr: $custNo - $custName";
 			$custRef="$myName";
 			$qtxt="select sum(amount) as amount from openpost where udlignet = '0' and konto_id='$custId'";
+			
 #cho "$qtxt<br>";
 			$amount=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))[0];
 			if ($amount < 0) {
@@ -223,7 +227,36 @@ if ($find) {
 				}
 			}
 		}
-	} elseif ($find) {
+	}elseif($find === "cashRegister"){
+		if(isset($_GET["page"])){
+			$page = $_GET["page"]*30;
+			$query = db_select("SELECT kladde_id FROM kassekladde GROUP BY kladde_id, transdate ORDER BY transdate DESC  OFFSET $page ROWS LIMIT 30", __FILE__ . " linje " . __LINE__);
+		}else{
+			$query = db_select("SELECT kladde_id FROM kassekladde GROUP BY kladde_id, transdate ORDER BY transdate DESC LIMIT 30", __FILE__ . " linje " . __LINE__);
+		}
+		print "<tr>";
+		print "<th>ID</th>";
+		print "<th>Kladde liste</th>";
+		print "</tr>";
+		while($res = db_fetch_array($query)){
+			print "<tr>";
+			print "<td><a href='betalinger.php?kladde_id=$res[kladde_id]&liste_id=$liste_id'>$res[kladde_id]</a></td>";
+			print "</tr>";
+		}
+
+		if(isset($_GET["page"])){
+			$page = $_GET["page"]+1;
+			print "<a href='betalinger.php?cashRegister&page=$page&liste_id=$liste_id'>Næste side</a>";
+		}else{
+			print "<a href='betalinger.php?cashRegister&page=1&liste_id=$liste_id'>Næste side</a>";
+		}
+
+		if(isset($_GET["page"]) && $_GET["page"] > 0){
+			$page = $_GET["page"]-1;
+			print "<a href='betalinger.php?cashRegister&page=$page&liste_id=$liste_id' style='margin-left: 1rem;'>Forrige side</a>";
+		}
+		
+	}elseif($find || isset($_GET["kladde_id"])){
 	$q=db_select("select ordre_id, bilag_id from betalinger",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)){
 		if ($r['bilag_id']) {
@@ -244,14 +277,24 @@ if ($find) {
 		$qtxt.= " where openpost.udlignet != '1' and openpost.amount < 0 and";
 		$qtxt.= " and openpost.konto_id = adresser.id and adresser.art = 'K' order by openpost.forfaldsdate";
 */		
-		$qtxt="select openpost.id as id,openpost.beskrivelse as egen_ref,openpost.amount as amount,openpost.valuta as valuta,openpost.faktnr as faktnr,openpost.transdate as transdate,openpost.bilag_id as bilag_id,openpost.forfaldsdate as duedate,openpost.betal_id as paymentId,adresser.erh as erh, openpost.refnr as refnr, openpost.kladde_id as kladde_id, adresser.bank_reg as modt_reg, adresser.bank_konto as modt_konto, adresser.firmanavn as modt_navn,adresser.bank_fi as modt_fi,adresser.betalingsbet as betalingsbet,adresser.betalingsdage as betalingsdage from openpost, adresser where openpost.udlignet != '1' and openpost.amount < 0 and openpost.konto_id = adresser.id and adresser.art = 'K' order by forfaldsdate";
-#cho "$qtxt<br>";
+		if(isset($_GET["kladde_id"])){
+			$qtxt="select openpost.id as id,openpost.beskrivelse as egen_ref,openpost.amount as amount,openpost.valuta as valuta,openpost.faktnr as faktnr,openpost.transdate as transdate,openpost.bilag_id as bilag_id,openpost.forfaldsdate as duedate,openpost.betal_id as paymentid,adresser.erh as erh, openpost.refnr as refnr, openpost.kladde_id as kladde_id, adresser.bank_reg as modt_reg, adresser.bank_konto as modt_konto, adresser.firmanavn as modt_navn,adresser.bank_fi as modt_fi,adresser.betalingsbet as betalingsbet,adresser.betalingsdage as betalingsdage from openpost, adresser where openpost.udlignet != '1' and openpost.amount < 0 and openpost.konto_id = adresser.id and adresser.art = 'K' and kladde_id = $_GET[kladde_id] order by forfaldsdate";
+		}else{
+			$qtxt="select openpost.id as id,openpost.beskrivelse as egen_ref,openpost.amount as amount,openpost.valuta as valuta,openpost.faktnr as faktnr,openpost.transdate as transdate,openpost.bilag_id as bilag_id,openpost.forfaldsdate as duedate,openpost.betal_id as paymentid,adresser.erh as erh, openpost.refnr as refnr, openpost.kladde_id as kladde_id, adresser.bank_reg as modt_reg, adresser.bank_konto as modt_konto, adresser.firmanavn as modt_navn,adresser.bank_fi as modt_fi,adresser.betalingsbet as betalingsbet,adresser.betalingsdage as betalingsdage from openpost, adresser where openpost.udlignet != '1' and openpost.amount < 0 and openpost.konto_id = adresser.id and adresser.art = 'K' order by forfaldsdate";
+		}
+		
+		
+		#echo "$qtxt<br>";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		$count = db_fetch_array($q);
+		if(empty($count)){
+			print "<p style='text-align: center;'>Der blev ikke fundet nogen posteringer.</p>";
+		}
 	while ($r=db_fetch_array($q)){
 		$ordre_id=0;
 #cho "$ordre_id<br>";		
 		$medtag=1;
-			$egen_ref=$r['egen_ref'];
+			$egen_ref[0]=$r['egen_ref'];
 		$kladde_id=$r['kladde_id']*1;
 		$bilag_id=$r['bilag_id']*1;
 		$refnr=$r['refnr']*1;
@@ -270,22 +313,22 @@ if ($find) {
 			else $erh="ERH356";
 			if ($erh=="ERH351" || $erh=="ERH357" || $erh=="ERH358" || $erh=="SDCK020") {
 				$modt_konto = $r['modt_fi']; 
-				$kort_ref=$r['betal_id'];
+					$kort_ref=$r['paymentid'];
 				} elseif ($r['faktnr']) $kort_ref=$myName.":".$r['faktnr'];
 				else $kort_ref=$myName;
 				$duedate = $r['duedate'];	
 				if (!$duedate) {
 					$forfaldsdag=str_replace("-","",dkdato($r['duedate']));
 			} else $forfaldsdag=str_replace("-","",forfaldsdag($r['transdate'], $r['betalingsbet'], $r['betalingsdage']));
-			$belob=dkdecimal($r['amount']*-1);
-			$valuta=$r['valuta'];
-			if (!$valuta) $valuta='DKK';
-				$paymentId = $r['paymentId'];
+				$belob[0]=dkdecimal($r['amount']*-1);
+				$valuta[0]=$r['valuta'];
+				if (!$valuta[0]) $valuta='DKK';
+				$paymentId = $r['paymentid'];
 				if (!$paymentId) $paymentId = $r['faktnr'];
 #cho "Pay $paymentId<br>";
-				if ($r['paymentId']) {
-					if (substr($r['paymentId'],0,1)=="+") {
-						$paymentId=substr($r['paymentId'],1);
+				if ($r['paymentid']) {
+					if (substr($r['paymentid'],0,1)=="+") {
+						$paymentId=substr($r['paymentid'],1);
 						list($tmp,$tmp2)=explode("<",$paymentId);
 					if($tmp=='04'||$tmp=='15') $erh='ERH352';
 					elseif($tmp=='71') $erh='ERH351'; # Skal give SDCK020, hvis betalingslister sendes til SDC-bank i stedet for BEC (ERH)
@@ -294,12 +337,15 @@ if ($find) {
 					$tmp2=(str_replace("+",";",$tmp2));#split fungerer ikke med "+" som skilletegn?
 					list($kort_ref,$modt_konto)=explode(";",$tmp2);
 					$kort_ref=trim($kort_ref);
-					} else $kort_ref=$r['paymentId'];	
+					} else $kort_ref=$r['paymentid'];	
 				}
 				$qtxt="insert into betalinger";
-				$qtxt.="(bet_type,fra_kto, egen_ref, til_kto, modt_navn, kort_ref, belob, betalingsdato, valuta, bilag_id, ordre_id, liste_id) ";
+				$qtxt.="(bet_type,fra_kto, egen_ref, til_kto, modt_navn,";
+				$qtxt.="kort_ref, belob, betalingsdato, valuta, bilag_id, ordre_id, liste_id) ";
 				$qtxt.="values ";
-				$qtxt.="('$erh','$myBank','$egen_ref','$modt_konto','".db_escape_string($r['modt_navn'])."','$kort_ref','$belob','$forfaldsdag',"; $qtxt.="'$valuta', '$bilag_id', '$ordre_id','$liste_id')";
+				$qtxt.="('$erh','$myBank','".db_escape_string($egen_ref[0])."','$modt_konto','".db_escape_string($r['modt_navn'])."',";
+				$qtxt.="'".db_escape_string($kort_ref)."','$belob[0]','$forfaldsdag',"; 
+				$qtxt.="'$valuta[0]', '$bilag_id', '$ordre_id','$liste_id')";
 #cho "$qtxt<br>";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
@@ -367,10 +413,10 @@ if ($udskriv) {
 		<th><b>Modtager konto</b></td>
 		<th><b>Modtager ref.</b></td>
 		<th><b>Modtager</b></td>
-		<th align='right' class='text-right'><b>Bel&oslash;b</b></td>
-		<th align='center' class='text-center'><b>Valuta</b></td>
-		<th align='right' class='text-right' title='$paytitle'><b>Betalingsdato</b></td>
-		<th align='center' class='text-center'><span title='Se i nyt vindue'><b>Se</b></span></td>";
+		<th><b>Bel&oslash;b</b></td>
+		<th><b>Valuta</b></td>
+		<th title='$paytitle'><b>Betalingsdato</b></td>
+		<th><span title='Se i nyt vindue'><b>Se</b></span></td>";
 		if ($bogfort!='V') print "<th align='center'><span title='Slet linjen fra listen'><b>Slet</b></span></th>";
 		print "</tr>";
 		if ($menu=='T') {
@@ -392,7 +438,6 @@ $q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$x++;
 		$erh[$x]=$r['bet_type'];
-#cho "$erh[$x]<br>";
 		$fra_kto[$x]=$r['fra_kto'];
 		$egen_ref[$x]=$r['egen_ref'];
 		$til_kto[$x]=$r['til_kto'];
@@ -435,22 +480,55 @@ $q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				if ($erh[$x]) print "<option>$erh[$x]</option>\n";
 				if ($erh[$x]!='ERH356') print "<option>ERH356</option>\n";
 				print "</SELECT></span></td>\n";
+				if(isset($k1_bg[$x])){
 				print "<td $k1_bg[$x]><span title=\"$k1[$x]\">";
+				}else{
+					print "<td><span>";
+				}
 				print "<input type=\"text\" style=\"text-align:right\" name=\"fra_kto[$x]\" size=14 value=\"$r[fra_kto]\"></span></td>";
-				print "<td $2_bg[$x]><span title=\"$k2[$x]\">";
+				if(isset($k2_bg[$x])){
+					print "<td $k2_bg[$x]><span title=\"$k2[$x]\">";
+				}else{
+					print "<td><span>";
+				}
 				print "<input type=\"text\" name=\"egen_ref[$x]\" size=20 value=\"$r[egen_ref]\"></span></td>";
+				if(isset($k3_bg[$x])){
 				print "<td $k3_bg[$x]><span title=\"$k3[$x]\">";
+				}else{
+					print "<td><span>";
+				}
 				print "<input type=\"text\" style=\"text-align:right\" name=\"til_kto[$x]\" size=12 value=\"$r[til_kto]\"></span></td>";
+				if(isset($k4_bg[$x])){
 				print "<td $k4_bg[$x]><span title=\"$k4[$x]\">";
+				}else{
+					print "<td><span>";
+				}
 				print "<input type=\"text\" style=\"text-align:left\" name=\"kort_ref[$x]\" size=10 value=\"$kort_ref[$x]\"></span></td>";
+				if(isset($k5_bg[$x])){
 				print "<td $k5_bg[$x]><span title=\"$k5[$x]\">";
+				}else{
+					print "<td><span>";
+				}
 				print "<input type=\"text\" name=\"modt_navn[$x]\" size=15 value=\"$r[modt_navn]\"></span></td>";
+				if(isset($k6_bg[$x])){
 				print "<td $k6_bg[$x]><span title=\"$k6[$x]\">";
+				}else{
+					print "<td><span>";
+				}
 				print "<input type=\"text\" style=\"text-align:right\" name=\"belob[$x]\" size=10 value=\"$r[belob]\"></span></td>";
+				if(isset($k7_bg[$x])){
 				print "<td $k7_bg[$x]><span title=\"$k7[$x]\">";
+				}else{
+					print "<td><span>";
+				}
 				print "<input type=\"text\" style=\"text-align:right\" name=\"valuta[$x]\" size=3 value=\"$r[valuta]\"></span></td>";
+				if(isset($k8_bg[$x])){
 				print "<td $k8_bg[$x]><span title=\"$k8[$x]\">";
-				print "<input type=\"text\" style=\"text-align:right\" name=\"betalingsdato[$x]\" size=10 value=\"$r[betalingsdato]\">";
+				}else{
+					print "<td><span>";
+				}
+				($r['betalingsdato'])?$betDato=$r['betalingsdato']:$betDato=$paydate;
+				print "<input type=\"text\" style=\"text-align:right\" name=\"betalingsdato[$x]\" size=10 value=\"$betDato\">";
 				print "</span></td>";
 				if ($r['ordre_id']) {
 					print "<td align=right>";

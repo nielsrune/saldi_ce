@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/ordreliste.php --- lap 4.0.6 ---- 2022-06-19 ---
+// --- debitor/ordreliste.php --- lap 4.0.8 ---- 2023-06-21 ---
 // LICENS
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2022 Saldi.DK ApS
+// Copyright (c) 2003-2023 Saldi.DK ApS
 // ----------------------------------------------------------------------
 
 // 20121004 Fjernet email fra $selectfelter og indsat søgerutine til emails - søg 20121004
@@ -74,9 +74,11 @@
 // 20211102 MSC - Implementing new design
 // 20220210 PHR - Some cleanup 
 // 20220210 PHR - Added queries in function select_valg
-// 20220301 PHR - Added "$valg == 'faktura' ||" as invouved orders should not be locked
+// 20220301 PHR - Added "$valg == 'faktura' ||" as invoiced orders should not be locked
 // 20220619 PHR Removed misplaced ';' from findtekst(386...
-
+// 20220824 PHR Changed 'hent_ordrer' to wait 30 sec between fetches
+// 20230323 PBLM Fixed minor error
+// 20230621 PHR missing $sprog_id
 
 #ob_start();
 @session_start();
@@ -181,7 +183,7 @@ $download=if_isset($_GET['download']);
 $hent_nu=if_isset($_GET['hent_nu']);
 $shop_ordre_id=if_isset($_GET['shop_ordre_id']);
 $shop_faktura=if_isset($_GET['shop_faktura']);
-if ($hent_nu && file_exists("../temp/$db/shoptidspkt.txt")) unlink ("../temp/$db/shoptidspkt.txt");
+# if ($hent_nu && file_exists("../temp/$db/shoptidspkt.txt")) unlink ("../temp/$db/shoptidspkt.txt");
 
 if (!$returside && $konto_id && !$popup) $returside="debitorkort.php?id=$konto_id";
 
@@ -212,7 +214,6 @@ if ($r=db_fetch_array(db_select("select id from adresser where art = 'S' and pbs
 
   
 $box5 = select_valg("$valg", "box5");
-#cho __line__." select_valg('$valg', 'box3') $box3<br>";
 
 $box3 = select_valg("$valg", "box3");
 $box4 = select_valg("$valg", "box4");
@@ -228,7 +229,7 @@ if (!$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 } else {
 		$qtxt = "select * from grupper where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'"; #20210623
 		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-			$box6 = $r1['box6'];
+			$box6 = $r['box6'];
 			$c =explode(",",$box6);
 			$c = array_map('trim', $c);
 			if(!in_array(trim("$firmanavn1"), $c)){
@@ -1072,6 +1073,7 @@ $api_fil=trim($r['box4']);
 	if (file_exists("../temp/$db/shoptidspkt.txt")) {
 		$fp=fopen("../temp/$db/shoptidspkt.txt","r");
 		$tidspkt=fgets($fp);
+		if ($hent_nu) $tidspkt-=1170; 
 	fclose ($fp);
 	} else $tidspkt = 0;
 	if ($tidspkt < date("U")-1200 || $shop_ordre_id  || $shop_faktura) {
@@ -1084,9 +1086,9 @@ $api_fil=trim($r['box4']);
 		if ($api_encode) $api_txt.="&encode=$api_encode";
 		if ($shop_ordre_id && is_numeric($shop_ordre_id)) $api_txt.="&order_id=$shop_ordre_id";
 		elseif ($shop_faktura) $api_txt.="&invoice=$shop_faktura";
-echo "$api_text<br>";
+echo "$api_txt<br>";
 		exec ("nohup /usr/bin/wget  -O - -q  --no-check-certificate --header='$header' '$api_txt' > /dev/null 2>&1 &\n");
-}	
+	} elseif ($hent_nu) alert("vent 30 sekunder");
 	print "<tr><td><a href=\"$_SERVER[PHP_SELF]?sort=$sort&hent_nu=1\">".findtekst(879,$sprog_id)."</td></tr>";
 }
 $r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));
@@ -1188,9 +1190,7 @@ function genberegn($id) {
 }
 
 function bidrag ($feltnavn,$sum,$moms,$sum_m_moms,$kostpris,$udlignet){
-	global $ialt;
-	global $totalkost;
-	global $genberegn;
+	global $genberegn,$ialt,$totalkost,$sprog_id;
 
 	$ialt=$ialt+$sum;
 	$totalkost=$totalkost+$kostpris;

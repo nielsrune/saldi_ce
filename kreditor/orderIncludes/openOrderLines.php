@@ -1,4 +1,31 @@
 <?php
+
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// --- kreditor/ordreIncludes/openOrerLines.php --- lap 4.0.7 --- 2023.02.15 ---
+// LICENSE
+//
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
+//
+// Copyright (c) 2003-2023 saldi.dk aps
+// ----------------------------------------------------------------------
+// 20221106 PHR - Various changes to fit php8 / MySQLi
+// 20230215 PHR - Added '&& $ialt';
+
 for ($x=1; $x<=$linjeantal; $x++)	{
 	if ($varenr[$x]) {
 		$ialt=($pris[$x]-($pris[$x]/100*$rabat[$x]))*$antal[$x];
@@ -31,7 +58,7 @@ for ($x=1; $x<=$linjeantal; $x++)	{
 	print "<td><input class='inputbox' type='text' size=58 name=beskrivelse$x value= \"".htmlentities($beskrivelse[$x])."\" onchange='javascript:docChange = true;'></td>";
 	print "<td><input class='inputbox' type='text' style='text-align:right' size=10 name=pris$x value='$dkpris' onchange='javascript:docChange = true;'></td>";
 	print "<td><input class='inputbox' type='text' style='text-align:right' size=4 name=raba$x value='$dkrabat' onchange='javascript:docChange = true;'></td>";
-	if ($art=='KK') $ialt=$ialt*-1;
+	if ($art=='KK' && $ialt) $ialt=$ialt*-1;
 	if ($varenr[$x]) $tmp=dkdecimal($ialt,2);
 	else $tmp=NULL;
 	print "<td align=right><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee;text-align:right' readonly='readonly' size=10 value='$tmp'></td>";
@@ -49,8 +76,9 @@ if ($status>=1) {
 		if ($r['id'] && !$r['gruppe']) { # 20211201 
 		alert("Vare med varenummer $varenr[$x] er ikke tilknyttet en varegruppe (Pos nr. $x)");
 	} else {
-		$row = db_fetch_array(db_select("select box9 from grupper where kodenr = '$row[gruppe]' and art = 'VG'",__FILE__ . " linje " . __LINE__));
-		$box9[$x] = trim($row['box9']);
+		$qtxt = "select box9 from grupper where kodenr = '$r[gruppe]' and art = 'VG'";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+		$box9[$x] = trim($r['box9']);
 		$tidl_lev[$x]=0;
 	}
 	if ($art=='KK') {
@@ -62,24 +90,25 @@ if ($status>=1) {
 	}
 	if (substr($dklev[$x],-1)=='0') $dklev[$x]=substr($dklev[$x],0,-1);
 	if (substr($dklev[$x],-1)=='0') $dklev[$x]=substr($dklev[$x],0,-2);
-
+	$tidl_lev[$x] = 0;
 	if (($antal[$x]>=0)&&($art!='KK')) {
 		$qtxt = "select * from batch_kob where linje_id = '$linje_id[$x]' and ordre_id=$id and vare_id = $vare_id[$x]";
-		$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
-		while($row = db_fetch_array($query)) $tidl_lev[$x]=$tidl_lev[$x]+$row['antal'];
+		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		while($r = db_fetch_array($q)) $tidl_lev[$x]=$tidl_lev[$x]+$r['antal'];
 		if (afrund($antal[$x]-$tidl_lev[$x],2)) $status=1;
 		$temp=0;
-		$query = db_select("select * from reservation where linje_id = $linje_id[$x] and batch_salg_id=0",__FILE__ . " linje " . __LINE__);
-		if ($row = db_fetch_array($query)) {
-			if ($antal[$x]-$tidl_lev[$x]!=$row['antal']) {
+		$qtxt = "select * from reservation where linje_id = $linje_id[$x] and batch_salg_id=0";
+		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		if ($r = db_fetch_array($q)) {
+			if ( $antal[$x] - $tidl_lev[$x] != $r['antal'] ) {
 				$qtxt = "update reservation set antal=$antal[$x]-$tidl_lev[$x] where linje_id=$linje_id[$x] and batch_salg_id=0";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			}
-		} elseif ($antal[$x]-$tidl_lev[$x]!=$row['antal']) {
+			} elseif ($antal[$x]-$tidl_lev[$x]!=$r['antal']) {
 			if (($antal[$x]>=0)&&($tidl_lev[$x]<0)) {
 				$txt = "Antal m&aring; ikke &aelig;ndres til positivt tal, n&aring;r der er returneret varer (Pos nr. $posnr[$x])";
 				print "<BODY onLoad='javascript:alert($txt)'>";
 				$antal[$x]=$tidl_lev[$x];
+				}
 			} else {
 				$qtxt = "insert into reservation (linje_id, vare_id, batch_salg_id, antal) values	";
 				$qtxt.= "($linje_id[$x], $vare_id[$x], 0, $antal[$x]-$tidl_lev[$x])";
@@ -89,10 +118,11 @@ if ($status>=1) {
 	}
 	if ($antal[$x]<0) {
 		$tidl_lev[$x]=0;
-		$query = db_select("select antal from batch_kob where linje_id = '$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
-		while ($row = db_fetch_array($query)) {
-			if ($art=='KK') $tidl_lev[$x] = $tidl_lev[$x] - $row['antal'];
-			else $tidl_lev[$x] = $tidl_lev[$x] + $row['antal'];
+		$qtxt = "select antal from batch_kob where linje_id = '$linje_id[$x]'";
+		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+		while ($r = db_fetch_array($q)) {
+			if ($art=='KK') $tidl_lev[$x] = $tidl_lev[$x] - $r['antal'];
+			else $tidl_lev[$x] = $tidl_lev[$x] + $r['antal'];
 	 	}
 	}
 	$dk_tidl_lev[$x] = dkdecimal($tidl_lev[$x],2);
@@ -119,7 +149,7 @@ if ($status>=1) {
 	if ($labelprint) {
 if ($varenr[$x]) {
 	$txt = "<a href='../lager/labelprint.php?id=$vare_id[$x]&beskrivelse=".urlencode($beskrivelse[$x]);
-	$txt.= "&stregkode=".urlencode($varenr[$x])."&pris=$salgspris[$x]&enhed=$enhed[$x]' target='blank'>";
+	$txt.= "&stregkode=".urlencode($varenr[$x])."&pris=$pris[$x]&enhed=$enhed[$x]' target='blank'>";
 	$txt.= "<img src='../ikoner/print.png' style='border: 0px solid;'></a>";
 } else $txt=NULL;
 print "<td>$txt</td>";
@@ -128,6 +158,7 @@ print "<td>$txt</td>";
 $txt = "<input type=button value='Serienr.' name='vis_snr$x' onchange='javascript:docChange = true;'>";
 print "<td onClick='serienummer($linje_id[$x])'>$txt</td>";
 	}
+	$box9[$x] = if_isset($box9[$x],NULL);
 	if ($antal[$x]<0 && $art!='KK' && $box9[$x]=='on') {
 $txt = "<span title= '".findtekst(1496, $sprog_id)."'><img alt='".findtekst(1515, $sprog_id)."' src=../ikoner/serienr.png>";
 print "<td align=center onClick='batch($linje_id[$x])'>$txt</td>";
@@ -161,7 +192,7 @@ print "<td><input class='inputbox' type='text' style='background: none repeat sc
 #if ($status==1) {print "<td><input class='inputbox' type='text' style='text-align:right' size=2 name=modt0></td>";}
 print "</tr>\n";
 print "<input type='hidden' name='sum' value='$sum'>";
-$moms=$momssum/100*$momssats;
+($momssats)?$moms = $momssum/100*$momssats:$moms = 0;
 if ($art=='KK') $moms=$moms-0.0001; #Ellers runder den op istedet for ned?
 else $moms=$moms+0.0001; #Ellers runder den ned istedet for op?
 $moms=afrund($moms,3);
@@ -205,8 +236,15 @@ if (count($posnr) == 0 && $id) {
 	print "<td align=center><input type='submit' style = 'width:120px;' value='".findtekst(1099, $sprog_id)."' ";
 	print "name='delete' onclick='javascript:docChange = false;'></td>";
 }	elseif ($id && $art=='KO') {
-	print "<td align=center><span title='".findtekst(1506, $sprog_id)."'>";
-	print "<input type = 'submit' style = 'width:120px;' value='".findtekst(880, $sprog_id)."' ";
+	if ($udskriv_til == 'email') {
+		$spantxt = str_replace('$email',$email,findtekst(3009, $sprog_id));
+		$txt     = findtekst(3008, $sprog_id);
+	} else {
+		$spantxt = findtekst(1506, $sprog_id);
+		$txt     = findtekst(880, $sprog_id);
+	}
+	print "<td align=center><span title='".$spantxt."'>";
+	print "<input type = 'submit' style = 'width:120px;' value='".$txt."' ";
 	print "name='print' onclick='javascript:docChange = false;'></span></td>";
 	print "<td align=center><span title='".findtekst(1960, $sprog_id)."'>";
 	print "<input type=submit style = 'width:120px;' value='".findtekst(1959, $sprog_id)."' ";
@@ -217,8 +255,13 @@ print "<td align=center><span title='".findtekst(1516, $sprog_id)."'>";
 print "<input type=submit style = 'width:120px;' value='CSV' name='csv' ";
 print "onClick=\"javascript:ordre2csv=window.open('ordre2csv.php?id=$ordre_id','ordre2csv','scrollbars=1,resizable=1')\">";
 print "</span></td>";
-if ($konto_id) $r=db_fetch_array(db_select("select kreditmax from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__));
-if ($kreditmax=$r['kreditmax']*1) {
+$kreditmax = 0;
+if ($konto_id) {
+	$qtxt = "select kreditmax from adresser where id = '$konto_id'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $kreditmax = $r['kreditmax'];
+	if ($kreditmax < 0.01) $kreditmax = 0;
+} 
+if ($kreditmax) {
 	if ($valutakurs) $kreditmax=$kreditmax*100/$valutakurs;
 	$q=db_select("select * from openpost where konto_id = '$konto_id' and udlignet='0'",__FILE__ . " linje " . __LINE__);
 	$tilgode=0;
@@ -241,7 +284,7 @@ $tilgode=$tilgode+$opp_amount;
 	}
 	if ($kreditmax<$ialt+$tilgode) {
 $tmp=	dkdecimal(($ialt+$tilgode)-$kreditmax,2);
-alert("Kreditmax overskrides med $valuta $tmp");
+		print "<span style='color:#FF0000';>OBS Kreditmax overskrides med $valuta $tmp !</span>";
 	}
 }# end  if ($kreditmax....
 

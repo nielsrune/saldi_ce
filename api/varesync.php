@@ -34,9 +34,9 @@
 
 function varesync($valg) {
 	global $brugernavn,$db;
-
+# if ($db == 'pos_8') transaktion('begin');
 	$showtxt=NULL;
-	$newItemsId=$vnrtjek=array();
+	$newItemsId=$newItems=$vnrtjek=$stregkode=$varBarCode=array();
 	db_modify("update shop_varer set saldi_variant='0' where saldi_variant is NULL",__FILE__ . " linje " . __LINE__);
 	db_modify("update shop_varer set shop_variant='0' where shop_variant is NULL",__FILE__ . " linje " . __LINE__);
 	$x=0;
@@ -77,13 +77,14 @@ function varesync($valg) {
 		$varBarCode[$x]=$r['variant_stregkode'];
 	}
 	$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
-	if ($db=='pos_8' || $db=='bizsys_345') {
 		$pfn='prod_'.date('Hi');
 		$lf=$lagerfil."files/$pfn.csv";
 		$pStck='pStck_'.date('Hi');
-		$sf=$lagerfil."files/$pStck.csv";
-		system ("/usr/bin/wget --no-cache --no-check-certificate --spider --header='$header' '$api_fil?products_id=*&filename=$pfn.csv' \n");
-		system ("cd ../temp/$db/\nwget --no-cache --no-check-certificate --header='$header' $sf\n");
+		$sf= "files/$pStck.csv";
+#		system ("/usr/bin/wget --no-cache --no-check-certificate --spider --header='$header' '$api_fil?products_id=*&filename=$pfn.csv' \n");
+		shell_exec("nohup curl '$api_fil?products_id=*&filename=$sf'\n");
+		system ("cd ../temp/$db/\nwget $sf\n");
+		$sf = $lagerfil.$sf;
 		$stockfile=file_get_contents("../temp/$db/$pStck.csv");
 		unlink("../temp/$db/$pStck.csv");
 		$stockline=explode("\n",$stockfile);
@@ -91,14 +92,10 @@ function varesync($valg) {
 			list($stockItemNo[$y],$stock[$y])=explode(";",$stockline[$y]);
 		}
 		$stockfile=NULL;
-	} else {
-		if (file_exists("../temp/$db/shop_products.csv")) unlink("../temp/$db/shop_products.csv");
-		$lf=$lagerfil."files/shop_products.csv";
-		$pfn='shop_products';
-	}
-	system ("/usr/bin/wget --no-cache --no-check-certificate --spider --header='$header' '$api_fil?products_id=*&filename=$pfn.csv' \n");
+#	system ("/usr/bin/wget --no-cache --no-check-certificate --spider --header='$header' '$api_fil?products_id=*&filename=$pfn.csv' \n");
+	shell_exec("nohup curl '$api_fil?products_id=*&filename=$pfn.csv'\n");
 #if ($brugernavn=='phr') echo "$api_fil?products_id=*&filename=$pfn.csv<br>";
-	system ("cd ../temp/$db/\nwget --no-cache --no-check-certificate --header='$header' $lf\n");
+	system ("cd ../temp/$db/\nwget $lf\n");
 #if ($brugernavn=='phr') echo "wget --no-cache --no-check-certificate --header='$header' $lf<br>";
 	$indhold=file_get_contents("../temp/$db/$pfn.csv");
 #	unlink("../temp/$db/$pfn.csv");
@@ -113,8 +110,9 @@ function varesync($valg) {
 		}
 		$shop_id[$y]=0;
 		if ($useQty) {
-			list($shop_id[$y],$varenr[$y],$stregkode[$y],$salgspris[$y],$beskrivelse[$y],$gruppe[$y],$tilbud[$y],$notes[$y],$stock)=explode(";",$linje[$y]);
-			$stockItemNo[$y]=$varenr[$y];
+			list($shop_id[$y],$varenr[$y],$stregkode[$y],$salgspris[$y],$beskrivelse[$y],$gruppe[$y],$tilbud[$y],$notes[$y],$stock[$y])=explode(";",$linje[$y]);
+			$stock[$y]=trim($stock[$y],'"');
+			($stock[$y])?$stock[$y]*=1:$stock[$y]=0;
 		} elseif ($useCost) {
 			list($shop_id[$y],$varenr[$y],$stregkode[$y],$salgspris[$y],$kostpris[$y],$beskrivelse[$y],$gruppe[$y],$tilbud[$y],$notes[$y])=explode(";",$linje[$y]);
 			$variant_qty[$y]=0;
@@ -126,6 +124,7 @@ function varesync($valg) {
 #		list($shop_id[$y],$varenr[$y],$stregkode[$y],$salgspris[$y],$beskrivelse[$y],$gruppe[$y],$tilbud[$y],$notes[$y])=explode(";",$linje[$y]);
 		$shop_id[$y]=trim($shop_id[$y],'"');
 		$varenr[$y]=trim($varenr[$y],'"');
+		$stockItemNo[$y]=$varenr[$y];
 		$salgspris[$y]=trim($salgspris[$y],'"');
 		$kostpris[$y]=trim($kostpris[$y],'"');
 		if (!$kostpris[$y]) $kostpris[$y]=0;
@@ -134,6 +133,7 @@ function varesync($valg) {
 		$stregkode[$y]=trim($stregkode[$y],'"');
 		$notes[$y]=trim($notes[$y],'"');
 		$tilbud[$y]=trim($tilbud[$y],'"');
+
 		$newstock[$y]=0;
 #if ($brugernavn=='phr') echo "$varenr[$y]	$stregkode[$y]<br>";
 		if (!$shop_id[$y]) {
@@ -142,15 +142,12 @@ function varesync($valg) {
 		}
 		if (!$shop_encode) {
 			$tmp=$beskrivelse[$y];
-			if (strpos($tmp,'æ') || strpos($tmp,'ø')  || strpos($tmp,'å')) $shop_encode='utf8';
-			elseif (strpos($tmp,'Æ') || strpos($tmp,'Ø')  || strpos($beskrivelse[$y],'Å')) $shop_encode='utf8';
-			else {
 				($tmp=utf8_encode($beskrivelse[$y]));
 				if (strpos($tmp,'æ') || strpos($tmp,'ø')  || strpos($tmp,'å')) $shop_encode='iso-8859';
 				elseif (strpos($tmp,'Æ') || strpos($tmp,'Ø')  || strpos($tmp,'Å')) $shop_encode='iso-8859';
 			}
 		}
-	}
+	if (!$shop_encode) $shop_encode = 'utf8';
 	$strktjek=array();
 	for ($y=0;$y<count($linje);$y++) {
 		if ($shop_encode=='iso-8859') {
@@ -199,8 +196,7 @@ function varesync($valg) {
 		if ($vare_id[$y] && $varenr[$y]) {
 			if ($valg=='2') {
 				$qtxt = "update varer set varenr='$varenr[$y]',beskrivelse='$beskrivelse[$y]',stregkode='$stregkode[$y]',salgspris='$salgspris[$y]',";
-#				if ($kostpris[$y]) 
-				$qtxt.= "kostpris='$kostpris[$y]',";
+				if ($kostpris[$y] > 0) $qtxt.= "kostpris='$kostpris[$y]',";
 				$qtxt.= "special_price='0' where id = '$vare_id[$y]'";
 #if ($brugernavn=='phr') echo __line__." $qtxt<br>";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -233,16 +229,18 @@ function varesync($valg) {
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 			for($s=0;$s<count($stockItemNo);$s++) {
+			$stockItemNo[$s] = trim($stockItemNo[$s],'"');
 				if ($stockItemNo[$s]==$varenr[$y]) {
 					$newstock[$y]=$stock[$s];
-#					lagerreguler($vare_id[$y],$stock[$s],0,0,date("Y-m-d"),'0');
-#					echo "Sætter $varenr[$y] til $stock[$s] stk<br>";
+					lagerreguler($vare_id[$y],$stock[$s],0,0,date("Y-m-d"),'0');
+					echo "Sætter $varenr[$y] til ".dkdecimal($stock[$s])." stk<br>";
 				}
 			}
 		}  
 	}
 	
 	############################# Varianter #########################
+	$shop_encode = NULL;
 	$s_variant_id=$strktjek=array();
 	$qtxt="SELECT column_name FROM information_schema.columns WHERE table_name='variant_varer' and column_name='variant_kostpris'";
 	if (!$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
@@ -268,17 +266,24 @@ function varesync($valg) {
 		$vt_var[$x]=$r['beskrivelse'];
 		$x++;
 	}
-	if ($db=='pos_8') {
+	if ($db=='pos_85') {
+		$useQty=1;
 		$vfn='var_'.date('Hi');
 		$lf=$lagerfil."files/$vfn.csv";
 		$sfn='vStck_'.date('Hi');
 		$sf=$lagerfil."files/$sfn.csv";
 		$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
+echo "curl '$api_fil?variant=*&filename=$vfn.csv'<br>";
 #cho "$api_fil?variant=*<br>";
-		$systxt="/usr/bin/wget --no-cache --no-check-certificate --spider --header='$header' '$api_fil?variant=*&filename=$vfn.csv' \n";
-	$result=system ($systxt);
+		shell_exec("nohup curl '$api_fil?variant=*&filename=$vfn.csv'\n");
+echo 	"cd ../temp/$db/<br>wget $lf<br>";
+		system ("cd ../temp/$db/\nwget $lf\n");
+		#		$systxt="/usr/bin/wget --no-cache --no-check-certificate --spider --header='$header' '$api_fil?variant=*&filename=$vfn.csv' \n";
+#		$result=system ($systxt);
 		if (file_exists("../temp/$db/$sfn.csv")) unlink("../temp/$db/$sfn.csv");
-		system ("cd ../temp/$db/\nwget --no-cache --no-check-certificate --header='$header' $sf\n");
+echo 	"cd ../temp/$db/<br>wget $sf<br>";	
+		system ("cd ../temp/$db/\nwget $sf\n");
+		if (!file_exists("../temp/$db/$vfn.csv")) exit;
 		if (file_exists("../temp/$db/$sfn.csv")) {
 			$stockfile=file_get_contents("../temp/$db/$sfn.csv");
 #			unlink("../temp/$db/$sfn.csv");
@@ -292,17 +297,18 @@ function varesync($valg) {
 		$lf=$lagerfil."files/shop_variants.csv";
 		$vfn='shop_variants';
 		if (file_exists("../temp/$db/$vfn.csv")) unlink ("../temp/$db/$vfn.csv");
+#echo "nohup curl '$api_fil??variant=*&filename=$vfn.csv'<br>";
+#		shell_exec("nohup curl '$api_fil??variant=*&filename=$vfn.csv'\n");
 		$systxt="/usr/bin/wget --no-cache --no-check-certificate --spider --header='$header' '$api_fil?variant=*&filename=$vfn.csv' \n";
 		$result=system ($systxt);
-	}
 	if (file_exists("../temp/$db/$vfn.csv")) unlink ("../temp/$db/$vfn.csv");
 	$systxt="cd ../temp/$db/\nwget --no-cache --no-check-certificate --header='$header' '$lf'\n";
 	$result=system ($systxt);
 	if (!file_exists("../temp/$db/$vfn.csv")) exit;
+	}
 	$indhold=file_get_contents("../temp/$db/$vfn.csv");
 #	unlink("../temp/$db/$vfn.csv");
 	$linje=explode("\n",$indhold);
-	$shop_encode='';
  	(substr($linje[0],-4,3) == 'qty')?$useQty=1:$useQty=0; 
 #cho __line__  ." $useQty<br>";
 	for ($y=0;$y<count($linje);$y++){
@@ -313,7 +319,6 @@ function varesync($valg) {
 		$shop_id[$y]=0;		
 		if ($useQty) {
 			list($varenr[$y],$parent_id[$y],$variant_id[$y],$stregkode[$y],$variant[$y],$variant_type[$y],$variant_text[$y],$stock[$y])=explode(";",$linje[$y]);
-			$stock[$y]=trim($stock[$y],'"')*1;
 			$stockVariant[$y]=trim($stregkode[$y],'"');
 #if ($brugernavn=='phr') echo __line__." $varenr[$y],$parent_id[$y],$variant_id[$y],$stregkode[$y]<br>";
 		} else {
@@ -348,13 +353,14 @@ function varesync($valg) {
 		$variant_id[$y]*=1;
 		if (!$shop_encode) {
 			$tmp=$variant_text[$y];
-			if (strpos($tmp,'æ') || strpos($tmp,'ø')  || strpos($tmp,'å')) $shop_encode='utf8';
-			elseif (strpos($tmp,'Æ') || strpos($tmp,'Ø')  || strpos($beskrivelse[$y],'Å')) $shop_encode='utf8';
-			else ($tmp=utf8_encode($beskrivelse[$y]));
+#			if (strpos($tmp,'æ') || strpos($tmp,'ø')  || strpos($tmp,'å')) $shop_encode='utf8';
+#			elseif (strpos($tmp,'Æ') || strpos($tmp,'Ø')  || strpos($beskrivelse[$y],'Å')) $shop_encode='utf8';
+			$tmp=utf8_encode($variant_text[$y]);
 			if (strpos($tmp,'æ') || strpos($tmp,'ø')  || strpos($tmp,'å')) $shop_encode='iso-8859';
 			elseif (strpos($tmp,'Æ') || strpos($tmp,'Ø')  || strpos($tmp,'Å')) $shop_encode='iso-8859';
 		}
 	}
+	if (!$shop_encode) $shop_encode = 'utf8';
 #if ($brugernavn=='phr') transaktion ('begin');	
 	$m=0;
 	for ($y=1;$y<count($linje);$y++) {
@@ -401,46 +407,46 @@ if ($parent_id[$y] && $variant_id[$y]) {
 		}
 		$variant_text[$y]=db_escape_string($variant_text[$y]);
 		$varenr[$y]=db_escape_string($varenr[$y]);
+		$qtxt="select id from varer where varenr = '$varenr[$y]'";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $saldiVareId[$y]=$r['id'];
+		else $saldiVareId[$y]=NULL;
 		$qtxt="select id,saldi_id,saldi_variant from shop_varer where shop_id='$parent_id[$y]' and shop_variant='$variant_id[$y]'";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		if ($r['id'] && in_array($r['saldi_variant'],$s_variant_id)) {
 			$qtxt="delete from shop_varer where id = '$r[id]'";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else {
 			$variantVareId[$y]=$r['saldi_id'];
 			$s_variant_id[$y]=$r['saldi_variant'];
-if ($brugernavn == 'phr' && $varenr[$y] =='40206Pinkmarble') echo __line__." $variantVareId[$y] $s_variant_id[$y] $stregkode[$y]<br>";
+		}
+		if ($s_variant_id[$y] && $saldiVareId[$y] && $saldiVareId[$y] != $variantVareId[$y]) {
+			$qtxt="update shop_varer set saldi_id = '$saldiVareId[$y]' where id='$s_variant_id[$y]'";
+#if ($brugernavn=='phr') echo __line__." ".$qtxt."<br>";
+			$variantVareId[$y] = $saldiVareId[$y];
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		$qtxt="select id,saldi_id from shop_varer where shop_id='$parent_id[$y]'";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
+#if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		if ($r['saldi_id'] && $variantVareId[$y] != $r['saldi_id']) {
 			$variantVareId[$y] = $r['saldi_id'];
 			$qtxt = "select id from variant_typer where beskrivelse = '$variant[$y]'";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
 			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				$qtxt = "select id from variant_varer where vare_id = '$variantVareId[$y]' and variant_type ='$r[id]'";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
 				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
 				if ($r['id']	&& $s_variant_id[$y] != $r['id']) {
-					$s_variant_id[$y] != $r['id'];
-#if ($varenr[$y] == 'ML2310-93') echo __line__." saldi ID $variantVareId[$y] - Saldi Var ID $s_variant_id[$y]<br>"; 
-					$qtxt="select id from shop_varer where saldi_id = '$variantVareId[$y]' and saldi_variant ='$s_variant_id[$y]' order by id";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
+					$s_variant_id[$y] = $r['id'];
 					$z=0;
+					$qtxt="select id from shop_varer where saldi_id = '$variantVareId[$y]' and saldi_variant ='$s_variant_id[$y]' order by id";
 					while ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 						if ($z == 0) $qtxt = "update shop_varer set shop_id='$parent_id[$y]', shop_variant = '$variant_id[$y]' where id = '$r[id]'";
 						else $qtxt = "delete from shop_varer where id = '$r[id]'";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
-#						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 						$z++;
 					}
-					if ($z == 0) {
+					if ($z == 0 && $s_variant_id[$y]) {
 						$qtxt = "insert into shop_varer (saldi_id,saldi_variant,shop_id,shop_variant) values "; 
 						$qtxt.= "('$variantVareId[$y]','$s_variant_id[$y]','$parent_id[$y]','$variant_id[$y]')";
-if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
+#if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 					}
 				}
@@ -520,7 +526,7 @@ if ($brugernavn == 'phr') echo __line__." $qtxt<br>";
 	for($s=0;$s<count($vare_id);$s++) {
 		if (!in_array($vare_id[$s],$variantVareId) && $newstock[$s]) {
 			lagerreguler($vare_id[$s],$newstock[$s],0,0,date("Y-m-d"),'0');
-			echo "Sætter $varenr[$s] til $newstock[$s] stk<br>";
+			echo __line__." Sætter $varenr[$s] til $newstock[$s] stk<br>";
 		}
 	}
 	echo $showtxt;

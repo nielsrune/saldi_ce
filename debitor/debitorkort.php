@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- debitor/debitorkort.php ------ lap 4.0.2 ----2021-10-06-----------
+// --- debitor/debitorkort.php --- lap 4.0.8 --- 2023-02-23 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,29 +20,32 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 
-// 2012.10.23 ID slettes fra pbs_kunder hvis pbs ikke afmærket, søg 20121023
-// 2012.10.24 Annulleret ændringer fra 2012.10.23 !!
-// 2013.10.04 Indsat ENT_COMPAT,$charset); Søg 20131004
-// 2014.05.07 Indsat db_escabe_string #20140507
-// 2015.01.23 Indhente virksomhedsdata fra CVR via CVRapi - tak Niels Rune https://github.com/nielsrune
-// 2016.04.12 PHR Indsat link til labelprint
-// 2019.02.13 MSC - Rettet topmenu design til
-// 2019.04.12 MSC - Rettet isset fejl
-// 2019.04.23 PHR - Flyttet fejlmeddelse om 'Kontonr eksisterer' over 'firmanavn skal udfyldes'
-// 2020.03.16 PHR - Some design update (Removed borders)
-// 2021.05.23 PHR Added my sale password.
+// 20121023 ID slettes fra pbs_kunder hvis pbs ikke afmærket, søg 20121023
+// 20121024 Annulleret ændringer fra 2012.10.23 !!
+// 20131004 Indsat ENT_COMPAT,$charset); Søg 20131004
+// 20140507 Indsat db_escabe_string #20140507
+// 20150123 Indhente virksomhedsdata fra CVR via CVRapi - tak Niels Rune https://github.com/nielsrune
+// 20160412 PHR Indsat link til labelprint
+// 20190213 MSC - Rettet topmenu design til
+// 20190412 MSC - Rettet isset fejl
+// 20190423 PHR - Flyttet fejlmeddelse om 'Kontonr eksisterer' over 'firmanavn skal udfyldes'
+// 20200316 PHR - Some design update (Removed borders)
+// 20210523 PHR Added my sale password.
 // 20210702   LOE Translated these texts with findtekst() function
 // 20210706   LOE Commited out for future modification
 // 20211006   PHR added 'anonymize'
+// 20221229 PHR some cleanup
+// 20230223 PHR repaired 'anonymize' after translalation error and renamed kategori to katString where is string
 
 @session_start();
 $s_id=session_id();
 
-$fokus=$konto_id=$ordre_id=NULL;
-
+$fokus = $katString = NULL;
+$konto_id = $lukket = $ordre_id = $productlimit = $status = $status_antal = 0;
+$cat_id = array();
 print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/overlib.js\"></script>\n";
 
 $modulnr=6;
@@ -70,28 +73,28 @@ if (!isset ($_GET['returside'])) $_GET['returside'] = NULL;
 	if ($popup) $returside="../includes/luk.php";
 	else $returside="debitor.php";
 }
-if ($delete_category=if_isset($_GET['delete_category'])) {
+if (isset($_GET['delete_category'])) {
+	$delete_category = $_GET['delete_category'];
 	$r=db_fetch_array(db_select("select * from grupper where art='DebInfo'",__FILE__ . " linje " . __LINE__));
 	$cat_id=explode(chr(9),$r['box1']);
 	$cat_beskrivelse=explode(chr(9),$r['box2']);
-	$cat_antal=count($cat_id);
-	for ($x=0;$x<$cat_antal;$x++) {
+	for ($x=0;$x<count($cat_id);$x++) {
 		if ($cat_id[$x]!=$delete_category) {
 			($box1)?$box1.=chr(9).$cat_id[$x]:$box1=$cat_id[$x];
 			($box2)?$box2.=chr(9).db_escape_string($cat_beskrivelse[$x]):$box2=db_escape_string($cat_beskrivelse[$x]);
 		}
 	}
-	$delete_category=0;
-	db_modify("update grupper set box1='$box1',box2='$box2' where art = 'DebInfo'",__FILE__ . " linje " . __LINE__);
+	$delete_category=NULL;
+	db_modify("update grupper set box1='$box1',box2='$box2' where art = 'DebInfo'",__FILE__ . " linje " . __LINE__);  
 }
 $rename_category=if_isset($_GET['rename_category']);
 
 if (isset($_POST['id']) || isset($_POST['firmanavn'])){
- 	$submit=db_escape_string(trim($_POST['submit']));
+ 	$submit = if_isset($_POST['submit'],NULL);
  	$id=$_POST['id'];
- 	
-	if (isset($_POST['anonymize']) && $id) include ('anonymize.php');
-  elseif ($submit!="Slet") {
+	if (isset($_POST['anonymize']) && $id) {
+		include ('anonymize.php');
+	} elseif ($submit!="Slet") {
 		$notes=$_POST['notes'];
 		$firmanavn=db_escape_string(trim($_POST['firmanavn']));
 		$addr1=db_escape_string(trim($_POST['addr1']));
@@ -110,8 +113,8 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 		$ny_kontonr=db_escape_string(trim($_POST['ny_kontonr']));
 		$gl_kontotype=db_escape_string(trim($_POST['gl_kontotype']));
 		$kontotype=db_escape_string(trim($_POST['kontotype']));
-		$fornavn=db_escape_string(trim($_POST['fornavn']));
-		$efternavn=db_escape_string(trim($_POST['efternavn']));
+		(isset($_POST['fornavn']))?$fornavn=db_escape_string(trim($_POST['fornavn'])) : $fornavn = '';
+		(isset($_POST['efternavn']))?$efternavn=db_escape_string(trim($_POST['efternavn'])) : $efternavn = '';
 		$fax=db_escape_string(trim($_POST['fax']));
 		$web=db_escape_string(trim($_POST['web']));
 		$betalingsbet=db_escape_string(trim($_POST['betalingsbet']));
@@ -124,8 +127,8 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 		$felt_4 = db_escape_string(trim($_POST['felt_4']));
 		$felt_5 = db_escape_string(trim($_POST['felt_5']));
 		$lev_firmanavn=db_escape_string(trim($_POST['lev_firmanavn']));
-		$lev_fornavn=db_escape_string(trim($_POST['lev_fornavn']));
-		$lev_efternavn=db_escape_string(trim($_POST['lev_efternavn']));
+		(isset($_POST['lev_fornavn'])  )?$lev_fornavn   = db_escape_string(trim($_POST['lev_fornavn']))   : $lev_fornavn   = '';
+		(isset($_POST['lev_efternavn']))?$lev_efternavn = db_escape_string(trim($_POST['lev_efternavn'])) : $lev_efternavn = '';
 		$lev_addr1=db_escape_string(trim($_POST['lev_addr1']));
 		$lev_addr2=db_escape_string(trim($_POST['lev_addr2']));
 		$lev_postnr=db_escape_string(trim($_POST['lev_postnr']));
@@ -133,36 +136,35 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 		$lev_land=db_escape_string(trim($_POST['lev_land']));
 		$lev_kontakt=db_escape_string(trim($_POST['lev_kontakt']));
 		$lev_tlf=db_escape_string(trim($_POST['lev_tlf']));
-		$lev_email=db_escape_string(trim($_POST['lev_email']));
-		$vis_lev_addr=db_escape_string(trim($_POST['vis_lev_addr']));
-		$lukket=db_escape_string(trim($_POST['lukket']));
-		$password=db_escape_string(trim($_POST['password']));
+		(isset($_POST['lev_email']))?$lev_email = db_escape_string(trim($_POST['lev_email'])) : $lev_email = '';
+		$vis_lev_addr=db_escape_string(if_isset($_POST['vis_lev_addr'],NULL));
+		$lukket=db_escape_string(if_isset($_POST['lukket'],NULL));
+		(isset($_POST['password']))?$password = db_escape_string(trim($_POST['password'])) : $password = '';
+		$productlimit=db_escape_string(trim($_POST['productlimit']));
 		list ($gruppe) = explode (':', $_POST['gruppe']);
-
-		$rabatgruppe=$_POST['rabatgruppe']*1;
+		(isset($_POST['rabatgruppe']))?$rabatgruppe = db_escape_string(trim($_POST['rabatgruppe'])) : $rabatgruppe = 0;
+		if (!$rabatgruppe) $rabatgruppe = 0;
 		$kontoansvarlig=$_POST['kontoansvarlig'];
  		$bank_reg=$_POST['bank_reg'];
  		$bank_konto=$_POST['bank_konto'];
  		$swift=$_POST['swift'];
- 		$pbs_nr=$_POST['pbs_nr'];
-		$pbs=$_POST['pbs'];
+		(isset($_POST['pbs_nr']))?$pbs_nr = db_escape_string(trim($_POST['pbs_nr'])) : $pbs_nr = '';
+		(isset($_POST['pbs'])   )?$pbs    = db_escape_string(trim($_POST['pbs'])   ) : $pbs    = '';
  		$ordre_id=$_POST['ordre_id'];
  		$returside=$_POST['returside'];
  		$fokus=$_POST['fokus'];
- 		$posnr=$_POST['posnr'];
- 		$ans_id=$_POST['ans_id'];
+ 		$posnr=if_isset($_POST['posnr'],array());
+		(isset($_POST['ans_id']))?$ans_id = $_POST['ans_id'] : $ans_id = 0;
  		$ans_ant=$_POST['ans_ant'];
-
-		$cat_valg=$_POST['cat_valg'];
-		$cat_id=$_POST['cat_id'];
-		$cat_beskrivelse=$_POST['cat_beskrivelse'];
-		$cat_antal=$_POST['cat_antal']*1;
-		$ny_kategori=$_POST['ny_kategori'];
-		$rename_category=if_isset($_POST['rename_category']);
+		
+		$cat_id          = if_isset($_POST['cat_id'],array());
+		$cat_valg        = if_isset($_POST['cat_valg'],array());
+		$cat_beskrivelse = if_isset($_POST['cat_beskrivelse'],array());
+		$newCatName      = if_isset($_POST['newCatName'],NULL);
+		$rename_category = if_isset($_POST['rename_category'],NULL);
 
 		$status=db_escape_string(trim($_POST['status']));
-		$ny_status=db_escape_string(trim($_POST['ny_status']));
-		$status_id=$_POST['status_id'];
+		(isset($_POST['ny_status']))?$ny_status = db_escape_string(trim($_POST['ny_status'])): $ny_status = '';		$status_id=$_POST['status_id'];
 		$status_beskrivelse=$_POST['status_beskrivelse'];
 		$status_antal=count($status_id);
 		$rename_status=if_isset($_POST['rename_status']);
@@ -171,11 +173,9 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 			$firmanavn=trim($fornavn." ".$efternavn);
 			$lev_firmanavn=trim($lev_fornavn." ".$lev_efternavn);
 		}
-
-
 #		if (!$pbs) $pbs_nr=NULL;
 		($status=='new_status')?$new_status=1:$new_status=0;
-		$status*=1;
+		if (!$status) $status = 0;
 
 		if (substr($ny_kontonr,0,1)=="=") {
 			$ny_kontonr=str_replace("=","",$ny_kontonr);
@@ -212,42 +212,48 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 		}
 		######### Kategorier
 
-		if (!isset ($kategori)) $kategori = NULL;
-		if (!isset ($status_valg)) $status_valg = NULL;
+		if (!isset ($kategori)) $kategori = array();
+ 		if (!isset ($status_valg)) $status_valg = array();
 		if (!isset ($box3)) $box3 = NULL;
 		if (!isset ($box4)) $box4 = NULL;
 
-		for ($x=0;$x<$cat_antal;$x++) {
+		for ($x=0;$x<count($cat_id);$x++) {
+			if (!isset($cat_valg[$x])) $cat_valg[$x] = ''; 
 			if ($cat_valg[$x]) {
-				($kategori)?$kategori.=chr(9).$cat_id[$x]:$kategori=$cat_id[$x];
+				($katString || $katString == '0')?$katString.=chr(9).$cat_id[$x]:$katString=$cat_id[$x];
 			}
 		}
 		$tmp=findtekst(343,$sprog_id);
-		if ($ny_kategori && $ny_kategori!=$tmp) {
-			if (!$rename_category && in_array($ny_kategori,$cat_beskrivelse)) {
+		if ($newCatName && $newCatName!=$tmp) {
+			if (!is_numeric($rename_category) && in_array($newCatName,$cat_beskrivelse)) {
 				$alerttekst=findtekst(344,$sprog_id);
 			} else {
-				if (!$rename_category) {
-					$x=1;
+				if (!is_numeric($rename_category)) {
+					$x='0';
+					$y=count($cat_id);
 					while(in_array($x,$cat_id)) $x++; #finder laveste ledige vaerdi
-					$cat_id[$cat_antal]=$x;
-					$cat_beskrivelse[$cat_antal]=$ny_kategori;
-					$cat_antal++;
+					$cat_id[$y] = $x;
+					$cat_beskrivelse[$y]=$newCatName;
 				}
-				$box1=NULL;$box2=NULL;
-				for ($x=0;$x<$cat_antal;$x++) {
-					if ($cat_id[$x]==$rename_category) $cat_beskrivelse[$x]=$ny_kategori;
-					($box1)?$box1.=chr(9).$cat_id[$x]:$box1=$cat_id[$x];
+				$box1 = $box2 = NULL;
+				for ($x=0;$x<count($cat_id);$x++) {
+					if (($cat_id[$x] || $cat_id[$x] == '0') && $cat_beskrivelse[$x]) {
+						if ($cat_id[$x] == $rename_category) {
+							$cat_beskrivelse[$x]=$newCatName;
+						}
+						($box1 || $box1 == '0')?$box1.=chr(9).$cat_id[$x]:$box1=$cat_id[$x];
 					($box2)?$box2.=chr(9).db_escape_string($cat_beskrivelse[$x]):$box2=db_escape_string($cat_beskrivelse[$x]);
 				}
-				$rename_category=0;
-				db_modify("update grupper set box1='$box1',box2='$box2' where art = 'DebInfo'",__FILE__ . " linje " . __LINE__);
+				}
+				$rename_category=NULL;
+				$qtxt = "update grupper set box1='$box1',box2='$box2' where art = 'DebInfo'";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);  
 			}
 		}
 		######### Status
 
-		for ($x=0;$x<$status_antal;$x++) {
-			if ($status_valg[$x]) {
+		for ($x=0;$x<count($status_valg);$x++) {
+			if ($status_valg[$x] || $status_valg[$x] == '0') {
 				($status)?$status.=chr(9).$status_id[$x]:$status=$status_id[$x];
 			}
 		}
@@ -368,14 +374,14 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
 				$qtxt.= "art,gruppe,kontoansvarlig,oprettet,bank_reg,bank_konto,swift,pbs_nr,pbs,kontotype,";
 				$qtxt.= "fornavn,efternavn,lev_firmanavn,lev_fornavn,lev_efternavn,lev_addr1,lev_addr2,lev_postnr,";
 				$qtxt.= "lev_bynavn,lev_land,lev_kontakt,lev_tlf,lev_email,felt_1,felt_2,felt_3,felt_4,felt_5,";
-				$qtxt.= "vis_lev_addr,lukket,kategori,rabatgruppe,status)";
+				$qtxt.= "vis_lev_addr,lukket,kategori,rabatgruppe,status,productlimit)";
 				$qtxt.= " values ";
 				$qtxt.= "('$ny_kontonr','$firmanavn','$addr1','$addr2','$postnr','$bynavn','$land','$kontakt','$tlf','$fax','$email',";
 				$qtxt.= "'$mailfakt','$web','$betalingsdage','$kreditmax','$betalingsbet','$cvrnr','$ean','$institution','$notes','D',";
 				$qtxt.= "'$gruppe','$kontoansvarlig','$oprettet','$bank_reg','$bank_konto','$swift','$pbs_nr','$pbs','$kontotype',";
 				$qtxt.= "'$fornavn','$efternavn','$lev_firmanavn','$lev_fornavn','$lev_efternavn','$lev_addr1','$lev_addr2','$lev_postnr',";
 				$qtxt.= "'$lev_bynavn','$lev_land','$lev_kontakt','$lev_tlf','$lev_email','$felt_1','$felt_2','$felt_3','$felt_4','$felt_5',";
-				$qtxt.= "'$vis_lev_addr','$lukket','$kategori','$rabatgruppe','$status')";
+				$qtxt.= "'$vis_lev_addr','$lukket','$katString','$rabatgruppe','$status','". usdecimal($productlimit) ."')";
  	 	 	 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
  	 	 	 	$q = db_select("select id from adresser where kontonr = '$ny_kontonr' and art = 'D'",__FILE__ . " linje " . __LINE__);
  	 	 	 	$r = db_fetch_array($q);
@@ -395,15 +401,17 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
  	 	 	}
  	 	 	$qtxt = "update adresser set kontonr = '$kontonr', firmanavn = '$firmanavn', addr1 = '$addr1', addr2 = '$addr2',";
  	 	 	$qtxt.= "postnr = '$postnr', bynavn = '$bynavn', land = '$land', kontakt = '$kontakt', tlf = '$tlf', fax = '$fax',";
- 	 	 	$qtxt.= "email = '$email', mailfakt = '$mailfakt', web = '$web', betalingsdage= '$betalingsdage', kreditmax = '$kreditmax',";
- 	 	 	$qtxt.= "betalingsbet = '$betalingsbet', cvrnr = '$cvrnr', ean = '$ean', institution = '$institution', notes = '$notes',";
- 	 	 	$qtxt.= "gruppe='$gruppe', kontoansvarlig='$kontoansvarlig',bank_reg='$bank_reg',bank_konto='$bank_konto',swift='$swift',";
+ 	 	 	$qtxt.= "email = '$email', mailfakt = '$mailfakt', web = '$web', betalingsdage= '$betalingsdage', ";
+ 	 	 	$qtxt.= "kreditmax = '$kreditmax',betalingsbet = '$betalingsbet', cvrnr = '$cvrnr', ean = '$ean', ";
+ 	 	 	$qtxt.= "institution = '$institution', notes = '$notes',gruppe='$gruppe', "; 
+			$qtxt.= "kontoansvarlig='$kontoansvarlig',bank_reg='$bank_reg',bank_konto='$bank_konto',swift='$swift',";
  	 	 	$qtxt.= "pbs_nr = '$pbs_nr', pbs = '$pbs',kontotype='$kontotype',fornavn='$fornavn',efternavn='$efternavn',";
-			$qtxt.= "lev_firmanavn='$lev_firmanavn',lev_fornavn='$lev_fornavn',lev_efternavn='$lev_efternavn',lev_addr1='$lev_addr1',";
-			$qtxt.= "lev_addr2='$lev_addr2',lev_postnr='$lev_postnr',lev_bynavn='$lev_bynavn',lev_land='$lev_land',";
-			$qtxt.= "lev_kontakt='$lev_kontakt',lev_tlf='$lev_tlf',lev_email='$lev_email',felt_1='$felt_1',felt_2='$felt_2',";
-			$qtxt.= "felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',vis_lev_addr='$vis_lev_addr',lukket='$lukket',kategori='$kategori',";
-			$qtxt.= "rabatgruppe='$rabatgruppe',status='$status' ";
+			$qtxt.= "lev_firmanavn='$lev_firmanavn',lev_fornavn='$lev_fornavn',lev_efternavn='$lev_efternavn',";
+			$qtxt.= "lev_addr1='$lev_addr1',lev_addr2='$lev_addr2',lev_postnr='$lev_postnr',lev_bynavn='$lev_bynavn',";
+			$qtxt.= "lev_land='$lev_land',lev_kontakt='$lev_kontakt',lev_tlf='$lev_tlf',lev_email='$lev_email',";
+			$qtxt.= "felt_1='$felt_1',felt_2='$felt_2',felt_3='$felt_3',felt_4='$felt_4',felt_5='$felt_5',";
+			$qtxt.= "vis_lev_addr='$vis_lev_addr',lukket='$lukket',kategori='$katString',";
+			$qtxt.= "rabatgruppe='$rabatgruppe',status='$status', productlimit = '". usdecimal($productlimit) ."' ";
 			#if ($password != '**********') $qtxt.=",password = '". saldikrypt('$id','$password') ."' "; 20210706
 			$qtxt.= "where id = '$id'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -462,7 +470,7 @@ if ($id > 0){
 	$institution=htmlentities(trim($r['institution']),ENT_COMPAT,$charset);
 	$notes=htmlentities(trim($r['notes']),ENT_COMPAT,$charset);
 	$gruppe=trim($r['gruppe']);
-	$rabatgruppe=$r['rabatgruppe']*1;
+	$rabatgruppe=$r['rabatgruppe'];
 	$bank_konto=trim($r['bank_konto']);
 	$bank_reg=trim($r['bank_reg']);
 	$swift=trim($r['swift']);
@@ -472,6 +480,7 @@ if ($id > 0){
 	$kontoansvarlig=trim($r['kontoansvarlig']);
 	$status=trim($r['status']);
 	$oprettet=$r['oprettet'];
+	$productlimit = $r['productlimit'];
 	if (!$kontoansvarlig) $kontoansvarlig='0';
 	($r['vis_lev_addr']) ? $vis_lev_addr='checked' : $vis_lev_addr=NULL;
 	$felt_1 = htmlentities(trim($r['felt_1']),ENT_COMPAT,$charset);
@@ -481,7 +490,6 @@ if ($id > 0){
 	$felt_5 = htmlentities(trim($r['felt_5']),ENT_COMPAT,$charset);
 	($r['lukket']) ? $lukket='checked' : $lukket='';
 	$kategori=explode(chr(9),$r['kategori']);
-	$kategori_antal=count($kategori);
 	if (!$oprettet) {
 		$oprettet = date("Y-m-d");
 		$qtxt="select max(oprettet) as oprettet from adresser where id < '$id'";
@@ -545,7 +553,6 @@ if ($id > 0){
 	if (isset($_GET['land'])) $land=$_GET['land'];
 	if (isset($_GET['kontakt'])) $kontakt=$_GET['kontakt'];
 	if (isset($_GET['tlf'])) $tlf=$_GET['tlf'];
-	$kategori_antal=0;
 	if (!isset($vis_lev_addr)) $vis_lev_addr='checked';
 	print "<BODY onload=\"javascript:docChange = true;\">\n";
 
@@ -557,7 +564,6 @@ $kreditmax=dkdecimal($kreditmax);
 if ($r=db_fetch_array(db_select("select * from grupper where art='DebInfo'",__FILE__ . " linje " . __LINE__))) {
 	$cat_id=explode(chr(9),$r['box1']);
 	$cat_beskrivelse=explode(chr(9),$r['box2']);
-	$cat_antal=count($cat_id);
 	$status_id=explode(chr(9),$r['box3']);
 	$status_beskrivelse=explode(chr(9),$r['box4']);
 	$status_antal=count($status_id);
@@ -724,8 +730,10 @@ print "<span title=\"".findtekst(366,$sprog_id)."\"><!--tekst 366--><input class
 print "</span></td></tr>\n";
 if ($kontotype=='erhverv') {
 	($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
-	print "<tr bgcolor=$bg><td>".findtekst(367,$sprog_id)."<!--tekst 367--></td><td><input class='inputbox' type='text' size='25' name='web' value=\"$web\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
-}
+	print "<tr bgcolor=$bg><td>".findtekst(367,$sprog_id)."<!--tekst 367--></td>";
+	print "<td><input class='inputbox' type='text' size='25' name='web' value=\"$web\" ";
+	print "onchange=\"javascript:docChange = true;\"></td></tr>\n";
+} else print "<input type = 'hidden' name = 'web' value = \"$web\">";
 ($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
 print "<tr bgcolor=$bg><td>".findtekst(368,$sprog_id)."<!--tekst 368--></td>\n";
 print "<td><select class='inputbox' NAME=betalingsbet onchange=\"javascript:docChange = true;\" >\n";
@@ -792,9 +800,16 @@ print "<tr bgcolor=$bg><td>".findtekst(377,$sprog_id)."<!--tekst 377--></td><td>
 print "<tr bgcolor=$bg><td>".findtekst(378,$sprog_id)."<!--tekst 378--></td><td><input class=\"inputbox\" type='text' style='width:100px' name=fax value=\"$fax\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
 if ($kontotype=='erhverv') {
 	($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
-	print "<tr bgcolor=$bg><td>".findtekst(379,$sprog_id)."<!--tekst 379--></td><td><input class=\"inputbox\" type='text' style='width:100px' name=ean value=\"$ean\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
+	print "<tr bgcolor=$bg><td>".findtekst(379,$sprog_id)."<!--tekst 379--></td>";
+	print "<td><input class=\"inputbox\" type='text' style='width:100px' name='ean' value=\"$ean\" ";
+	print "onchange=\"javascript:docChange = true;\"></td></tr>\n";
 	($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
-	print "<tr bgcolor=$bg><td>".findtekst(380,$sprog_id)."<!--tekst 380--></td><td><input class=\"inputbox\" type='text' style='width:100px' name=institution value=\"$institution\" onchange=\"javascript:docChange = true;\"></td></tr>\n";
+	print "<tr bgcolor=$bg><td>".findtekst(380,$sprog_id)."<!--tekst 380--></td>";
+	print "<td><input class=\"inputbox\" type='text' style='width:100px' name='institution' value=\"$institution\" "; 
+	print "onchange=\"javascript:docChange = true;\"></td></tr>\n";
+} else {
+	print "<input type = 'hidden' name = 'ean' value = \"$ean\">";
+	print "<input type = 'hidden' name = 'institution' value=\"$institution\">";
 }
 ($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
 print "<tr bgcolor=$bg><td>".findtekst(381,$sprog_id)."<!--tekst 381--></td><td><input class='inputbox' type='text' style='width:100px' "; 
@@ -903,6 +918,12 @@ if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 	print "<span onmouseover=\"return overlib('$oLibTxt', WIDTH=600);\" onmouseout=\"return nd();\">Mit Salg kode</span>";
 	print "</td><td><input type='text' class='inputbox' name=\"Password\" size=\"25\" value=\"**********\"></td></tr>\n";
 }
+($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
+	print "<tr bgcolor=$bg><td>";
+	$oLibTxt = "Sæt limit på hvor mange varer en kunde kan oprette";
+	print "<span onmouseover=\"return overlib('$oLibTxt', WIDTH=600);\" onmouseout=\"return nd();\">Varelimit</span>";
+	print "</td><td><input type='text' class='inputbox' name=\"productlimit\" size=\"25\" value=\"". dkdecimal($productlimit,0) . "\"></td></tr>\n";
+
 
 print "</tbody></table></td></tr>"; # <- TABEL 1.2.3
 
@@ -913,11 +934,11 @@ print "<tr><td valign=\"top\"><table cellpadding=\"0\" cellspacing=\"1\" border=
 $bg=$bgcolor5;
 print "<tr bgcolor=$bg><td colspan=\"4\" valign=\"top\">".findtekst(388,$sprog_id)."<!--tekst 388--></td></tr>\n";
 $x=0;
-if (!$rename_category) {
-	for ($x=0;$x<$cat_antal;$x++) {
-#	if ($cat_id[$x]!=$rename_category) {
+if (!is_numeric($rename_category)) {
+	for ($x=0;$x<count($cat_id);$x++) {
+	if ($cat_id[$x] || $cat_id[$x] == '0') {
 		$checked="";
-		for ($y=0;$y<$kategori_antal;$y++) {
+		for ($y=0;$y<count($kategori);$y++) {
 			if ($cat_id[$x]==$kategori[$y]) $checked="checked";
 		}
 		print "<tr><td>$cat_beskrivelse[$x]</td>\n";
@@ -931,19 +952,24 @@ if (!$rename_category) {
 		print "<input type=\"hidden\" name=\"cat_beskrivelse[$x]\" value=\"$cat_beskrivelse[$x]\">\n";
 	}
 }
-if ($rename_category){
-	for ($x=1;$x<=$cat_antal;$x++) {
-		if ($rename_category==$cat_id[$x]) $ny_kategori=$cat_beskrivelse[$x];
+}
+if (is_numeric($rename_category)){
+	for ($x=0;$x<count($cat_id);$x++) {
 		print "<input type=\"hidden\" name=\"cat_id[$x]\" value=\"$cat_id[$x]\">\n";
 		print "<input type=\"hidden\" name=\"cat_beskrivelse[$x]\" value=\"$cat_beskrivelse[$x]\">\n";
+		if ($rename_category==$cat_id[$x]) $newCatName=$cat_beskrivelse[$x];
+		else {
+			print "<tr><td>$cat_beskrivelse[$x]</td></tr>\n";
+		}
 	}
-	$tekst=findtekst(388,$sprog_id);
-	$tekst=str_replace('$ny_kategori',$ny_kategori,$tekst);
-	print "<tr><td colspan=\"4\">$tekst<!--tekst 388--></td></tr>\n";
+#	$tekst=findtekst(388,$sprog_id);
+#	$tekst=str_replace('$newCatName',$newCatName,$tekst);
+#	print "<tr><td colspan=\"4\">$tekst<!--tekst 388--></td></tr>\n";
 	print "<input type=\"hidden\" name=\"rename_category\" value=\"$rename_category\">\n";
-	print "<tr><td colspan=\"4\" title=\"Skriv det nye navn p&aring; kategorien her\"><input type=\"text\" size=\"25\" name=\"ny_kategori\" value=\"$ny_kategori\"></td></tr>\n";
-} else print "<tr><td colspan=\"4\" title=\"".findtekst(390,$sprog_id)."\"><!--tekst 390--><input class='inputbox' type=\"text\" size=\"25\" name=\"ny_kategori\" value=\"".findtekst(343,$sprog_id)."\"></td></tr>\n";
-print "<input type=\"hidden\" name=\"cat_antal\" value=\"$cat_antal\">\n";
+	print "<tr><td colspan=\"4\" title=\"Skriv det nye navn p&aring; kategorien her\"><input type=\"text\" size=\"25\" name=\"newCatName\" value=\"$newCatName\"></td></tr>\n";
+} else {
+	print "<tr><td colspan=\"4\" title=\"".findtekst(390,$sprog_id)."\"><!--tekst 390--><input class='inputbox' type=\"text\" size=\"25\" name=\"newCatName\" placeholder=\"".findtekst(343,$sprog_id)."\"></td></tr>\n";
+}
 
 print "</tbody></table></td>";# <- TABEL 1.2.4.1
 print "<td><table border=0><tbody>"; # TABEL 1.2.4.2 ->
@@ -955,6 +981,7 @@ print "</tbody></table></td></tr>";# <- TABEL 1.2.4.2
 print "<tr><td colspan=2><table border=\"0\" width=\"100%\"><tbody>"; # TABEL 1.2.4.3 ->
 
 print "<tr><td colspan=6><hr></td></tr>\n";
+$x = 0;
 	if ($kontotype == 'erhverv') {
 	print "<tr bgcolor=$bg><td colspan=6><b>".findtekst(392,$sprog_id)."<!--tekst 392--></b></td></tr>\n";
 	if ($id) {
@@ -971,10 +998,11 @@ print "<tr><td colspan=6><hr></td></tr>\n";
  			print "<input class='inpPasswordutbox' type=hidden name=ans_id[$x] value=$r[id]>\n";
  			if ($x==1) {print "<input class='inputbox' type=hidden name=kontakt value='$r[navn]'>";}
 		}
-		print "<input type=hidden name=ans_ant value=$x>\n";
 		print "<tr><td colspan=6><br></td></tr>\n";
 	}
 }
+print "<input type='hidden' name='ans_ant' value='$x'>\n";
+
 #print "<tr><td><br></td></tr>\n";
 $q = db_select("select id from openpost where konto_id = '$id'",__FILE__ . " linje " . __LINE__);
 if (db_fetch_array($q)) $slet="NO";
@@ -988,7 +1016,7 @@ if ($slet=="NO") {
 	print "<input type='submit' 'style=width:200px' accesskey='g' ";
 	print "value=".findtekst(471,$sprog_id)." name='submit' onclick='javascript:docChange = false;'>";
 	print "&nbsp;<input type='submit' 'style=width:200px' ";
-	print "value='Anonymisér' name='".findtekst(1929,$sprog_id)."' ";
+	print "name='anonymize' value='".findtekst(1929,$sprog_id)."' ";
 	$txt=str_replace('$kontonr',$kontonr,findtekst(1930,$sprog_id));
 	print "onclick=\"return confirm('$txt')\">";
 	print "</td>";

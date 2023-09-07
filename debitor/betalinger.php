@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/betalinger.php --- Patch 4.0.5 --- 2022.02.01 ---
+// --- debitor/betalinger.php --- Patch 4.0.8 --- 2023.06.18 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // -----------------------------------------------------------------------------------
 //
 // 2015.11.04 Kopieret fra kreditor og tilrettet til debitorer (phr) 
@@ -39,6 +39,7 @@
 // 2021.04.06 PHR some cleanup;
 // 20211109 MSC - Implementing new design
 // 20220201 PHR Moved functions to '../includes/payListFunc.php'
+// 20230618 PHR BUG correction: When fetch from 'kontokort' the CURRENT list is now updated, if account exists in list.  
 
 $dan_liste=$gem=$listenote=$slet_ugyldige=$udskriv=NULL;
 
@@ -80,7 +81,7 @@ if ($dan_liste) {
 if (isset($_POST['slet_ugyldige']) || isset($_POST['gem']) || isset($_POST['udskriv'])) {
 #cho "Gem $_POST[gem]<br>";
 	$id = $erh = array();
-	$slet_ugyldige = $_POST['slet_ugyldige'];
+	$slet_ugyldige = if_isset($_POST['slet_ugyldige'],NULL);
 #	$liste_id      = if_isset($_POST['liste_id']);
 	$listenote     = if_isset($_POST['listenote']);
 	$udskriv       = if_isset($_POST['udskriv']);
@@ -103,7 +104,7 @@ if (isset($_POST['slet_ugyldige']) || isset($_POST['gem']) || isset($_POST['udsk
 	for ($x=1;$x<=$antal;$x++) {
 		if ($allPayDates) $betalingsdato[$x]=$allPayDates;
 		if ($slet_ugyldige && $ugyldig[$x] == $id[$x]) $slet[$x]='on';
-		elseif (!isset($slet)) $slet[$x] = NULL;
+		elseif (!isset($slet[$x])) $slet[$x] = NULL;
 		if ($slet[$x]=='on') {
 			#cho "delete from betalinger where id='$id[$x]'<br>";
 			db_modify("delete from betalinger where id='$id[$x]'",__FILE__ . " linje " . __LINE__);
@@ -197,20 +198,8 @@ if ($find) {
 	}
 	$myBank = $myReg.$myBank;
 #cho "select ordre_id, bilag_id from betalinger<br>";
-	$qtxt = "select var_value from settings where var_name = 'customerCommissionAccountUsed' and var_grp = 'items'";
-	if ($find == 'saldo' && $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-		$x=0;
-		$custAccount=array();
-		$qtxt = "select id, egen_ref from betalinger where liste_id = '$liste_id'";
-		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-		while ($r = db_fetch_array($q)) {
-			list($a,$b) = explode('-',$r['egen_ref'],2);
-			$custAccount[$x] = trim(str_replace('Afr:','',$a));
-			$x++;
-		}
-		$x=0;
-		$qtxt = "select * from adresser where art = 'D'";
-#cho "$qtxt<br>";
+	if ($find == 'saldo') {
+		$qtxt = "select * from adresser where art = 'D' and lukket != 'on'";
 		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r = db_fetch_array($q)) {
 			$custId=$r['id'];
@@ -224,20 +213,23 @@ if ($find) {
 			$custBank = $custReg.$custBank;
 			$myRef="Afr: $custNo - $custName";
 			$custRef="Afregning: $myName";
-			$qtxt="select sum(amount) as amount from openpost where udlignet = '0' and konto_id='$custId'";
-#cho "$qtxt<br>";
+			$qtxt="select sum(amount) as amount from openpost where konto_id='$custId'";
 			$amount=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))[0];
-			if ($amount < 0) {
+			if (round($amount,2) < 0) {
 				$amount = dkdecimal(abs($amount));
-				if (!in_array($custNo,$custAccount)) {
+				$qtxt = "select id from betalinger where egen_ref ='".db_escape_string($myRef)."' ";
+				$qtxt.= "and liste_id = '$liste_id'";
+				if ($id = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))[0]) {
+						$qtxt = "update betalinger set belob = '$amount' where id = '$id'";
+				} else {
 					$qtxt = "insert into betalinger";
 					$qtxt.= "(bet_type,fra_kto,egen_ref,til_kto,modt_navn,kort_ref,belob, betalingsdato,valuta,bilag_id,ordre_id,liste_id) ";
 					$qtxt.= "values ";
 					$qtxt.= "('ERH356','$myBank','".db_escape_string($myRef)."','".db_escape_string($custBank)."',";
 					$qtxt.= "'".db_escape_string($custName)."','".db_escape_string($custRef)."','$amount','$paydate',"; 
 					$qtxt.="'$currency', '0', '0','$liste_id')";
-					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
 		}
 	} elseif ($find) {
@@ -399,9 +391,10 @@ $fejl=0;
 $q=db_select("select * from betalinger where liste_id=$liste_id order by modt_navn,betalingsdato",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$x++;
+		$k1_bg[$x] = $k2_bg[$x] = $k3_bg[$x] = $k4_bg[$x] = $k5_bg[$x] = $k6_bg[$x] = $k7_bg[$x] = $k8_bg[$x] = '';
 		$erh[$x]=$r['bet_type'];
 		$fra_kto[$x]=$r['fra_kto'];
-		$egen_ref[$x]=$r['egen_ref'];
+		$egen_ref=$r['egen_ref'];
 		$til_kto[$x]=$r['til_kto'];
 		$kort_ref[$x]=$r['kort_ref'];
 		$belob[$x]=$r['belob'];

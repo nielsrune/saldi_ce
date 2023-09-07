@@ -4,7 +4,7 @@
 //                     \__ \/ _ \| |_| |) | | _ | |) |  <
 //                     |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/importer_variantvarer.php --- lap 4.0.2 --- 2022-02-18 ---
+// --- systemdata/importer_variantvarer.php --- lap 4.0.8 --- 2023-06-06 ---
 // LICENSE
 // 
 // This program is free software. You can redistribute it and / or
@@ -24,6 +24,7 @@
 // ----------------------------------------------------------------------
 // 20210714 LOE - Translated some text.
 // 20220218 PHR - Variants is cow created if thet did not exist
+// 20230606 PHR - php8
 
 @session_start();
 $s_id=session_id();
@@ -594,12 +595,12 @@ function nummertjek ($nummer){
 	$retur=1;
 	$nummerliste=array("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", ".", "-");
 	for ($x=0; $x<strlen($nummer); $x++) {
-		if (!in_array($nummer{$x}, $nummerliste)) $retur=0;
+		if (!in_array($nummer[$x], $nummerliste)) $retur=0;
 	}
 	if ($retur) {
 		for ($x=0; $x<strlen($nummer); $x++) {
-			if ($nummer{$x}==',') $komma++;
-			elseif ($nummer{$x}=='.') $punktum++;		
+			if ($nummer[$x]==',') $komma++;
+			elseif ($nummer[$x]=='.') $punktum++;		
 		}
 		if ((!$komma)&&(!$punktum)) $retur='US';
 		elseif (($komma==1)&&(substr($nummer,-3,1)==',')) $retur='DK';

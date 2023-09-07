@@ -599,25 +599,25 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 				$qtxt=NULL;
 				if ($amount>0) {
 					if (strlen($beskrivelse)==22 && substr($beskrivelse,0,3)=='IK ' && is_numeric(substr($beskrivelse,3,19))) { # ?
-						$kredit=substr($beskrivelse,3,13)*1;
-						$faktura=substr($beskrivelse,16,5)*1;
+						$kredit=(int)substr($beskrivelse,3,13);
+						$faktura=(int)substr($beskrivelse,16,5);
 						$k_type='D';
 					} elseif (strlen($beskrivelse)==20 && substr($beskrivelse,-4)=='IK71' && is_numeric(substr($beskrivelse,0,14))) { # Sparekasserne
-						$kredit=substr($beskrivelse,0,8)*1;
-						$faktura=substr($beskrivelse,8,6)*1;
+						$kredit=(int)substr($beskrivelse,0,8);
+						$faktura=(int)substr($beskrivelse,8,6);
 						$k_type='D';
 					} elseif (strlen($beskrivelse)==24 && substr($beskrivelse,0,4)=='IK71' && is_numeric(substr($beskrivelse,5))) { # Danske Bank 20160815
-						$kredit=substr($beskrivelse,5,13)*1;
-						$faktura=substr($beskrivelse,18,5)*1;
+						$kredit=(int)substr($beskrivelse,5,13);
+						$faktura=(int)substr($beskrivelse,18,5);
 						$k_type='D';
 						if ($kredit && $faktura) $qtxt="select * from ordrer where fakturanr = '$faktura' and kontonr = '$kredit'"; # 20170119
 					} elseif (strlen($beskrivelse)==32 && substr($beskrivelse,7,10)=='Indbet.ID=' && is_numeric(substr($beskrivelse,17,15))) { # Danske Bank
-						$kredit=substr($beskrivelse,17,9)*1;
-						$faktura=substr($beskrivelse,26,5)*1;
+						$kredit=(int)substr($beskrivelse,17,9);
+						$faktura=(int)substr($beskrivelse,26,5);
 						$k_type='D';
 					} elseif (strlen($beskrivelse)==35 && substr($beskrivelse,0,21)=='Indbetalingskort, nr.' && is_numeric(substr($beskrivelse,22,14))) { # Nordea
-						$kredit=substr($beskrivelse,22,7)*1;
-						$faktura=substr($beskrivelse,29,5)*1;
+						$kredit=(int)substr($beskrivelse,22,7);
+						$faktura=(int)substr($beskrivelse,29,5);
 						$k_type='D';
 					} elseif (strlen($beskrivelse)==40 && substr($beskrivelse,0,6)=='DK-IND' && is_numeric(substr($beskrivelse,22,14))) { # SparNord
 						$felt_1="%".substr($beskrivelse,-10);

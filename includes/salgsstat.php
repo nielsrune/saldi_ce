@@ -28,6 +28,7 @@
 // 
 // 20160309	- ændret $antal[$x][$y] til $r['antal'] da antal ikke skal summeres ved sumberegning
 // 20210329 - Loe translated with findtekst function some of these texts
+// 01-05-2023 PBLM Fixed minor errors
 
 @session_start();
 $s_id=session_id();
@@ -79,7 +80,7 @@ $year=date("y");
 
 $tmp=$year-1;
 if ($tmp<10) $tmp="0".$tmp;
-list($fra,$til)=explode(":",$periode);
+list($fra,$til)=(isset($periode) ? explode(":",$periode) : 0);
 if (!$til) $til=date("dmY");
 $rtekst="Klik her for at v&aelig;lge en anden periode";
 
@@ -134,7 +135,7 @@ $qtxt.="order by ordrer.kontonr,ordrelinjer.varenr";
 #cho $qtxt."<br>";
 $q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while($r=db_fetch_array($q)){
-	if ($q_konto_id[$x] && $q_konto_id[$x]!=$r['konto_id']) {
+	if (isset($q_konto_id) && $q_konto_id[$x] && $q_konto_id[$x]!=$r['konto_id']) {
 		$x++;
 		$y=0;
 		$q_vare_id[$x]=array();
@@ -143,8 +144,8 @@ while($r=db_fetch_array($q)){
 	$q_kontonr[$x]=$r['kontonr'];
 	$q_firmanavn[$x]=$r['firmanavn'];
 	if ($summeret) {
-		if ($q_vare_id[$x][$y] && $q_vare_id[$x][$y]!=$r['vare_id']) {
-			$q_pris[$x][$y]=$q_sum[$x][$y]/$q_antal[$x][$y];
+		if (isset($q_vare_id[$x][$y]) && $q_vare_id[$x][$y] && $q_vare_id[$x][$y]!=$r['vare_id']) {
+			$q_pris[$x][$y]=($q_antal[$x][$y] != 0) ? $q_sum[$x][$y]/$q_antal[$x][$y] : $q_sum[$x][$y];
 			$y++;
 		}
 		$q_vare_id[$x][$y]=$r['vare_id'];
@@ -153,8 +154,8 @@ while($r=db_fetch_array($q)){
 #		$antal[$x][$y]=$r['antal'];
 		$q_pris[$x][$y]=$r['pris'];
 		$q_rabat[$x][$y]=$r['rabat'];
-		$q_antal[$x][$y]+=$r['antal'];
-		$q_sum[$x][$y]+=$r['antal']*($q_pris[$x][$y]-($q_pris[$x][$y]/100*$q_rabat[$x][$y])); #20160309
+		(isset($q_antal[$x][$y])) ? $q_antal[$x][$y]+=$r['antal'] : $q_antal[$x][$y]=$r['antal'];
+		(isset($q_sum[$x][$y])) ? $q_sum[$x][$y]+=$r['antal']*($q_pris[$x][$y]-($q_pris[$x][$y]/100*$q_rabat[$x][$y])) : $q_sum[$x][$y]=$r['antal']*($q_pris[$x][$y]-($q_pris[$x][$y]/100*$q_rabat[$x][$y])); #20160309
 	} else {
 		($r['fakturadate'])?$q_faktdato[$x][$y]=dkdato($r['fakturadate']):$q_faktdato[$x][$y]='Ikke faktureret';
 		$q_vare_id[$x][$y]=$r['vare_id'];
@@ -189,7 +190,7 @@ for ($x=0;$x<count($q_konto_id);$x++) {
 	}
 	print "<tr><td width=10%><b>".findtekst(284,$sprog_id).":</b></td><td>$q_kontonr[$x]</td></tr>";
 	print "<tr><td width=10%><b>".findtekst(360,$sprog_id).":</b></td><td>$q_firmanavn[$x]</td></tr>";
-	if ($periode) print "<tr><td><b>".findtekst(899,$sprog_id)."</b></td><td>$periode</td></tr>";
+	if (isset($periode)) print "<tr><td><b>".findtekst(899,$sprog_id)."</b></td><td>$periode</td></tr>";
 	print "<tr>";
 	if (!$summeret) print "</td><td align=\"left\"><b>".findtekst(635,$sprog_id)."</b></td>";
 

@@ -204,7 +204,8 @@ function posOptions () {
 		print "<td title='".findtekst(716,$sprog_id)."'><!--Tekst 716-->".findtekst(715,$sprog_id)."<!--Tekst 715--></td>\n";
 		print "<td title='".findtekst(722,$sprog_id)."'><!--Tekst 722-->".findtekst(721,$sprog_id)."<!--Tekst 721--></td>\n";
 		print "<td title='".findtekst(705,$sprog_id)."'><!--Tekst 705-->".findtekst(704,$sprog_id)."<!--Tekst 704--></td>\n";
-		print "<td title='".findtekst(707,$sprog_id)."'><!--Tekst 707-->".findtekst(706,$sprog_id)."<!--Tekst 706--></td>\n";
+		print "<td title='".findtekst(3011,$sprog_id)."'><!--Tekst 3011-->".findtekst(3010,$sprog_id)."<!--Tekst 3010--></td>\n";
+		print "<td title='".findtekst(707,$sprog_id)."'><!--Tekst 707-->".findtekst(3015,$sprog_id)."<!--Tekst 3015--></td>\n";
 		print "<td title='".findtekst(726,$sprog_id)."'><!--Tekst 726-->".findtekst(725,$sprog_id)."<!--Tekst 725--></td>\n";
 		if (count($bord)>1) print "<td title='".findtekst(755,$sprog_id)."'><!--Tekst 755-->".findtekst(754,$sprog_id)."<!--Tekst 754--></td>\n";
 		$text=findtekst(765,$sprog_id);
@@ -223,6 +224,7 @@ function posOptions () {
 		print "</tr>\n";
 		for($x=0;$x<$kasseantal;$x++) {
 			if (!$pfs[$x]) $pfs[$x]=10;
+			$terminal_type[$x] = if_isset($terminal_type[$x],NULL);
 			print "<tr bgcolor=$bgcolor5>";
 			$tmp=$x+1;
 			print "<td>$tmp</td>";
@@ -248,13 +250,68 @@ function posOptions () {
 				}
 -				print "</SELECT></td>\n";
 			}
+
+
+			
+      # Setup options for each POS terminal
 			print "<td><input class='inputbox' type='text' style='text-align:right;width:50px;' name='kassekonti[$x]' value='$kassekonti[$x]'></td>\n";
 			print "<td><input class='inputbox' type='text' style='text-align:right;width:50px;' name='mellemkonti[$x]' value='$mellemkonti[$x]'></td>\n";
 			print "<td><input class='inputbox' type='text' style='text-align:right;width:50px;' name='diffkonti[$x]' value='$diffkonti[$x]'></td>\n";
 			if (!$printer_ip[$x])$printer_ip[$x]='localhost';
 			print "<td><input class='inputbox' type='text' style='text-align:right;width:70px;' name='printer_ip[$x]' value='$printer_ip[$x]'></td>\n";
-			print "<td align='center'><input class='inputbox' type='text' style='text-align:right;width:70px;' name='terminal_ip[$x]' value='$terminal_ip[$x]'></td>\n";
+      
+      # Payment terminal implementation
+      print "<td align='center'>
+				<select class='inputbox' type='select' style='text-align:right;width:150px;'
+				name='terminal_type[$x]' value='$terminal_type[$x]' onchange='type_change($x);'> ";
+
+			$kasse_id = $x + 1;
+			$posTermOption = NULL;
+			$qtxt = "SELECT var_value FROM settings WHERE pos_id='$kasse_id' and var_name='terminal_type'";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $posTermOption = $r[0];
+			if ($posTermOption == "Ip baseret"){
+				print "<option selected='selected' value='Ip baseret'>Ip baseret</option>
+					<option value='Flatpay'>Flatpay</option>";
+      } else if ($posTermOption == "Flatpay") {
+        print "<option value='Ip baseret'>Ip baseret</option>
+					<option selected='selected' value='Flatpay'>Flatpay</option>";
+      } else if (str_starts_with($posTermOption, "Vibrant")) {
+				print "<option value='Ip baseret'>Ip baseret</option>
+				<option value='Flatpay'>Flatpay</option>";
+        # Handeled below
+      } else {
+				print "<option value='t'></option>
+				<option value='Ip baseret'>Ip baseret</option>
+				<option value='Flatpay'>Flatpay</option>";
+		  }
+
+			# $qtxt = "SELECT name, terminal_id, pos_id FROM vibrant_terms";
+			$qtxt = "SELECT var_name, var_value, pos_id FROM settings WHERE var_grp = 'vibrant_terms'";
+			$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+      $i = 0;
+
+      while ($r = db_fetch_array($q)) {
+        if (!$r['pos_id'] || $r['pos_id'] == $x+1 || $r['pos_id'] == -1) {
+          if ($r['pos_id'] == $x+1 && str_starts_with($posTermOption, "Vibrant")) {
+            $selected = "selected='selected'";
+          } else {
+            $selected = "";
+          }
+          print "<option $selected value='Vibrant: $r[var_name]'>Vibrant: $r[var_name]</option>";
+        }
+        $i++;
+      }
+
+      print "<option value='vibrant_new'>Ny Vibrant terminal</option>";
+                
+      print " </select>
+            </td>\n";
+			print "<td align='center'><input class='inputbox' type='text' style='text-align:right;width:100px;' name='terminal_ip[$x]' value='$terminal_ip[$x]'></td>\n";
+      
 			print "<td align='center'><input class='inputbox' type='text' style='text-align:right;width:70px;' name='koekkenprinter[$x]' value='$koekkenprinter[$x]'></td>\n";
+      
+      
+      
 			if (count($bord)>1) {
 				print "<td align='center'><select class='inputbox' style='width:70px;' name='bordvalg[$x]'>\n";
 				if ($bordvalg[$x]) {#print "<option value='$bordvalg[$x]'>$bordvalg[$x] $bord[$x]</option>";
@@ -285,6 +342,35 @@ function posOptions () {
 					print "<td><input class='inputbox' type='text' style='text-align:right;width:50px;' name='ValutaDifKonti[$x][$y]' value='".$ValutaDifKonti[$y][$x]."'></td>\n";
 			}
 		}
+
+    # Handle Vibrant terminal creation
+    print "
+<script>
+
+function type_change(idx) {
+  var elm = document.getElementsByName(`terminal_type[\${idx}]`)[0];
+  if (elm.value == 'vibrant_new') {
+    fetch('diverseIncludes/create_vibrant_term.php', {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({'id': idx}), 
+    })
+    .then(res => res.text())
+    .then((text) => {
+
+      if (text.endsWith('ERROR')) {
+        alert('Der skete en fejl, kontakt venligst saldi teamet på 46902208 hvis du sidder fast.\\n\\n' + text.split('\\n')[text.split('\\n').length-2]);
+      } else {
+        // Reload the page
+        location.href = location.href;
+      }
+    });
+  }
+}
+
+</script>";
 	}
 	print "</tbody></table></td></tr>";
 	print "<tr><td><hr></td></tr>\n";
@@ -355,7 +441,68 @@ function posOptions () {
 	print "<tr><td><hr></td></tr>\n";
 	print "<tr><td><table><tbody>";
 	# 20140508 ->
+
+  # Create the HTML for the plan table input area
+  $pages_htm = "";
+  $x = 1;
+  $q = db_select("select id, name from table_pages ORDER BY id", __FILE__ . " linje " . __LINE__);
+	while ($r = db_fetch_array($q)) {
+		$id=$r["id"];
+		$name=$r["name"];
+    
+    $pages_htm = "$pages_htm<tr bgcolor=$bgcolor5><td>$id</td><td><input class='inputbox' type='text' style='text-align:left' size='15' name='plan[$x]' value='$name'></td></tr>";
+		$x++;
+	}
+
+  # Get the amount of plans that we have, since it gets added at the end it will always be 1 above the real amount
+  $plancount = $x-1;
+  # Bordantal for the old table system
 	$bordantal=count($bord);
+
+  if ($bordantal != 0) {
+    $txt = "Ikke i brug";
+    $title = "Sæt gammelt bordplans system til 0 for at aktivere.";
+  } else {
+    $txt = "";
+    $title = "";
+  }
+
+  print "
+    <tr>
+      <td title='$title' style='color: red'>
+        $txt
+      </td>
+      <td>
+        <button type='button' onclick='window.location.replace(\"../bordplaner/planner\")'>Åben bordplanlægger</button>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        Antal bordplaner
+      </td>
+      <td>
+        <input class='inputbox' type='text' style='text-align:right' size='1' name='planamount' value='$plancount'>
+      </td>
+    </tr>
+    
+    <tr>
+      <td>
+        Id
+      </td>
+      <td>
+        Navn
+      </td>
+    </tr>
+    $pages_htm
+";
+  
+  if ($bordantal != 0) {
+    print "
+      <tr>
+        <td colspan=2><br>Gammelt Bordplansystem, sæt antal til 0 for at aktivere det nye.</td>
+      </tr>
+      ";
 	print "<tr><td title='".findtekst(673,$sprog_id)."'>".findtekst(674,$sprog_id)."</td><td><input class='inputbox' type='text' style='text-align:right' size='1' name='bordantal' value='$bordantal'></td></tr>\n";
 	if ($bordantal) {
 		print "<tr><td></td><td title='".findtekst(675,$sprog_id)."'>".findtekst(676,$sprog_id)."</td></tr>\n";
@@ -366,6 +513,7 @@ function posOptions () {
 			print "<td>$tmp</td>\n";
 			print "<td title='".findtekst(675,$sprog_id)."'><input class='inputbox' type='text' style='text-align:left' size='15' name='bord[$x]' value='$bord[$x]'></td></tr>\n";
 		}
+	}
 	}
 	print "</tbody></table></td></tr>";
 	print "<tr><td><hr></td></tr>\n";

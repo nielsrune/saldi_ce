@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| | | |
 //                        |___/_/ \_|___|__/|_|
 //
-// --- systemdata/admin_brugere.php --- lap 4.0.4 --- 2021-09-17 ---
+// -- systemdata/admin_brugere.php ------------- lap 4.0.8 -- 2023-02-27 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,21 +20,23 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ------------------------------------------------------------------------
 // 20210328 PHR Some cleanup.
 // 20210917 LOE translated some texts
+// 20230227 CA  Add missing parameters on some calls to db_select & db_modify
+// 20230323 PBLM Fixed some minor errors
 
 @session_start();
 $s_id=session_id();
 
 $modulnr=104;
-$title="Brugere";
 $css="../css/standard.css";
 
+include("../includes/std_func.php");
+$title=findtekst("Brugere", $sprog_id);
 include("../includes/connect.php");
 include("../includes/online.php");
-include("../includes/std_func.php");
 
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\" height=\"25\">";
@@ -47,8 +49,9 @@ print "</td></tr>\n";
 print "<td align = center valign = center>";
 print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>";
 
-$ret_id=$_GET['ret_id'];
-$slet_id=$_GET['slet_id'];
+
+$ret_id = if_isset($_GET['ret_id'], 0);
+$slet_id=if_isset($_GET['slet_id'], 0);
 
 if ($_POST) {
 	$submit=$_POST['submit'];
@@ -59,8 +62,8 @@ if ($_POST) {
 	$kode2=trim($_POST['kode2']);
 	$ret_bruger=trim($ret_bruger);
 	$admin=$_POST['admin'];
-	$oprette=$_POST['oprette'];
-	$slette=$_POST['slette'];
+	$oprette=if_isset($_POST['oprette'], 0);
+	$slette=if_isset($_POST['slette'], 0);
 	$adgang_til=addslashes(trim($_POST['adgang_til']));
 
 	$rettigheder="$admin,$oprette,$slette,$adgang_til";
@@ -74,7 +77,7 @@ if ($_POST) {
 	if (($kode) && (!strstr($kode,'**********'))) {
 		$kode=saldikrypt($id,$kode);
 	} elseif($kode)	{
-		$query = db_select("select * from brugere where id = '$id'");
+		$query = db_select("select * from brugere where id = '$id'",__FILE__ . " linje " . __LINE__);
 		if ($row = db_fetch_array($query))
 		$kode=trim($row['kode']);
 	}
@@ -94,7 +97,7 @@ if ($_POST) {
 	} elseif ((strstr($submit,'Opdat'))&&($ret_bruger)&&($ret_bruger!="-")) {
 		db_modify("update brugere set brugernavn='$ret_bruger',kode='$kode',rettigheder='$rettigheder' where id=$id",__FILE__ . " linje " . __LINE__);
 	}
-	elseif (($id)&&($ret_bruger=="-")) {db_modify("delete from brugere where id = $id");}
+	elseif (($id)&&($ret_bruger=="-")) {db_modify("delete from brugere where id = $id",__FILE__ . " linje " . __LINE__);}
 }
 
 print "<tr><td valign = top align=center>";

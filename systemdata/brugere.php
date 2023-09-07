@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------systemdata/brugere.php------------- lap 3.9.3 -- 2020-07-09 --
+// --------------systemdata/brugere.php------------- lap 4.0.8 -- 2022-03-16 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,16 +20,17 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2020 saldi.dk aps
+// Copyright (c) 2003 - 2022 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20150327 CA  Topmenudesign tilføjet                             søg 20150327
 // 20161104	PHR	Ændret kryptering af adgangskode
-// 2018.12.20 MSC - Rettet isset fejl
-// 2019.02.21 MSC - Rettet topmenu design
-// 2019.02.25 MSC - Rettet topmenu design
-// 2019.03.21 PHR Added 'read only' attribut at 'varekort'
-// 2019.04.15 PHR	Corrected an error in module order printet on screen, resulting in wrong rights to certain modules
-// 2020.07.09 PHR Various changes in variable names and user deletion.
+// 20181220 MSC - Rettet isset fejl
+// 20190221 MSC - Rettet topmenu design
+// 20190225 MSC - Rettet topmenu design
+// 20190321 PHR Added 'read only' attribut at 'varekort'
+// 20190415 PHR Corrected an error in module order printet on screen, resulting in wrong rights to certain modules
+// 20200709 PHR Various changes in variable names and user deletion.
+// 20230316 PHR Replaced *1 by (int)
 
 @session_start();
 $s_id=session_id();
@@ -78,7 +79,7 @@ if ($addUser || $updateUser) {
 	$medarbejder=trim(if_isset($_POST['medarbejder']));
 	$employeeId=if_isset($_POST['employeeId']);
 	$rights=$_POST['rights'];
-	$roRights=$_POST['roRights'];
+	$roRights = if_isset($_POST['roRights'],NULL);
 	$rettigheder=NULL;
 	for ($x=0;$x<16;$x++) {
 		if (!isset($rights[$x])) $rights[$x]=NULL;
@@ -95,7 +96,7 @@ if ($addUser || $updateUser) {
 			$ret_id=$id;
 	}
 	$tmp=substr($medarbejder,0,1);
-	$employeeId[0]=$employeeId[0]*1;
+	$employeeId[0]=(int)$employeeId[0];
 	if ($addUser && $brugernavn) {
 		$query = db_select("select id from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__);
 		if ($row = db_fetch_array($query)) {

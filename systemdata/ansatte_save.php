@@ -42,7 +42,7 @@ if ($konto_id=$_POST['konto_id']) {
 	$tlf=db_escape_string(trim($_POST['tlf']));
 	$fax=db_escape_string(trim($_POST['fax']));
 	$mobil=db_escape_string(trim($_POST['mobil']));
-	$privattlf=db_escape_string(trim($_POST['privattlf']));
+	$privattlf=db_escape_string(trim(if_isset($_POST['privattlf'])));
 	$email=db_escape_string(trim($_POST['email']));
 	$cprnr=db_escape_string(trim($_POST['cprnr']));
 	$notes=db_escape_string(trim($_POST['notes']));
@@ -53,18 +53,19 @@ if ($konto_id=$_POST['konto_id']) {
 	$startdato=db_escape_string(trim($_POST['startdato']));
 	$slutdato=db_escape_string(trim($_POST['slutdato']));
 	($startdato)?$startdate=usdate($startdato):$startdate=NULL;
-	($slutdato)?$slutdate=usdate($slutdato):$sluttdate=NULL;
-	$trainee=trim($_POST['trainee']);
-	list($afd,$x)=explode(":",$_POST['afd']);
+	($slutdato)?$slutdate=usdate($slutdato):$slutdate=NULL;
+	$trainee=trim(if_isset($_POST['trainee']));
+	$afd = $_POST['afd'];
+	if (strpos(':',$afd))	list($afd,$x)=explode(':',$afd);
 	$afd=$afd*1;
 	$returside=$_POST['returside'];
 	$fokus=$_POST['fokus'];
-	$provision=$_POST['provision'];
-	$provision_id=$_POST['provision_id'];
-	$gruppe_id=$_POST['gruppe_id'];
-	$pro_antal=$_POST['pro_antal'];
+	$provision    = if_isset($_POST['provision']);
+	$provision_id = if_isset($_POST['provision_id']);
+	$gruppe_id    = if_isset($_POST['gruppe_id']);
+	$pro_antal    = if_isset($_POST['pro_antal']);
 
-	echo "$nummer $initialer $afd $id<br>";
+	#echo "$nummer $initialer $afd $id<br>";
 	
 		if (!is_numeric($nummer) && $id) { #20140923
 			$messages = "Skal være et tal";
@@ -106,7 +107,8 @@ if ($konto_id=$_POST['konto_id']) {
 				}
 			}
 		}
-		$box=if_isset($_POST['box']);
+		isset($_POST['box'])?$box = $_POST['box']:$box = array();
+		
 		$extra_id_0=if_isset($_POST['extra_id_0']);
 		$extra_id_1=if_isset($_POST['extra_id_1']);
 		if (count($box) && $id > 0) {

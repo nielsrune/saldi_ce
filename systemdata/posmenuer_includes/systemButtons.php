@@ -22,6 +22,7 @@
 // 20191128 PHR	Set $country to 'Denmark' if not set.
 // 20220209	PHR enabled udskriv_sidste for Norway.
 
+
 $country = db_fetch_array(db_select("select land from adresser where art = 'S'",__FILE__ . " linje " . __LINE__))['land'];
 if (!$country) {
 	$country="Denmark";
@@ -139,7 +140,32 @@ if ($d==6 && $menutype!='U') {
     }
     print "</SELECT>\n";
 } else {
+    print "<div
+            style='position: relative;'
+           >";
     print "<INPUT CLASS=\"inputbox\" TYPE=\"text\" style=\"width:100px;text-align:center\" name=\"butvnr\" value=\"$c\"><br>\n";
+    print "
+      <div class='tooltip' id='varekort-btn'>
+        <svg 
+          onclick='open_product_page();'
+          fill='none' 
+          height='16' 
+          stroke='currentColor' 
+          stroke-linecap='round'
+          stroke-linejoin='round' 
+          stroke-width='2' 
+          viewBox='0 0 24 24' 
+          width='16' 
+          xmlns='http://www.w3.org/2000/svg'
+        >
+          <polyline points='15 14 20 9 15 4'/>
+          <path d='M4 20v-7a4 4 0 0 1 4-4h12'/>
+        </svg>
+        <span class='tooltiptext'>Åben varekort</span>
+      </div>
+
+";
+      
 }
 
 
