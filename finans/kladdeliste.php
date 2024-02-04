@@ -116,7 +116,7 @@ $tjek=0;
 		print "<tr bgcolor=\"$linjebg\">";
 		if (strpos(' ',$row['tidspkt'])) list ($a,$b)=explode(" ",$row['tidspkt']);
 		else $b=$row['tidspkt'];
-		if ($tidspkt - trim($b) > 3600 || $row['hvem'] == $brugernavn) {
+		if ((int)$tidspkt - (int)trim($b) > 3600 || $row['hvem'] == $brugernavn) {
 			if ($popup) print "<td onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:$kladde=window.open('kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 			else print "<td><a href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";
 		}
