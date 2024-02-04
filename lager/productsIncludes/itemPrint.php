@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/varerIncludes/itemPrint.php --- lap 4.0.7 --- 2023-02-18 ---
+// --- lager/productsIncludes/itemPrint.php --- lap 4.0.7 --- 2023-02-18 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or

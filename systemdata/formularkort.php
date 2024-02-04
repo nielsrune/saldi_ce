@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/formularkort --- patch 4.0.8 --- 2023-08-28 ---
+// --- systemdata/formularkort --- patch 4.0.8 --- 2023-10-03 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -50,6 +50,7 @@
 // 20220213 PHR Various changes to fit php8
 // 20230719 PHR Cleanup in 'mailtext
 // 20230828 PHR Fixed error in above
+// 20231003 PHR Added ordre_valuta
 
 @session_start();
 $s_id=session_id();
@@ -87,9 +88,8 @@ if (isset($_POST) && $_POST) {
 	if ($nyt_sprog) {
 		$nyt_sprog=if_isset($_POST['nyt_sprog']);
 		$skabelon=if_isset($_POST['skabelon']);
-		$handling=if_isset($_POST['gem']);
+		if(isset($_POST['gem']) && $_POST['gem']) $handling = 'gem' ;
 		if (!$nyt_sprog) {
-			$handling=if_isset($_POST['gem']);
 			if (!$handling) $handling=if_isset($_POST['slet']);
 			if (!$handling) $handling=if_isset($_POST['fortryd']);
 			if ($handling == 'slet') $nyt_sprog='slet';
@@ -513,7 +513,6 @@ if ($form_nr && $art) print "<tr><td colspan=\"11\" align=\"center\"><input clas
 print "</tbody></table></td></tr></form>\n";
 
 function sprog($nyt_sprog,$skabelon,$handling){
-
 $tmp=db_escape_string(htmlentities($nyt_sprog));
 if ($tmp!=$nyt_sprog) {
 	print "<BODY onload=\"javascript:alert('Sprog ben&aelig;vnelse m&aring; ikke indeholde specialtegn\\nOprettelse af $nyt_sprog er annulleret')\">";
@@ -540,14 +539,14 @@ if ($tmp!=$nyt_sprog) {
 } else {
 	print "<form name=formularvalg action=$_SERVER[PHP_SELF]?nyt_sprog=yes method=\"post\">";
 	print "<tr><td width=100% align=center><table border=0><tbody>"; # 20150331
-	print "<tr><td>Skriv sprog der &oslash;nskes tilf&oslash;jet: </td><td><input class='inputbox' type=tekst name=nyt_sprog size=15<td></tr>";
+	print "<tr><td>Skriv sprog der &oslash;nskes tilf&oslash;jet: </td><td><input class='inputbox' type='text' name='nyt_sprog' size='15'<td></tr>";
 	print "<tr><td>".findtekst(801, $sprog_id)." ".findtekst(801, $sprog_id)."</td>";
-	print "<td><SELECT class='inputbox' NAME=skabelon>";
+	print "<td><SELECT class='inputbox' NAME='skabelon'>";
 	$q=db_select("select distinct sprog from formularer order by sprog",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) print "<option>$r[sprog]</option>";
 	print "<option></option>";
 	print "</SELECT></td><tr>";
-	print "<tr><td colspan=2 align=center><input type=submit accesskey=\"g\" value=\"gem\" name=\"".findtekst(3,$sprog_id)."\">&nbsp;";
+	print "<tr><td colspan=2 align=center><input type=submit accesskey=\"g\" name=\"gem\" value=\"".findtekst(3,$sprog_id)."\">&nbsp;";
 	print "<input type=submit accesskey=\"s\" value=\"slet\" name=\"slet\" onclick=\"return confirm('Slet det valgte sprog?')\">&nbsp;";
 	print "<input type=submit accesskey=\"f\" value=\"fortryd\"name=\"".findtekst(159,$sprog_id)."\"></td></tr>";
 	print "</tbody></table></td></tr>";
@@ -646,7 +645,8 @@ function drop_down($x,$form_nr,$art_nr,$formularsprog,$id,$beskrivelse,$xa,$xb,$
 		print "<option>ordre_ordredate</option>";
 		print "<option>ordre_ordrenr</option>";
 		print "<option>ordre_projekt</option>";
-	}
+		print "<option>ordre_valuta</option>";
+	}	
 	if ($form_nr==4 || $form_nr==13) {
 		print "<option>ordre_fakturanr</option>";
 		print "<option>ordre_fakturadate</option>";
@@ -896,8 +896,10 @@ $x=0;
 		if ($row['fed']=='on') {$row['fed']='checked';}
 		print "<td align=center><input class='inputbox' type=checkbox name=fed[$x] $row[fed]></td>\n";
 		if ($row['kursiv']=='on') {$row['kursiv']='checked';}
-		print "<td align=center><input class='inputbox' type=checkbox name=kursiv[$x] $row[kursiv]></td>\n";
-		if ($row['beskrivelse']=='beskrivelse'){print "<td align=center><input class='inputbox' type='text' style='text-align:right;width:40px;' name=xb[$x] value=".str_replace(".",",",round($row['xb'],1))."></td>\n";}
+		print "<td align=center><input class='inputbox' type='checkbox' name='kursiv[$x]' $row[kursiv]></td>\n";
+		if (strtolower($row['beskrivelse']) == 'beskrivelse') {
+			print "<td align=center><input class='inputbox' type='text' style='text-align:right;width:40px;' name='xb[$x]' value='".str_replace(".",",",round($row['xb'],1))."'></td>\n";
+		}
 		print "</tr>\n";
 	}
 	return($x);

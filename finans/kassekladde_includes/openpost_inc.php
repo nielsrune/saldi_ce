@@ -138,8 +138,7 @@ if ($menu=='T') {
 	}
 	$criteria = $critA.$critB.$critC.$critD;
 	if ($sort=="firmanavn") $sort="konto_nr";
-	$qtxt = "select id, konto_id, konto_nr, faktnr, transdate, amount, valuta, beskrivelse ";
-	$qtxt.= "from openpost $criteria order by $sort";
+	$qtxt = "select * from openpost $criteria order by $sort";
 	$x=0;
 	$accountId = array(); 
 	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
@@ -156,8 +155,16 @@ if ($menu=='T') {
 				$currency[$x]     = $r['valuta'];
 				$transdate[$x]    = $r['transdate'];
 				$accountType[$x] = $art[$y];
+				($invoiceNo[$x] && $r['kladde_id'] == 0)?$odrerId[$x] = $r['refnr'] : $odrerId[$x] = 0;
+				if ($orderId[$x]) {
+					$qtxt = "select firmanavn from ordrer where id = '$orderId[$x]'";
+					$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+					$accountName[$x] = $r2['firmanavn'];
+
+				}
 				$grpArt=$art[$y]."G"; #20220823
-				$r2 = db_fetch_array(db_select("SELECT box5 FROM grupper WHERE art ='$grpArt' AND kodenr	= '$grp'",__FILE__ . " linje " . __LINE__));
+				$qtxt = "SELECT box5 FROM grupper WHERE art ='$grpArt' AND kodenr	= '$grp'";
+				$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$offsetAccount[$x] = $r2['box5'];
 				$x++;
 			}

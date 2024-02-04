@@ -118,9 +118,9 @@
 118	Klik her for at komme til leverandørliste.	Click here to get to supplier list.	Klikk her for å komme til leverandørlisten.	
 119	Klik her for at tilføje eller rette i enheder og materialer.	Click here to add or correct devices and materials.	Klikk her for å legge til eller korrigere enheter og materialer.	
 120	Enh./mat.	Enh./mat.	Enh./mat.	
-121	Klik her for at rette i forskellige indstillinger for moms	customer-	Klikk her for å korrigere forskjellige momsinnstillinger	
+121	Klik her for at rette i indstillinger	Click here to correct settings-	Klikk her for å korrigere innstillinger
 122	Indstillinger	Settings	Innstillinger	
-123	Klik her for momsrapport	income statement	Klikk her for merverdiavgiftsrapport	
+123	Klik her for finansrapporter	Click here for financial reports	Klikk her for Klikk her for økonomiske rapporter
 124	Rapporter	Reports	Rapporter	
 125	Klik her for at se åbne poster og kontokort for dine kunder. Her kan du også skrive rykkere og få en oversigt over de 100 kunder med med største omsætning.	Click here to see open records and credit cards for your customers. Here you can also write reminders and get an overview of the 100 customers with the largest turnover.	Klikk her for å se åpne poster og kredittkort for kundene dine. Her kan du også skrive påminnelser og få oversikt over de 100 kundene med størst omsetning.	
 126	Klik her for at se åbne poster og kontokort for dine leverandører. Her kan du også lave betalingslister til banken.	Click here to see open records and credit cards for your suppliers. Here you can also make payment lists for the bank.	Klikk her for å se åpne poster og kredittkort for leverandørene dine. Her kan du også lage betalingslister for banken.	
@@ -2126,4 +2126,8 @@
 3017	API nøjlen til din Vibrant APP	The API key for your vibrant APP	API-key for din Vibrant APP
 3018	Kurs	Exchange rate	Vekslingskurs
 3019  SAF-T   SAF-T   SAF-T
-3020  Dansk SAF-T standart er baseret på OECD standart    Danish SAF-T is based on the OECD standard  Den danske SAF-t-standarden er basert på OECD-standarden
+3020	Dansk SAF-T standart er baseret på OECD standard	Danish SAF-T is based on the OECD standard	Den norske SAF-t-standarden er basert på OECD-standarden
+3021	Lav et vibrant login	Create a vibrant terminal login	Lav et vibrant login 
+3022	Kontoen du anvender til at logge ind på din vibrant terminal med	The login you use to login to your terminal with	Innloggingsnett brukt til terminalen din
+3023	Opret login	Create login	Opprett login
+3024	Vis login	Show login	Vis login

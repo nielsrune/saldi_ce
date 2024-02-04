@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- kreditor/modtag.php --- patch 4.0.7 --- 2022.11.06 ---
+// --- kreditor/modtag.php --- patch 4.0.8 --- 2023.10.25 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 Saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2013.08.30 Fejl v. "interne shops" (Rotary) de der blev forsøgt kald til ikke eksisterende url.Søn 20130830
@@ -33,6 +33,8 @@
 // 20170123 PHR - Diverse i forhold til varianter
 // 20181003 PHR - Lille udefinerbar rettelse
 // 20221106 PHR - Various changes to fit php8 / MySQLi
+// 20231025 PHR Added call to sync_shop_vare and log to stocklog.
+
 
 @session_start();
 $s_id=session_id();
@@ -212,8 +214,30 @@ if ($fejl==0) {
 				}
 			}
 			db_modify("update ordrelinjer set leveres=0 where id = $linje_id[$x]",__FILE__ . " linje " . __LINE__);
-			$r=db_fetch_array(db_select("select box2 from grupper where art = 'DIV' and kodenr = '5' ",__FILE__ . " linje " . __LINE__));
+			$qtxt="select id,var_value from settings where var_name = 'confirmStockChange' and var_grp = 'items'";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+				$qtxt="select ordrenr from ordrer where id = '$id'";
+				($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$ordreNr=$r['ordrenr']:$ordreNr=NULL;
+				$qtxt = "select ansatte.navn,ansatte.initialer from ansatte,brugere where brugere.id = '$bruger_id' ";
+				$qtxt.= "and ansatte.id = brugere.ansat_id";
+				if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
+					$userName = db_escape_string(substr($r['navn'],0,10));
+					$initials = db_escape_string(trim(substr($r['initialer'],0,10)));
+				} else {
+					$userName = db_escape_string(substr($brugernavn,0,10));
+					$initials = '';
+				}
+				$qtxt = "insert into stocklog (item_id,username,initials,correction,reason,logtime) values ";
+				$qtxt.= "('$vare_id[$x]','$userName','$initials','$leveres[$x]','indkøbsordre $ordreNr','".date('U')."')";
+				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			}
+			sync_shop_vare($vare_id[$x],$variant_id[$x],$lager[$x]);
+/*
+			$qtxt = "select box2 from grupper where art = 'DIV' and kodenr = '5'";
+echo "$qtxt<br>";
+			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$shopurl=trim($r['box2']);
+echo "$shopurl<br>";
 			if (strlen($shopurl)>1) { #20131001
 				$qtxt="select beholdning,publiceret from varer where id = '$vare_id[$x]'";
 				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -235,6 +259,7 @@ if ($fejl==0) {
 					print "<body onload=\"javascript:window.open('$url','opdat:beholdning');\">";
 				}
 			}
+*/
 		}
 	}
 	for ($x=1; $x<=$linjeantal; $x++) {

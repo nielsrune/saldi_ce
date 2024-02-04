@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------/includes/udvaelg.php--------lap 3.7.0----2017.05.09-----
+// -------------/includes/udvaelg.php--------lap 4.0.9----2023.11.13-----
 // LICENS
 //
 // Dette program er fri software. Du kan gendistribuere det og / eller
@@ -23,7 +23,7 @@
 // En dansk oversaettelse af licensen kan laeses her:
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2017 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2015.01.05 Retter fejlindtastning til noget brugbart 20150105-1
 // 2015.01.05 sikrer at numeriske værdier er numeriske ved at gange med 1 20150105-2
@@ -31,6 +31,7 @@
 // 2015.10.19 Ved enkelbeløb findes beløb ikke hvis de ikke stemmer på decimalen da der bogføres med 3 decimaler.
 // 20170509 PHR Søgning med wildcards i TXT'er
 // 20180228 PHR Fejlrettelse i ovenstående.
+// 20231113 PHR Added lower & upper to text search
 
 if (!function_exists('udvaelg')){
 	function udvaelg ($tmp, $key, $art){
@@ -78,7 +79,13 @@ if (!function_exists('udvaelg')){
 					if (strstr($tmp,'*')) {
 						$tmp=str_replace('*','%',$tmp);
 						$udvaelg= " and $key like '$tmp'";
-					} else $udvaelg= " and $key = '$tmp'";
+						$udvaelg.= " or lower($key) like '".strtolower($tmp)."'";
+						$udvaelg.= " or upper($key) like '".strtoupper($tmp)."'";
+					} else {
+						$udvaelg = " and $key = '$tmp'";
+						$udvaelg.= " or lower($key) like '".strtolower($tmp)."'";
+						$udvaelg.= " or upper($key) like '".strtoupper($tmp)."'";
+					}
 				} else $udvaelg= " and $key = '$tmp'";
 			}
 		return $udvaelg;

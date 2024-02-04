@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/varer.php --- lap 3.7.9 --- 2021-02-11 ---
+// --- lager/varer.php ---patch 4.0.8 ----2023-09-05--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -17,10 +17,11 @@
 // or other proprietor of the program without prior written agreement.
 //
 // The program is published with the hope that it will be beneficial,
-// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
-// GNU General Public License for more details.
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2021 saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 2013.01.15 Wildcard forsvinder efter søgning - tak til Henrik Thomsen fra Basslab for rettelse - søg 20130115
@@ -53,9 +54,15 @@
 // 2019.08.28 PHR - Number of item lines per page was not saved. #20190828
 // 2019.91.02 PHR - Increased timeout. #20190901
 // 2021.02.11 PHR - Search now looks in 'trademark'
+// 2021.04.01 LOE - Translated these texts to English 20210401
+// 2023.04.14 LOE - Minor modifications
+// 2023.06.03 PHR - php8
+// 2023.09.05	PHR - cookie for saldiProductListStart & saldiProductListLines 
 
 @session_start();
 $s_id=session_id();
+
+$vis_lev_felt = NULL;
 
 if (isset($_GET['sort'])) {
 	$sort=$_GET['sort'];
@@ -72,9 +79,9 @@ else $lev_kto_navn = "";
 
 $title="Varer";
 $modulnr=9;
-$css="../css/standard.css";
+$css="../css/std.css";
 
-$beskrivelse=$slut=$start=$udvalg=$vis_lev=NULL;
+$beskrivelse=$linjeantal=$slut=$start=$udvalg=$vis_lev=$vis_lev_felt=NULL;
 #$linjeantal=100;
 
 include("../includes/connect.php");
@@ -153,9 +160,15 @@ if (isset($_GET)) {
 		$i_forslag=array();
 		$bestilt=array();
 	}
-	if (isset($_GET['start'])) $start = $_GET['start'];
+	if (isset($_GET['start'])) {
+		$start = $_GET['start'];
+		setcookie("saldiProductListStart", $start);
+	} elseif(isset($_COOKIE['saldiProductListStart'])) $start=$_COOKIE['saldiProductListStart'];
 	else $start=1;
-	if (isset($_GET['linjeantal'])) $linjeantal = $_GET['linjeantal'];
+	if (isset($_GET['linjeantal'])) {
+		$linjeantal = $_GET['linjeantal'];
+		setcookie("saldiProductListLines", $start);
+	} elseif(isset($_COOKIE['saldiProductListLines'])) $start=$_COOKIE['saldiProductListLines'];
 #	else $linjeantal=500;
 	$slut = if_isset($_GET['slut']);
 #	else $slut=$start+$linjeantal;
@@ -229,7 +242,7 @@ if ($slut <= $start) $slut=$start+$linjeantal;
 	
 $qtxt="select var_value from settings where var_name = 'vatOnItemCard' and var_grp = 'items'";
 $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-if ($vatOnItemCard=$r['var_value']) {
+if (isset($r['var_value']) && $vatOnItemCard=$r['var_value']) {
 	$itemGroup=array();
 	$x=0;
 	$qtxt = "select kodenr,box4 from grupper where art='VG' and box7!='on' order by box4";
@@ -399,10 +412,10 @@ if (!$makeSuggestion) {
 if ($csv) fwrite($csvfil,"\"Varenr\";\"Enhed\";\"Varemrk.\";\"Beskrivelse\";");
 else {
 print "<tr>";
-print "<td><b><a href=\"varer.php?sort=varenr&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">Varenr.</a></b></td>\n";
-print "<td><b><a href=\"varer.php?sort=enhed&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">Enhed</a></b></td>\n";
-print "<td><b><a href=\"varer.php?sort=beskrivelse&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">Beskrivelse</a></b></td>\n";
-if ($showTrademark) print "<td><b><a href=\"varer.php?sort=trademark&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">Varemrk.</a></b></td>\n";
+print "<td><b><a href=\"varer.php?sort=varenr&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">".findtekst(917,$sprog_id).".</a></b></td>\n"; #20210401
+print "<td><b><a href=\"varer.php?sort=enhed&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">".findtekst(945,$sprog_id)."</a></b></td>\n";
+print "<td><b><a href=\"varer.php?sort=beskrivelse&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">".findtekst(914,$sprog_id)."</a></b></td>\n";
+if ($showTrademark) print "<td><b><a href=\"varer.php?sort=trademark&amp;vis_lev=$vis_lev&amp;start=$start&amp;linjeantal=$linjeantal\">".findtekst(946,$sprog_id)."</a></b></td>\n";
 }
 if (!$vis_lev){
 	if ($lagerantal>1 && !$makeSuggestion) {
@@ -418,14 +431,14 @@ if (!$vis_lev){
 		}
 	}
 		if ($csv) fwrite($csvfil,"\"Ialt\";");
-		else print "<td align=right><b><a href=\"varer.php?sort=beholdning&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">Ialt</a></b></td>\n";
+		else print "<td align=right><b><a href=\"varer.php?sort=beholdning&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">".findtekst(947,$sprog_id)."</a></b></td>\n";
 	} else {
 		if ($stock) {	
 			print "<td align=right><b> I tilbud</b></td>\n";
 			print "<td align=right><b> I ordre</b></td>\n";
 			print "<td align=right><b> Bestilt</b></td>\n";
 		}
-		print "<td align=right><b><a href=\"varer.php?sort=beholdning&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">Beholdn.</a></b></td>\n";
+		print "<td align=right><b><a href=\"varer.php?sort=beholdning&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">".findtekst(948,$sprog_id)."</a></b></td>\n";
 	}
 }
 if ($makeSuggestion) {
@@ -435,16 +448,16 @@ if ($makeSuggestion) {
 	if ($csv) fwrite($csvfil,"\"Kostpris\";\"Salgspris\"\n");
 	else {
 		($vatOnItemCard)?$tekst="<br>(incl.moms)":$tekst="";
-		print "<td align=\"right\" valign=\"top\" rowspan=\"2\"><b><a href=\"varer.php?sort=salgspris&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">Salgspris</a></b>$tekst</td>\n";
-		if ($vis_kostpriser) print "<td align=\"right\" valign=\"top\" rowspan=\"2\"><b>Kostpris</b></td>\n";
+		print "<td align=\"right\" valign=\"top\" rowspan=\"2\"><b><a href=\"varer.php?sort=salgspris&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">".findtekst(949,$sprog_id)."</a></b>$tekst</td>\n";
+		if ($vis_kostpriser) print "<td align=\"right\" valign=\"top\" rowspan=\"2\"><b>".findtekst(950,$sprog_id)."</b></td>\n";
 	}
 }
 if ($vis_lev) {
-	print "<td align=right><b> Kostpris</b></td>\n";
-	print "<td align=right><b> Beholdn.</b></td>\n";	
-	print "<td>&nbsp;</td>\n";
-	print "<td><b> Leverand&oslash;r</b></td>\n";
-	print "<td><b> Lev. varenr</td>\n";
+	print "<td align=right><b>".findtekst(950,$sprog_id)."</b></td>\n";
+	print "<td align=right><b>".findtekst(948,$sprog_id)."</b></td>\n";	
+	print "<td></td>\n";
+	print "<td><b> ".findtekst(951,$sprog_id)."</b></td>\n";
+	print "<td><b> ".findtekst(952,$sprog_id)."</td>\n";
 }
 print "</tr><tr>\n";
 
@@ -584,7 +597,7 @@ if (!$vis_VG[0]) {
 			$x++;
 		}
 		$udvalg=$udvalg. ")";
-	} else $udvalg=$udvalg. " and gruppe = ''";
+	} # else $udvalg=$udvalg. " and gruppe = ''";
 }
 
 if ($lev_kto || $lev_navn) {
@@ -636,7 +649,10 @@ if (($stock||$makeSuggestion)&&!$udskriv) $varer_i_ordre=find_varer_i_ordre();
 if (!$slut) $slut=$start+50; 
 if ($beskrivelse||$varenummer||$makeSuggestion) $slut=999999;
 $v=0;
-$qtxt="select * from varer where id > 0 $udvalg order by $sort";
+$varenr = array();
+$qtxt = "select * from varer ";
+if ($udvalg) $qtxt.= "where id > 0 $udvalg ";
+if ($sort) $qtxt.= "order by $sort";
 $q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r = db_fetch_array($q)) {
 	$id[$v]=$r['id'];
@@ -655,7 +671,7 @@ while ($r = db_fetch_array($q)) {
 	$vatPrice[$v]=$salgspris[$v];
 	$v++;
 }
-
+if(isset($varenr)){// 20230414
 for ($v=0;$v<count($varenr);$v++) {
 	$z++;	# $z bruges som taeller til at kontrollere hvor mange linjer der indgaar i listen.
 $vis1=1;
@@ -728,15 +744,16 @@ $vis2=1;
 				if (in_array($gruppe[$v],$lagergrupper)) {
 				if ($makeSuggestion || $stock)	{
 					$tmp=find_beholdning($id[$v],$udskriv);
-					$i_tilbud[$z]=$tmp[1];
-					$it_ordrenr[$z]=$tmp[5];
-					$i_ordre[$z]=$tmp[2];
-					$io_ordrenr[$z]=$tmp[6];
-					$i_forslag[$z]=$tmp[3];
-					$if_ordrenr[$z]=$tmp[7];
-					$bestilt[$z]=$tmp[4];
-					$b_ordrenr[$z]=$tmp[8];
+					(isset($tmp[1]))?$i_tilbud[$z]   = $tmp[1]:$i_tilbud[$z]   = 0;
+					(isset($tmp[5]))?$it_ordrenr[$z] = $tmp[5]:$it_ordrenr[$z] = 0;
+					(isset($tmp[2]))?$i_ordre[$z]    = $tmp[2]:$i_ordre[$z]    = 0;
+					(isset($tmp[6]))?$io_ordrenr[$z] = $tmp[6]:$io_ordrenr[$z] = 0;
+					(isset($tmp[3]))?$i_forslag[$z]  = $tmp[3]:$i_forslag[$z]  = 0;
+					(isset($tmp[7]))?$if_ordrenr[$z] = $tmp[7]:$if_ordrenr[$z] = 0;
+					(isset($tmp[4]))?$bestilt[$z]    = $tmp[4]:$bestilt[$z]    = 0;
+					(isset($tmp[8]))?$b_ordrenr[$z]  = $tmp[8]:$b_ordrenr[$z]  = 0;
 				}
+
 				if ($csv) fwrite($csvfil,"\"".dkdecimal($beholdning[$v],2)."\";");
 				else {
 					if ($stock) {
@@ -820,20 +837,22 @@ $vis2=1;
 		} elseif ($makeSuggestion||$stock) {
 			if (in_array($id[$v],$varer_i_ordre)) {
 				$tmp=find_beholdning($id[$v],$udskriv);
-				$i_tilbud[$z]=$tmp[1];
-				$it_ordrenr[$z]=$tmp[5];
-				$i_ordre[$z]=$tmp[2];
-				$io_ordrenr[$z]=$tmp[6];
-				$i_forslag[$z]=$tmp[3];
-				$if_ordrenr[$z]=$tmp[7];
-				$bestilt[$z]=$tmp[4];
-				$b_ordrenr[$z]=$tmp[8];
+					(isset($tmp[1]))?$i_tilbud[$z]   = $tmp[1]:$i_tilbud[$z]   = 0;
+					(isset($tmp[5]))?$it_ordrenr[$z] = $tmp[5]:$it_ordrenr[$z] = 0;
+					(isset($tmp[2]))?$i_ordre[$z]    = $tmp[2]:$i_ordre[$z]    = 0;
+					(isset($tmp[6]))?$io_ordrenr[$z] = $tmp[6]:$io_ordrenr[$z] = 0;
+					(isset($tmp[3]))?$i_forslag[$z]  = $tmp[3]:$i_forslag[$z]  = 0;
+					(isset($tmp[7]))?$if_ordrenr[$z] = $tmp[7]:$if_ordrenr[$z] = 0;
+					(isset($tmp[4]))?$bestilt[$z]    = $tmp[4]:$bestilt[$z]    = 0;
+					(isset($tmp[8]))?$b_ordrenr[$z]  = $tmp[8]:$b_ordrenr[$z]  = 0;
 			} else {
 				$i_tilbud[$z]=0;
 				$i_ordre[$z]=0;
 				$i_forslag[$z]=0;
 				$bestilt[$z]=0;
 			}
+			if (!$min_lager[$v])  $min_lager[$v]  = 0;
+			if (!$beholdning[$v]) $beholdning[$v] = 0;
 			if ($min_lager[$v]*1>($beholdning[$v]-$i_ordre[$z]+$i_forslag[$z]+$bestilt[$z])) {
 			
 				$genbestil[$z]=$max_lager[$v]-$beholdning[$v]+$i_ordre[$z]-($i_forslag[$z]+$bestilt[$z]);
@@ -852,6 +871,7 @@ $vis2=1;
 	}
 }
 return($z);
+}
 }# endfunc udskriv
 ##############################################
 
@@ -923,7 +943,7 @@ function genbestil($vare_id, $antal) {
 		db_modify("update ordrer set sum = '$sum' where id = $ordre_id",__FILE__ . " linje " . __LINE__);	
 	} else { 
 		$r = db_fetch_array(db_select("select varenr from varer where id = '$vare_id'",__FILE__ . " linje " . __LINE__));
-		print "Leverand&oslash;r findes ikke (Varenr: $r[varenr])<br>";
+		print "".findtekst(951,$sprog_id)." findes ikke (Varenr: $r[varenr])<br>";
 	}
 }
 
@@ -969,6 +989,12 @@ function find_varer_i_ordre() { #tilfoejet 2008.01.28 for hastighedsoptimering a
 	sort ($varer_i_ordre);
 	return $varer_i_ordre;
 }
+if ($fokus) { # This does not work - must make it focus on last opened product.
+	print "<script language=\"javascript\">
+	document.vareliste.$fokus.focus();
+	</script>";
+}
+print "</tbody></table>";
 
 ?>
 </td></tr>

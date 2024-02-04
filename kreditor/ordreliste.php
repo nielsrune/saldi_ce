@@ -1,5 +1,5 @@
 <?php
-// --- kreditor/ordreliste.php --- lap 4.0.8 --- 2023-04-25 ---
+// --- kreditor/ordreliste.php -----patch 4.0.8 ----2023-10-17----------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -14,15 +14,18 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2023 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2014.03.19 addslashes erstattet med db_escape_string
 // 2104.09.16	Tilføjet oioublimport i bunden
 // 20211125 PHR Added 'Skan Bilag'
 // 20220728 MSC - Implementing new design
 // 20221106 PHR - Various changes to fit php8 / MySQLi
+// 20230317 LOE - Applied some translated texts, and Also fixed some undefined variable errors and some more.
 // 20230525 PHR - php8
+// 20231017 PHR Fixed an error in account selection ($firma);
 
 ob_start();
 @session_start();
@@ -31,8 +34,8 @@ $s_id=session_id();
 $css="../css/std.css";
 $modulnr=5;
 $title="Leverandører • Ordreliste";
-$dk_dg=$firmanavn=$firmanavn_ant=$hrefslut=$hurtigfakt=$konto_id=$linjebg=NULL;
-$checked=$returside=$totalkost=$understreg=$vis_projekt=NULL;
+$dk_dg=$firmanavn=$hrefslut=$hurtigfakt=$konto_id=$linjebg=NULL;
+$checked=$returside=$totalkost=$understreg=$vis_projekt=$nbsp=NULL;
 
 include("../includes/connect.php");
 include("../includes/online.php");
@@ -100,18 +103,9 @@ if ($submit=if_isset($_POST['submit'])) {
 	$nysort = if_isset($_POST['nysort']);
 	$firma=if_isset($_POST['firma']);
 	$kontoid=if_isset($_POST['kontoid']);
-	$firmanavn_ant=if_isset($_POST['firmanavn_antal']);
 }
+list($kontoid,$firma) = explode('|',$firma,2);
 
-if (($firma)&&($firmanavn_ant>0)) {
-	for ($x=1; $x<=$firmanavn_ant; $x++) {
-		$tmp="firmanavn$x";
-		if ($firma==$_POST['$tmp']) {
-			$tmp="konto_id$x";
-			$kontoid=$_POST['$tmp'];
-		}
-	}
-} elseif ($firmanavn_ant>0) $kontoid='';
 if ($valg) {
 	$cookievalue="$ordrenumre;$kontonumre;$fakturanumre;$ordredatoer;$lev_datoer;$fakturadatoer;$genfaktdatoer;$summer;$firma;$kontoid;$ref[0];$sort;$valg;$nysort;$modtagelsesnumre";
 	setcookie("kred_ord_lst", $cookievalue);
@@ -235,15 +229,15 @@ else {
 if ($valg=='faktura') {
 	print "<td><b><a href='ordreliste.php?nysort=fakturadate&sort=$sort&valg=$valg$hreftext' title='Fakturadato'>Fakt.dato</b></td>";
 }
-print "<td><b><a href='ordreliste.php?nysort=kontonr&sort=$sort&valg=$valg$hreftext' title='Kontonummer'>Kontonr.</b></td>";
-print "<td><b><a href='ordreliste.php?nysort=firmanavn&sort=$sort&valg=$valg$hreftext'>Firmanavn</a></b></td>";
-print "<td><b><a href='ordreliste.php?nysort=lev_navn&sort=$sort&valg=$valg$hreftext'>Leveres til</a></b></td>";
-print "<td title='Vores reference'><b> Vor.ref.</a></b></td>";
-if ($vis_projekt) print "<td title='Projektnummer'><b> Projektnr.</a></b></td>";
-if ($valg=='forslag') {print "<td align=right><b><a href='ordreliste.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>Forslagssum</a></b></td>";}
-elseif ($valg=='ordrer'){print "<td align=right><b><a href='ordreliste.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>Ordresum</a></b></td>";}
+print "<td><b><a href='ordreliste.php?nysort=kontonr&sort=$sort&valg=$valg$hreftext' title='Kontonummer'>".findtekst(804,$sprog_id)."</b></td>";
+print "<td><b><a href='ordreliste.php?nysort=firmanavn&sort=$sort&valg=$valg$hreftext'>".findtekst(360,$sprog_id)."</a></b></td>";
+print "<td><b><a href='ordreliste.php?nysort=lev_navn&sort=$sort&valg=$valg$hreftext'>".findtekst(814,$sprog_id)."</a></b></td>";
+print "<td title='Vores reference'><b> ".findtekst(815,$sprog_id)."</a></b></td>";
+if ($vis_projekt) print "<td title='Projektnummer'><b>".findtekst(816,$sprog_id)."</a></b></td>";
+if ($valg=='forslag') {print "<td align=right><b><a href='ordreliste.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>".findtekst(826,$sprog_id)."</a></b></td>";}
+elseif ($valg=='ordrer'){print "<td align=right><b><a href='ordreliste.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>".findtekst(887,$sprog_id)."</a></b></td>";}
 else {
-	print "<td align=right><b><a href='ordreliste.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>Fakturasum";
+	print "<td align=right><b><a href='ordreliste.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>".findtekst(885,$sprog_id)."";
 	print "</a></b></td>";
 }
 print "</tr>\n";
@@ -274,26 +268,26 @@ if (($kontoid)&&(!$firma)){
 	$row = db_fetch_array(db_select("select firmanavn from adresser where id = $kontoid",__FILE__ . " linje " . __LINE__));
 	$firma=$row['firmanavn'];
 }
-$query = db_select("select konto_id from ordrer where (art = 'KK' or art = 'KO') and $status order by firmanavn",__FILE__ . " linje " . __LINE__);
-while ($row = db_fetch_array($query)) {
-	 if (!in_array($row['konto_id'], $konto_id)) {
-		 $x++;
-		 $konto_id[$x]=$row['konto_id'];
-		 $r2 = db_fetch_array(db_select("select firmanavn from adresser where id = $konto_id[$x]",__FILE__ . " linje " . __LINE__));
+$qtxt = "select konto_id from ordrer where (art = 'KK' or art = 'KO') and $status order by firmanavn";
+$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+while ($r = db_fetch_array($q)) {
+	if (!in_array($r['konto_id'], $konto_id)) {
+		$konto_id[$x]=$r['konto_id'];
+		$qtxt = "select firmanavn from adresser where id = $konto_id[$x]";
+		$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		 $firmanavn[$x]=$r2['firmanavn'];
-		 if (strlen($firmanavn[$x])>35){$firmanavn[$x]=substr($firmanavn[$x],0,30)."...";}
+		if (strlen($firmanavn[$x])>35) $firmanavn[$x]=substr($firmanavn[$x],0,30)."...";
 		 print "<input type=hidden name=firmanavn$x value='$firmanavn[$x]'>";
 		 print "<input type=hidden name=konto_id$x value=$konto_id[$x]>";
+		$x++;
 	 } 
 }
-$firmanavn_antal=$x;	
-print "<input type=hidden name=firmanavn_antal value=$firmanavn_antal>";
  
 print "<td><span title= 'V&aelig;lg et firma'><SELECT NAME='firma' value='$firma' style='width:100px'>";
 print "<option>$firma</option>";
 print "<option>$nbsp</option>";
-for ($x=1;$x<=$firmanavn_antal; $x++) {
-	print "<option>$firmanavn[$x]</option>";
+for ($x=1;$x<count($konto_id); $x++) {
+	print "<option value = '$konto_id[$x]|$firmanavn[$x]'>$firmanavn[$x]</option>";
 }
 print "</SELECT></td>";
 
@@ -313,7 +307,7 @@ $refantal=$x;
 print "<td><span title= 'V&aelig;lg en referanceperson'><SELECT NAME='ref' value='$ref[0]' style='width:100px'>";
 print "<option>$ref[0]</option>";
 for ($x=1;$x<=$refantal; $x++) {print "<option>$ref[$x]</option>";}
-if ($ref[0]!=$ref[$x]) {print "<option>$ref[$x]</option>";}
+if ($ref[0]!=if_isset($ref[$x])) {print "<option>$ref[$x]</option>";}
 if ($ref[0]) {print "</SELECT></td>";}
 
 if ($vis_projekt) {

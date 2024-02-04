@@ -4,8 +4,8 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/ordreliste.php --- lap 4.0.8 ---- 2023-06-21 ---
-// LICENS
+// --- debitor/ordreliste.php -----patch 4.0.8 ----2023-11-13--------------
+//                           LICENSE
 //
 // This program is free software. You can redistribute it and / or
 // modify it under the terms of the GNU General Public License (GPL)
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2003-2023 Saldi.DK ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 20121004 Fjernet email fra $selectfelter og indsat søgerutine til emails - søg 20121004
@@ -77,8 +78,13 @@
 // 20220301 PHR - Added "$valg == 'faktura' ||" as invoiced orders should not be locked
 // 20220619 PHR Removed misplaced ';' from findtekst(386...
 // 20220824 PHR Changed 'hent_ordrer' to wait 30 sec between fetches
+// 20230320 MSC - Fixed so tilbud icon would show up, if setting is on and fixed footer in tilbud section
 // 20230323 PBLM Fixed minor error
 // 20230621 PHR missing $sprog_id
+// 20230719 LOE Made some minor modification
+// 20230829 MSC - Copy pasted new design into code
+// 20231113 PHR Added search for 'Land'
+// 20231206 PHR PHP 8 error in 'genberegn'
 
 #ob_start();
 @session_start();
@@ -372,29 +378,43 @@ if ($submit=="Genfakturer" || $submit==findtekst(1206, $sprog_id)){ #20210817
 	else print "<BODY onload=\"javascript:alert('$alert2')\">";
 } 
 if ($menu=='T') {
-	include_once '../includes/topmenu/header.php';
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
 	$TableBG = '';
 if ($valg=="$ordrer1") {
 	$TableBG = '';
-	print "
-	<div class='$kund'>".findtekst(985, $sprog_id)."</div>
-	<div class='content-noside'>";     
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">".findtekst(985, $sprog_id)."</div>";
+	if (!$hurtigfakt) {
+		print "<div class=\"headerbtnRght headLink\"><a href=ordreliste.php?valg=tilbud&konto_id=$konto_id&returside=$returside title='Vis tilbud'><i class='fa fa-dollar fa-lg'></i></a> &nbsp; <a accesskey=V href=ordrevisning.php?valg=$valg title='Ændre ordrevisning'><i class='fa fa-gear fa-lg'></i></a> &nbsp; <a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret ny ordre'><i class='fa fa-plus-square fa-lg'></i></a></div>";     	
+	}
+	else {
+		print "<div class=\"headerbtnRght headLink\"><a accesskey=V href=ordrevisning.php?valg=$valg title='Ændre ordrevisning'><i class='fa fa-gear fa-lg'></i></a> &nbsp; <a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret ny ordre'><i class='fa fa-plus-square fa-lg'></i></a></div>";     
+	}
+	print "</div>";
+	print "	<div class='content-noside'>";     
 } if ($valg=="$faktura1") {
 	$TableBG = '';
-	print "
-	<div class='$kund'>".findtekst(1420, $sprog_id)."</div>
-	<div class='content-noside'>";      
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">".findtekst(1420, $sprog_id)."</div>";     
+	if (!$hurtigfakt) {
+		print "<div class=\"headerbtnRght headLink\"><a href=ordreliste.php?valg=tilbud&konto_id=$konto_id&returside=$returside title='Vis tilbud'><i class='fa fa-dollar fa-lg'></i></a> &nbsp; <a accesskey=V href=ordrevisning.php?valg=$valg title='Ændre ordrevisning'><i class='fa fa-gear fa-lg'></i></a> &nbsp; <a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret ny ordre'><i class='fa fa-plus-square fa-lg'></i></a></div>";     
+	} else {
+		print "<div class=\"headerbtnRght headLink\"><a accesskey=V href=ordrevisning.php?valg=$valg title='Ændre ordrevisning'><i class='fa fa-gear fa-lg'></i></a> &nbsp; <a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret ny ordre'><i class='fa fa-plus-square fa-lg'></i></a></div>";     
+	}
+	print "</div>";
+	print "	<div class='content-noside'>";     
+} if ($valg=="$tilbud1" && !$hurtigfakt) {
+	$TableBG = '';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">".findtekst(812, $sprog_id)."</div>";     
+	print "<div class=\"headerbtnRght headLink\"><a href=ordreliste.php?valg=tilbud&konto_id=$konto_id&returside=$returside title='Vis tilbud'><i class='fa fa-dollar fa-lg'></i></a> &nbsp; <a accesskey=V href=ordrevisning.php?valg=$valg title='Ændre ordrevisning'><i class='fa fa-gear fa-lg'></i></a> &nbsp; <a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret ny ordre'><i class='fa fa-plus-square fa-lg'></i></a></div>";     
+	print "</div>";
+	print "	<div class='content-noside'>";   
 }
-	print "<div class=\"maincontentLargeHolder\">\n";
-print  "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable2\">";
-
-#	$leftbutton="<a title=\"Klik her for at komme til startsiden\" href=\"../index/menu.php\" accesskey=\"L\">LUK</a>";
-#	$rightbutton="<a href=\"#\">Ordremenu</a>\t";
-#	if ($valg!='ordrer') $rightbutton.="\t<a href='ordreliste.php?valg=ordrer&konto_id=$konto_id&returside=$returside'>&nbsp;Ordreliste&nbsp;</a>";
-#	if ($valg!='faktura') $rightbutton.="\t<a href='ordreliste.php?valg=faktura&konto_id=$konto_id&returside=$returside'>&nbsp;Fakturaliste&nbsp;</a>";
-#	$rightbutton.="\t<a href=\"../debitor/ordre.php?returside=../debitor/ordreliste.php?konto_id=$konto_id\">Ny ordre/faktura</a>";
-#	$rightbutton.="\t<a accesskey=V href=ordrevisning.php?valg=$valg>Visning</a>";
-#	include("../includes/topmenu.php");
 } else {
 	include("../includes/oldDesign/header.php");
 	$border='border:1px';
@@ -481,7 +501,6 @@ for ($x=1;$x<$vis_feltantal;$x++) $tmp=$tmp."\n".trim(if_isset($find[$x]));
 $tmp=db_escape_string($tmp);
 $qtxt="update grupper set box9='$tmp' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'";
 db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-
 for ($x=0;$x<$vis_feltantal;$x++) {
 	if (!isset($feltbredde[$x]) || !$feltbredde[$x]) $feltbredde[$x]=100;
 	if ($feltbredde[$x]<=10) $feltbredde[$x]*=10;
@@ -537,6 +556,9 @@ for ($x=0;$x<$vis_feltantal;$x++) {
 		} elseif (in_array($vis_felt[$x],$tekstfelter) && $find[$x]) { #20121004 20160901
 			$tmp2="ordrer.".$tmp."";
 			$udvaelg=$udvaelg.udvaelg($find[$x],$tmp2,'');
+		} elseif ($find[$x] && $vis_felt[$x] == 'land') {
+			$tmp2="ordrer.".strtolower($tmp)."";
+			$udvaelg=$udvaelg.udvaelg($find[$x],$tmp2, 'TEXT');
 		} elseif ($find[$x]||$find[$x]=="0") {
 			$tmp2="ordrer.".$tmp."";
 			$udvaelg=$udvaelg.udvaelg($find[$x],$tmp2, 'NR');
@@ -577,7 +599,7 @@ $antal=$r['antal'];
 print " </td></tr>\n<tr><td align=center valign=top>";
 #print "<table border=0 valign='top' $class><tbody>\n<tr valign=top align=center>"; 
 if ($menu=='T') {
-	print "<div class='dataTablediv'><table border=0 valign='top' class='dataTable' width='100%'><thead>\n<tr valign=top align=center>"; #20210719
+	print "<table border=0 valign='top' class='dataTable' width='100%'><thead>\n<tr valign=top align=center>"; #20210719
 } else {
 	print "<table border=0 valign='top' width='100%'><tbody>\n<tr valign=top align=center>"; #20210719
 }
@@ -597,9 +619,9 @@ for ($x=0;$x<$vis_feltantal;$x++) {
 }
 $tmp=$start+$linjeantal;
 if ($antal>$slut) { 
-	print "<td align=right class='imgNoTextDeco' style='padding-top: 20px;'><a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret ny ordre'><i class='fa fa-plus-square'></i></a> &nbsp; <a accesskey=V href=ordrevisning.php?valg=$valg title='Ændre ordrevisning'><i class='fa fa-gear'></i></a> &nbsp; <a href='ordreliste.php?start=$tmp&valg=$valg&konto_id=$konto_id'><img class='imgInvert imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+	print "<td align=right class='imgNoTextDeco' style='padding-top: 20px;'><a href='ordreliste.php?start=$tmp&valg=$valg&konto_id=$konto_id'><img class='imgInvert imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 } else { 
-	print "<td align=right class='imgNoTextDeco' style='padding-top: 20px;'><a accesskey=N href='ordre.php?konto_id=$konto_id&returside=ordreliste.php?konto_id=$konto_id' title='Opret ny ordre'><i class='fa fa-plus-square'></i></a> &nbsp; <a accesskey=V href=ordrevisning.php?valg=$valg title='Ændre ordrevisning'><i class='fa fa-gear'></i></a></td>";
+	print "<td align=right class='imgNoTextDeco' style='padding-top: 20px;'></td>";
 }
 print "</tr>\n";
 
@@ -1033,18 +1055,18 @@ $ialt=dkdecimal($ialt,2);
 $ialt_m_moms=dkdecimal($ialt_m_moms,2);
 #$cols--;
 print "<tr><td colspan='$colspan' width='100%'>";
-print "<table border='0' width='100%'><tbody>";
+print "<table border='0' width='100%' style='width:100%;'><tbody>";
 if ($valg=="$faktura1") {
-	print "<td width='30%'></td><td width='40%' align=center><span title= '".findtekst(1438, $sprog_id)."'><b><a href=ordreliste.php?genberegn=1&valg=$valg accesskey=G>".findtekst(878,$sprog_id)."</a></td><td width=30% align=right><b>$ialt / $dk_db / $dk_dg%</td></tr>\n";
-	print "<td width=30%><br></td><td width=40% align=center><span title= ''><b>".findtekst(877,$sprog_id)."</td><td width=30% align=right><b>$ialt_m_moms</td></tr>\n";
+	print "<td width='10%'></td><td width='70%' align=right><span title= '".findtekst(1438, $sprog_id)."'><b><a href=ordreliste.php?genberegn=1&valg=$valg accesskey=G>".findtekst(878,$sprog_id)."</a></td><td width=20% align=right><b>$ialt / $dk_db / $dk_dg%</td></tr>\n";
+	print "<td width=10%><br></td><td width=70% align=right><span title= ''><b>".findtekst(877,$sprog_id)."</td><td width=20% align=right><b>$ialt_m_moms</td></tr>\n";
 } else {
-	print "<td width=30%>";
+	print "<td width=20%>";
 	if ($valg=="$ordrer1" && !$vis_lagerstatus) {
 		print "<span title='".findtekst(1443, $sprog_id)."'>";
 		print "<a href=\"ordreliste.php?vis_lagerstatus=on&valg=$valg\">".findtekst(810,$sprog_id)."</a>";#20210318
 		print "</span>";
 	}
-	print "</td><td width=40% align=center>".findtekst(811,$sprog_id)."</td><td width=30% align=right><b>$ialt_m_moms ($ialt)</td></tr></tr>\n";
+	print "</td><td width=70% align=right>".findtekst(811,$sprog_id)."</td><td width=20% align=right><b>$ialt_m_moms ($ialt)</td></tr></tr>\n";
 }
 if ($genberegn==1) print "<meta http-equiv=\"refresh\" content=\"0;URL='ordreliste.php?genberegn=2&valg=$valg'\">";
 #$cols++;
@@ -1093,7 +1115,7 @@ echo "$api_txt<br>";
 }
 $r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));
 
-if ($apifil=$r['box2']) {
+if (isset($r['box2']) && $apifil=$r['box2']) { //checks if $r$r['box2'] exists before using it
 	(strpos($r['box2'],'opdat_status=1'))?$opdat_status=1:$opdat_status=0;
 	(strpos($r['box2'],'shop_fakt=1'))?$shop_fakt=1:$shop_fakt=0;
 	(strpos($r['box2'],'betaling=kort'))?$kortbetaling=1:$kortbetaling=0;
@@ -1149,33 +1171,21 @@ if ($apifil=$r['box2']) {
 #print "<body onload=\"javascript:window.open('$url','opdat:beholdning');\">";
 function genberegn($id) {
 	$kostpris=0;
-	$qtxt = db_select("select id,vare_id,antal,pris,kostpris,saet,samlevare from ordrelinjer where ordre_id = $id and posnr>0 and vare_id > 0",__FILE__ . " linje " . __LINE__);
-	while ($r0=db_fetch_array($qtxt)) {
+	$qtxt = "select id,vare_id,antal,pris,kostpris,saet,samlevare from ordrelinjer where ordre_id = '$id' ";
+	$qtxt.= "and posnr > '0' and vare_id > '0' and antal IS NOT NULL and kostpris IS NOT NULL";
+	$q0 = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($r0=db_fetch_array($q0)) {
 		$qtxt = "select provisionsfri, gruppe from varer where id = '$r0[vare_id]'";
 		if ($r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-			$qtxt = "select box9 from grupper where art = 'VG' and ".nr_cast(kodenr)."='$r1[gruppe]' and box9 = 'on'";
-			if ((!$r1[provisionsfri])&&($r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))) {
-/*
-				$batch_tjek='0';
-				$q1 = db_select("select antal, batch_kob_id from batch_salg where linje_id = '$r0[id]' and batch_kob_id != 0",__FILE__ . " linje " . __LINE__);
-				while ($r1=db_fetch_array($q1)) {
-					if ($r2=db_fetch_array(db_select("select pris, fakturadate, linje_id from batch_kob where id = '$r1[batch_kob_id]'",__FILE__ . " linje " . __LINE__))) {
-						if ($r2['fakturadate']<'2000-01-01') $r2=db_fetch_array(db_select("select pris from ordrelinjer where id = '$r2[linje_id]'",__FILE__ . " linje " . __LINE__));
-						$batch_tjek=1;
-						$tmpp=$r2['pris']*$r1['antal'];
-						$kostpris=$kostpris+$r2['pris']*$r1['antal'];
-					}
-				}
-				if ($batch_tjek<1) {
-					$r2=db_fetch_array(db_select("select kostpris from varer where id = $r0[vare_id]",__FILE__ . " linje " . __LINE__));
-					$kostpris=$kostpris+$r2['kostpris']*$r0['antal'];
-				}
-*/
+			$qtxt = "select box9 from grupper where art = 'VG' and kodenr='$r1[gruppe]' and box9 = 'on'";
+			if ( !$r1['provisionsfri'] && db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			$kostpris+=$r0['kostpris']*$r0['antal'];
 			}
-			elseif ($r1['provisionsfri']) $kostpris+=$r0['pris']*$r0['antal'];
-			else {
-				if ($r0['saet'] && $r0['samlevare'] && $r0['kostpris']) {
+			elseif ($r1['provisionsfri']) {
+				$kostpris+=$r0['pris']*$r0['antal'];
+			}
+			else {	
+				if ($r0['saet'] && $r0['samlevare'] && $r0['kostpris']) { 
 					$r0['kostpris']=0;
 					db_modify("update ordrelinjer set kostpris='0' where id = '$r0[id]'");
 				}
@@ -1214,7 +1224,6 @@ function bidrag ($feltnavn,$sum,$moms,$sum_m_moms,$kostpris,$udlignet){
 if ($valg=="$ordrer1") {
 	if ($menu=='T') {
 		print "</tfoot></table>";
-		print "</tbody></table></div>";
 		print "</tbody></table>";
 	} else {
 		print "</tbody></table>";
@@ -1226,11 +1235,19 @@ if ($valg=="$ordrer1") {
 if ($valg=="$faktura1") {
 	if ($menu=='T') {
 		print "</tfoot></table>";
-		print "</tbody></table></div>";
 		print "</tbody></table>";
 	} else {
 		print "</tfoot></table>";
-		print "</tbody></table></div>";
+		print "</tbody></table>";
+	}
+}
+
+if ($valg=="$tilbud1"  && !$hurtigfakt) {
+	if ($menu=='T') {
+		print "</tfoot></table>";
+		print "</tbody></table>";
+	} else {
+		print "</tfoot></table>";
 		print "</tbody></table>";
 	}
 }

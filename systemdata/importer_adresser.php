@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/importer_adresser.php --- lap 4.0.8 --- 2023-07-01 ---
+// --- systemdata/importer_adresser.php-----patch 4.0.8 ----2023-12-14--
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2023 saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // -----------------------------------------------------------------------
 
 // 2013.02.10 Break ændret til break 1
@@ -28,7 +29,9 @@
 // 2014.08.11 se $find_kontakt... 
 // 2017.01.04 rettet else til elseif ($feltnavn[$y] != 'kontoansvarlig') 20170104
 // 2019.10.21 PHR Added '&& strpos($felt[$y]," "))' ad field was emptied if not  #20191021
+// 2021.07.14 LOE Translated some text.
 // 20230702 PHR php8
+// 20231214 PHR Correceted text error and recognition of Lb.Md.
 
 @session_start();
 $s_id=session_id();
@@ -45,8 +48,9 @@ print "<div align=\"center\">";
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>Luk</a></td>";
-print "<td width=\"80%\" $top_bund>$title</td>";
+if ($popup) print "<td width=\"10%\" $top_bund><a href=../includes/luk.php accesskey=L>".findtekst(30, $sprog_id)."</a></td>"; #20210713
+else print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>".findtekst(30, $sprog_id)."</a></td>";
+print "<td width=\"80%\" $top_bund>".findtekst(1385, $sprog_id)."</td>";
 print "<td width=\"10%\" $top_bund><br></td>";
 print "</tbody></table>";
 print "</td></tr>";
@@ -92,12 +96,12 @@ function upload(){
 	print "<form enctype=\"multipart/form-data\" action=\"importer_adresser.php\" method=\"POST\">";
 	print "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"900000\">";
 	print "<tr><td width=\"150px\">Import art</td><td align=\"right\"><select name=\"art\" style=\"width:150px\">\n";
-	print "<option value=\"D\">Debitorimport</option>\n";
-	print "<option value=\"K\">Kreditorimport</option>\n";
+	if ($art!='D') print "<option value=\"D\">".findtekst(1386, $sprog_id)."</option>\n";
+	if ($art!='K') print "<option value=\"K\">".findtekst(1387, $sprog_id)."</option>\n";
 	print "</select></span></td></tr>";
-	print "<tr><td width=\"150px\">Opdater eksisterende</td><td align=\"right\"><input type=\"checkbox\" name=\"opdat\"></td></tr>";
+	print "<tr><td width=\"150px\">".findtekst(1388, $sprog_id)."</td><td align=\"right\"><input type=\"checkbox\" name=\"opdat\"></td></tr>";
 	print "<tr><td colspan=\"2\"><hr></td></tr>";
-	print "<tr><td> V&aelig;lg datafil:</td><td><input name=\"uploadedfile\" type=\"file\"></td></tr>";
+	print "<tr><td> ".findtekst(1364, $sprog_id).":</td><td><input name=\"uploadedfile\" type=\"file\"></td></tr>";
 	print "<tr><td colspan=\"2\"><hr></td></tr>";
 	print "<tr><td colspan=\"2\" align=center><input type=\"submit\" value=\"Hent\"></td></tr>";
 	print "</form>";
@@ -160,10 +164,10 @@ print "<tr><td>Konto art:<b>$art</b></td>\n";
 print "<input type=\"hidden\" name=\"art\" value=\"$art\">\n";
 print "<input type=\"hidden\" name=\"opdat\" value=\"$opdat\">\n";
 print "</select></span>";
-print "<td colspan=\"$cols\" align=\"right\"><span title='Angiv hvilket skilletegn der anvendes til opdeling af kolonner'>Separatortegn&nbsp;<select name=splitter>\n";
+print "<td colspan=\"$cols\" align=\"right\"><span title='".findtekst(1389, $sprog_id)."'>".findtekst(1377, $sprog_id)."<select name=splitter>\n";
 if ($splitter) print "<option>$splitter</option>\n";
-if ($splitter!='Semikolon') print "<option>Semikolon</option>\n";
-if ($splitter!='Komma') print "<option>Komma</option>\n";
+if ($splitter!='Semikolon') print "<option>".findtekst(1378, $sprog_id)."</option>\n";
+if ($splitter!='Komma') print "<option>".findtekst(1379, $sprog_id)."</option>\n";
 if ($splitter!='Tabulator') print "<option>Tabulator</option>\n";
 print "</select></span>";
 print "<input type=\"hidden\" name=\"filnavn\" value=$filnavn>";
@@ -408,6 +412,7 @@ if ($fp) {
 				if ($feltnavn[$y]=='betalingsbet') {
 					$tmp=strtolower($felt[$y]);
 					if ($tmp=='lb.md.') $felt[$y]='Lb.Md.';
+					elseif ($tmp=='lb. md.') $felt[$y]='Lb. Md.';
 					elseif ($tmp=='forud') $felt[$y]='Forud';
 					elseif ($tmp=='kontant') $felt[$y]='Kontant';
 					elseif ($tmp=='efterkrav') $felt[$y]='Efterkrav';
@@ -513,7 +518,7 @@ if ($fp) {
 					db_modify("insert into ansatte($kontakt_a,posnr,konto_id) values ($kontakt_b,1,'$konto_id')",__FILE__ . " linje " . __LINE__);
 				}
 				if ($kontakt_b) {
-					list($tmp,$null)=explode(",",$kontakt_b,2);
+					list($tmp,$null)=explode(",'",$kontakt_b,2);
 					db_modify("update adresser set kontakt=$tmp where id = '$konto_id'",__FILE__ . " linje " . __LINE__);
 				}
 			}

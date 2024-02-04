@@ -231,7 +231,7 @@ $vis=if_isset($_GET['vis']);
 					color: #FFF;
 				}
 			</style>
-			<title>Stillads</title>
+			<title>". $pageTitle ."</title>
 		</head>
 		<body>
 		<div id=\"wrapper\">";

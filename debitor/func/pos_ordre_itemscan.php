@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.8 -- 2023.06.15 --
+// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.9 -- 2023.12.20 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -64,6 +64,7 @@
 // 20220614 PHR Added hidden input tilfravalgNy as tilfravalg was reset when changing price or rebate. See pos_ordre.php too 
 // 20220726 PHR Added barcodeNew to be inserted into orderline colunm 'barcode'
 // 20230613 PHR php8
+// 20231220 PHR added htmlentities to #20210829
 
 function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$rabat_ny,$lager_ny) {
 	print "\n<!-- Function varescan (start)-->\n";
@@ -389,7 +390,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 		print "<input type=\"hidden\" name = \"pre_bordnr\" value=\"$bordnr\">\n";  #20140508
 		#print "<input type=\"hidden\" name = \"vare_id\" value=\"$vare_id[0]\">\n";
 		print "<input type=\"hidden\" name = \"momssats\" value=\"$momssats\">\n";
-		print "<input type='hidden' name = 'beskrivelse_old' value=\"$beskrivelse[0]\">\n"; #20210829
+		print "<input type='hidden' name = 'beskrivelse_old' value='". htmlentities($beskrivelse[0]) ."'>\n"; #20210829
 		print "<input type='hidden' name = 'pris_old' value=\"$pris[0]\">\n"; #20210829
 		if ($myDe) print "<input type='hidden' name = 'beskrivelse_ny' value=\"$myDe\">\n"; #20210829
 		print "<input type='hidden' name = 'barcodeNew' value=\"$barcodeNew\">\n"; #20210829
@@ -443,7 +444,6 @@ if (!$pris_old && $myPr) $pris_old = dkdecimal($myPr);
 				print "<td align=\"right\" title=\"".findtekst(1874, $sprog_id).": ".dkdecimal($kostpris[0],2)."\">$pris[0]</td>\n";
 			}
 			if ($pris_ny && $fokus=="rabat_ny") {
-echo __line__." $barcodeNew<br>";
 #			$r=db_fetch_array(db_select("select box8 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
 #				$rabatvareid=$r['box8']*1;
 #				if (db_fetch_array(db_select("select varenr from varer where id = '$rabatvareid'",__FILE__ . " linje " . __LINE__))) {

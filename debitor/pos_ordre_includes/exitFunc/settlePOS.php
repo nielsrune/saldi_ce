@@ -75,6 +75,7 @@
 		}
 		$linjeantal=$x;
 		transaktion("begin");
+/*
 		for($x=1;$x<=count($linje_id);$x++) {
 #			if ($pris[$x] != 0 && $rabat[$x] != 0 && $kostpris[$x] != 0 && $fast_db[$x] != 0) {
 				$qtxt = "select salgspris,kostpris from varer where id = '$vare_id[$x]'";
@@ -85,6 +86,7 @@
 					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 				}
 			}
+*/
 #		}
 		$pos=0;
 		$sum=0;

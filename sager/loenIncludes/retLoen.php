@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- sager/loenIncludes/loen.php --- lap 4.0.8 --- 2023-07-03 ---
+// --- sager/loenIncludes/loen.php --- lap 4.0.8 --- 2023-10-05 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -23,6 +23,7 @@
 // Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20230703 PHR New up/down height add on's was omitted in new note (seddel) whe denied (afvist) 
+// 20231005 PHR mentor and km now omittet on hoursalary (timeløn)  
 
 function ret_loen() {
 	global $brugernavn;
@@ -1143,8 +1144,10 @@ function ret_loen() {
 							<th>100%</th>";
 							print "<th width='36' title='Skur lav sats (".dkdecimal($skur_sats1)."'>S(L)</th>";
 							print "<th width='36' title='Skur høj sats (".dkdecimal($skur_sats2)."'>S(H)</th>";
+							if ($loen_art!='timer') { //20231005
 							print "<th width='36' title='Mentortillæg (".dkdecimal($mentorRate).")'>Mentor</th>";
 							print "<th>Km</th>";
+							}
 							print "<th>Sum</th>";
 							if ($loen_art=='timer') print "<th>Timetillæg</th>";
 							else print "<th>Akkord</th>";
@@ -1325,12 +1328,14 @@ function ret_loen() {
 								print "<td class=\"alignCenter\"><input name=\"skur2[$x]\" type=\"checkbox\" $l_skur2[$x]></td>\n";
 #								print "<td class=\"alignCenter\"><input name=\"loen_mentor[$x]\" type=\"checkbox\" $l_mentor[$x]></td>\n";
 							}
+							if ($loen_art!='timer') { //20231005
 							print "<td title=\"\"><input type=\"text\" $beskyttet placeholder=\"0,00\" name=\"loen_mentor[$x]\"
 							class=\"alignRight printBorderNone\" value=\"". str_replace(".",",",$loen_mentor[$x]) ."\"
 								style=\"width:33px;\"></td>\n";
 							print "<td title=\"Fratrukket $fratraek[$x] kilometer\"><input type=\"text\" $beskyttet placeholder=\"0,00\"
 								name=\"loen_km[$x]\" class=\"alignRight printBorderNone\" value=\"". str_replace(".",",",$loen_km[$x]). "\"
 								style=\"width:33px;\"></td>\n";
+							}
 							if($hideSalary && $loen_art == 'timer'){
 							print "<td><input type=\"text\" readonly=\"readonly\"  name=\"hideSalary\" class=\"alignRight printBorderNone\" value=\"\" disabled=\"disabled\" style=\"width:50px;\"></td>\n";
 							print "<input type=\"hidden\" name=\"t_belob[$x]\" value=\"$loen_loen[$x]\">\n";

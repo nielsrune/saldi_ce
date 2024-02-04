@@ -4,28 +4,29 @@
 //                        \__ \/ _ \| |_| |) | |
 //                        |___/_/ \_|___|___/|_|
 //
-// -------systemdata/ansatte.php--------lap 3.6.2-------2016-03-03-------
-// LICENS
+// --- systemdata/ansatte.php --- patch 4.0.8 --- 2023-079-25 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2016 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20160303 PHR indsat manglende '</form>'
+// 20210711 LOE - Translated some texts to Norsk and English from Dansk
+// 20220614 MSC - Implementing new design
+// 20230925 PHR - PHP8
 
 @session_start();
 $s_id=session_id();
@@ -34,34 +35,37 @@ $css="../css/standard.css";
 $title="Personalekort";
 $modulnr=1;
 	
+$afd_nr=array();
+	
 include("../includes/var_def.php");
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 
  if ($_GET) {
-	$id        = if_isset($_GET['id']);
-	$returside = if_isset($_GET['returside']);
-	$fokus     = if_isset($_GET['fokus']);
-	$konto_id  = if_isset($_GET['konto_id']);
+	$id = $_GET['id'];
+	$returside= $_GET['returside'];
+	$fokus = $_GET['fokus'];
+	$konto_id=$_GET['konto_id'];
  }
 if ($_POST) {
 	include("ansatte_save.php");
 }
 if ($menu=='T') {
-#	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
-	print "<div id=\"header\">\n";
-	print "<div class=\"headerbtnLft\"></div>\n";
-#	print "<span class=\"headerTxt\">Systemsetup</span>\n";     
-#	print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=../debitor/debitorkort.php;title=debitor\" class=\"button green small right\">Ny debitor</a>--></div>";       
-	print "</div><!-- end of header -->";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=stamkort.php accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 	print "<div id=\"leftmenuholder\">";
 	include_once 'left_menu.php';
 	print "</div><!-- end of leftmenuholder -->\n";
-	print "<div class=\"maincontent\">\n";
-	print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>"; # -> 1
+	print "<div class=\"maincontentLargeHolder\">\n";
+	print "<div class='divSys'>";
+	print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTableSys\"><tbody>"; # -> 1
 } else {
 	$query = db_select("select firmanavn from adresser where id = '$konto_id'",__FILE__ . " linje " . __LINE__);
 	$row = db_fetch_array($query);
@@ -69,9 +73,9 @@ if ($menu=='T') {
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><!-- TABEL 1 -> --><tbody>";
 	print "<tr><td align=\"center\" valign=\"top\">";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><!-- TABEL 1.1 -> --><tbody>";
-	print "<td width=\"10%\" $top_bund<font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$font<a href=stamkort.php?returside=$returside&id=$konto_id&fokus=$fokus accesskey=L>Luk</a></td>";
-	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$font$row[firmanavn] - Ansatte</td>";
-	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$font<a href=ansatte.php?returside=$returside&fokus=$fokus&konto_id=$konto_id accesskey=N>Ny</a><br></td>";
+	print "<td width=\"10%\" $top_bund<font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$font<a href=stamkort.php?returside=$returside&id=$konto_id&fokus=$fokus accesskey=L>".findtekst(30, $sprog_id)."</a></td>";#20210711 
+	print "<td width=\"80%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$font$row[firmanavn] - ".findtekst(1262, $sprog_id)."</td>";
+	print "<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\" color=\"#000066\">$font<a href=ansatte.php?returside=$returside&fokus=$fokus&konto_id=$konto_id accesskey=N>".findtekst(39, $sprog_id)."</a><br></td>";
 	print "</tbody></table><!-- <- TABEL1.1 -->";
 	print "</td></tr>";
 	print "<td align=center valign=center>";
@@ -86,12 +90,23 @@ include("ansatte_body.php");
 print "<tr><td><br></td></tr>";
 print "<tr><td><br></td></tr>";
 print "<td><br></td><td><br></td><td><br></td>";
-PRINT "<td align=center><input type=\"submit\" accesskey=\"g\" value=\"Gem/opdat&eacute;r\" name=\"submit\"></td>";
+PRINT "<td align=center><input type=\"submit\" class='green medium button' style='width:150px;' accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\" name=\"submit\"></td>";
 print "</form>";
-?>
+
+print "
 </tbody>
-</table><!-- <- TABEL 1.2 -->
+</table>
 </td></tr>
-<tr><td align="center" valign="bottom">
-</tbody></table><!-- <- TABEL 1 -->
-</body></html>
+<tr><td align=\"center\" valign=\"bottom\">
+</tbody></table>
+</div></div>
+";
+
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
+?>

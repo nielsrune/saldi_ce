@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/varekort.php --- lap 4.0.8 --- 2023-06-03 ---
+// --- lager/varekort.php --- lap 4.0.8 --- 2023-10-18 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -50,8 +50,8 @@
 // 20190129 PHR	- PHR Incl_moms changed according to'$vatOnItemCard' to fullfill demands for different Vat Rates
 // 20190220 MSC - Rettet topmenu design og isset fejl
 // 20190321 PHR - Added 'read-only'. Look for $noEdit
-// 20190404  LN - Added call to varios functions in varekort_includes/percentageField and created percentage field.
-// 20190409 PHR - Added call to function vatPercent in varekort_includes/itemVat.php and moved vat calculation there.
+// 20190404  LN - Added call to varios functions in productCardIncludes/percentageField and created percentage field.
+// 20190409 PHR - Added call to function vatPercent in productCardIncludes/itemVat.php and moved vat calculation there.
 // 20190421 PHR - Added confirmDescriptionChange, can be set in 'Indstillinger' > 'VareValg'. 
 // 20190321 PHR - Edited 'read-only'. Changed from [10] to [9]
 // 20191022 PHR - Added copy option, search 'Kopier'.
@@ -69,7 +69,7 @@
 // 20200714 PHR	- Corrected copy handling
 // 20200922 PHR - Added confirmStockChange, can be set in 'Indstillinger' > 'VareValg'. 
 // 20201020 PHR - Total qty was inserted as variant qty when adding variant.
-// 20201115 PHR - Added weights and measures and moved unit section to varekort_includes/units.php
+// 20201115 PHR - Added weights and measures and moved unit section to productCardIncludes/units.php
 // 20210125 PHR - Changed $x to $y af parent loop was reset.
 // 20210207 PHR - 'Lagerreguler' must not be run if variants.
 // 20210213 PHR - Some cleanup
@@ -82,9 +82,12 @@
 // 20220419 DAPE - dg is now properly calculated without VAT
 // 20221004 MLH - Added on_price_list, tier_price_multiplier, tier_price_method, tier_price_rounding, salgspris_multiplier, salgspris_method, salgspris_rounding, retail_price_multiplier, retail_price_method, retail_price_rounding
 // 20221004 MLH - Added show_advanced_price_calc
-// 20230425+20230603 PHR - php8
+// 20230425 PHR - php8 +20230603
 // 20230704 PBLM - Added js to handle changes check
 // 20230824 PHR - Moved updateProductPrice routine to seperate file in productsIncludes.
+// 20230910 PHR - Moved a several routines to seperate files in productCardIncludes.
+// 20231006 PHR - some changes in Variants - Must be totally rewritten
+// 20231018 PHR - More changes in Variants - Must be totally rewritten
 
 ob_start(); //Starts output buffering
 
@@ -98,7 +101,7 @@ $styklister=1;
 $title="Varekort";
 
 $ant_indg_i=0;
-$beholdning=$beskrivelse[0]=$betalingsdage=$betegnelse=$box8=NULL;
+$batchItem=$beholdning=$beskrivelse[0]=$betalingsdage=$betegnelse=$box8=NULL;
 $commissionItem=$confirmDescriptionChange=$confirmStockChange=$copyId=$ean13=$enhed=NULL;
 $fejl=$find=$fokus=$folgevarenr=NULL;
 $grossWeight=$gruppe=NULL;
@@ -114,7 +117,7 @@ $varenr=$variant=$variantVarerVariantId=$vis_kost=NULL;
 
 $campaign_cost=$special_price=$special_from_date=$special_to_date=0;
 $oldCost=$oldSale=$p_grp_kostpris=$p_grp_salgspris=$p_grp_retail_price=$p_grp_tier_price=0;
-$beskrivelse=$kat_id=$lagerbeh=$ny_lagerbeh=$varianter_id=$variantVarerId=array();
+$beskrivelse=$kat_id=$lagerbeh=$ny_lagerbeh=$varianter_id=$variantVarerId=$variantVarerQty=array();
 
 // 20221004
 $on_price_list=1;
@@ -133,8 +136,8 @@ include("../includes/std_func.php");
 include("../includes/vareopslag.php"); # 20090514
 include("../includes/stykliste.php");
 include("../includes/fuld_stykliste.php");
-include("varekort_includes/itemVat.php");
-include("varekort_includes/percentageField.php");
+include("productCardIncludes/itemVat.php");
+include("productCardIncludes/percentageField.php");
 
 			$qtxt="SELECT column_name FROM information_schema.columns WHERE table_name='varer' and column_name='specialtype'";
 			if (!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
@@ -207,7 +210,7 @@ if ($deleteItem=='Slet') {
 }	
 $acceptStockChange=if_isset($_POST['acceptStockChange']);
 $cancelStockChange=if_isset($_POST['cancelStockChange']);
-
+#$acceptStockChange=1;
 if ($acceptStockChange) {
 	$initials=if_isset($_POST['initials']);
 	$reason=if_isset($_POST['reason']);
@@ -222,9 +225,8 @@ if ($acceptStockChange) {
 	$qtxt.= "('$id','". db_escape_string($userName) ."','". db_escape_string($initials) ."','". db_escape_string($reason) ."',";
 	$qtxt.= "'". $stockchange ."','". date("U") ."')";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-	$lagerbeh=if_isset($_POST['lagerbeh']);
-	$ny_lagerbeh=if_isset($_POST['ny_lagerbeh']);
-
+    $lagerbeh    = if_isset($_POST['lagerbeh'],array());
+    $ny_lagerbeh = if_isset($_POST['ny_lagerbeh'],array());
 	for($x=1;$x<=count($ny_lagerbeh);$x++) {
 #		if ($ny_lagerbeh[$x]!=$lagerbeh[$x]) {
 			lagerreguler($id,$ny_lagerbeh[$x],$cost,$x,date("Y-m-d"),'0');
@@ -271,7 +273,7 @@ if ($saveItem || $submit = trim($submit)) {
 	$lev_varenr=if_isset($_POST['lev_varenr']);
 	$lev_antal=if_isset($_POST['lev_antal']);
 	$lev_pos=if_isset($_POST['lev_pos']);
-	$gruppe=if_isset($_POST['gruppe']);
+    $gruppe                  = (int)if_isset($_POST['gruppe']);
 	$ny_gruppe=if_isset($_POST['ny_gruppe']);
 	$dvrg_nr[0]=if_isset($_POST['dvrg'])*1; # DebitorVareRabatGruppe
 	$prisgruppe=if_isset($_POST['prisgruppe'])*1;
@@ -319,16 +321,16 @@ if ($saveItem || $submit = trim($submit)) {
 	$ny_kategori=if_isset($_POST['ny_kategori']);
 	$rename_category=if_isset($_POST['rename_category']);
 	$vare_varianter=if_isset($_POST['vare_varianter']);
+    $useVariants = $vare_varianter;
     $varianter_id            = if_isset($_POST['varianter_id'],array());
 	$var_type=if_isset($_POST['var_type']);
 	$var_type_beh=if_isset($_POST['var_type_beh']);
 	$var_type_stregk=if_isset($_POST['var_type_stregk']);
 	$variant_vare_id=if_isset($_POST['variant_vare_id']);
 	$variant_vare_stregkode=if_isset($_POST['variant_vare_stregkode']);
-    $variantVarerQty = if_isset($_POST['variant_varer_beholdning']);
+    $variantVarerQty         = if_isset($_POST['variant_varer_beholdning'],array());
 	$lagerbeh=if_isset($_POST['lagerbeh']);
     $ny_lagerbeh             = if_isset($_POST['ny_lagerbeh'],array());
-    
     #20221004
     $on_price_list           = if_isset($_POST['on_price_list']);
     $tier_price_multiplier   = usdecimal(if_isset($_POST['tier_price_multiplier']),2);
@@ -368,7 +370,11 @@ if ($saveItem || $submit = trim($submit)) {
 		} else $kostpris[0] = 0;
 	} else $kostpris[0] = usdecimal($kostpris[0],2);
 	
-	
+    $qtxt = "select * from grupper where art='VG' and kodenr = '$gruppe'";
+    if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+        $stockItem = if_isset($r['box8'],0);
+        $batchItem = if_isset($r['box9'],0);
+    }
 	$qtxt="select box4 from grupper where art='API'";
     $api_fil = NULL;
     if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $api_fil=trim($r['box4']);
@@ -426,6 +432,7 @@ if ($id && is_array($lagerlok)) {
 	}
 */
 	for ($x=0;$x<count($variant_vare_id);$x++) {
+      if (!isset($variantVarerQty[$x])) $variantVarerQty[$x] = array(); 
         for ($l=1;$l<=count($variantVarerQty[$x]);$l++) {
             $variantVarerQty[$x][$l]=usdecimal($variantVarerQty[$x][$l],2)*1;
 			if ($variant_vare_stregkode[$x]) {
@@ -457,7 +464,7 @@ if ($id && is_array($lagerlok)) {
 		} else {
 #			($variantsum)?$var_type_beh=0:$var_type_beh=$beholdning*1; # 20201020 disabled as it made mismatch in qty's
 			if (!$ny_variant_type) $ny_variant_type=1;
-            $qtxt="insert into variant_varer(vare_id,variant_type,variant_stregkode,variant_varer_beholdning) values ('$id','$ny_variant_type','$var_type_stregk','0')"; 
+            $qtxt="insert into variant_varer(vare_id,variant_type,variant_stregkode,variant_beholdning) values ('$id','$ny_variant_type','$var_type_stregk','0')"; 
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
 			$qtxt="select id from variant_varer where vare_id='$id' and variant_type='$ny_variant_type' and variant_stregkode = '$var_type_stregk'"; 
 			$r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -872,9 +879,8 @@ if ($id && is_array($lagerlok)) {
 	for($x=1;$x<=count($ny_lagerbeh);$x++) {
       $ny_beholdning+=$ny_lagerbeh[$x];
 }
-
 if ($confirmStockChange && !$changeStock && $ny_beholdning != $beholdning) {
-	include ("varekort_includes/confirmStockChange.php");
+    include ("productCardIncludes/confirmStockChange.php");
 }
 if ($stockItem) {
     for($x=1;$x<=$numberOfStocks;$x++) {
@@ -903,7 +909,7 @@ elseif (strstr($submit, "Vare")) {
 	vareopslag ($sort, $fokus, $id, $vis_kost, $ref, $find, "varekort.php");
 }
 if ($saveItem && $beskrivelse[0] != $oldDescription) {
-	if ($confirmDescriptionChange) include ("varekort_includes/changeDescription.php");
+    if ($confirmDescriptionChange) include ("productCardIncludes/changeDescription.php");
 	else {
 		$qtxt="update varer set beskrivelse = '". db_escape_string($beskrivelse[0]) ."' where id= '$id'";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -1028,6 +1034,7 @@ if ($id > 0) {
         $variantVarerId[$x]=$r['id'];
         $variantVarerBarcode[$x]=$r['variant_stregkode'];
         $variantVarerType[$x]=explode(chr(9),$r['variant_type']);
+        $variantVarerText[$x]=$r['beskrivelse'];
         $variantVarerVariantId[$x]=$r['variant_id'];
         $var_beh[$x] = 0;
          for($l=1;$l<=$numberOfStocks;$l++) {
@@ -1037,15 +1044,10 @@ if ($id > 0) {
             if ($r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
                 $variantVarerQty[$x][$l]=$r2['beholdning'];
                 $var_beh[$x]+=$variantVarerQty[$x][$l];
-                #cho "VB ".$variantVarerQty[$x][$l]."<br>";
             }
         }
         $x++;
     }
-            
- 
-	
- 
     if ($r=db_fetch_array(db_select("select shop_id from shop_varer where saldi_id='$id'",__FILE__ . " linje " . __LINE__))) {
 		$shop_id=$r['shop_id'];
 		$publiceret='on';
@@ -1139,10 +1141,10 @@ if ($id > 0) {
 		$useCommission = $r['var_value'];
 	} else $useCommission = NULL;
 #	$kpris=dkdecimal($row['kostpris']);
-	$query = db_select("select * from grupper where art='VG' and kodenr = '$gruppe'",__FILE__ . " linje " . __LINE__);
-	$row = db_fetch_array($query);
-    $stockItem = if_isset($row['box8'],0);
-    $batchItem = if_isset($row['box9'],0);
+    $q = db_select("select * from grupper where art='VG' and kodenr = '$gruppe'",__FILE__ . " linje " . __LINE__);
+    $r = db_fetch_array($q);
+    $stockItem = if_isset($r['box8'],0);
+    $batchItem = if_isset($r['box9'],0);
 }else {
 	$gruppe=1;
 	$leverandor=0;
@@ -1215,73 +1217,25 @@ if (!$varenr) {
 } else {
 	print "<input type=\"hidden\" name=\"varenr\" value=\"$varenr\">";
 	print "<tr><td colspan='4' width='100%'><table bordercolor='#FFFFFF' border='1' cellspacing='5' width='100%'><tbody>";
-	print "<tr><td colspan='2' valign='top'><table border='0' width='100%'><tbody>"; # Pris enhedstabel ->
-	if (!$beskrivelse[0]) $fokus="beskrivelse0";
-	print "<tr><td width='17%'>".findtekst(914,$sprog_id)."</td><td>";
-	print "<input type='hidden' name='oldDescription' value=\"$beskrivelse[0]\">";
-	print "<input class='inputbox' type='text' style='text-align:left;width:400px;' name='beskrivelse0' ";
-	if (strpos($beskrivelse[0],"'")) print "value=\"". $beskrivelse[0] ."\" ";
-	else print "value='". $beskrivelse[0] ."' ";
-	print "onchange=\"javascript:docChange = true;\"></td>";
-#	print "<a href=changeDescription.php?id=$id>$beskrivelse[0]</a></td>";
-	print "<td rowspan='6' valign='top'>";
-    $box6 = NULL;
-    $qtxt = "select box6 from grupper where art = 'bilag'";
-    if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $box6 = $r['box6'];
-    if ($box6) {
-		if ($fotonavn) {
-            $fotourl=$docfolder.$db."/varefotos/".$id;
-			($noEdit)?$href=NULL:$href="varefoto.php?id=$id&fotonavn=".urlencode($fotonavn);
-			print "<a href=\"$href\"><img style=\"border:0px solid;height:100px\" alt=\"$fotonavn\" src=\"$fotourl\"></a>";
-		} else {
-			($noEdit)?$href=NULL:$href="varefoto.php?id=$id";
-			print "<a href=\"$href\">".findtekst(2022,$sprog_id)."</a>";
-		}
-	}
-	print "</td></tr>";
-	for ($x=1;$x<=$vare_sprogantal;$x++) {
-		print "<input type=\"hidden\" name=\"vare_tekst_id[$x]\" value=\"$vare_tekst_id[$x]\">";
-		print "<tr><td>$vare_sprog[$x]</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"beskrivelse[$x]\" value=\"$beskrivelse[$x]\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	}
-	print "<tr><td>".findtekst(2019,$sprog_id)."</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"trademark\" value=\"$trademark\" onchange=\"javascript:docChange = true;\"></td></tr>";
+    print "<tr><td colspan='2' valign='top'><table border='0' width='100%'><tbody>"; # Vareinfo enhedstabel ->
+    print "\n<!-- productCardIncludes/showInfo.php begin -->\n";
+    include_once("productCardIncludes/showInfo.php");
+    print "\n<!-- productCardIncludes/showInfo.php end -->\n";
 ################# VARIANTER #######################
-    if (count($variantVarerId)) {
+    if (count($variantVarerId)) { // Selected Variants is shown
 		print "<tr><td colspan=\"2\"><hr></td></tr>";
 		print "<tr><td colspan=\"2\">".findtekst(472,$sprog_id)."</td></tr>";
 		print "<tr><td colspan=\"2\"><table border=\"0\"><tbody>";
-
-		print "<tr>";
-        for ($x=0;$x<count($variantVarerId);$x++) {
-			print "<tr>";
-            print "<input type=\"hidden\" name=\"variant_vare_id[$x]\" value=\"$variantVarerId[$x]\">";
-            print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\"
-            name=\"variant_vare_stregkode[$x]\" value=\"$variantVarerBarcode[$x]\" 
-            onchange=\"javascript:docChange = true;\"></td>";
-            for ($l=1;$l<=$numberOfStocks;$l++) {
-                if ($variantVarerId[$x]) {
-                    print "<td><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;\" name=\"variant_varer_beholdning[$x][$l]\" value=\"".dkdecimal($variantVarerQty[$x][$l],2)."\" onchange=\"javascript:docChange = true;\"></td>";
-				} else print "<td></td>"; 
-			}
-			if ($var_beh[$x]) { 
-				print "<td></td>";
-			} else {
-				print "<td title=\"".findtekst(397,$sprog_id)."\">";
-                print "<!--tekst 396--><a href=\"varekort.php?id=$id&delete_var_type=$variantVarerId[$x]\" onclick=\"return confirm('Vil du slette denne variant fra listen?')\">";
-				print "<img src=../ikoner/delete.png border=0></a></td>\n";
-			}
-            $png=barcode($variantVarerBarcode[$x]);
-			if ($png) {
-                if ($labelprint && file_exists($png)) print "<td align=\"right\"><a href=\"../lager/labelprint.php?id=$id&beskrivelse=".urlencode($beskrivelse[0])."&stregkode=".urlencode($variantVarerBarcode[$x])."&src=$png&pris=$salgspris&enhed=$enhed&indhold=$indhold\" target=\"_blank\"><img src=\"../ikoner/print.png\" style=\"border: 0px solid;\"></a></td>";
-			} 
-			print "</tr>";
-		}
+        print "\n<!-- productCardIncludes/showVariantsInfo.php begin -->\n";
+        include_once('productCardIncludes/showVariantsInfo.php');
+        print "\n<!-- productCardIncludes/showVariantsInfo.php end -->\n";
 		print "</tbody></table></td>";
-	} else {
-		print "<tr><td>".findtekst(2016,$sprog_id)."</td><td><input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:400px;\" name=\"stregkode\" value=\"$stregkode\" onchange=\"javascript:docChange = true;\"></td>";
+    } else { // Inputfield for barcode is shown
+        print "<tr><td>".findtekst(2016,$sprog_id)."<!--Stregkode--></td><td><input class=\"inputbox\" type=\"text\" style=\"text-alig1n:left;width:400px;\" name=\"stregkode\" value=\"$stregkode\" onchange=\"javascript:docChange = true;\"></td>";
 	}
 	print "</tbody></table></td>";
 	#print "<tr><td>Varianter</td><td>";
-    if (!count($vare_varianter) || !$stockItem){     
+    if (!count($variantVarerId) || !$stockItem){     
 	($stregkode)?$tmp=$stregkode:$tmp=$varenr;
 		$png=barcode($tmp);
 		if ($png) {
@@ -1302,678 +1256,65 @@ if (!$varenr) {
 ######### ==> tabel 4
 #print "<tr><td colspan=4 width=100%><table border=1 width=100%><tbody>";
 	print "<tr><td width=\"33%\" valign=top><table border=\"0\" width=\"100%\"><tbody>"; # Pris enhedstabel ->
-	print "<tr><td height=\"20%\"><b>".findtekst(2017,$sprog_id)."</b></td><td width=\"33%\" align=\"center\">$enhed</td><td width=\"33%\" align=\"center\">$enhed2</td></tr>";
-	if ($p_grp_salgspris) $type="readonly=readonly";
-	else $type="type=text";
-	if (round($salgspris,3)==0.001) $tmp=dkdecimal($salgspris,3); #20161006
-	else $tmp=dkdecimal($salgspris,2);
-#		if (isset($provisionPercentage)) {
-#        setPercentageField($type, $tmp, $enhed2, $salgspris, $forhold, $incl_moms, $id, $provisionPercentage);
-#    } else {
-#        setPercentageField($type, $tmp, $enhed2, $salgspris, $forhold, $incl_moms, $id, null);    
-#    }
-	print "<tr><td>".findtekst(949,$sprog_id)."</td><td>";
-    print "<input $type style=text-align:right size=\"8\" name=\"salgspris\" value=\"$tmp\">";
-	print "</td>";
-    if ($enhed2) {
-		$tmp=dkdecimal($salgspris/$forhold,2);
-		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
-	} elseif($incl_moms) {
-		print  "<td>(".findtekst(2018,$sprog_id).")</td>";
-    }
-	if ($p_grp_tier_price) $type="readonly=readonly";
-	else $type="type=text";
-    
-    // B2B price
- $tmp=dkdecimal($tier_price,2);
-	print "<tr><td>B2B ".findtekst(949,$sprog_id)."</td><td><input $type style=text-align:right size=8 name=tier_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
-	if ($enhed2) {
-		$tmp=dkdecimal($tier_price/$forhold,2);
-		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
-	}
-	print "</tr>";
-
-    // retail price
-	if ($p_grp_retail_price) $type="readonly=readonly";
-	else $type="type=text";
-	$tmp=dkdecimal($retail_price,2);
-	print "<tr><td>Vejl.pris</td><td><input $type style=text-align:right size=8 name=retail_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
-	if ($enhed2) {
-		$tmp=dkdecimal($retail_price/$forhold,2);
-		print "<td><INPUT class=\"inputbox\" READONLY=readonly style=text-align:right size=8 value=\"$tmp\"></td>";
-	}
-	print "</tr>";
-    if ($stockItem) {
-		$r=db_fetch_array(db_select("select box6 from grupper where art = 'DIV' and kodenr = '3'",__FILE__ . " linje " . __LINE__));
-		$fifo=$r['box6'];
-	}
-	$title = NULL;
-	#	if ($provision == 0 && $salgspris > 0) $useCommission = 0;  # 20210401
-#	elseif (($provision > 0 && $salgspris > $kostpris[0] && $kostpris[0] > 1)) $provision = $useCommission = 0;
-/*
-  if ($useCommission && $provision && $salgspris > $kostpris[0] && $kostpris[0] > 1) {
-		if (abs($kostpris[0] - ($salgspris - $salgspris*$provision/100)) < 0.1) $kostpris[0] = (100 - $provision) / 100; 
-		$title = "title = 'Når kostpris er større end 0 og mindre end 1 og varen er en kommisionsvare \n";
-		$title.= "bliver kostprisen beregnet som den pris varen sælges til * den her anførte kostpris'";
-	} else
-*/
-	if ($useCommission && $provision && $salgspris == 0 && $kostpris[0] == 0) {
-		$kostpris[0] = 1 - $provision/100;
-		$title = "title = 'Når salgspris er 0 og kostpris er større end 0 og mindre end 1 \n ";
-		$title.= "bliver kostprisen beregnet som den pris varen sælges til * den her anførte kostpris'\n";
-		$title.= "Er varen en kommissionsvare er kostprisen kommissionskundens andel af salget";
-	} 
-	if ($useCommission) {
-		if ($salgspris > 0) { 
-			$title = "title = 'Når en kommissionsvare har fast salgpris beregnes kostprisen automatisk ud fra kommissionssatsen \n";
-			$title.= "med mindre der skrives en anden kostpris her. '\n";
-		} else {
-			$title = "title = 'Når salgspris er 0 og kostpris er større end 0 og mindre end 1 \n ";
-			$title.= "bliver kostprisen beregnet som den pris varen sælges til * den her anførte kostpris\n";
-			$title.= "Er varen en kommissionsvare er kostprisen kommissionskundens andel af salget.\n";
-			$title.= "F.eks. hvis varen sælges til kr 200,00 bliver kostprisen (kommissionskundens del) ". dkdecimal(200*$kostpris[0],2) ."'";
-		}
-	}
-	$tmp=dkdecimal($kostpris[0],2);
-	if ($p_grp_kostpris || $samlevare) $type="readonly=readonly";
-	elseif ($fifo && $beholdning != 0) $type="readonly=readonly";
-	else $type="type=text";
-	print "<tr><td $title> ".findtekst(950,$sprog_id)."</td><td colspan='2' $title>";
-    print "<input $type style=text-align:right size=8 name=kostpris[0] id='costPrice' value=\"$tmp\">";
-	if ($useCommission) {
-#		if ($salgspris) {
-#			$cost = $salgspris * $kostpris[0] / 1;
-#			print ' = '. dkdecimal($cost);
-#}
-		print "</td></tr>";
-		print "<tr><td>".findtekst(2020,$sprog_id).":</td><td>";
-		($provision || $commissionItem)?$checked="checked='checked'":$checked=NULL; 
-		print "<input type='checkbox' name='commissionItem' $checked onchange=\"javascript:docChange = true;\">";
-		if ($provision && !$salgspris && $kostpris[0]) print "&nbsp;". dkdecimal($provision,0) ."%";
-		elseif ($provision) {
-			print "&nbsp<input type = 'text' style = 'width:30px;text-align:right;' name = 'provision' value = '$provision'>%";
-		}
-	} elseif ($salgspris) {
-		$CM=0;
-		$CM = 100 - $kostpris[0] * 100 / $netprice;
-		print " ". dkdecimal($CM,1) ."% dg";
-	}
-	print "</td></tr>";
-    
-    // BEGIN 20221004
-    print "<tr>";
-    print "<td>".findtekst(2077,$sprog_id)."</td>";
-    print "<td colspan='2'>";
-    print "<select name='on_price_list'>";
-    print "<option value=1".(($on_price_list==1)?" selected='selected'":"").">".findtekst(83,$sprog_id)."</option>";
-    print "<option value=0".((!$on_price_list)?" selected='selected'":"").">".findtekst(84,$sprog_id)."</option>";
-    print "</select>";
-    print "</td>";
-    print "</tr>";
-    
-    if ($show_advanced_price_calc || $salgspris_multiplier>0 || $tier_price_multiplier>0 || $retail_price_multiplier>0){
-        print "<tr><td height='25px' colspan='3' title='".findtekst(2105,$sprog_id)."'><input type='checkbox' name='show_advanced_price_calc' checked='checked'> <b>".findtekst(2105,$sprog_id)."</b></td></tr>";
-        
-        // Automatically set the sales price from cost price at product list import
-        print "<tr title='".findtekst(2079,$sprog_id)."'>";
-        print "<td>".findtekst(2076,$sprog_id)."</td>";
-        print "<td colspan='2'>";
-        print "<input type='text' style='text-align:right' size='8' name='salgspris_multiplier' value='".dkdecimal($salgspris_multiplier)."' onchange='javascript:docChange = true;'>";
-        print "<select name='salgspris_method'>";
-        print "<option value='percentage'".(($salgspris_method=='percentage')?" selected='selected'":"").">".findtekst(2064,$sprog_id)."</option>";
-        print "<option value='amount'".(($salgspris_method=='amount')?" selected='selected'":"").">".findtekst(2065,$sprog_id)."</option>";
-        print "</select>";
-        print "<select name='salgspris_rounding'>";
-        print "<option value='no_rounding'".(($salgspris_rounding=='no_rounding')?" selected='selected'":"").">".findtekst(2066,$sprog_id)."</option>";
-        print "<option value='std_rounding'".(($salgspris_rounding=='std_rounding')?" selected='selected'":"").">".findtekst(2069,$sprog_id)."</option>";
-        print "<option value='rounding_up'".(($salgspris_rounding=='rounding_up')?" selected='selected'":"").">".findtekst(2067,$sprog_id)."</option>";
-        print "<option value='round_down'".(($salgspris_rounding=='round_down')?" selected='selected'":"").">".findtekst(2068,$sprog_id)."</option>";
-        print "</select>";
-        print "</td>";
-        print "</tr>";
-
-        // Automatically set the B2B price from cost price at product list import
-        print "<tr title='".findtekst(2079,$sprog_id)."'>";
-        print "<td>".findtekst(2075,$sprog_id)."</td>";
-        print "<td colspan='2'>";
-        print "<input type='text' style='text-align:right' size='8' name='tier_price_multiplier' value='".dkdecimal($tier_price_multiplier)."' onchange='javascript:docChange = true;'>";
-        print "<select name='tier_price_method'>";
-        print "<option value='percentage'".(($tier_price_method=='percentage')?" selected='selected'":"").">".findtekst(2064,$sprog_id)."</option>";
-        print "<option value='amount'".(($tier_price_method=='amount')?" selected='selected'":"").">".findtekst(2065,$sprog_id)."</option>";
-        print "</select>";
-        print "<select name='tier_price_rounding'>";
-        print "<option value='no_rounding'".(($tier_price_rounding=='no_rounding')?" selected='selected'":"").">".findtekst(2066,$sprog_id)."</option>";
-        print "<option value='std_rounding'".(($tier_price_rounding=='std_rounding')?" selected='selected'":"").">".findtekst(2069,$sprog_id)."</option>";
-        print "<option value='rounding_up'".(($tier_price_rounding=='rounding_up')?" selected='selected'":"").">".findtekst(2067,$sprog_id)."</option>";
-        print "<option value='round_down'".(($tier_price_rounding=='round_down')?" selected='selected'":"").">".findtekst(2068,$sprog_id)."</option>";
-        print "</select>";
-        print "</td>";
-        print "</tr>";
-
-        // Automatically set the retail price from cost price at product list import
-        print "<tr title='".findtekst(2079,$sprog_id)."'>";
-        print "<td>".findtekst(2080,$sprog_id)."</td>";
-        print "<td colspan='2'>";
-        print "<input type='text' style='text-align:right' size='8' name='retail_price_multiplier' value='".dkdecimal($retail_price_multiplier)."' onchange='javascript:docChange = true;'>";
-        print "<select name='retail_price_method'>";
-        print "<option value='percentage'".(($retail_price_method=='percentage')?" selected='selected'":"").">".findtekst(2064,$sprog_id)."</option>";
-        print "<option value='amount'".(($retail_price_method=='amount')?" selected='selected'":"").">".findtekst(2065,$sprog_id)."</option>";
-        print "</select>";
-        print "<select name='retail_price_rounding'>";
-        print "<option value='no_rounding'".(($retail_price_rounding=='no_rounding')?" selected='selected'":"").">".findtekst(2066,$sprog_id)."</option>";
-        print "<option value='std_rounding'".(($retail_price_rounding=='std_rounding')?" selected='selected'":"").">".findtekst(2069,$sprog_id)."</option>";
-        print "<option value='rounding_up'".(($retail_price_rounding=='rounding_up')?" selected='selected'":"").">".findtekst(2067,$sprog_id)."</option>";
-        print "<option value='round_down'".(($retail_price_rounding=='round_down')?" selected='selected'":"").">".findtekst(2068,$sprog_id)."</option>";
-        print "</select>";
-        print "</td>";
-        print "</tr>";
-    } else {
-        print "<tr><td colspan='3'><input type='checkbox' name='show_advanced_price_calc'> ".findtekst(2105,$sprog_id)."</td></tr>\n";
-    }
-    // END 20221004
-
+    print "\n<!-- productCardIncludes/showPrices.php begin -->\n";
+    include_once("productCardIncludes/showPrices.php");
+    print "\n<!-- productCardIncludes/showPrices.php end -->\n";
 	print "</tbody></table></td>"; #<- Pris enhedstabel
-	print "<td width=33% valign=top><table border=0 width=100%><tbody>"; # Tilbudstabel ->
-	print "<tr><td colspan=\"2\" height=\"20%\"><b>".findtekst(812,$sprog_id)."</b></td><td colspan=\"2\"><a href=\"happyhour.php?vare_id=$id\">".findtekst(2023,$sprog_id)."</a></td></tr>";
-	print "<tr>";
-	$tmp=dkdecimal($special_price,2);
-	if ($incl_moms) {
-		$tekst="(".findtekst(2024,$sprog_id).")";
-		$title="".findtekst(2018,$sprog_id)."";
-	} else {
-		$tekst="";
-		$title="";
-	}
-	$inputTxt = "class='inputbox' type='text' style='text-align:right' size='8' name='special_price' ";
-	$inputTxt.= "value='$tmp' onchange='javascript:docChange = true;'";
-	if ($incl_moms && $specialType == 'price') {
-		$tekst="(".findtekst(2024,$sprog_id).")";
-		$title="".findtekst(2018,$sprog_id)."";
-	} else {
-		$tekst="";
-		$title="";
-	}
-	print "<td>";
-	if (!$specialType || $m_antal_array[0]) $specialType='price';
-	if ($special_price || $m_antal_array[0]) {
-		($specialType=='price')?print "".findtekst(949,$sprog_id)."":print "".findtekst(2025,$sprog_id)."";
-		print "<input type='hidden' name='specialType' value='$specialType'>";
-	} else {
-		$options[0]="<option value='price'>".findtekst(949,$sprog_id)."</option>";
-		$options[1]="<option value='percent'>".findtekst(2025,$sprog_id)."</option>";
-		print "<select name='specialType'>";
-		($specialType=='price')?print $options[0]:print $options[1];
-		($specialType=='price')?print $options[1]:print $options[0];
-		print "</select>";
-	}
-	print "</td>";
-	print "<td title=\"$title\"><input $inputTxt>$tekst</td>";
-	$tmp=dkdecimal($campaign_cost,2);
-	print "<td height=20%>".findtekst(950,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=campaign_cost value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	if ($special_price!=0) $tmp=dkdato($special_from_date);
-	else $tmp='';
-	print "<tr><td height=20%>".findtekst(2026,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_from_date value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
-	print "<td height=20%>".findtekst(2028,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_from_time value=\"$special_from_time\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	if ($special_price!=0) $tmp=dkdato($special_to_date);
-	else $tmp='';
-	print "<tr><td height=20%>".findtekst(2027,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_to_date value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
-	print "<td height=20%>".findtekst(2029,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=special_to_time value=\"$special_to_time\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	print "</tbody></table></td>";# <- Tilbudstabel 
-	print "<td valign=top width=33%><table border=0 width=100%><tbody>"; # Collitabel ->
-	print "<tr><td colspan=3 height=20%><b>Colli</b></td></tr>";
-	$tmp=dkdecimal($colli,2);
-	print "<tr><td width=34%>".findtekst(2030,$sprog_id)."</td><td width=33%><input class=\"inputbox\" type=text style=text-align:right size=8 name=colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td><td width=33%><br></td></tr>";
-	$tmp=dkdecimal($outer_colli,2);
-	print "<tr><td height=20%>".findtekst(2031,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	$tmp=dkdecimal($open_colli_price,2);
-	print "<tr><td height=20%>".findtekst(2032,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=open_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	$tmp=dkdecimal($outer_colli_price,2);
-	print "<tr><td height=20%>".findtekst(950,$sprog_id)."</td><td><input class=\"inputbox\" type=text style=text-align:right size=8 name=outer_colli_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td></tr>";
-	print "</tbody></table></td></tr>";# <- Collitabel 
 
-	include ('varekort_includes/units.php');
+	print "<td width=33% valign=top><table border=0 width=100%><tbody>"; # Tilbudstabel ->
+    print "\n<!-- productCardIncludes/showDiscounts.php begin -->\n";
+    include_once("productCardIncludes/showDiscounts.php");
+    print "\n<!-- productCardIncludes/showDiscounts.php end -->\n";
+	print "</tbody></table></td>";# <- Tilbudstabel 
+
+	print "<td valign=top width=33%><table border=0 width=100%><tbody>"; # Collitabel ->
+    print "\n<!-- productCardIncludes/showColli.php begin -->\n";
+    include_once("productCardIncludes/showColli.php");
+    print "\n<!-- productCardIncludes/showColli.php end -->\n";
+
+    print "</tbody></table></td></tr>";# <- Collitabel 
+    print "<tr><td valign=top><table border='0' width='100%'><tbody>"; # Enhedstabel ->
+    print "\n<!-- productCardIncludes/showUnits.php begin -->\n";
+    include ('productCardIncludes/showUnits.php');
+    print "\n<!-- productCardIncludes/showUnits.php end -->\n";
+    print "</tbody></table></td>";
 	
 	print "<td valign=top><table border=0 width=100%><tbody>"; # Gruppe tabel ->
-	print "<tr><td><b>".findtekst(2037,$sprog_id)."</b></td></tr>";
-	#varegruppe->
-	print "<tr><td width=33%>".findtekst(774,$sprog_id)."</td>";
-	if (!$gruppe) $gruppe=1;
-	$qtxt="select beskrivelse,box10 from grupper where art='VG' and kodenr = '$gruppe'";
-	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-	if ($r['box10'] && !$operation) {
-		$r2 = db_fetch_array(db_select("select MAX(operation) as operation from varer where lukket !='on'",__FILE__ . " linje " . __LINE__));
-		$operation=$r2['operation']+1;
-	}
-	print "<td width=67%>
-	<input type=\"hidden\" NAME=\"gruppe\" value=\"$gruppe\">
-	<SELECT class=\"inputbox\" NAME=\"ny_gruppe\" style=\"width: 18em\">";
-	print "<option value=\"$gruppe\">$gruppe $r[beskrivelse]</option>";
-    if (!$beholdning || !$batchItem) { # batchItem added 20090210 to make groupchange possible if stockItem is set.
-		if ($samlevare=='on') $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' and box8!='on' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
-		elseif ($beholdning) $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' and box8='on' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);# tilfoejet 20090210 
-		else $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
-		while ($row = db_fetch_array($query)) {
-			print "<option value=\"$row[kodenr]\">$row[kodenr] $row[beskrivelse]</option>";
-		}
-	}
-	print "</SELECT></td></tr>";
-#<- Varegruppe
-	if (isset($dvrg_nr[1]) && $dvrg_nr[1]) {
-		print "<tr><td>Debitorrabatgrp.</td>";
-		print "<td><SELECT class=\"inputbox\" NAME=\"dvrg\" style=\"width: 18em\">";
-		if (!$dvrg_nr[0]) print "<option value=\"0\"></option>";
-		for ($x=1;$x<=count($dvrg_nr);$x++) {
-			if ($dvrg_nr[0] && $dvrg_nr[0]==$dvrg_nr[$x]) print "<option value=\"$dvrg_nr[$x]\">$dvrg_nr[$x] $dvrg_navn[$x]</option>";
-		}
-		for ($x=1;$x<=count($dvrg_nr);$x++) {
-			if ($dvrg_nr[0]!=$dvrg_nr[$x]) print "<option value=\"$dvrg_nr[$x]\">$dvrg_nr[$x] $dvrg_navn[$x]</option>";
-		}
-	}
-	print "</SELECT></td></tr>";
-# Prisgruppe->
-	print "<tr><td>".findtekst(2038,$sprog_id)."</td>";
-	if (!$prisgruppe) $prisgruppe=0;
-	print "<td><SELECT class=\"inputbox\" NAME=prisgruppe value='$prisgruppe' style=\"width: 18em\">";
-	$qtxt = "select * from grupper where art='VPG' and kodenr='$prisgruppe' order by kodenr";
-	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-	print "<option value=\"$prisgruppe\">$r[beskrivelse]</option>";
-	}
-	$q = db_select("select * from grupper where art='VPG' and kodenr!='$prisgruppe' order by kodenr",__FILE__ . " linje " . __LINE__);
-#if ($prisgruppe) print "<option value=\"0\"></option>";
-	while ($r = db_fetch_array($q)) {
-		print "<option value=\"$r[kodenr]\">$r[kodenr] $r[beskrivelse]</option>";
-	}
-	if ($prisgruppe) print "<option value=\"0\"></option>";
-	print "</SELECT></td></tr>";
-#<- Prisgruppe
-
-# tilbudgruppe->
-	print "<tr><td>".findtekst(2039,$sprog_id)."</td>";
-	if (!$tilbudgruppe) $tilbudgruppe=0;
-	print "<td><SELECT class=\"inputbox\" NAME=tilbudgruppe value='$tilbudgruppe' style=\"width: 18em\">";
-	print "<option value=\"$tilbudgruppe\">";
-	$qtxt = "select * from grupper where art='VTG' and kodenr='$tilbudgruppe' order by kodenr";
-	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) print $r['beskrivelse'];
-	print "</option>";
-	$qtxt = "select * from grupper where art='VTG' and kodenr!='$tilbudgruppe' order by kodenr";
-	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
-	while ($r = db_fetch_array($q)) {
-		print "<option value=\"$r[kodenr]\">$r[kodenr] $r[beskrivelse]</option>";
-	}
-	if ($tilbudgruppe) print "<option value=\"0\"></option>";
-	print "</SELECT></td></tr>";
-	#<- tilbudgruppe
-	# Rabatgruppe->
-	print "<tr><td>".findtekst(2040,$sprog_id)."</td>";
-	if (!$rabatgruppe) $rabatruppe=0;
-	print "<td><SELECT class=\"inputbox\" NAME=rabatgruppe value='$rabatgruppe' style=\"width: 18em\">";
-	print "<option value=\"$rabatgruppe\">";
-	$qtxt = "select * from grupper where art='VRG' and kodenr='$rabatgruppe' order by kodenr";
-	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) print $r['beskrivelse'];
-	print "</option>";
-	if ($rabatgruppe) print "<option value=\"0\"></option>";
-	$q = db_select("select * from grupper where art='VRG' and kodenr!='$rabatgruppe' order by kodenr",__FILE__ . " linje " . __LINE__);
-	while ($r = db_fetch_array($q)) {
-		print "<option value=\"$r[kodenr]\">$r[beskrivelse]</option>";
-	}
-	print "</SELECT></td></tr>";
-	#<- Rabatgruppe
+    print "\n<!-- productCardIncludes/showGroups.php begin -->\n";
+    include ('productCardIncludes/showGroups.php');
+    print "\n<!-- productCardIncludes/showGroups.php end -->\n";
 	print "</tbody></table></td>";# <- Gruppe tabel 
+
 	print "<td valign=\"top\"><table border=\"0\" width=\"100%\"><tbody>"; # M-rabat tabel ->
-	print "<tr><td><b>".findtekst(2041,$sprog_id)."</b></td>";
-	if ($special_price && $specialType=='percent') {
-		print "<tr><td>".findtekst(2043,$sprog_id)."</td></tr>";
-	} else {
-		print "<td align=\"right\"><SELECT class=\"inputbox\" NAME=m_type style=\"width: 4em\">";
-	if ($m_type == 'amount') {
-		print "<option value=\"amount\">kr</option>";
-		print "<option value=\"percent\">%</option>";
-	} else {
-		print "<option value=\"percent\">%</option>";
-		print "<option value=\"amount\">kr</option>";
-	}
-	print "</SELECT> pr</td>";
-		print "<td> ".findtekst(2042,$sprog_id)."</td></tr>";
-	for ($x=0;$x<	count($m_antal_array);$x++) {	
-		if ($m_antal_array[$x]) {
-			if ($incl_moms && $m_type!="percent") $m_rabat_array[$x]*=(100+$incl_moms)/100;
-			($rabatgruppe)? $inputtype="readonly=\"readonly\"":$inputtype="type=\"text\"";
-				print "<tr><td>".findtekst(2044,$sprog_id)."</td>";
-				print "<td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_rabat_array[$x]\" value=".dkdecimal($m_rabat_array[$x],3)."></td><td><input $inputtype size=\"5\" style=\"text-align:right\" name=\"m_antal_array[$x]\" value=\"".dkdecimal($m_antal_array[$x],3)."\"></td></tr>";
-		}
-	}
-	#$x++;
-	if (!$rabatgruppe) {
-			if (!isset($m_rabat_array[$x])) $m_rabat_array[$x]='';
-			if (!isset($m_antal_array[$x])) $m_antal_array[$x]='';
-			print "<tr><td>".findtekst(2044,$sprog_id)."</td>";
-		print "<td><input class='inputbox' type='text' size='5' style='text-align:right' name='m_rabat_array[$x]'";
-		print "value='".dkdecimal($m_rabat_array[$x],3)."'></td>";
-		print "<td><input class='inputbox' type='text' size='5' style=text-align:right name='m_antal_array[$x]'";
-		print "value='".dkdecimal($m_antal_array[$x],3)."'></td></tr>";
-	}
-	}
+    print "\n<!-- productCardIncludes/showQtyDiscounts.php begin -->\n";
+    include ('productCardIncludes/showQtyDiscounts.php');
+    print "\n<!-- productCardIncludes/showQtyDiscounts.php end -->\n";
 	print "</tbody></table></td></tr>";# <- M-rabat tabel 
 	print "<tr><td valign=\"top\" height=\"200px\"><table border=\"0\" width=\"100%\"><tbody>"; # Diverse tabel ->
-	print "<tr><td colspan=\"2\"><b>".findtekst(782,$sprog_id)."</b></td></tr>";
-    if ($stockItem){
-		$lagernavn[1]='';
-		$x=0;
-		$qtxt="select beskrivelse,kodenr from grupper where art='LG' order by kodenr";
-		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-		while ($r=db_fetch_array($q)) {
-			$x++;
-			$lagernavn[$x]=$r['beskrivelse'];
-		}
-		$qtxt="update batch_kob set lager = '1' where (lager = '0' or lager is NULL) and vare_id='$id'";
-		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-		$qtxt="update batch_salg set lager = '1' where (lager = '0' or lager is NULL) and vare_id='$id'";
-		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-		$qtxt="update lagerstatus set lager = '1' where (lager = '0' or lager is NULL) and vare_id='$id'";
-		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-		$lagersum=0;
-		for ($x=1;$x<=count($lagernavn);$x++) {	
-			$qtxt="select sum(antal) as antal from batch_kob where vare_id = '$id' and lager = '$x'";
-			$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$b_antal[$x]=$r2['antal'];
-			$qtxt="select sum(antal) as antal from batch_salg where vare_id = '$id' and lager = '$x'";
-			$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$b_antal[$x]-=$r2['antal'];
-			$r2=db_fetch_array(db_select("select lok1 from lagerstatus where vare_id = '$id' and lager = '$x'",__FILE__ . " linje " . __LINE__));
-			$lagerlok[$x]=$r2['lok1'];
-			$qtxt="select sum (beholdning) as beholdning from lagerstatus where vare_id = '$id' and lager = '$x'";
-			$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$lagerbeh[$x]=$r2['beholdning']*1;
-			$lagersum+=$b_antal[$x];
-			if ($lagerbeh[$x]!=$b_antal[$x] && !count($vare_varianter)) {
-				$l=0;
-				$qtxt="select id from lagerstatus where vare_id = '$id' and lager = '$x' order by id";
-				$q2=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-				while ($r2=db_fetch_array($q2)) {
-					if ($l>=1) {
-						$qtxt="delete from lagerstatus where id ='$r2[id]' and  vare_id = '$id' and lager = '$x'";
-						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-					}
-					$l++;
-				}	
-				$qtxt="update lagerstatus set beholdning='$b_antal[$x]' where vare_id = '$id' and lager = '$x'";
-				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-				$lagerbeh[$x]=$b_antal[$x]; 
-			}			
-		}
-		if (count($lagernavn)) {
-			print "<tr><td colspan=\"2\">
-			</td><td><b>".findtekst(2045,$sprog_id)."</b></td></tr>";
-			for ($x=1;$x<=count($lagernavn);$x++) {
-				if (!isset($lagerid[$x])) $lagerid[$x]=0; 
-				print "<tr><td colspan=\"2\"><input type=\"hidden\" name=\"lagerid[$x]\" value=\"$lagerid[$x]\">$lagernavn[$x]</td>
-				<td colspan=\"4\"><input class=\"inputbox\" type=\"text\" size=\"25\" name=\"lagerlok[$x]\" value=\"$lagerlok[$x]\" onchange=\"javascript:docChange = true;\"></td>";
-			}
-			print "<tr><td colspan=\"6\"><hr></td></tr>";
-		} else {
-            print "<tr><td colspan=\"2\">".findtekst(2045,$sprog_id)."</td>";
-            print "<td colspan=\"4\"><input class=\"inputbox\" type=\"text\" size=\"25\" name=\"location\" ";
-            print "value=\"$location\" onchange=\"javascript:docChange = true;\"></td>";
-		}
-	}
-        print "<input type='hidden' name='stockItem' value='$stockItem'>"; 
-        print "<tr><td colspan=\"2\">".findtekst(2046,$sprog_id)."</td>";
-    print "<td colspan=\"4\"><input class=\"inputbox\" type=text size=25 name=folgevarenr value=\"$folgevarenr\" "; 
-    print "onchange=\"javascript:docChange = true;\"></td>";
-	if ($operation) {
-		print "<tr><td colspan=\"2\">Montage</td><td colspan=\"4\">";
-		print "<input class=\"inputbox\" type=text style='text-align:right;' size='8' name='montage' value=\"".dkdecimal($montage)."\"";
-		print "onchange=\"javascript:docChange = true;\"></td>";
-		print "<tr><td colspan=\"2\">Demontage</td><td colspan=\"4\">";
-		print "<input class=\"inputbox\" type=text style='text-align:right;' size='8' name='demontage' value=\"".dkdecimal($demontage)."\"";
-		print "onchange=\"javascript:docChange = true;\"></td>";
-		print "<tr><td colspan=\"2\"> Operation nr:</td><td colspan=\"4\">";
-		print "<input class=\"inputbox\" type=text size='5' style='text-align:right;' name='operation' value=\"$operation \">";
-	}	
-    elseif ($stockItem){
-		$incomming=$outgoing=0;
-		db_modify("update ordrelinjer set leveret=0 where leveret is NULL and vare_id=$id",__FILE__ . " linje " . __LINE__);
-		$qtxt = "select (antal-leveret) as incomming from ordrer,ordrelinjer where ordrer.art = 'KO' and (ordrer.status='1' or ordrer.status='2') ";
-		$qtxt.= "and ordrelinjer.ordre_id=ordrer.id and vare_id='$id'";
-		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-		if (count($lagernavn) <= 1) { #20200310-1
-			while ($r=db_fetch_array($q))	$incomming+=$r['incomming']; #20200310-2
-			$qtxt = "select (antal-leveret) as outgoing from ordrer,ordrelinjer where ordrer.art = 'DO' and (ordrer.status='1' or ordrer.status='2') ";
-			$qtxt.= "and ordrelinjer.ordre_id=ordrer.id and vare_id='$id'";
-			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-			while ($r=db_fetch_array($q)) $outgoing+=$r['outgoing'];
-		}
-		print "<tr><td>".findtekst(2046,$sprog_id)."</td><td>Min:</td><td width=\"5%\" align='right'><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"min_lager\" value=\"". dkdecimal($min_lager,0). "\"></td>";
-		print "<td width=\"5%\">Max:</td><td colspan=\"2\" align='right' ><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"max_lager\" value=\"". dkdecimal($max_lager,0) ."\"></td></tr>";
-		if (count($lagernavn)) {
-			if ($beholdning!=$lagersum) db_modify("update varer set beholdning='$lagersum' where id='$id'",__FILE__ . " linje " . __LINE__);
-			for ($x=1;$x<=count($lagernavn);$x++) {
-				($x==1)?print "<tr><td>Aktuel</td>":print "<tr><td></td>";
-				if (($fifo && !$samlevare) || count($vare_varianter)) {
-					print "<td>$lagernavn[$x]</td>";
-					print "<td align='right'><INPUT class='inputbox' READONLY='readonly' size='5' style='text-align:right' ";
-					print "name='ny_beholdning' value='$lagerbeh[$x]' onchange='javascript:docChange = true;'>";
-					print "<INPUT type = 'hidden' name='ny_beholdning' value='$lagerbeh[$x]'>"; #20210308
-					print "<INPUT type = 'hidden' name='ny_lagerbeh[$x]' value='$lagerbeh[$x]'>"; #20210308
-				} else {
-					print "<td>$lagernavn[$x]</td><td align='right'>";
-					print "<input class='inputbox' type='text' size='5' style='text-align:right' name='ny_lagerbeh[$x]' ";
-					print "value='$lagerbeh[$x]' onchange='javascript:docChange = true;'>";
-				}
-				print "<input type='hidden' name='lagerbeh[$x]' value='$lagerbeh[$x]'></td>";
-				if ($x==count($lagernavn)) {
-					$qtxt="select * from stocklog where item_id = $id order by id desc limit 5";
-					$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-					$usNa=array();
-					$s=0;
-					while ($r=db_fetch_array($q)) {
-						$usNa[$s]=$r['username'];
-						$init[$s]=$r['initials'];
-#						$reas[$s]=db_escape_string($r['reason']);
-						$corr[$s]=dkdecimal($r['correction']);
-						$daTi[$s]=date("d-m-Y H:i",$r['logtime']);
-						$s++;
-					}
-					if ($s) {
-						($linjebg!="bgcolor=$bgcolor")?$linjebg="bgcolor=$bgcolor":$linjebg="bgcolor=$bgcolor5";
-						$txt = "<table><tr $linjebg><td>Bruger</td><td>Initialer</td><td>Antal</td><td>Tidspkt</td></tr>";
-						for ($s=0;$s<count($usNa);$s++) {
-						($linjebg!="bgcolor=$bgcolor")?$linjebg="bgcolor=$bgcolor":$linjebg="bgcolor=$bgcolor5";
-							$txt.= "<tr $linjebg><td>$usNa[$s]</td><td>$init[$s]</td><td align=right>$corr[$s]</td><td>$daTi[$s]</td></tr>";
-						}
-						$txt.= "</table>";
-					print "<td colspan='2'><td align= 'center'><a href='stockLog.php?id=$id'>";
-					print "<span onmouseover=\"return overlib('$txt', WIDTH=800);\" onmouseout=\"return nd();\">Log</span></td></a>";
-					}	
-				}
-				print "</tr>";
-			}
-		} else {
-			print "<tr><td></td>";
-			if (($fifo && !$samlevare) || count($vare_varianter)) {
-				print "<td>Aktuel</td><td align='right'><INPUT class=\"inputbox\" READONLY=\"readonly\" size=\"5\" style=\"text-align:right\" name=\"ny_beholdning\" value=\"$beholdning\" onchange=\"javascript:docChange = true;\">";
-			} else {
-				print "<td>Aktuel</td><td align='right'><input class=\"inputbox\" type=\"text\" size=\"5\" style=\"text-align:right\" name=\"ny_beholdning\" value=\"$beholdning\" onchange=\"javascript:docChange = true;\">";
-			}
-		}
-			print "<input type=\"hidden\" name=\"beholdning\" value=\"$beholdning\"></td></tr>";
-			$title='Antal ikke modtaget i godkendt købsordre';
-			print "<tr><td>Købs&nbsp;ordrer<td><td align='right' title='$title'>".dkdecimal($incomming,0)."&nbsp;</td></tr>";
-			$title='Antal ikke leveret i godkendt salgsordre';
-			print "<tr><td>Salgs&nbsp;ordrer<td><td align='right' title='$title'>".dkdecimal($outgoing,0)."&nbsp;</td></tr>";
-			print "</td></tr>";
-	}
-	($provisionsfri)?$provisionsfri="checked":$provisionsfri=""; 
-	print "<tr><td colspan=\"2\" align='right'>".findtekst(2048,$sprog_id)."</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"provisionsfri\" $provisionsfri></td>";
-	if ($shopurl) {
-#		($publiceret)?$publiceret="checked":$publiceret=""; 
-#		print "<tr><td colspan=\"2\">Publiceret</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"publiceret\" $publiceret></td>";
-		if ($shop_id) {
-		print "<tr><td colspan=\"2\">
-		<input type=\"hidden\" name=\"publiceret\" value=\"$publiceret\">
-		Shop ID (klik for at fjerne)</td><td align=\"center\"><a href=\"slet_shopbinding.php?id=$id\">$shop_id</a></td>";
-		} else {
-			($publiceret)?$publiceret="checked":$publiceret=""; 
-			print "<tr><td colspan=\"2\">Publiceret</td><td align=\"center\"><input class=\"inputbox\" type=\"checkbox\" name=\"publiceret\" $publiceret></td>";
-		}
-	}	
+    print "\n<!-- productCardIncludes/showLocations.php begin -->\n";
+    include ('productCardIncludes/showLocations.php');
+    print "\n<!-- productCardIncludes/showLocations.php end -->\n";
 	print "</tbody></table></td>";#  <- Diverse tabel
 #################### KATEGORIER ###########################
 	print "<td valign=\"top\" height=\"200px\">";
 	print "<div class=\"vindue\">";
 	print "<table border=0 width=100%><tbody>"; # Kategori tabel ->
-    $kat_niveauer = $x = 0;
-    $kat_id = array();
-	$q=db_select("select id,box1,box2 from grupper where art='V_CAT' order by box1",__FILE__ . " linje " . __LINE__);
-	while ($r=db_fetch_array($q)) {
-		$x++;
-		$kat_id[$x]=$r['id'];
-		$kat_beskrivelse[$x]=$r['box1'];
-        ($r['box2'])?$kat_masters[$x]=explode(chr(9),$r['box2']):$kat_masters[$x]=array();
-		$kat_niveau[$x]=count($kat_masters[$x]);
-		if ($kat_niveau[$x]>$kat_niveauer) $kat_niveauer=$kat_niveau[$x];
-        if (count($kat_masters[$x])) {
-		$tmp=count($kat_masters[$x])-1;
-		$kat_master[$x]=$kat_masters[$x][$tmp];
-        } else $kat_master[$x] = 0;
-	}
-
-    for ($x=1;$x<=count($kat_id);$x++) {
-		if ($kat_master[$x] && !in_array($kat_master[$x],$kat_id)) {
-			db_modify("delete from grupper where id = '$kat_id[$x]'",__FILE__ . " linje " . __LINE__);
-		}
-	}
-
-	print "<tr><td colspan=\"4\" valign=\"top\"><b>".findtekst(388,$sprog_id)."<!--tekst 388--></b></td></tr>\n";
-	$x=0;
-
-$a=1;$b=0;$e=0;$f=0;
-$used_id=array();
-$brugt=array();
-$pre=array();
-while ($a <= count($kat_id)) {
-		$niveau=0;
-#cho "A $a ID $kat_id[$a] Master $kat_master[$a]<br>";
-	if (!$kat_master[$a] && !in_array($kat_id[$a],$used_id)) {
-		$checked=NULL;
-		for ($y=0;$y<count($kategori);$y++) {
-			if ($kat_id[$a]==$kategori[$y]) $checked="checked";
-		}
-		print "<tr><td title=\"ID=$kat_id[$a]\">$kat_beskrivelse[$a]</td>\n";
-		print "<td title=\"".findtekst(395,$sprog_id)."\" align=\"center\"><!--tekst 395--><input type=\"checkbox\" name=\"kat_valg[$a]\" $checked></td>\n";
-		print "<td title=\"".findtekst(396,$sprog_id)."\"><!--tekst 396--><a href=\"varekort.php?id=$id&rename_category=$kat_id[$a]\" onclick=\"return confirm('Vil du omd&oslash;be denne kategori?')\"><img src=../ikoner/rename.png border=0></a></td>\n";
-		if (in_array($kat_id[$a],$kat_master)) print "<td></td>"; 
-		else print "<td title=\"".findtekst(397,$sprog_id)."\"><!--tekst 396--><a href=\"varekort.php?id=$id&delete_category=$kat_id[$a]\" onclick=\"return confirm('Vil du slette denne katagori?')\"><img src=../ikoner/delete.png border=0></a></td>\n";
-		print "</tr>\n";
-		print "<input type=\"hidden\" name=\"kat_id[$a]\" value=\"$kat_id[$a]\">\n";
-
-#		print "$kat_beskrivelse[$a]<br>";
-		$used_id[$b]=$kat_id[$a];
-		$b++;
-	}
-	$c=$a; 
-	$q=0;
-    for ($d=1;$d<=count($kat_id);$d++) {
-	$q++;
-# Master_id skal være = master  & id må ikke være brugt før og master skal være sat.  
-#cho "$q $kat_master[$d]()==$kat_id[$c]($kat_beskrivelse[$c]) $kat_beskrivelse[$d]<br>";
-	if ($kat_master[$d]==$kat_id[$c] && !in_array($kat_id[$d],$used_id) && in_array($kat_master[$d],$used_id)) {
-#cho "her $kat_beskrivelse[$d]<br>";
-		$checked=NULL;
-		for ($y=0;$y<=$kategori_antal;$y++) {
-			if ($kat_id[$d]==$kategori[$y]) $checked="checked";
-		}
-			print "<tr><td title=\"ID=$kat_id[$d]\">";
-			for ($e=0;$e<$kat_niveau[$d];$e++) print "-&nbsp;";
-#			print "$a | $c | $d | $kat_id[$d] | $kat_beskrivelse[$d] | $kat_master[$d]</td>\n";
-			print "$kat_beskrivelse[$d]</td>\n";
-			print "<td title=\"".findtekst(395,$sprog_id)."\" align=\"center\"><!--tekst 395--><input type=\"checkbox\" name=\"kat_valg[$d]\" $checked></td>\n";
-			print "<td title=\"".findtekst(396,$sprog_id)."\"><!--tekst 396--><a href=\"varekort.php?id=$id&rename_category=$kat_id[$d]\" onclick=\"return confirm('Vil du omd&oslash;be denne kategori?')\"><img src=../ikoner/rename.png border=0></a></td>\n";
-			if (in_array($kat_id[$d],$kat_master)) print "<td></td>";
-			else print "<td title=\"".findtekst(397,$sprog_id)."\"><!--tekst 396--><a href=\"varekort.php?id=$id&delete_category=$kat_id[$d]\" onclick=\"return confirm('Vil du slette denne katagori?')\"><img src=../ikoner/delete.png border=0></a></td>\n";
-			print "</tr>\n";
-			print "<input type=\"hidden\" name=\"kat_id[$d]\" value=\"$kat_id[$d]\">\n";
-		
-			$used_id[$b]=$kat_id[$d];
-			$nivau++;
-			$pre[$niveau]=$c;
-			$b++;
-			$c=$d;
-			$d=1;
-#cho "$a | $c | $d | $kat_id[$c] | $kat_beskrivelse[$c] | $kat_master[$c]</br>\n";
-		}
-#cho "$d==count($kat_id) && $c!=$a<br>";
-		if ($d==count($kat_id) && $c!=$a) {
-#cho "skifter A $a B $c D $d<br>";
-			$c=$a;
-			if ($niveau && $pre[$niveau]) $c=$pre[$niveau];
-			$d=1;
-			$niveau--;
-#cho "-> A $a B $c D $d<br>";
-		}
-#		if ($q>10000) {
-#			break 1;
-#		}
-	}
-
-	$a++;
-}
-
-	if ($rename_category){
-		for ($x=0;$x<count($kat_id);$x++) {
-			if ($rename_category==$kat_id[$x]) $ny_kategori=$kat_beskrivelse[$x];
-		}
-		$tekst=findtekst(388,$sprog_id);
-#		$tekst=str_replace('$ny_kategori',$ny_kategori,$tekst);
-		print "<tr><td colspan=\"4\">Ret \"$ny_kategori\" til:</td></tr>\n";
-		print "<input type=\"hidden\" name=\"rename_category\" value=\"$rename_category\">\n";
-	#	print "<tr><td colspan=\"4\" title=\"".findtekst(390,$sprog_id)."\"><input type=\"text\" size=\"25\" name=\"ny_kategori\" value=\"$ny_kategori\"></td></tr>\n";
-	} else $ny_kategori=''; 
-	print "<tr><td colspan=\"4\" title=\"".findtekst(390,$sprog_id)."\"><!--tekst 390--><input class=\"inputbox\" type=\"text\" size=\"25\" name=\"ny_kategori\" placeholder=\"".findtekst(343,$sprog_id)."\" value=\"$ny_kategori\"></td></tr>\n";
+    print "\n<!-- productCardIncludes/showCategories.php begin -->\n";
+    include ('productCardIncludes/showCategories.php');
+    print "\n<!-- productCardIncludes/showCategories.php end -->\n";
 	print "</tbody></table></div></td>";#  <- Kategori tabel
 
 ####################################### VARIANTER #############################################
-	print "<td valign=\"top\" height=\"200px\"><div class=\"vindue\"><table border=\"0\" width=\"100%\"><tbody>"; # Variant tabel ->
-	print "<tr><td valign=\"top\"><b>".findtekst(472,$sprog_id)."<!--tekst 472--></b></td></tr>\n";
-	for ($x=0;$x<count($varianter_id);$x++) {
-        (isset($variantVarerBarcode) && count($variantVarerBarcode))?$checked[$x]='checked':$checked[$x]='';
-#		(in_array($variantVarerVariantId[$x],$vare_varianter))?$checked[$x]='checked':$checked[$x]='';
-		#		if ($db=='bizsys_244' && ($id=='4757' || $id=='4679'  || $id=='1499')) $checked[$x]='checked';
-		print "<input type=\"hidden\" name=\"varianter_id[$x]\" value=\"$varianter_id[$x]\">";
-		$title=findtekst(487,$sprog_id);
-		print "<tr title='$title'><!--tekst 487--><td>$varianter_beskrivelse[$x]</td><td>";
-#		if (count($varianter)) $checked[$x]='checked';
-			print "<input type=\"hidden\" name=\"vare_varianter[$x]\" value=\"$checked[$x]\">";
-		if ($beholdning) {# 20180118
-			$readonly='disabled';
-			$title='Kan ikke ændres når der er varer på lager';
-		} else $readonly=NULL;
-		print "<input title='$title' $readonly class='inputbox' type='checkbox' name=\"vare_varianter[$x]\" $checked[$x]>";
-		print "</td></tr>\n";  
-	}
-	print "<tr><td colspan=\"2\"><table border=0><tbody><tr>";
-	for ($x=0;$x<count($vare_varianter);$x++) {
-		$r=db_fetch_array(db_select("select beskrivelse from varianter where id = '$vare_varianter[$x]'",__FILE__ . " linje " . __LINE__));
-		print "<td align=\"center\">$r[beskrivelse]</td>";
-	}
-	print "</tr><tr>";
-	for ($x=0;$x<count($vare_varianter);$x++) {
-		print "<td><select name=var_type[$x]>";
-		$q=db_select("select * from variant_typer where variant_id = '$vare_varianter[$x]' order by beskrivelse",__FILE__ . " linje " . __LINE__);
-		while ($r=db_fetch_array($q)) {
-			print "<option value='$r[id]'>$r[beskrivelse]</option>";
-		}
-		print "</select></td>";
-	}
-	print "</tr></tbody></table></td></tr>";
-#print "<tr><td>Antal</td><td><input type=\"text\" style=\"width:50px\" name=\"var_type_beh\"></td></tr>";
-	if (count($vare_varianter)) print "<tr><td>Stregkode</td><td><input type=\"text\" style=\"width:250px\" name=\"var_type_stregk\"></td></tr>";
+    print "<td valign=\"top\" height=\"200px\"><div class=\"vindue\"><table border=\"0\" width=\"100%\"><tbody>"; # 
+    print "\n<!-- productCardIncludes/useVariants.php begin -->\n";
+    include ('productCardIncludes/useVariants.php');
+    print "\n<!-- productCardIncludes/useVariants.php end -->\n";
 	print "</tbody></table></div></td></tr>";#  <- Variant tabel
 	
 ####################################### NOTER/BESKRIVELSE #############################################
-	include ('varekort_includes/notesEtc.php');
-
-
+    print "\n<!-- productCardIncludes/notesEtc.php begin -->\n";
+    include ('productCardIncludes/notesEtc.php');
+    print "\n<!-- productCardIncludes/notesEtc.php end -->\n";
 	
 	print "</td></tr></tbody></table></td></tr>";
 	# <== tabel 4
@@ -2320,6 +1661,7 @@ function cirkeltjek($vare_id)
 	}
 	for ($a=1; $a<=$x; $a++)	{
 		$query = db_select("select styklister.vare_id as vare_id, varer.samlevare as samlevare from styklister, varer where indgaar_i=$s_vare_id[$a] and varer.id=$s_vare_id[$a]",__FILE__ . " linje " . __LINE__);
+    
 		while ($row = db_fetch_array($query)) {
 			if ($id==$row[vare_id]) {
 				print "<BODY onload=\"javascript:alert('Cirkulær reference registreret')\">";
