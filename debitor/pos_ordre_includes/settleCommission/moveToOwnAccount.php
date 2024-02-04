@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -- debitor/pos_ordre_includes/settleCommission/moveToOwnAccount.php- patch 3.9.9 -- 2021-01-10 --
+// --- debitor/pos_ordre_includes/settleCommission/moveToOwnAccount.php --- patch 4.0.8 -- 2023-09-12 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,8 +20,9 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20200912 corrected error in VAT sign (was positve when is should be negative)
 
 $minDate=$fakturadate[0];
 $a=count($fakturadate)-1;
@@ -132,7 +133,7 @@ for ($co=0;$co<count($coAc);$co++) {
 		if ($commission && $fromVatPercent) {
 #			if ($costVat) $fromVat = afrund($commission * $fromVatPercent / (100+$fromVatPercent),2);
 			$fromVat = afrund($commission * $fromVatPercent / 100,2);
-echo __line__." $costVat $commission CV $fromVat<br>";
+#cho __line__." $costVat $commission CV $fromVat<br>";
 			$debet=$kredit=0;
 			($fromVat > 0)?$debet=$fromVat:$kredit=abs($fromVat);
 			$qtxt="insert into transaktioner (bilag,transdate,beskrivelse,kontonr,faktura,debet,kredit,kladde_id,afd,logdate,logtime,";
@@ -140,7 +141,7 @@ echo __line__." $costVat $commission CV $fromVat<br>";
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Moms af kommisionssalg, Kasse $kasse','$fromVatAccount','0','$debet','$kredit',0,'$afd','$dd','$logtime','',";
 			$qtxt.="'$ansat_id','0','$kasse','$reportNumber','0')";
-echo __line__." $qtxt<br>";	
+#cho __line__." $qtxt<br>";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else $commissionVat = 0;
 		if ($commission) {
@@ -172,7 +173,7 @@ echo __line__." $qtxt<br>";
 			if (!$fromVatPercent) $commission-= $toVat;
  			$debet=$kredit=0;
 			($commission > 0)?$kredit=$commission:$debet=abs($commission);
-			if ($debet) $toVat *= -1;
+			($debet > $kredit)?$toVat = abs($toVat):$toVat = -abs($toVat); #20230912
 			$qtxt="insert into transaktioner (bilag,transdate,beskrivelse,kontonr,faktura,debet,kredit,kladde_id,afd,logdate,logtime,";
 			$qtxt.="projekt,ansat,ordre_id,kasse_nr,report_number,moms)";
 			$qtxt.=" values ";

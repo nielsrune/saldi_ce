@@ -4,7 +4,7 @@
 //                        \__ \/ _ \| |_| | | |
 //                        |___/_/ \_|___|__/|_|
 //
-// --- finans/bankimport.php --- patch 4.0.6 --- 2022.06.17 ---
+// --- finans/bankimport.php --- patch 4.0.8 --- 2023.06.15 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 
 // 20121110 Indsat mulighed for valutavalg ved import - søg: valuta
@@ -58,6 +58,8 @@
 // 20220531	PHR Added kundenr as select option (Sparebanken Vest,Norway)
 // 20220617 PHR Better recognition of date formats
 // 20220531	PHR Added 'Modtager konto'
+// 20230615	PHR php8
+// 20230822 MSC - Copy pasted new design into code
 
 ini_set("auto_detect_line_endings", true);
 
@@ -66,13 +68,13 @@ $s_id=session_id();
 $css="../css/standard.css";
 $bankName = NULL;
 
-$title="SALDI - Bankimport";
+$title="Bankimport";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/settings.php");
 include("../includes/std_func.php");
 
-print "<div align=\"center\">";
+global $menu;
 
 $vend=NULL;
 
@@ -99,14 +101,20 @@ if(($_GET)||($_POST)) {
 		$afd=$_POST['afd'];
 		
 	}
-	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+
 	if ($menu=='T') {
-		$leftbutton="<a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>".findtekst(30, $sprog_id)."</a>"; #20210714
-		$rightbutton="";
-		include("../includes/topmenu.php");
+		include_once '../includes/top_header.php';
+		include_once '../includes/top_menu.php';
+		print "<div id=\"header\">"; 
+		print "<div class=\"headerbtnLft headLink\"><a href=importer.php?kladde_id=$kladde_id accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+		print "<div class=\"headerTxt\">$title</div>";     
+		print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+		print "</div>";
+		print "<div class='content-noside'><center>";
 	} elseif ($menu=='S') {
 		include("../includes/sidemenu.php");
 	} else {
+		print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 		print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 		print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 		print "<td width=\"10%\" $top_bund><a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>".findtekst(30, $sprog_id)."</a></td>";
@@ -171,10 +179,18 @@ if(($_GET)||($_POST)) {
 	}
 }
 print "</tbody></table>";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
 ################################################################################################################
 function upload($kladde_id, $bilag){
 global $charset;
 global $sprog_id;
+global $menu;
 
 print "<tr><td width=100% align=center><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<form enctype=\"multipart/form-data\" action=\"bankimport.php\" method=\"POST\">";
@@ -452,7 +468,10 @@ if ($fp) {
 						else $felt[$y]=dkdecimal($felt[$y]);
 					} elseif (nummertjek($felt[$y])=='DK') {
 						if (usdecimal($felt[$y])==0) $skriv_linje=0;
-					}	else $skriv_linje=0;		
+					}	else {
+echo "Z >$felt[$y]< ". nummertjek($felt[$y]) ."<br>";
+						$skriv_linje=0;
+					}
 				}
 				if ($feltnavn[$y]=='beskrivelse') { // 20220120
 					$felt[$y]=str_replace("%c3%a6","æ",$felt[$y]);
@@ -476,7 +495,7 @@ if ($fp) {
 					print "<td align=right>$felt[$y]&nbsp;</td>";
 				}
 				elseif ($feltnavn[$y]) {print "<td>$felt[$y]&nbsp;</td>";}
-				else {print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";}
+				else print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 			}
 			print "</tr>";
 			$bilag++;
@@ -486,7 +505,7 @@ if ($fp) {
 				if ($feltnavn[$y]=='belob') {
 					print "<td align=right><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 				} elseif ($feltnavn[$y]) print "<td><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
-				else {print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";}
+					else print "<td align=center><span style=\"color: rgb(153, 153, 153);\">$felt[$y]&nbsp;</span></td>";
 			}
 			print "</tr>";
 		}	
@@ -758,16 +777,18 @@ function flyt_data($kladde_id, $filnavn, $splitter, $feltnavn,$feltantal,$konton
 	print "<meta http-equiv=\"refresh\" content=\"0;URL=kassekladde.php?kladde_id=$kladde_id\">";
 }
 function nummertjek ($nummer){
-	$nummer=trim($nummer)*1;
+	$nummer=(float)$nummer;
 	$retur=1;
 	$nummerliste=array("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", ".", "-");
 	for ($x=0; $x<strlen($nummer); $x++) {
-		if (!in_array($nummer{$x}, $nummerliste)) $retur=0;
+		if (!in_array(substr($nummer,$x,1), $nummerliste)) {
+			$retur=0;
+		}
 	}
 	if ($retur) {
 		for ($x=0; $x<strlen($nummer); $x++) {
-			if ($nummer{$x}==',') $komma++;
-			elseif ($nummer{$x}=='.') $punktum++;		
+			if (substr($nummer,$x,1)==',') $komma++;
+			elseif (substr($nummer,$x,1)=='.') $punktum++;
 		}
 		if ((!$komma)&&(!$punktum)) $retur='US';
 		elseif (($komma==1)&&(substr($nummer,-3,1)==',')) $retur='DK';

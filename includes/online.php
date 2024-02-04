@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// // ---------------------includes/online.php----lap 4.0.5---2022-01-05---
+// --- includes/online.php --- lap 4.0.8 --- 2023-09-27 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // 
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20120905 $ansat_navn bliver nu sat her. Søg 20120905
 // 20130120 $sag_rettigheder bliver nu sat her. Søg 20130120
@@ -47,13 +47,13 @@
 // 20211220 PHR removed if ($r['box5']) from '20210928'. Why was it set?? 
 // 20220105 PHR Sets $sprog_id=$languageID
 // 20220212 PHR	MySale users removed from 'grupper' 
+// 20230927 PHR $pageTitle fetched from settings (used in ordreXpress & stillads)
 
 #include("../includes/connect.php"); #20211001
 if (isset($_COOKIE['timezone'])) { #20190110
 	$timezone=$_COOKIE['timezone'];
 	date_default_timezone_set($timezone);
 } else {
-	
 	date_default_timezone_set('Europe/Copenhagen');
 	#$r=db_fetch_array(db_select("select lukket,version from regnskab where id='1'",__FILE__ . " linje " . __LINE__)); # 20190605
 	$r=db_fetch_array(db_select("select lukket,version from regnskab where id='1' and db = '$sqdb'",__FILE__ . " linje " . __LINE__)); # 20210930
@@ -72,22 +72,6 @@ if (isset($_COOKIE['timezone'])) { #20190110
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		$r=db_fetch_array(db_select("select var_value from settings where var_name='alertText'",__FILE__ . " linje " . __LINE__));
-		
-			// ($r['var_value'])?$customAlertText=$r['var_value']:$customAlertText=NULL;
-			// $r=db_fetch_array(db_select("select var_value from settings where var_name='ps2pdf'",__FILE__ . " linje " . __LINE__));
-			// ($r['var_value'])?$ps2pdf=$r['var_value']:$ps2pdf=NULL;
-			// $r=db_fetch_array(db_select("select var_value from settings where var_name='pdftk'",__FILE__ . " linje " . __LINE__));
-			// ($r['var_value'])?$pdftk=$r['var_value']:$pdftk=NULL;
-			// $r=db_fetch_array(db_select("select var_value from settings where var_name='ftp'",__FILE__ . " linje " . __LINE__));
-			// ($r['var_value'])?$ftp=$r['var_value']:$ftp=NULL;
-			// $r=db_fetch_array(db_select("select var_value from settings where var_name='dbdump'",__FILE__ . " linje " . __LINE__));
-			// ($r['var_value'])?$dbdump=$r['var_value']:$dbdump=NULL;
-			// $r=db_fetch_array(db_select("select var_value from settings where var_name='tar'",__FILE__ . " linje " . __LINE__));
-			// ($r['var_value'])?$tar=$r['var_value']:$tar=NULL;
-			// $r=db_fetch_array(db_select("select var_value from settings where var_name='zip'",__FILE__ . " linje " . __LINE__));
-			// ($r['var_value'])?$zip=$r['var_value']:$zip=NULL;
-			// $r=db_fetch_array(db_select("select var_value from settings where var_name='systemLanguage'",__FILE__ . " linje " . __LINE__));
-			// ($r['var_value'])?$systemLanguage=$r['var_value']:$systemLanguage='Dansk';
 			$r? $customAlertText=$r['var_value']:$customAlertText=NULL; #20211018
 		$r=db_fetch_array(db_select("select var_value from settings where var_name='ps2pdf'",__FILE__ . " linje " . __LINE__));
 			$r? $ps2pdf=$r['var_value']:$ps2pdf=NULL;
@@ -151,19 +135,7 @@ if (substr($db,0,4) == 'laja') ini_set('display_errors',0);
 else ini_set('display_errors',0);
 
 $labelprint=0;
-if($sqdb=='udvikling') $labelprint=1;
-elseif($sqdb=='severinus') $labelprint=1;
-elseif($db=='bizsys_22') $labelprint=1;
-elseif($db=='bizsys_25') $labelprint=1;
-
-if($db=='severinus_22') $kundedisplay=1;
-elseif($db=='grillbar_59') $kundedisplay=1;
-#elseif($db=='udvikling_5') $kundedisplay=1;
-else $kundedisplay=0;
-
-#if ($db == 'udvikling_5') $timezone='America/Godthab';
-#if (!isset($timezone)) $timezone='Europe/Copenhagen';
-#date_default_timezone_set($timezone);
+$kundedisplay=0;
 
 if ($modulnr && $modulnr<100 && $db==$sqdb) { #Lukker vinduet hvis revisorbruger er logget af
 	include("../includes/std_func.php");
@@ -181,23 +153,6 @@ if ($row = db_fetch_array(db_select("select * from regnskab where db = '$db'",__
 	$lukket=$row['lukket'];
 	
 }
-/*
-if ($row = db_fetch_array(db_select("select * from regnskab where db = 'develop'",__FILE__ . " linje " . __LINE__))){
-	$lingua= $row['sprog']; #20210916
-}
-*/
-/*
-#.............	
-	$query = db_select("select * from online where session_id = '$s_id' and brugernavn ='$brugernavn'",__FILE__ . " linje " . __LINE__);
-	if ($row = db_fetch_array($query)) {
-		$lang1 = trim($row['sprog']);	
-}
-	$_SESSION['Language'] = $lang1; #20210922
-#..............
-*/
-
-
-
 
 if ($db_id && $db && $sqdb && $db!=$sqdb) { #20200928
 	if (!isset($nextver)) { # 20150104
@@ -261,7 +216,6 @@ if ($db_id && $db && $sqdb && $db!=$sqdb) { #20200928
 		}
 	}	else $bruger_id=-1;
 	if (!$sprog_id)$sprog_id=1;
-	
 	if (!strpos($css,'mysale') && $bruger_id) {
 	$jsvars="statusbar=0,menubar=0,titlebar=0,toolbar=0,scrollbars=1,resizable=1,dependent=1";
 	$qtxt="select box1,box2,box3,box4,box5 from grupper where art = 'USET' and kodenr = '$bruger_id'";
@@ -298,6 +252,10 @@ if ($db_id && $db && $sqdb && $db!=$sqdb) { #20200928
 		# $bgcolor5="#e0e0f0";
 	}
 if (!isset($bgnuance1)) $bgnuance1="+01+01-55"; # Aendring af nuancen til gult ved skiftende linjer
+
+		$qtxt = "select var_value from settings where var_name = 'pageTitle' and var_grp = 'ordreXpress'";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $pageTitle = $r['var_value'];
+		else $pageTitle = 'Saldi';
 	}
 	if ($menu=='T') {
 		$header='nix';

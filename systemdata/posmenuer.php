@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/posmenuer.php --- ver 4.0.8 -- 2023-04-05 --
+// --- systemdata/posmenuer.php --- ver 4.0.8 -- 2023-09-28 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -45,6 +45,7 @@
 // 20220209 PHR Renamed proforma to udskriv
 // 20230209 PHR Enhanced 'Kopi fra' (copy from') 
 // 20230405 PHR Added price option.
+// 20230928 PHR added "'"art='POSBUT' and " to fetch.
 
 @session_start();
 $s_id=session_id();
@@ -148,7 +149,8 @@ if ($menuvalg=='ny') {
 	$x=0;
 	$m_id=NULL;
 	$kodenr=array();
-	$q=db_select("select kodenr from grupper where art='POSBUT' order by kodenr",__FILE__ . " linje " . __LINE__);
+	$qtxt = "select kodenr from grupper where art='POSBUT' order by kodenr"; #20230928
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		$kodenr[$x]=$r['kodenr'];
 		$x++;
@@ -349,7 +351,7 @@ if (($menu_id) && $ret_col && $ret_row) {
 	$c = (int)$r['vare_id'];
 	$d = (int)$r['funktion'];
 
-	$qtxt="select box1 from grupper where kodenr='$menu_id'";
+	$qtxt="select * from grupper where art='POSBUT' and kodenr='$menu_id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
   $menu_navn = $r[0];
 

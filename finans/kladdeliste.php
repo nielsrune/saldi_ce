@@ -38,6 +38,10 @@ if (!isset ($_COOKIE['saldi_kladdeliste'])) $_COOKIE['saldi_kladdeliste'] = NULL
 $sort=isset($_GET['sort'])? $_GET['sort']:Null;
 $rf=isset($_GET['rf'])? $_GET['rf']:Null;
 $vis=isset($_GET['vis'])? $_GET['vis']:Null;
+if (isset($_GET['exitDraft']) && $_GET['exitDraft']) {
+	$qtxt = "update kladdeliste set hvem = '', tidspkt='0' where id = '". (int)$_GET['exitDraft'] ."'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+}
 print "<meta http-equiv=\"refresh\" content=\"150;URL=kladdeliste.php?sort=$sort&rf=$rf&vis=$vis\">";
 
 if (isset($_GET['sort'])) {
@@ -111,8 +115,7 @@ $tjek=0;
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
 		if (strpos(' ',$row['tidspkt'])) list ($a,$b)=explode(" ",$row['tidspkt']);
-		elseif ($row['tidspkt']) $b=$row['tidspkt'];
-		else $b = 0;
+		else $b=$row['tidspkt'];
 		if ($tidspkt - trim($b) > 3600 || $row['hvem'] == $brugernavn) {
 			if ($popup) print "<td onMouseOver=\"this.style.cursor = 'pointer'\"; onClick=\"javascript:$kladde=window.open('kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php','$kladde','".$jsvars."');$kladde.focus();\"><span style=\"text-decoration: underline;\">$row[id]</a></span></td>";
 			else print "<td><a href=kassekladde.php?tjek=$row[id]&kladde_id=$row[id]&returside=kladdeliste.php'>$row[id]</a></td>";

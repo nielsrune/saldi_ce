@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.7 --- 2023.02.25 ---
+// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.8 --- 2023.10.09 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -39,6 +39,7 @@
 // 20230225 PHR	Added decimal values to del_bord
 // 20230421 PHR Added ImachimeCustomDisplay
 // 20230531 PHR Added Discount to ImachimeCustomDisplay
+// 20231009 PHR Groupdiscount was handled as always as amount
 
 	print "<!-- ---------- start productLines.php ---------- -->\n";
 	$customerDisplay = NULL;
@@ -244,6 +245,9 @@
 				($linjebg!=$bgcolor5)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 				list($grupperabat,$rabattype)=explode(";",grupperabat($rabatantal[$x],$rabatgruppe[$x]));
 				if ($grupperabat) {
+				  if ($rabattype != 'amount') { // 20231009 then it is percent
+						$grupperabat = $pris[$x] /100 * $grupperabat;
+				  }
 					if ($posnr[$x] && $show) {
 						print "<tr bgcolor=\"$linjebg\"><td>rabat</td><td align=\"right\">".dkdecimal($rabatantal[$x],2)."</td><td>Rabat</td>";
 						print "<td align=\"right\">".dkdecimal($grupperabat,2)."</td>";

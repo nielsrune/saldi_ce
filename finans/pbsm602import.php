@@ -4,30 +4,30 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------finans/pbsm602import.php------------patch 3.8.9-----2020.01.02-----------
-// LICENS
+// --- finans/pbsm602import.php --- patch 4.0.8 --- 2023.09.08 ---
+// LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
+// See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2020 saldi.dk aps
+// Copyright (c) 2003 - 2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 20200102 PHR Instead of finding the latest invoice it now finds the oldest unpaid invoice. 20200102
-
+// 20230711 PHR Better recognition of debitor account for BS042 / '0297
+// 20230908 PHR Expanded debitor recognition character from 13 to 19 in above
+// 20231003 PHR Reversed above.
+//
 @session_start();
 $s_id=session_id();
 $css="../css/standard.css";
@@ -79,8 +79,8 @@ else print "<meta http-equiv=\"refresh\" content=\"0;URL=importer.php?kladde_id=
 print "</tbody></table>";
 ################################################################################################################
 function vis_data($kladde_id, $filnavn, $bilag, $modkonto){
-	global $bgcolor;
-	global $bgcolor5;
+	global $bgcolor,$bgcolor5;
+	global $db;
 	global $charset;
 	global $bruger_id;
 
@@ -104,10 +104,15 @@ function vis_data($kladde_id, $filnavn, $bilag, $modkonto){
 				if (substr($linje,13,4)=='0297') {
 					$y++;
 					$skriv_linje[$y]=1;
-					$debitor[$y]=substr($linje,29,15)*1;
+					$amount[$y]=substr($linje,115,13)/100;
+					$invoice[$y]=substr($linje,38,5);
+					$debitor[$y] = (int)substr($linje,25,13);
+					$qtxt = "select kontonr, sum, moms from ordrer where art = 'DO' and fakturanr = '$invoice[$y]'";
+					if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+						($amount[$y] == $r['sum'] + $r['moms'])?$debitor[$y] = $r['kontonr']:$debitor[$y] = '';
+					}
 					$beskrivelse[$y]="Indbetaling via FI kort. Kunde $debitor[$y]";
 					$date[$y]=usdate(substr($linje,103,6));
-					$amount[$y]=substr($linje,115,13)/100;
 					$belob[$y]=dkdecimal($amount[$y]);
 					if (!$amount[$y]) $skriv_linje[$y]=0;
 					list($aar,$maaned,$dag)=explode("-",$date[$y]);
@@ -126,6 +131,8 @@ function vis_data($kladde_id, $filnavn, $bilag, $modkonto){
 					list($aar,$maaned,$dag)=explode("-",$date[$y]);
 					if (checkdate($maaned,$dag,$aar)) $dato[$y]=dkdato($date[$y]);
 					else $skriv_linje[$y]=0;
+				} elseif ($db == 'saldi_6') {
+#					echo substr($linje,13,4)."<br>";
 				}
 			}
 		}
@@ -175,10 +182,15 @@ function flyt_data($kladde_id, $filnavn, $bilag, $modkonto){
 				if (substr($linje,13,4)=='0297') {
 					$y++;
 					$skriv_linje[$y]=1;
-					$debitor[$y]=substr($linje,29,15)*1;
+					$amount[$y]=substr($linje,115,13)/100;
+					$invoice[$y]=substr($linje,38,5);
+					$debitor[$y] = (int)substr($linje,25,13);
+					$qtxt = "select kontonr, sum, moms from ordrer where art = 'DO' and fakturanr = '$invoice[$y]'";
+					if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+						($amount[$y] == $r['sum'] + $r['moms'])?$debitor[$y] = $r['kontonr']:$debitor[$y] = '';
+					}
 					$beskrivelse[$y]="Indbetaling via FI kort. Kunde $debitor[$y]";
 					$date[$y]=usdate(substr($linje,103,6));
-					$amount[$y]=substr($linje,115,13)/100;
 					if (!$amount[$y]) $skriv_linje[$y]=0;
 					list($aar,$maaned,$dag)=explode("-",$date[$y]);
 					if (checkdate($maaned,$dag,$aar)) $dato[$y]=dkdato($date[$y]);

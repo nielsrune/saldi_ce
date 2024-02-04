@@ -165,6 +165,7 @@
 // 20220301 PHR	- Minor change in order locking
 // 20230505 PHR - php8
 // 12/06-2023 PBLM - Added functionality to handle the new 'EasyUBL' module (peppol)
+// 20201220 PHR - php8
 
 @session_start();
 $s_id=session_id();
@@ -1063,8 +1064,9 @@ if ($b_submit) {
 */
 		$posnr_ny[$x]=trim(if_isset($_POST[$y],0));
 		if ($posnr_ny[$x]!="-" && $posnr_ny[$x]!="->" && $posnr_ny[$x]!="<-" && !strpos($posnr_ny[$x],'+')) {
-			if ($posnr_ny[$x]=='0') $posnr_ny[$x]="0,01";
-			$posnr_ny[$x]=afrund((100*str_replace(",",".",$posnr_ny[$x])),0);
+			if ($posnr_ny[$x]=='0') $posnr_ny[$x]="0.01";
+			$posnr_ny[$x] = (float)str_replace(",",".",$posnr_ny[$x]);
+			if ($posnr_ny[$x]) $posnr_ny[$x]=afrund(100*$posnr_ny[$x],0);
 #			if ($x==0 && $posnr_ny[$x]) $posnr_ny[$x]*=100;  
 		}
 		$y="vare".$x;
@@ -2633,8 +2635,8 @@ $kundeordre = findtekst(1092,$sprog_id);
 						}
 						$kostpris[$x]/=$ko_ant[$x]; #20141023
 #cho "Kost3 $kostpris[$x]<br>";
-						$kostsum[$x]=$kostpris[$x]*$antal[$x];
-#cho "Kost4 $kostsum[$x]<br>";
+						$lineCost[$x]+=$kostpris[$x]*$antal[$x];
+#cho "Kost4 $lineCost[$x]<br>";
 					# db_modify("update ordrelinjer set kostpris='$kostpris[$x]' where id='$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
 						$dbi[$x]=($pris[$x]-$kostpris[$x])*$antal[$x];
 #cho "DB $dbi[$x]=($pris[$x]-$kostpris[$x])*$antal[$x]<br>";
@@ -2652,14 +2654,16 @@ $kundeordre = findtekst(1092,$sprog_id);
 					while ($r2 = db_fetch_array($q2)) ($serienumre[$x])?$serienumre[$x].=','.$r['serienr']:$serienumre[$x]=$r['serienr'];
 				}
 #*/
-				if ($brugsamletpris && $linje_id[$x]) db_modify("update ordrelinjer set posnr='$x' where id = '$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
+				if ($brugsamletpris && $linje_id[$x]) {
+					db_modify("update ordrelinjer set posnr='$x' where id = '$linje_id[$x]'",__FILE__ . " linje " . __LINE__);
+				}
 			}
 		}
 		$linjeantal=$x;
 		print "<input type=\"hidden\" name=\"linjeantal\" value=\"$x\">\n";
-		$totalrest=0;
+		$kostSum=$totalrest=0;
 		for ($x=1; $x<=$linjeantal; $x++) {
-			$dkantal[$x] = $dk_kostpris[$x] = $kostsum[$x] = 0;
+			$dkantal[$x] = $dk_kostpris[$x] = $lineCost[$x] = 0;
 			if (!$vare_id[$x]) {
 				$query = db_select("select id from varer where varenr = '$varenr[$x]'",__FILE__ . " linje " . __LINE__);
 				if ($row = db_fetch_array($query)) {$vare_id[$x]=$row['id'];}
@@ -2673,10 +2677,11 @@ $kundeordre = findtekst(1092,$sprog_id);
 				if ($rabatart[$x]=='amount') $ialt=($pris[$x]-$rabat[$x])*$antal[$x];
 				else $ialt=($pris[$x]-($pris[$x]/100*$rabat[$x]))*$antal[$x];
 				if ($provisionsfri[$x]) {
-					if ($art=='DO') $kostsum[$x]=$ialt;
+					if ($art=='DO') $kostSum=$ialt;
 				}
-#				if ($valutakurs)$kostsum[$x]*=$valutakurs/100; #20140116
-				$dbi[$x]=$ialt-$kostsum[$x];				
+#				if ($valutakurs)$lineCost[$x]*=$valutakurs/100; #20140116
+				$lineCost[$x] = $kostpris[$x] * $antal[$x];
+				$dbi[$x]=$ialt-$lineCost[$x];
 				$ialt=afrund($ialt,3);
 				if ($ialt!=0) {
 					$dg[$x]=$dbi[$x]*100/$ialt;
@@ -2685,10 +2690,10 @@ $kundeordre = findtekst(1092,$sprog_id);
 				$dk_kostpris[$x]=dkdecimal($kostpris[$x],2);
 				if ($art=='DO') {
 					$dk_db[$x]=dkdecimal($dbi[$x],2);
-					$dk_kostsum[$x]=dkdecimal($kostsum[$x],2);
+					$dk_lineCost[$x]=dkdecimal($lineCost[$x],2);
 				}	else {
 					$dk_db[$x]=dkdecimal($dbi[$x]*-1,2);
-					$dk_kostsum[$x]=dkdecimal($kostsum[$x]*-1,2);
+					$dk_lineCost[$x]=dkdecimal($lineCost[$x]*-1,2);
 				}
 				$dkpris=dkdecimal($pris[$x],2);
 				($rabat[$x])?$dkrabat=dkdecimal($rabat[$x],3):$dkrabat=NULL;
@@ -2757,7 +2762,7 @@ $kundeordre = findtekst(1092,$sprog_id);
 					if ($art=='DK') $tmp*=-1;
 					$tmp=dkdecimal($tmp,2);
 				}
-				print "<td align=\"right\" title=\"Kostpris $dk_kostsum[$x] * db: $dk_db[$x] * dg: $dk_dg[$x]%\">".$tmp."</td>\n";
+				print "<td align=\"right\" title=\"Kostpris $dk_lineCost[$x] * db: $dk_db[$x] * dg: $dk_dg[$x]%\">".$tmp."</td>\n";
 			} else print "<td>&nbsp;</td>\n";
 			print "<input type=\"hidden\" name=\"projekt[$x]\" value=\"$projekt[$x]\">\n";
 			if ($vis_projekt && !$projekt[0] && $projekt[$x]) {

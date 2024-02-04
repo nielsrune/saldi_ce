@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php --- lap 4.0.5 --- 2022.11.23 ---
+// --- debitor/pos_ordre_includes/showPosLines/showPosLinesFunc.php --- lap 4.0.9 --- 2023.11.10 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190508 LN Move function vis_pos_linjer here
@@ -29,6 +29,7 @@
 // 20210310 PHR Some error corections in minor design changes 
 // 20210822 PHR Added $discounttxt as global in function vis_pos_linjer
 // 20221123 PHR Remove Vat if less than 0.1
+// 20231110 PHR $kasse is now shown as background if less than 3 orderlines.
 
 #Called from pos_ordre.php & pos_ordre_itemscan.php
 function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
@@ -124,16 +125,18 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 			print "<tr><td></td><td></td><td>$r[beskrivelse]</td><td></td><td align='right'>".dkdecimal($lev_vnr,2)."<td></tr>";
 		}
 	}
-	if (!$id) {
+	$qtxt = "select count(id) as l from ordrelinjer where ordre_id = '$id'";
+	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	if ($r['l'] < 3) {
 		global $kasse;
 		global $bord;
 		if ($afd_navn) {
-			print "<tr><td height=\"40%\" colspan=\"4\" align=\"center\" valign=\"middle\">";
-			print "<b><div style=\"font-size:25mm;color:$bgcolor5;\">$kasse</div></b><br>";
-			print "<b><div style=\"font-size:25mm;color:$bgcolor5;\">$afd_navn</div></b></td></tr>\n";
+			print "<tr><td height=\"40%\" colspan=\"6\" align=\"center\" valign=\"middle\">";
+			print "<b><div style=\"font-size:20mm;color:$bgcolor5;\">$kasse</div></b><br>";
+			print "<b><div style=\"font-size:20mm;color:$bgcolor5;\">$afd_navn</div></b></td></tr>\n";
 		} else {
-			print "<tr><td height=\"40%\" colspan=\"4\" align=\"center\" valign=\"middle\"><b>";
-			print "<div style=\"font-size:25mm;color:$bgcolor5;\">Kasse $kasse</div></b></td></tr>\n";
+			print "<tr><td height=\"40%\" colspan=\"6\" align=\"center\" valign=\"middle\"><b>";
+			print "<div style=\"font-size:20mm;color:$bgcolor5;\">Kasse $kasse</div></b></td></tr>\n";
 		}
 	}
 	print "</tbody></table></div></td></tr>\n";
@@ -149,10 +152,7 @@ function vis_pos_linjer($id,$momssats,$status,$pris_ny,$show) {
 	if ($show) print "<tr><td colspan=\"6\"><hr></td></tr>\n";
 	$sum=afrund($sum,2);
 	$dd=date("Y-m-d");
-
-
 	if ($show) include("sum.php"); #20190510
-
 	$x=0;
 	$a=array();
 	$b=array();

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- sager/loenIncludes/vis_liste.php --- lap 4.0.8 --- 2023-07-03 ---
+// --- sager/loenIncludes/vis_liste.php --- lap 4.0.8 --- 2023-09-27 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -24,6 +24,9 @@
 // ----------------------------------------------------------------------
 // 20230703 PHR array tr_tjek moved up, as it was reset when it should not. 
 // 20230703 PHR reactiveate $sum1 - no idea why it was deactivated.
+// 20230915 PHR if transport has been on list and all itens with transport is removed, transportlines are deleted from
+//              loen_enheder
+// 20230915 PHR tent surcharges were not shown on completed bills.
 
 function vis_liste($id,$listevalg,$afsluttet,$godkendt,$telt_antal) {
 
@@ -378,14 +381,16 @@ function vis_liste($id,$listevalg,$afsluttet,$godkendt,$telt_antal) {
 					}
 				}
 #cho "$telt_antal*$sum1<br>";				
-				if ($l_liste[$x]=='7') {
+				if ($l_liste[$x]=='7' || $l_liste[$x]=='11') {
 					print "<tr class=\"akkordListeTrans\">
 						<td colspan=\"1\" style=\"text-align:right;\">1</td>
 						<td></td>
-						<td style=\"padding-left: 5px;\" colspan=\"12\">$telt_navn - Telt tillæg ".($telt_antal*100)."%</td>
-						<td align=\"right\">".dkdecimal($telt_antal*$teltsum,2)."</td> 
+						<td style=\"padding-left: 5px;\" colspan=\"12\">$l_liste[$x]. Telt tillæg ".($telt_antal*100)."%</td>
+						<td align=\"right\">".dkdecimal($telt_antal*$telt_pris,2)."</td></tr>
+						<!--<td align=\"right\">".dkdecimal($telt_antal*$teltsum,2)."</td>-->
 					</tr>"; #20140810 ændret telt_pris til sum1 også 2 linjer herunder
 					$telt_tillaeg=1;
+					$sum+=$telt_antal*$telt_pris;
 					$sum+=$telt_antal*$teltsum;
 				}
 			}
@@ -420,7 +425,11 @@ function vis_liste($id,$listevalg,$afsluttet,$godkendt,$telt_antal) {
 		<td colspan=\"2\"></td><td colspan=\"3\" style=\"padding-left: 5px;\"><b>Sum incl. transport</b></td>
 		<td colspan=\"10\" align=\"right\" style=\"padding-right: 1px;\"><b>".dkdecimal($sum,2)."</b></td>
 		</tr>";
+	} elseif (!$tr_sum) { // 20230915
+		$qtxt = "delete from loen_enheder where loen_id = '$id' and vare_id = '-1' and tekst = '$listevalg|Transport'";
+		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	} 
+
 	if ($listevalg=='7' && !$telt_tillaeg) {
 		include ('loenIncludes/addon7.php');
 	} elseif ($db != 'stillads_5' && $listevalg=='11' && !$telt_tillaeg) {

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/divFuncs/drawer/drawerStatusFunc.php --- lap 4.0.5 --- 2021.12.03 ---
+// --- debitor/pos_ordre_includes/divFuncs/drawer/drawerStatusFunc.php --- lap 4.0.8 --- 2023.10.08 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,13 +20,14 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2019-2021 saldi.dk aps
+// Copyright (c) 2019-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190708 LN Check drawer status and tell to close if open
 // 20201010 PHR function getDrawerStatus - added: ?returside=$returside
 // 20211202 PHR function getPrintserver - Chech for cookie and now it works with 'box' too
 // 20211203 PHR replaced alert("LUK SKUFFEN") with echo
+// 20231002 PHR set $printserver to NULL if undefined.
 
 function getDrawerStatus() {
 	global $bgcolor;
@@ -61,7 +62,8 @@ function preDrawerCheck() {
 }
 
  function getPrintserver() {
-	if (isset($_COOKIE['saldi_printserver']) && isset($_COOKIE['saldi_printserver'])) $printserver=$_COOKIE['printserver'];
+	if (isset($_COOKIE['saldi_printserver'])) $printserver=$_COOKIE['printserver'];
+	else $printserver = NULL;
 	if (!$printserver) {
 	 $r = db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
 	 $printer_ip=explode(chr(9),$r['box3']);

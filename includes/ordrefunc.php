@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//--- includes/ordrefunc.php --- ver 4.0.8 --- 20230719 ---
+//--- includes/ordrefunc.php ---patch 4.0.8 ----2023-12-20--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -17,10 +17,11 @@
 // or other proprietor of the program without prior written agreement.
 // 
 // The program is published with the hope that it will be beneficial,
-// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
-// GNU General Public License for more details.
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2003-2023 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 20120730 søg 20120730
@@ -207,9 +208,12 @@
 // 20220602 PHR function opret_saet: Added search for items that is part of items that is part of items
 // 20220726 PHR	function opret_ordrelinje: Added barcodeNew to write barcode from table mylabel in colunm serienr when adding ordreline.
 // 20220726 PHR function bogfor: Column 'mylabel.sold' now set 'mylabel.sold'+'ordrelinjer.antal' to amount if ordrelinjer.serienr = mylabel.barcode
-// 20230420 + 20230615 PHR php8 :)
+// 20230420 PHR php8 :) + 20230615 
 // 20230707 PHR Added call to ../includes/stdFunc/findAccountVat.php in function bogfor
 // 20230719 PHR php8
+// 20230829 MSC - Copy pasted new design into code
+// 20231128 MSC - Made small design changes
+// 20231220 PHR - php8
 
 function levering($id,$hurtigfakt,$genfakt,$webservice) {
 echo "<!--function levering start-->";
@@ -1196,7 +1200,7 @@ function samlevare($id,$art,$linje_id, $v_id, $leveres) {
 function bogfor($id,$webservice) {
 echo "<!--function bogfor start-->";
 
-	global $brugernavn;
+	global $bruger_id,$brugernavn;
 	global $db,$db_skriv_id;
 	global $fakturadate;
 	global $mail_fakt,$momssats;
@@ -1245,7 +1249,7 @@ echo "<!--function bogfor start-->";
 		if (is_numeric($row['felt_2']) && is_numeric($row['felt_4']) && is_numeric($row['felt_5'])) { #20191001
 				$qtxt="insert into pos_betalinger(ordre_id,betalingstype,amount,valuta,valutakurs) values ('$id','$row[felt_1]','$row[felt_2]','DKK','100')";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			if ($row['felt_4']*1 != 0) {
+			if ((float)$row['felt_4'] != 0) {
 				$qtxt="insert into pos_betalinger(ordre_id,betalingstype,amount,valuta,valutakurs) values ('$id','$row[felt_3]','$row[felt_4]','DKK','100')";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			}
@@ -1420,7 +1424,7 @@ echo "<!--function bogfor start-->";
 		$rabatvareid=$r['id'];
 		$rabatvarenr=$r['varenr'];
 		if ($r=db_fetch_array(db_select("select box2 from grupper where art = 'DIV' and kodenr='3'",__FILE__ . " linje " . __LINE__))) {
-			if ($rabatvareid=$r['box2']*1) {
+			if ($rabatvareid=(int)$r['box2']) {
 				$r=db_fetch_array(db_select("select varenr from varer where id = '$rabatvareid'",__FILE__ . " linje " . __LINE__));
 				$rabatvarenr=$r['varenr'];
 			} # else $fejl="Manglende varenummer for rabat (Indstillinger -> Diverse -> Ordrerelaterede valg)";
@@ -1481,7 +1485,6 @@ echo "<!--function bogfor start-->";
 			if ($valuta!='DKK' && $betaling=='Kontant' && !$betaling2) {
 				$tmp1=afrund($sum+$moms,2);
 				$tmp2=pos_afrund($sum+$moms,$difkto,$valutakurs);
-				
 				if ($afrunding=$tmp2-$tmp1) {
 					if ($moms) {
 						$afrundingsmoms=afrund($afrunding*($moms*100/$sum)/100,2);
@@ -1493,6 +1496,7 @@ echo "<!--function bogfor start-->";
 					
 				}
 			}
+#xit;				
 $tmp=afrund($sum+$moms,2)+$retur;
 			if (afrund($sum+$moms,2)+$retur!=$betalt) { #20140613
 				$returdiff=afrund($sum+$moms,2)+$retur-$betalt;
@@ -1520,9 +1524,11 @@ $tmp=afrund($sum+$moms,2)+$retur;
 				$qtxt = "insert into ordrelinjer (posnr,antal,pris,rabat,procent,ordre_id,bogf_konto,beskrivelse,projekt) ";
 				$qtxt.= "values ('0','1', '$diff', 0,100, '$id', '$difkto','Afrunding','$projekt')";
 				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+				$qtxt ="update ordrer set sum = '$sum',moms='$moms' where id = '$id'";
 						db_modify("update ordrer set sum = '$sum',moms='$moms' where id = '$id'",__FILE__ . " linje " . __LINE__);
 					}
 				}
+#exit;
 		batch_kob($id, $art);
 	batch_salg($id);
 		$tidspkt=date("H:i");
@@ -1570,9 +1576,6 @@ $tmp=afrund($sum+$moms,2)+$retur;
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 if ($dan_kn) db_modify("update ordrer set art = 'DK' where id = '$id'",__FILE__ . " linje " . __LINE__);
 if ($straksbogfor) $svar=bogfor_nu($id,$webservice);
-elseif (($db=='bizsys_49' || $db=='udvikling_5')  && $webservice) $svar=bogfor_nu($id,'webservice'); #20180914
-#$linje="Svar $svar<br>";
-#fwrite($fp,$linje."\n");
 		if ($svar != "OK") {
 			return($svar);
 			exit;
@@ -2116,8 +2119,7 @@ include("../includes/genberegn.php");
 	global $difkto;
 	global $title;
 
-	$korttyper = array();
-	$kortkonti = array();
+	$korttyper = 	$kortkonti = $vatAccount = array();
 
 	
 	$qtxt = "SELECT column_name FROM information_schema.columns WHERE table_name='transaktioner' and column_name='report_number'";
@@ -2421,19 +2423,52 @@ fwrite ($hmlog, __line__."  $qtxt\n");
 			$tmparray=explode(chr(9),$r['box3']);
 #		if (!$afd) $afd=$tmparray[$kasse-1]*1; # udkommenteret 20181128
 			$tmparray=explode(chr(9),$r['box5']);
-			$kortantal=$r['box4']*1;
+		$l_cardNames = explode(chr(9),strtolower($r['box5']));
 			$korttyper=explode(chr(9),$r['box5']);
+		$l_cartTypes=explode(chr(9),strtolower($r['box5']));
 			$kortkonti=explode(chr(9),$r['box6']);
 			$kortnavn=NULL; 
+
+/*
+		if ($div_kort_kto) { #20140129
+			$i=count($korttyper); #20231210
+			$qtxt = "select distinct(betalingstype) as paymenttype from pos_betalinger, ordrer ";
+			$qtxt.= "where betalingstype != 'Kontant' and betalingstype != 'Konto' and betalingstype != '!' ";
+			$qtxt.= "and pos_betalinger.amount != 0 ";
+			$qtxt.= "and ordre_id = pos_betalinger.ordre_id and ordrer.status = 3";
+			$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+			while ($r = db_fetch_array($q)) {
+				if (!in_array(strtolower($r['paymenttype']),$l_cartTypes)) {
+					if ($div_kort_kto) {
+						$korttyper[$i] = $r['paymenttype'];
+						$kortkonti[$i] = $div_kort_kto;
+						$i++;
+					} else {
+						alert("Konto for $r[paymenttype] mangler");
+						return "Konto for $r[paymenttype] mangler";		
+					}
+				}
+			}
+		}
+*/
 			if ($div_kort_kto) { #20140129
+			for ($b=0;$b<count($betaling);$b++) {
+				if (!in_array(strtolower($betaling[$b]),$l_cardNames) 
+				&& $betaling[$b] != 'Kontant' && $betaling[$b] != 'Konto') {
+					$i = count($kortkonti);
+					$korttyper[$i]   = $betaling[$b];
+					$l_cardNames[$i] = strtolower($betaling[$b]);
+					$kortkonti[$i]   = $div_kort_kto;
+				}
+			}
 				for ($b=0;$b<count($betaling);$b++) { #20150505
 					if (strpos($betaling[$b],"|")) list($betaling[$b],$kortnavn)=explode("|",$betaling[$b]);
 				}
-				$korttyper[$kortantal]='Betalingskort';
-				$kortkonti[$kortantal]=$div_kort_kto;
-				$kortantal++;
+			$i=count($korttyper);
+			$korttyper[$i]='Betalingskort';
+			$kortkonti[$i]=$div_kort_kto;
 			}
-			for($x=0;$x<$kortantal;$x++) { #20150505
+		for($x=0;$x<count($kortkonti);$x++) { #20150505
 				for($b=0;$b<count($betaling);$b++) { 
 				$cardVat=$cardVatPercent=$cardVatAccount=0; 
 					if (strtolower($betaling[$b])==strtolower($korttyper[$x])) { #20170816
@@ -2625,7 +2660,6 @@ fclose ($hmlog);
 							$qtxt.= "('0','$transdate','$beskrivelse','$bogf_konto[$y]','0','$debet','$kredit','0','$afd','$logdate',";
 							$qtxt.= "'$logtime','$projekt[$p]','$ansat','0','$kasse',$vat)";
 						}
-#cho __line__." $qtxt<br>";						
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 						$tmp=$debet-$kredit;
 						$qtxt="update kontoplan set saldo=saldo+'$tmp' where kontonr='$bogf_konto[$y]' and regnskabsaar='$regnaar'";
@@ -2942,7 +2976,6 @@ fclose ($hmlog);
 	}
 	if ($title != "Massefakturering" && !$webservice && $art !='PO') genberegn($regnaar);
 #xit;
-	
 	return($svar);
 } # endfunc bogfor_nu
 
@@ -3195,6 +3228,13 @@ function kontoopslag($o_art,$sort,$fokus,$id,$kontonr,$firmanavn,$addr1,$addr2,$
 
 	global $bgcolor,$bgcolor5,$land,$returside,$sag_id, $sprog_id;
 	$find=$href=$linjebg=$opret=NULL;
+	global $menu;
+
+	if ($menu=='T') {
+		include_once '../includes/top_menu.php';
+	} else {
+
+	}
 	
 	if ($fokus=='kontonr') $find=$kontonr;
 	elseif (strstr($fokus,'lev')) $find=$firmanavn;
@@ -3222,7 +3262,7 @@ $kundeordre = findtekst(1092,$sprog_id);  #20210630
 		$fokus="kontonr";
 	}
 #	sidehoved($id, "ordre.php", "../debitor/debitorkort.php", $fokus, "Kundeordre $id - Kontoopslag");
-	print"<table class='dataTable2' cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign=\"top\">";
+	print"<table class='dataTable' cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign=\"top\">";
 	print"<tbody><tr>";
 	print"<td><b><a href=$href?sort=kontonr&funktion=kontoOpslag&fokus=$fokus&id=$id>";
 	($o_art=='KO')?print "Leverandørnr":print "Kundenr";
@@ -3268,7 +3308,7 @@ $kundeordre = findtekst(1092,$sprog_id);  #20210630
 		if ($linjebg!=$bgcolor){$linjebg=$bgcolor; $color='#000000';}
 		else {$linjebg=$bgcolor5; $color='#000000';}
 		print "<tr bgcolor=\"$linjebg\">";
-		print "<td><a href=$href?fokus=$fokus&id=$id&konto_id=$row[id] $fokus_id>$row[kontonr]</a></td>";
+		print "<td><a class='no-outline' href=$href?fokus=$fokus&id=$id&konto_id=$row[id] $fokus_id>$row[kontonr]</a></td>";
 		$fokus_id='';
 		print "<td>".stripslashes($row['firmanavn'])."</td>";
 		print "<td>".stripslashes($row['addr1'])."</td>";
@@ -3361,6 +3401,12 @@ $kundeordre = findtekst(1092,$sprog_id);  #20210630
 	print "</tbody></table></td></tr>";
 	if ($o_art=='PO')	print "<script language=\"javascript\">document.kontoopslag.kontonr.focus();</script>";
 	else print "<BODY onLoad=\"javascript:document.getElementById('fokus').focus()\">";
+
+	if ($menu=='T') {
+		include_once '../includes/topmenu/footer.php';
+	} else {
+		include_once '../includes/oldDesign/footer.php';
+	}
 	exit;
 }
 ######################################################################################################################################
@@ -3368,6 +3414,14 @@ function ansatopslag($sort, $fokus, $id)
 {
 	global $bgcolor;
 	global $bgcolor5;
+
+	global $menu;
+
+	if ($menu=='T') {
+		include_once '../includes/top_menu.php';
+	} else {
+
+	}
 
 	if (!$id) $id='0';
 	$query = db_select("select konto_id from ordrer where id = $id",__FILE__ . " linje " . __LINE__);
@@ -3377,7 +3431,7 @@ function ansatopslag($sort, $fokus, $id)
 	$fokus=$fokus."&konto_id=".$konto_id;
 
 	sidehoved($id, "ordre.php", "../debitor/ansatte.php", $fokus, "Debitorordre $id",__FILE__ . " linje " . __LINE__);
-	print"<table cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"100%\" valign = \"top\">";
+	print"<table class='dataTable' cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"100%\" valign = \"top\">";
 	print"<tbody><tr>";
 	print"<td><b><a href=ordre.php?sort=navn&funktion=ansatOpslag&fokus=$fokus&id=$id>Navn</b></td>";
 	print"<td><b><a href=ordre.php?sort=tlf&funktion=ansatOpslag&fokus=$fokus&id=$id>Lokal</b></td>";
@@ -3403,6 +3457,12 @@ function ansatopslag($sort, $fokus, $id)
 		print "</tr>\n";
 	}
 	print "</tbody></table></td></tr></tbody></table>";
+
+	if ($menu=='T') {
+		include_once '../includes/topmenu/footer.php';
+	} else {
+		include_once '../includes/oldDesign/footer.php';
+	}
 	exit;
 }
 ######################################################################################################################################
@@ -3508,9 +3568,9 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 	$qtxt="SELECT id,vare_id,variant_type FROM variant_varer WHERE upper(variant_stregkode) = '$varenr_up'";
 	if (strlen($varenr)==12 && is_numeric($varenr)) $qtxt.=" or variant_stregkode='0$varenr'";
 	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-		$vare_id=$r['vare_id'];
-		$variant_type=$r['variant_type']*1;
-		$variant_id=$r['id'];
+		$vare_id=(int)$r['vare_id'];
+		$variant_type=(int)$r['variant_type'];
+		$variant_id=(int)$r['id'];
 		$qtxt="SELECT beskrivelse FROM variant_typer WHERE id = '$variant_type'";
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$variantText=$r['beskrivelse'];
@@ -3528,11 +3588,11 @@ function opret_ordrelinje($id,$vare_id,$varenr,$antal,$beskrivelse,$pris,$rabat_
 		if (strlen($varenr)==12 && is_numeric($varenr)) $string.=" or stregkode='0$varenr'";
 	} elseif ($id && $beskrivelse && $posnr) {
 		$qtxt="insert into ordrelinjer ";
-		$qtxt.="(ordre_id,vare_id,varenr,enhed,beskrivelse,antal,rabat,rabatart,procent,m_rabat,pris,kostpris,momsfri,momssats,posnr,";
-		$qtxt.="projekt,folgevare,rabatgruppe,bogf_konto,kred_linje_id,kdo,serienr,variant_id,leveres,samlevare,omvbet,saet,fast_db,";
-		$qtxt.="tilfravalg,lager) values ";
-		$qtxt.="('$id','0','','','$beskrivelse','0','0','','100','0','0','0','','0','$posnr','0','0','0','0','0','','','0','0','',";
-		$qtxt.="'$omvbet','$saet','$fast_db','',$lager)";
+		$qtxt.="(ordre_id,vare_id,varenr,enhed,beskrivelse,antal,rabat,rabatart,procent,m_rabat,pris,kostpris,momsfri,momssats,";
+		$qtxt.="posnr,projekt,folgevare,rabatgruppe,bogf_konto,kred_linje_id,kdo,serienr,variant_id,leveres,samlevare,omvbet,";
+		$qtxt.="saet,fast_db,tilfravalg,lager) values ";
+		$qtxt.="('$id','0','','','$beskrivelse','0','0','','100','0','0','0','','0','$posnr','0','0','0','0','0','','','0','0',";
+		$qtxt.="'','$omvbet','$saet','$fast_db','',$lager)";
 		fwrite($log, __linr__." $qtxt\n");
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	} else {
@@ -4075,11 +4135,15 @@ function vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find) {
 	global $db;
 	global $incl_moms;
 	global $momssats;
+	global $menu;
 
-		$fp = fopen("../temp/$db/vareopslag.log","a");
-	fwrite ($fp, date("H:i:s")."\n");
-	fwrite ($fp, __line__."vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find)\n");
-	fclose ($fp);
+	if ($menu=='T') {
+		include_once '../includes/top_menu.php';
+	} else {
+
+	}
+
+	file_put_contents("../temp/$db/vareopslag.log","vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find)\n",FILE_APPEND);
 	
 	$cols='5';
 	$findStr=trim($find,'*');
@@ -4203,7 +4267,7 @@ function vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find) {
 		function RestoreBackgroundColor(row) { row.style.backgroundColor = TableBackgroundNormalColor; }
 	</script>";
 */   
-  print "<table class='dataTable2' cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign = \"top\"><tbody>";
+  print "<table class='dataTable' cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign = \"top\"><tbody>";
 	$linjebg=$bgcolor; $color='#000000';
 #	$linjebg=$bgcolor5; $color='#000000';
 	print "<tr $linjebg>";
@@ -4227,11 +4291,11 @@ function vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find) {
 		if ($vis_kost) {
 			$cols=9;
 			print "<td colspan='$cols' align=center>";
-			print "<a href=$href?sort=varenr&funktion=vareOpslag&fokus=$fokus&id=$id>Udelad kostpriser</a></td></tr>";
+			print "<a class='button blue medium' href=$href?sort=varenr&funktion=vareOpslag&fokus=$fokus&id=$id>Udelad kostpriser</a></td></tr>";
 		}	else {
 			$cols=6;
 			print "<td colspan='$cols' align=center>";
-			print "<a href=$href?sort=varenr&funktion=vareOpslag&fokus=$fokus&id=$id&vis_kost=on>Vis kostpriser</a></td></tr>";
+			print "<a class='button blue medium' href=$href?sort=varenr&funktion=vareOpslag&fokus=$fokus&id=$id&vis_kost=on>Vis kostpriser</a></td></tr>";
 		}
 		$rowheight=NULL;
 	}
@@ -4324,7 +4388,7 @@ function vareopslag($art,$sort,$fokus,$id,$vis_kost,$ref,$find) {
 		print "<tr  bgcolor=\"$linjebg\" >";
 #		($art=='PO')?$hreftxt="$href?vare_id=$row[id]&fokus=$fokus&id=$id&bordnr=$bordnr":$hreftxt="";
 		$hreftxt="$href?vare_id=$row[id]&fokus=$fokus&id=$id&bordnr=$bordnr&lager=$afd_lager";#"$href?vare_id=$row[id]&fokus=$fokus&id=$id&bordnr=$bordnr";
-		print "<td $rowheight $onclick><a onfocus=\"this.style.fontSize = '20px';\" onblur=\"this.style.fontSize = '12px';\" id=\"opslag_$x\" href=\"$hreftxt\">$row[varenr]</a></td>";
+		print "<td $rowheight $onclick><a class='no-outline' onfocus=\"this.style.fontSize = '20px';\" onblur=\"this.style.fontSize = '12px';\" id=\"opslag_$x\" href=\"$hreftxt\">$row[varenr]</a></td>";
 		print "<td $onclick>$row[enhed]<br></td>";
 		print "<td $onclick>$row[beskrivelse]<br></td>";
 		if ($incl_moms && !in_array($row['gruppe'],$momsfri)) {
@@ -4397,7 +4461,7 @@ function tekstopslag($sort, $id)
 //#cho "host: $sqhost<br>dbname: $db<br>user: $squser<br>pasword: $sqpass";
 	//print "<td width=100% align=\"center\">\n";
 	print "<form name=\"ordre\" action=\"ordre.php?id=$id\" method=\"post\">\n";
-	print "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\" class=\"ordretekstSort\">\n";
+	print "<table width='100%' cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\" class=\"ordretekstSort\">\n";
 	//print "<tbody class=\"dataTableLink dataTableZebra\">\n";
 	// indsæt sagens omfang her
 	$r=db_fetch_array(db_select("select * from ordrer where id='$id'",__FILE__ . " linje " . __LINE__));
@@ -4440,8 +4504,8 @@ if ($sag_id) { #20140425 Kaldes kun hvis sag_id
 	}
 	print "</tbody>\n";
 	print "<tbody class=\"dataTableTopBorderGray\">\n";//<input class=\"inputbox\" type=\"text\" title=\"Hvis teksten skal være fed sættes <b> foran teksten og </b> efter teksten (F.eks. <b>Lorem ipsum</b>). Det samme gøres ved Italic, bare med <i> og </i>.\" style=\"text-align:left;width:800px;\" name=\"ny_linjetekst\">
-	print "<tr><td valign=\"top\" colspan=\"2\"><input type=\"hidden\" name=\"id\" value=\"$id\"><span style=\"display:block;margin-top:3px;\">Ny fast tekst</span></td><td><textarea class=\"textAreaSager autosize kontrolskema_font\" name=\"ny_linjetekst\" rows=\"1\" cols=\"10\" style=\"height:16px;width:800px;\" title=\"Hvis teksten skal være fed sættes &lt;b&gt; foran teksten og &lt;/b&gt; efter teksten (F.eks. &lt;b&gt;Lorem ipsum&lt;/b&gt;). Det samme gøres ved Italic, bare med &lt;i&gt; og &lt;/i&gt;. Hvis der skal insættes en blank linje bruges &lt;i&gt;&lt;/i&gt; uden tekst imellem.\"></textarea></td>\n";
-	print "<td colspan=\"2\" valign=\"bottom\"><input type=\"submit\" class=\"button gray medium\" accesskey=\"g\" value=\"Gem/Indsæt\" name=\"tekstlinjer\" onclick=\"javascript:docChange = false;\"></td>\n";
+	print "<tr><td colspan=\"2\"><input type=\"hidden\" name=\"id\" value=\"$id\"><span style=\"display:block;margin-top:3px; text-align:center;\"><b>Ny fast tekst:</b></span></td><td><textarea class=\"textAreaSager autosize kontrolskema_font\" name=\"ny_linjetekst\" rows=\"1\" cols=\"10\" style=\"height:16px;width:800px;\" title=\"Hvis teksten skal være fed sættes &lt;b&gt; foran teksten og &lt;/b&gt; efter teksten (F.eks. &lt;b&gt;Lorem ipsum&lt;/b&gt;). Det samme gøres ved Italic, bare med &lt;i&gt; og &lt;/i&gt;. Hvis der skal insættes en blank linje bruges &lt;i&gt;&lt;/i&gt; uden tekst imellem.\"></textarea></td>\n";
+	print "<td colspan=\"2\" style='text-align:center;'><input type=\"submit\" class=\"button gray medium\" accesskey=\"g\" value=\"Gem/Indsæt\" name=\"tekstlinjer\" onclick=\"javascript:docChange = false;\"></td>\n";
 	print "</tr>\n";
 	print "</tbody></table></form></td></tr></tbody></table>\n";
 	print "</div>";
@@ -4468,8 +4532,18 @@ if ($sag_id) { #20140425 Kaldes kun hvis sag_id
 		});
 		</script>
 	<?php
+
+	global $menu;
+
 	print "</body>\n";
 	print "</html>\n";
+
+	if ($menu=='T') {
+		include_once '../includes/topmenu/footer.php';
+	} else {
+		include_once '../includes/oldDesign/footer.php';
+	}
+
 	exit;
 }
 ######################################################################################################################################
@@ -4487,6 +4561,8 @@ function sidehoved($id, $returside, $kort, $fokus, $tekst) {
 	global $meta_returside;
 	global $bordnr;
 	global $popup;
+	
+	$title=$tekst;
 	
 	$sag_id=if_isset($_GET['sag_id']);
 	$konto_id=if_isset($_GET['konto_id']);
@@ -4508,14 +4584,12 @@ function sidehoved($id, $returside, $kort, $fokus, $tekst) {
 		if ($menu=='T' && !$sag_id) {
 		include_once '../includes/top_header.php';
 		include_once '../includes/top_menu.php';
-		$leftbutton="<a class='button red small' title=\"Klik her for at komme tilbage til ordrelisten\" href=\"../debitor/ordreliste.php\" accesskey=\"L\">".findtekst(30,$sprog_id)."</a>";
-		print "<div id=\"header\"> \n
-			<div class=\"headerbtnLft\">$leftbutton</div>\n
-			<span class=\"headerTxt\">$tekst</span>\n";     
-		print "<div class=\"headerbtnRght\"></div>";       
-		print "</div><!-- end of header -->";
-		print "<div class=\"maincontentLargeHolder glow\">\n";
-		print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\">";
+			print "<div id=\"header\">"; 
+			print "<div class=\"headerbtnLft headLink\"><a href=../debitor/ordreliste.php accesskey=L title='Klik her for at komme tilbage til ordreliste'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+			print "<div class=\"headerTxt\">$tekst</div>";     
+			print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+			print "</div>";
+			print "<div class='content-noside'>";
 		} elseif ($sag_id){
 		$bg="nix";
 		$header='nix';
@@ -4677,7 +4751,7 @@ if (strlen($ore)>2) { # 20150812
 
 function opret_ordre($sag_id,$konto_id) {
 //exit;
-		global $brugernavn;
+		global $bruger_id,$brugernavn;
 		global $db,$db_skriv_id;
 		global $default_procenttillag;
 		
