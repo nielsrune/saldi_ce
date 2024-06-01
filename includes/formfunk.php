@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---------------------includes/formfunk.php ------patch 4.0.8 ----2023-07-12--------------
+// ---includes/formfunk.php ------patch 4.0.8 ----2024-01-19--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2003-2023 Saldi.dk ApS
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 2012.09.06 Tilføjet mulighed for at vise momssats på ordrelinjer. 
@@ -434,7 +435,7 @@ print "<!--function find_form_tekst start-->";
 #	global $linjeafstand;
 	global $moms,$momsgrundlag;
 	global $psfp;
-	global $ref,$returside;
+	global $ref,$regnaar,$returside;
 	global $side,$sum;
 	global $transportsum;
 	global $valuta,$valutakurs,$vis_saet;
@@ -548,8 +549,11 @@ print "<!--function find_form_tekst start-->";
 					$q2 = db_select("select $variabel from adresser where art='S'",__FILE__ . " linje " . __LINE__);
 				} elseif ($tabel=="adresser" || $tabel=="konto") {
 					if ($variabel=='valuta') {
-						$r2 = db_fetch_array(db_select("select gruppe from adresser where id='$id'",__FILE__ . " linje " . __LINE__));
-						$q2 = db_select("select box3 as valuta from grupper where art='DG' and kodenr='$r2[gruppe]'",__FILE__ . " linje " . __LINE__);
+						$qtxt = "select gruppe from adresser where id='$id'";
+						$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+						$qtxt = "select box3 as valuta from grupper where art='DG' and kodenr='$r2[gruppe]' ";
+						$qtxt.= "and fiscal_year = $regnaar";
+						$q2 = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 					} else {
 					$q2 = db_select("select $variabel from adresser where id='$id'",__FILE__ . " linje " . __LINE__);
 					}
@@ -826,7 +830,7 @@ print "<!--function formularprint start-->";
 	global $mailantal,$mappe,$moms,$momsgrundlag,$momssats;
 	global $nextside;
 	global $printerid,$printfilnavn;
-	global $ref,$returside;
+	global $ref,$regnaar,$returside;
 	global $s_id,$side,$sprog_id,$subtotal,$sum;
 	global $transportsum;
 	global $vis_saet;
@@ -884,8 +888,8 @@ if ($formular!=3 && $folgeseddel) {
 		}
 	}
 }
-
-$r = db_fetch_array(db_select("select box6,box12 from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
+	$qtxt = "select box6,box12 from grupper where art = 'POS' and kodenr = '2' and fiscal_year = '$regnaar'";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $vis_saet=trim($r['box12']);
 if ($vis_saet) $brugsamletpris='on';
 
@@ -984,7 +988,8 @@ for ($o=0; $o<$ordre_antal; $o++) {
 		$r=db_fetch_array(db_SELECT("select adresser.gruppe,ordrer.procenttillag from ordrer,adresser where ordrer.id = '$ordre_id[$o]' and adresser.id=ordrer.konto_id",__FILE__ . " linje " . __LINE__));
 		$gruppe=$r['gruppe'];
 		$procenttillag=$r['procenttillag'];
-		$r=db_fetch_array(db_select("select box8 from grupper where art='DG' and kodenr='$gruppe'",__FILE__ . " linje " . __LINE__));
+		$qtxt = "select box8 from grupper where art='DG' and kodenr='$gruppe' and fiscal_year = '$regnaar'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$b2b=$r['box8'];
 	}
 	if ($afd) {
@@ -1950,7 +1955,7 @@ function rykkerprint($konto_id,$rykker_id,$rykkernr,$maaned_fra,$maaned_til,$reg
 						$z_faktnr=$z;
 						skriv($id,$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$faktnr", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 					}
-					if ($variabel[$z]=="beskrivelse") {
+					if (strtolower($variabel[$z]) == "beskrivelse")
 						$z_beskrivelse=$z;
 					($laengde[$z])?$beskr=(substr($r1['beskrivelse'],0,$laengde[$z])):$beskr=$r1['beskrivelse']; #20190430
 						skriv($id,$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$beskr", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
@@ -1969,8 +1974,7 @@ function rykkerprint($konto_id,$rykker_id,$rykkernr,$maaned_fra,$maaned_til,$reg
 			find_form_tekst("$rykker_id[$q]","S","$formular","0","$linjeafstand","");
 			bundtekst($konto_id[$q]);
 		}
-	}
-	fclose($psfp);
+#	fclose($psfp);
 	if ($mailantal>0) {
 		if(!class_exists('phpmailer')) {
 		ini_set("include_path", ".:../phpmailer");
@@ -2024,7 +2028,7 @@ global $db,$db_id;
 global $formularsprog;
 	global $htmfp;
 global $mappe;
-global $printfilnavn,$psfp,$y;
+global $printfilnavn,$psfp,$regnaar,$y;
 global $s_id;
 
 $dkkforfalden=$nomailantal=$mailantal=0;
@@ -2112,7 +2116,8 @@ for ($i=0;$i<count($konto_id);$i++) {
 		while ($r=db_fetch_array($q)) {
 				$betalingsbet=$r['betalingsbet'];
 			$betalingsdage=$r['betalingsdage'];
-			$r2=db_fetch_array(db_select("select box3 from grupper where art='DG' and kodenr='$r[gruppe]'",__FILE__ . " linje " . __LINE__));
+			$$qtxt = "select box3 from grupper where art='DG' and kodenr='$r[gruppe]' and fiscal_year = '$regnaar'";
+			$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$kontovaluta=$r2['box3'];
 			if (!$kontovaluta) $kontovaluta='DKK';
 			if ($email) $mailantal++;

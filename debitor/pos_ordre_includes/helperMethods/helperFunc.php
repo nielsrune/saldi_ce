@@ -167,10 +167,10 @@ function getReceiptId($table)
     return $id;
 }
 
-function proformaCount($x, $dkkpris, $kasse)
-{
+function proformaCount($x, $dkkpris, $kasse) {
+	$totalPrice = 0;
     for ($j = 0; $j <= $x; $j++) {
-        $temp = str_replace('.', '', $dkkpris[$j]);
+        $temp = dkdecimal($dkkpris[$j],2);
         $totalPrice += $temp;
     }
     $proformaQuery = db_fetch_array(db_select("select * from proforma where id='$kasse'",__FILE__."linje".__LINE__));

@@ -1,29 +1,28 @@
 <?php
-// ----------------systemdata/left_menu.php -- lap 3.5.5 -- 2015-03-27 --
-// LICENS
+// ----------------systemdata/left_menu.php -----patch 4.0.8 ----2023-07-22----
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// // Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20141030 CA  Ændret projekter til topmenu-design - søg 20141030
 // 20150217 CA  Ændret varegrupper til topmenu-design - søg 20150217
 // 20150217 CA  Tilføjet linjeskift i HTML-koden, så fejlsøgning lettes
 // 20150313 CA  Ændret henvisning til rabatgrupper - søg 20150313
+
 print "<div class=\"leftmenu\">";
 	if (strpos($_SERVER['SCRIPT_NAME'],"kontoplan.php")) {
 		print "<div class=\"leftmenuhead link\">Kontoplan</div>\n<ul>";
@@ -42,7 +41,7 @@ print "<div class=\"leftmenu\">";
 			print "<li><a href=\"syssetup.php?valg=afdelinger\" accesskey=\"A\">Afdelinger</a></li>\n";
 			print "<li><a href=\"syssetup.php?valg=projekter\" accesskey=\"P\">Projekter</a></li>\n"; # 20141030
 #			print "<li><a href=\"projekter.php\" accesskey=\"P\">Projekter</a></li>\n";
-			print "<li><a href=\"syssetup.php?valg=lagre\" accesskey=\"G\">Lagre</a></li>\n";
+			print "<li><a href=\"syssetup.php?valg=lagre\" accesskey=\"G\">".findtekst(533,$sprog_id)."</a></li>\n";
 			print "<li><a href=\"syssetup.php?valg=varer\" accesskey=\"V\">Varegrupper</a></li>\n"; # 20150217
 #			print "<li><a href=\"syssetup.php?valg=rabatgrupper\" accesskey=\"T\">Rabatgrupper</a></li>\n"; # 20150217 - ændret accesskey
 			print "<li><a href=\"rabatgrupper.php\" accesskey=\"T\">Rabatgrp</a></li>\n"; # 20150313

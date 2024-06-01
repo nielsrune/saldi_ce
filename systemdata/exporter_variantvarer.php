@@ -1,29 +1,28 @@
 <?php
-// ---------/systemdata/exporter_variantvarer.php---lap 3.4.1--2014-05-26------------------------
-// LICENS
+// ----/systemdata/exporter_variantvarer.php-----patch 4.0.8 ----2023-07-22--
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
-//
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20130412 Rettet i formatet
 // 20140516 Grundet timeout ved mange varer eksporteres nu max 1000 hvorefter rutinen genstarter der hvor den er nået til. Søg $start,$slut & $z; 
 // 20140516 Indsat dkdecimal ved udskrivning af kost',salgs', og vejl.pris. 
 // 20140526 Rettet $varianter_id til $varianttype_id 
+// 20210714 LOE - Translated some text.
 
 @session_start();
 $s_id=session_id();
@@ -124,16 +123,16 @@ if ($z>$slut) {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>Luk</a></td>";
-print "<td width=\"80%\" $top_bund>$title</td>";
+print "<td width=\"10%\" $top_bund><a href=diverse.php?sektion=div_io accesskey=L>".findtekst(30, $sprog_id)."</a></td>"; #20210714
+print "<td width=\"80%\" $top_bund>".findtekst(1375, $sprog_id)."</td>"; 
 print "<td width=\"10%\" $top_bund><br></td>";
 print "</tbody></table>";
 print "</td></tr>";
 print "<td align=center valign=top>";
 print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\"><tbody>";
-
-print "<tr><td align=center> H&oslash;jreklik her: </td><td $top_bund><a href='$filnavn'>variantvarer</a></td></tr>";
-print "<tr><td align=center colspan=2> V&aelig;lg \"gem destination som\"</td></tr>";
+$xa=findtekst(1375, $sprog_id); $variantvarer = explode(" ", $xa);
+print "<tr><td align=center> ".findtekst(1362, $sprog_id).": </td><td $top_bund><a href='$filnavn'>$variantvarer[1]</a></td></tr>";
+print "<tr><td align=center colspan=2> ".findtekst(1363, $sprog_id)."</td></tr>";
 
 print "</tbody></table>";
 

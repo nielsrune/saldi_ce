@@ -144,7 +144,7 @@ $x=0;
 if ($vis_VG[0]) $tmp='checked';
 else $tmp='';
 print "<tr><td><small>$font<input name= VG_$x type=checkbox $tmp> Alle varegrupper</small></td></tr>";
-$q = db_select("select * from grupper where art = 'VG' order by beskrivelse",__FILE__ . " linje " . __LINE__);
+$q = db_select("select * from grupper where art = 'VG' and fiscal_year = '$regnaar' order by beskrivelse",__FILE__ . " linje " . __LINE__);
 while ($r = db_fetch_array($q)) {
 	$x++;
 	print "<input type=hidden name=VG_id$x value=$r[kodenr]>";

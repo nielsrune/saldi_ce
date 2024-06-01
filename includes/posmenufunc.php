@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-//--- includes/posmenufunc.php --- ver 4.0.5 --- 2021.08.24 ---
+//--- includes/posmenufunc.php ---patch 4.0.8 ----2023-07-12--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2009-2022 Saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20150820 Mulig for pris på varegenveje. Søg $pris
 // 20151023	Diverse nye ændringer
@@ -150,16 +151,16 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 		$qtxt="select kodenr from grupper where art='POSBUT' and kode='$plads' and (box7 < box8) and (box7<='$tid' and box8>='$tid')";
 		if ($afd) $qtxt.=" and (box12='$afd' or box12='') order by box12 desc limit 1";
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-		$menu_id=$r['kodenr'];
+		$menu_id = (int)$r['kodenr'];
 		if (!$menu_id && $menu_id!='0') {  # Her tages højde for at slut tidspkt kan være mindre en starttidspkt
 			$qtxt="select kodenr from grupper where art='POSBUT' and (box7 > box8) and ((box7>='$tid' and box8>='$tid') or (box7<='$tid' and box8<='$tid'))";
 			if ($afd) $qtxt.=" and (box12='$afd' or box12='') order by box12 desc limit 1";
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-			$menu_id=$r['kodenr'];
+			$menu_id = (int)$r['kodenr'];
 		}
 	}
   $menu_id = (int)$menu_id;
-	$qtxt="select * from grupper where art='POSBUT' and kodenr='$menu_id'";
+	$qtxt="select * from grupper where art='POSBUT' and kodenr='". (int)$menu_id ."'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	($r['kode']=='H')?$menu='sidemenu':$menu='bundmenu'; 
 	$menuid=$r['kodenr'];
@@ -205,8 +206,8 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 			$b=$r['color'];
 				$b_font=$r['fontcolor'];
 				$knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
-			$c=$r['vare_id']*1;
-			$d=$r['funktion']*1;
+				$c=(int)$r['vare_id'];
+				$d=(int)$r['funktion'];
 			}
 			if ($a=='--') {
 				print "<td><input type=\"button\" $stil value= \"\"></td>"; 
@@ -226,7 +227,6 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					$knap="<input type=\"button\" $stil value= \"$a\">";
 					  $knap=str_replace("setcolor: ;","color: $b_font;",$knap); 
 					$knap=str_replace("background-color: ;","background-color: $b;",$knap);
-
 				}
 				if (!$d || $d==1) {
 					if (strpos($a,'$pris')) {
@@ -270,6 +270,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					print "&pris_ny=$pris_ny&folger=$folger&fokus=$fokus&bordnr=$bordnr&lager=$afd_lager'\">$knap</span>\n";
 				} elseif ($d==5) {
 				  $tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+					$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 				  print "<td><INPUT TYPE=\"button\" $tmp NAME=\"$a\" VALUE=\"$a\" onclick=\"pos_ordre.$fokus.value += '$a';pos_ordre.$fokus.focus();\">\n";
 				  
 				} elseif ($d==6) {
@@ -288,6 +289,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 							if ($bordnr==$z) $txt=$bord[$z];
 						}
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+							$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
             } else {
               $bordnr=if_isset($_GET['bordnr'], -1);
               echo "xxx$bordnr";
@@ -307,23 +309,28 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='2') {
 						$txt=str_replace('$brugernavn',$buttonTextArr['user'],$a);
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 						print "<td><INPUT $disabled onclick=\"window.location.href='pos_ordre.php?id=$id&skift_bruger=1&bordnr=$bordnr'\" type=\"button\" $tmp value= \"$txt\">\n";
 					} elseif ($c=='3') {
                         $txt = $buttonTextArr['splitTable'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"del_bord\" VALUE=\"$txt\">";
 					} elseif ($c=='4') {
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 						print "<td><INPUT $tmp TYPE=\"submit\" NAME=\"OK\" VALUE=\"Enter\">";
 					} elseif ($c=='5') {
                         $txt = $buttonTextArr['findReceipt'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 						print "<td><input $disabled type=\"button\" onclick=\"window.location.href='pos_ordre.php?id=$id&find_bon=1'\" $tmp value=\"$txt\">\n";
 #						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 #						print "<td>".$knap;
 					} elseif ($c=='6') {
                         $txt = $buttonTextArr['moveTable'];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"flyt_bord\" VALUE=\"$txt\">";
 					} elseif ($c=='7') {
                         $txt = $buttonTextArr['boxCount'];
@@ -338,6 +345,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						print "<td>".$knap;
 					} elseif ($c=='9' || $c=='23') {
 						$kstil=str_replace("background-color: ;","background-color: $b;",$stil);
+						$kstil=str_replace("setcolor: ;","color: $b_font;",$kstil); 
 						$qtxt="select sum(ordrelinjer.antal) as iordre, sum(ordrelinjer.leveret) as bestilt from ordrelinjer,varer ";
 						$qtxt.="where ordrelinjer.ordre_id='$id' and varer.kategori!='' and ordrelinjer.vare_id=varer.id";
 						$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
@@ -356,6 +364,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					} elseif ($c=='11') {
                         $txt = $buttonTextArr["draw"];
 						$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+						$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 						print "<td><INPUT $disabled $tmp TYPE=\"submit\" NAME=\"skuffe\" VALUE=\"$txt\">";
 					} elseif ($c=='12') {
                         $txt = $buttonTextArr['print'];
@@ -399,7 +408,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 						$knap=str_replace("background-color: ;","background-color: $b;",$knap);
 						print "<td>".$knap;
 						$r = db_fetch_array(db_select("select box13 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
-						$timeout=$r['box13']*1;
+						$timeout=(int)$r['box13'];
 						if ($timeout && !$bon) {
 							$r = db_fetch_array(db_select("select box1 from grupper where art = 'POS' and kodenr = '3'",__FILE__ . " linje " . __LINE__));
 							$brugervalg=$r['box1'];
@@ -534,6 +543,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					}
 				} elseif ($d==7) { #PaymentOption
 					$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+					$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 					(((!$id && !$varenr_ny) || $betalingsbet!='Kontant') && !$indbetaling)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp; #20160927 $kontonr rettet til $betalingsbet.:: 20161006
 					if ($a=='Kontant') {
 						print "<TD><INPUT TYPE=\"submit\" $tmp2 NAME='betaling' VALUE=\"$a\" onclick=\"pos_ordre.$fokus.value += 'c';pos_ordre.$fokus.focus();\">\n"; #20160927 $tmp rettet til $tmp2
@@ -555,6 +565,7 @@ function menubuttons($id,$menu_id,$vare_id,$plads) {
 					}
 			    } elseif ($d==8) { #Valuta / Currency
 					$tmp=str_replace("background-color: ;","background-color: $b;",$stil);
+					$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 					(((!$id && !$varenr_ny) || !$sum || $kontonr) && !$indbetaling)?$tmp2="disabled=disabled ".$tmp:$tmp2=$tmp;
 						print "<TD align=\"center\"><INPUT TYPE=\"submit\" $tmp2 NAME=\"betvaluta\" VALUE=\"$a\"></TD>\n";
 				} else print "<td><br>";
@@ -690,6 +701,7 @@ function tastatur($kasse,$status) {
 	$href="pos_ordre.php?id=$id&find_bon=1;";
 	print "<td width=\"$width\"><input $disabled type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"Find\nbon\"></td>\n";
 	$tmp=str_replace("background-color: $bgcolor5",'background-color:#ff0000',$stil);
+	$tmp=str_replace("setcolor: ;","color: $b_font;",$tmp); 
 	if ($popup) $href="../includes/luk.php";
 	else $href="../index/menu.php";
 	print "<td><input $disabled type=\"button\" onclick=\"window.location.href='$href'\" $tmp value=\"Luk\"></td>\n";
@@ -735,7 +747,7 @@ function tastatur($kasse,$status) {
 	$modtaget2=afrund($modtaget2,2);
 
 	$r = db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
-	$kortantal=$r['box4']*1;
+	$kortantal=(int)$r['box4'];
 #cho "kortantal	$kortantal<br>\n";
 	$korttyper=explode(chr(9),$r['box5']);
 #cho "korttyper ".count($korttyper),"<br>\n";
@@ -743,7 +755,7 @@ function tastatur($kasse,$status) {
 	$vis_kontoopslag=$r['box11'];
 	$vis_hurtigknap=$r['box12'];
 	$vis_indbetaling=$r['box14'];
-	$timeout=$r['box13']*1;
+	$timeout=(int)$r['box13'];
 	$r = db_fetch_array(db_select("select var_value from settings where var_name = 'card_enabled'",__FILE__ . " linje " . __LINE__));
 	$card_enabled=explode(chr(9),$r['var_value']);
 

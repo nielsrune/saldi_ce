@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---- debitor/pos_ordre_includes/helperMethods/helperFuncII.php ---- lap 3.8.9----2020.02.11-------
+// ---- debitor/pos_ordre_includes/helperMethods/helperFuncII.php--patch 4.0.8 ----2023-08-31----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,9 +19,10 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2003-2020 saldi.dk aps
-// ----------------------------------------------------------------------
+// Copyright (c) 2003-2023 Saldi.dk ApS
+// -------------------------------------------------------------------------------------------------
 //
 // 20190312 LN Make various helper functions for the pos_ordre and the report files
 // 20190319 LN Added new function to return a unque box id
@@ -47,6 +48,7 @@ function getVatArray($linjeantal, $dkkpris, $vatArray) {
 }
 
 function makeOrderIdArray($kasse,$date) {	
+	$ordreIdArr = array();
 	$qtxt = "select id from ordrer where felt_5 = '$kasse' and fakturadate = '$date'"; 
 	$orderQuery = db_select($qtxt, __FILE__ . "linje" . __LINE__);
 	while ($order = db_fetch_array($orderQuery)) {

@@ -1,6 +1,6 @@
 <?php
 
-// -- lager/optalling.php ------------------- patch 4.0.7 -- 2023-02-24 --
+// -- lager/optalling.php ------------------- patch 4.0.7 -- 2024-01-18 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -353,9 +353,10 @@ if ($fokus) {
 
 
 function vis_optalling($lager,$vnr,$gentael) {
-	global $bgcolor;
-	global $bgcolor2;
+	global $bgcolor,$bgcolor2;
+	global $regnaar;
 	global $dato;
+
 
 	$behold=$kpris=$lagervalue=$opt=$vareantal=0;
 	$x=0;
@@ -458,7 +459,8 @@ function vis_optalling($lager,$vnr,$gentael) {
 #		if (!$vnr) print "<tr><td colspan=\"8\"><hr></td></tr>";
 	}
 	$gruppe = NULL;
-	$q=db_select("select kodenr from grupper where box8='on' and art='VG' order by kodenr",__FILE__ . " linje " . __LINE__);
+	$qtxt = "select kodenr from grupper where box8='on' and art='VG' and fiscal_year = '$regnaar' order by kodenr";
+	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while($r=db_fetch_array($q)) {
 		$tmp=$r['kodenr']*1;
 		if ($gruppe) $gruppe.=" or gruppe = '".$tmp."'";
@@ -554,7 +556,7 @@ function bogfor($lager,$nulstil_ej_optalt,$dato,$bogfor,$godkend_regdif) {
 #xit;	
 #	$bogfor=1;
 		$x=0;
-		$q=db_select("select * from grupper where box8='on' and art='VG' order by kodenr",__FILE__ . " linje " . __LINE__);
+	$q=db_select("select * from grupper where box8='on' and art='VG' and fiscal_year = '$regnaar' order by kodenr",__FILE__ . " linje " . __LINE__);
 		while($r=db_fetch_array($q)) {
 			$gruppe[$x]=$r['kodenr'];
 			$lagertraek[$x]=$r['box2'];
@@ -906,7 +908,7 @@ transaktion('commit');
 
 ########################################################################################################################
 function opdat_behold($reg_vare_id) {
-	global $api_fil,$nulstil_ej_optalt;
+	global $api_fil,$db,$nulstil_ej_optalt;
 	echo "opdaterer beholdning<br>";
 	
 	$x=0; # hele select 20170915 
@@ -1003,15 +1005,18 @@ function opdat_behold($reg_vare_id) {
 					if ($ny_variant_beholdning != $variant_beholdning[$x][$v]) {
 						$qtxt="update variant_varer set variant_beholdning='$ny_variant_beholdning' where id='".$variant_id[$x][$v]."'";
 						db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
+/*
 						if ($api_fil) {
 							$qtxt="select shop_variant from shop_varer where saldi_id='$vare_id[$x]' and saldi_variant='".$variant_id[$x][$v]."'";
 							if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 								$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
-								$txt = "/usr/bin/wget --spider --no-check-certificate --header='$header' ";
+								$txt = "/usr/bin/curl ";
+#								$txt = "/usr/bin/wget --spider --no-check-certificate --header='$header' ";
 								$txt.= "'$api_fil?update_stock=$r[shop_variant]&stock=".$ny_variant_beholdning ."'";
-								exec ("nohup $txt > /dev/null 2>&1 &\n");
+								exec ("$txt > /dev/null 2>&1 &\n");
 							}
 						}
+*/
 					}
 				}
 			} else {
@@ -1027,6 +1032,7 @@ function opdat_behold($reg_vare_id) {
 			$qtxt="update varer set beholdning='$ny_beholdning' where id='$vare_id[$x]'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
 		}
+/*
 		if ($api_fil) {
 			$qtxt="select shop_id from shop_varer where saldi_id='$vare_id[$x]'";
 			if ($r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
@@ -1034,11 +1040,13 @@ function opdat_behold($reg_vare_id) {
 				fwrite ($apilog, __file__." ".__line__." opdaterer vare_id:$vare_id[$x] ship_id:$r[shop_id] til $ny_beholdning stk\n")	;
 				fclose ($apilog);
 				$header="User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/23.0";
-				$txt = "/usr/bin/wget --spider --no-check-certificate --header='$header' ";
+				$txt = "/usr/bin/curl ";
+#				$txt = "/usr/bin/wget --spider --no-check-certificate --header='$header' ";
 				$txt.= "'$api_fil?update_stock=$r[shop_id]&stock=".$ny_beholdning ."'";
-				exec ("nohup $txt > /dev/null 2>&1\n");
+				exec ("$txt > /dev/null 2>&1\n");
 			}
 		}
+*/
 	}
 }
 
@@ -1167,7 +1175,7 @@ function importer($lager,$dato){
 					$fp2=fopen("../temp/$db/optael_ej_exist.txt","w");
 					while ($linje=trim(fgets($fp))) {
 				list($varenr,$antal)=explode($splitter,$linje);
-#cho "$varenr<br>";
+#cho "$varenr,$antal<br>";
 					if (substr($varenr,0,1)=='"' && substr($varenr,-1,1)=='"') $varenr=substr($varenr,1,strlen($varenr)-2);
 #					$varenr=strtolower($varenr);
 					if (substr($antal,0,1)=='"' && substr($antal,-1,1)=='"') $antal=substr($antal,1,strlen($antal)-2);
@@ -1175,6 +1183,7 @@ function importer($lager,$dato){
 					if (strpos($tmp,'æ') || strpos($tmp,'ø') || strpos($tmp,'å') || strpos($tmp,'Æ') || strpos($tmp,'Ø') || strpos($tmp,'Å')) {
 						$varenr=$tmp;
 					}
+
 					if (strpos($antal,",")) $antal=usdecimal($antal);
 					if (is_numeric($antal)) {
 						$vare_id=NULL;

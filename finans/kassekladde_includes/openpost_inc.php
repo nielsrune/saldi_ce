@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- finans/kassekladde_includes/openpost_inc.php --- ver 4.0.8 --- 2023.06.04 ---
+// --- finans/kassekladde_includes/openpost_inc.php --- ver 4.0.8 --- 2023.08.28 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -25,6 +25,7 @@
 // 20220823 PHR Moved $offsetAccount lookup to reduce lookups
 // 20221111 PHR More posts can now be aligned in one step
 // 20230604 PHR Added offsetAccount to kredit,
+// 20230828 PHR Gets Company name from inviince instead of order.
 
 function openpost($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betailngs_id,$lobenr){
 # ($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$beskrivelse,$d_type,$debet,$k_type,$kredit,$faktura,$belob,$momsfri,$afd,$projekt,$ansat,$valuta,$forfaldssato,$betailngs_id,$lobenr) {
@@ -91,7 +92,7 @@ if ($menu=='T') {
 }
 	print "<tbody >";
 	print "<tr>";
-	print "<td><b><a href='../finans/kassekladde.php?sort=konto_nr".$lnktxt."'>Kundenr</a></b></td>";
+	print "<td><b><a href='../finans/kassekladde.php?sort=konto_nr".$lnktxt."'>Kontonr</a></b></td>";
 	print "<td><b><a href='../finans/kassekladde.php?sort=firmanavn".$lnktxt."'>Navn</a></b></td>";
 	print "<td><b><a href='../finans/kassekladde.php?sort=faktnr".$lnktxt."'>Fakturanr</a></b></td>";
 	print "<td><b><a href='../finans/kassekladde.php?sort=transdate".$lnktxt."'>Dato</a></b></td>";

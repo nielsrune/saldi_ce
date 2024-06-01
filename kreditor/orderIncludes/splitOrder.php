@@ -1,7 +1,7 @@
 <?php
 print "<!-- BEGIN orderIncludes/splitOrder.php -->";
 print "splitOrder.php<br>";
-print "<table cellpadding='1' cellspacing='0' bordercolor='#ffffff' border='1' valign = 'top'><tbody>";
+print "<table cellpadding='1' cellspacing='0' class='datatable' bordercolor='#ffffff' border='1' valign = 'top'><tbody>";
 
 $x=0;
 $newOrderId = array();
@@ -116,7 +116,7 @@ function showLine($x,$varenr,$antal,$beskrivelse,$enhed,$ialt,$kred_linje_id,$le
 	$mQt[$x] = str_replace(',','.',$mQt[$x]*=1);
 	if (!$maxQt) $maxQt = 0;
 	$title = str_replace('$maxQ',$maxQt,findtekst(2012,$languageId));
-	print "<td title = '$title'>";
+	print "<td title = '$title' style='width:10px; text-align:center;'>";
  	print "<input type = 'hidden' name = 'maxQt[$x]' value = '$maxQt'>"; 
  	($maxQt > 0)?$disabled = NULL:$disabled="disabled = 'disabled'";
  	print "<input style = 'width:30px;text-align:right' type = 'text' name = 'mQt[$x]' value = '$mQt[$x]' $disabled></td>"; 
@@ -126,7 +126,7 @@ function showLine($x,$varenr,$antal,$beskrivelse,$enhed,$ialt,$kred_linje_id,$le
 	if (!$maxSQt) $maxSQt = 0;
 	$title = str_replace('$maxQ',$maxSQt,findtekst(2013,$languageId));
  ($maxSQt >0 && $antal)?$disabled = NULL:$disabled="disabled = 'disabled'";
- 	print "<td style = 'width:40px:;' title = '$title'>";
+ 	print "<td style='width:10px; text-align:center;' title = '$title' >";
  	print "<input type = 'hidden' name = 'maxSQt[$x]' value = '$maxSQt'>"; 
  	print "<input style = 'width:30px;text-align:right' type = 'text' name = 'mSQt[$x]' value = '$mSQt[$x]' $disabled></td>"; 
 	print "</tr>";

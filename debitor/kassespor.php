@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/kassespor.php --- lap 4.0.8 --- 2023-04-27 ---
+// --- debitor/kassespor.php -----patch 4.0.8 ----2023-09-07--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,8 +19,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2008-2023 Saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20141119 PHR Tilføjet summer og bord
 // 20150305 PHR Tilføjet status.
@@ -32,12 +33,19 @@
 // 20171004	PHR	Viser nu kun summer hvis der er saldo. Søg: if ($bet_sum[$z])
 // 20180615	PHR	Indsat mulighed for at rettet betalingsmetode på ikke bogførte bonnner. Søg '$ret_bet_id'
 // 20190107 MSC Rettet topmenu design til
-// 20190218 MSC - Rettet topmenu design
+// 20190218 MSC Rettet topmenu design
 // 20190404 PHR If status field is empty it will now be set to '3:4' as it included orders with invoicedate and status less than 3
 // 20200624 PHR Added time as search posibility.
 // 20201024 PHR Added lokk to pos_ordre.
 // 20210305 PHR Added limit 10000 to query.
+// 20210330 Loe translated these to English 
+// 20210707 LOE Fixed a bug  Uncaught Error: Cannot pass parameter 1 by reference
+// 20210805 LOE Translated title texts
+// 20211012 MSC Implementing new design
+// 20211101 MSC Implementing new design
+// 20220905 MSC Implementing new design
 // 20230427 PHR Extendet cookie lifetime to 1 year.
+// 20230907 PHR PHP-8
 
 ob_start();
 @session_start();
@@ -46,13 +54,13 @@ $title="Kassespor";
 $modulnr=12;
 $css="../css/standard.css";
 $hreftext=0;
-$udskriv = $valg = NULL;
+$udskriv=NULL;
+$valg=NULL;
 
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
-
 
 $status = if_isset($_GET['status']);
 $id = if_isset($_GET['id']);
@@ -74,6 +82,7 @@ $borde =  if_isset($_GET['borde']);
 $refs =  if_isset($_GET['refs']);
 $start = if_isset($_GET['start']);
 $ret_bet_id = if_isset($_GET['ret_bet_id']);
+$changeCashNo = if_isset($_GET['changeCashNo']);
 
 if (!isset ($_COOKIE['saldi_kassespor'])) $_COOKIE['saldi_kassespor'] = NULL;
 if (!isset ($beskrivelse)) $beskrivelse = NULL;
@@ -98,7 +107,6 @@ if ($submit= if_isset($_POST['submit'])){
 	$borde =  if_isset($_POST['borde']);
 	$refs =  if_isset($_POST['refs']);
 	$linjeantal = if_isset($_POST['linjeantal']);
-
 	$cookievalue="$sort;$nysort;$fakturadatoer;$logtimes;$afdelinger;$sort;$nysort;$idnumre;$fakturanumre;$summer;$betalinger;$betalinger2;$modtagelser;$modtagelser2;$kasser;$refs;$linjeantal;$borde;$status";
 	setcookie("saldi_kassespor", $cookievalue, time()+3600*24*365);
 } else {
@@ -141,37 +149,57 @@ $r = db_fetch_array(db_select("select box7 from grupper where art = 'POS' and ko
 ($r['box7'])?$bordnavn=explode(chr(9),$r['box7']):$bordnavn=array(); #20141119
 
 if ($menu=='T') {
-	print "<center><table width=75% height=5% border=0 cellspacing=0 cellpadding=0><tbody>";
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=rapport.php  accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 } else {
 	print "<center><table width=100% height=5% border=0 cellspacing=0 cellpadding=0><tbody>";
-}
-if ($menu=='T') {
-	$leftbutton="<a class='button red small' title=\"Klik her for at komme til startsiden\" href=\"../debitor/rapport.php\" accesskey=\"L\">Luk</a>";
-	$rightbutton=NULL;
-	$vejledning=NULL;
-	include("../includes/top_header.php");
-	include("../includes/top_menu.php");
-	print "<div id=\"header\"> 
-	<div class=\"headerbtnLft\">$leftbutton</div>
-	<span class=\"headerTxt\">Kassespor</span>";     
-	print "<div class=\"headerbtnRght\"></div>";       
-	print "</div><!-- end of header -->";
-	print "<div class=\"maincontentLargeHolder\">\n";
-} elseif ($menu=='S') {
-	include("../includes/sidemenu.php");
-} else {
 print "<tr><td height = 25 align=center valign=top>";
 print "<table width=100% align=center border=0 cellspacing=2 cellpadding=0><tbody>";
 print "<tr>";
 print "<td width=10% $top_bund>";
-	if ($popup) print "<a href=../includes/luk.php accesskey=L>Luk</a></td>\n";
-	else print "<a href=rapport.php accesskey=L>Luk</a></td>\n";
-print "<td width=80% $top_bund>Kassespor</td>\n";
+		if ($popup) print "<a href=../includes/luk.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>\n";
+		else print "<a href=rapport.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>\n";
+	print "<td width=80% $top_bund>".findtekst(455,$sprog_id)."</td>\n";
 print "<td width=10% $top_bund><br></td>\n";
 print "</tr>\n";
 print "<tr>";
 }
-if ($ret_bet_id && !isset($_POST['fortryd'])) {
+
+$newCashNo = if_isset($_POST['newCashNo']); #20210707
+
+if ($newCashNo && $editCashNo) {
+	$qtxt="update ordrer set felt_5='$ny_betal_type' where id='$ret_bet_id'";
+#		echo $qtxt."<br>"; 
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	alert("Bon $bon rettet fra $betal_type til $ny_betal_type");
+
+	
+} elseif ($editCashNo) {
+	print "<form name=ret_betaling action='kassespor.php?editCashNo='$editCashNo' method='post'>";
+	print "<table><tbody><br><br><br>";
+	print "<tr><td>Ret Kasse på bon: <b>$bon</b> fra <b>$currentCashNo</b> til:</td>"; 
+	$qtxt = "select box1 from grupper where art = 'POS' and kodenr = '1'";
+	$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+	print "<td><select class=\"inputbox\" style=\"text-align:right;width:200px;height:30px;font-size:12px\" name=\"newcashNo\">";
+	print "<option value=\"$currentCashNo\">$newCashNo</option>";
+	for ($x=1;$x<=$r['box1'];$x++) {
+		if ($currentCashNo!=$x) print "<option value='$x'>$x</option>"; 
+	}
+	print "</select></td></tr>";
+	print "<tr><td colspan='2' align='center'><br>";
+	print "<input style='width:100px;' type='submit' value='Fortryd' name='fortryd'>";	
+	print "&nbsp;&nbsp;&nbsp;";
+	print "<input style='width:100px;' type='submit' value='Ret' name='ret'></td>\n";
+	print "</tbody></table></td></tr>\n"; 
+	exit;
+
+} elseif ($ret_bet_id && !isset($_POST['fortryd'])) {
 	$betal_type=$_GET['betal_type'];
 	$bon=$_GET['bon'];
 	$sum=$_GET['sum'];
@@ -187,7 +215,7 @@ if ($ret_bet_id && !isset($_POST['fortryd'])) {
 		$qtxt="select box5 from grupper where art = 'POS' and kodenr = '1'";
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$korttyper=explode(chr(9),$r['box5']);
-		print "<td><select class=\"inputbox\" style=\"text-align:right;width:200px;height:20px;font-size:12px\" name=\"ny_betal_type\">";
+		print "<td><select class=\"inputbox\" style=\"text-align:right;width:200px;height:30px;font-size:12px\" name=\"ny_betal_type\">";
 		if ($betal_type!='Kontant') print "<option value=\"Kontant\">Kontant</option>";
 		for ($x=0;$x<count($korttyper);$x++) {
 			if ($betal_type!=$korttyper[$x]) print "<option value=\"$korttyper[$x]\">$korttyper[$x]</option>"; 
@@ -205,50 +233,80 @@ if ($ret_bet_id && !isset($_POST['fortryd'])) {
 if (!isset($kontoid)) $kontoid = NULL;
 
 print "<form name=bonliste action=kassespor.php method=post>";
+
+if ($menu=='T') {
+	print "<table width=100% class='dataTable'><tbody>";
+	if (!$linjeantal) $linjeantal=50;
+	$next=udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$start,'',$borde,$status);
+	if ($start>=$linjeantal) {
+		$tmp=$start-$linjeantal;
+		print "<td class='imgNoTextDeco'><a href='kassespor.php?sort=$sort&start=$tmp'><img class='imgInvert imgFade' src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>\n";
+	} else print  "<td></td>\n";
+	print "<td align=center valign=top style='width:90%'><span title= '".findtekst(1609, $sprog_id)."'><input class=\"inputbox\" type=text style=\"text-align:right;width:50px; text-align:center;\" name=\"linjeantal\" value=\"$linjeantal\"></td>\n";
+	$tmp=$start+$linjeantal;
+	if ($next>0) {
+		print "<td class='imgNoTextDeco' align=right><a href='kassespor.php?sort=$sort&start=$tmp'><img class='imgInvert imgFade' src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>\n";
+	} else {
+		print "<td></td>\n";
+	}
+	print "</tr>\n";
+	print "</tbody></table>";
+} else {
 if (!$linjeantal) $linjeantal=50;
 $next=udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$start,'',$borde,$status);
 if ($start>=$linjeantal) {
 	$tmp=$start-$linjeantal;
 	print "<td><a href='kassespor.php?sort=$sort&start=$tmp'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>\n";
 } else print  "<td></td>\n";
-print "<td align=center valign=top style='height:10%;'><span title= 'Angiv maksimale antal linjer, som skal vises pr. side'><input class=\"inputbox\" type=text style=\"text-align:right;width:30px\" name=\"linjeantal\" value=\"$linjeantal\"></td>\n";
+	print "<td align=center valign=top style='height:10%;><span title= '".findtekst(1609, $sprog_id)."'><input class=\"inputbox\" type=text style=\"text-align:right;width:30px\" name=\"linjeantal\" value=\"$linjeantal\"></td>\n";
 $tmp=$start+$linjeantal;
 if ($next>0) {
 	print "<td align=right><a href='kassespor.php?sort=$sort&start=$tmp'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>\n";
-} else print  "<td></td>\n";
+	} else {
+		print "<td></td>\n";
+	}
 print "</tr>\n";
 print "</tbody></table>";
-print " </td></tr><tr><td align=center valign=top>";
-print "<table cellpadding=1 cellspacing=1 border=0 valign = top>";
+}
 
+if ($menu=='T') {
+	print "<div class='dataTablediv'>";
+} else {
+	print "";
+}
+
+print "<table cellpadding=1 cellspacing=1 border=0 valign = top class='dataTable' width='100%'>";
+
+if ($menu=='T') {
+	print "<thead>";
+} else {
 print "<tbody>";
+	print "<tr><td colspan=20><hr></td></tr>\n";
+}
 print "<tr>";
-print "<td style=\"text-align:center;width:30px\"><b><a href='kassespor.php?nysort=id&sort=$sort&valg=$valg$hreftext'>Status</b></td>\n";
-print "<td style=\"text-align:center;width:60px\"><b><a href='kassespor.php?nysort=id&sort=$sort&valg=$valg$hreftext'>Id</b></td>\n";
-print "<td style=\"text-align:center;width:110px\"><b><a href='kassespor.php?nysort=fakturadate&sort=$sort&valg=$valg$hreftext'>Bondato</a></b></td>\n";
-print "<td style=\"text-align:center;width:50px\"><b>Tidspkt.</a></b></td>\n";
+print "<td style=\"padding-top: 20px;width:30px\"><b><a href='kassespor.php?nysort=id&sort=$sort&valg=$valg$hreftext'>Status</b></td>\n";
+print "<td style=\"padding-top: 20px;width:60px\"><b><a href='kassespor.php?nysort=id&sort=$sort&valg=$valg$hreftext'>Id</b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:110px\"><b><a href='kassespor.php?nysort=fakturadate&sort=$sort&valg=$valg$hreftext'>".findtekst(929,$sprog_id)."</a></b></td>\n"; #20210330
+print "<td style=\"padding-top: 20px; text-align:right;width:50px\"><b>".findtekst(930,$sprog_id).".</a></b></td>\n";
 #print "<td align=center><b><a href='kassespor.php?nysort=kontonr&sort=$sort&valg=$valg$hreftext'>Konto</b></td>\n";
-print "<td style=\"text-align:center;width:110px\"><b><a href='kassespor.php?nysort=fakturanr&sort=$sort&valg=$valg$hreftext'>Bonnr</a></b></td>\n";
-print "<td style=\"text-align:center;width:50px\"><b><a href='kassespor.php?nysort=felt_5&sort=$sort&valg=$valg$hreftext'>Kasse</a></b></td>\n";
-print "<td style=\"text-align:center;width:50px\"><b><a href='kassespor.php?nysort=nr&sort=$sort&valg=$valg$hreftext'>Bord</a></b></td>\n";
-print "<td style=\"text-align:center;width:50px\"><b><a href='kassespor.php?nysort=ref&sort=$sort&valg=$valg$hreftext'>Ref.</a></b></td>\n";
-print "<td style=\"text-align:center;width:100px\"><b><a href='kassespor.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>Beløb</a></b></td>\n";
-print "<td style=\"text-align:center;width:100px\"><b><a href='kassespor.php?nysort=felt_1&sort=$sort&valg=$valg$hreftext'>Betaling</a></b></td>\n";
-print "<td style=\"text-align:center;width:100px\"><b><a href='kassespor.php?nysort=felt_2&sort=$sort&valg=$valg$hreftext'>Modtaget</a></b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:110px\"><b><a href='kassespor.php?nysort=fakturanr&sort=$sort&valg=$valg$hreftext'>".findtekst(928,$sprog_id)."</a></b></td>\n"; 
+print "<td style=\"padding-top: 20px; text-align:right;width:50px\"><b><a href='kassespor.php?nysort=felt_5&sort=$sort&valg=$valg$hreftext'>".findtekst(931,$sprog_id)."</a></b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:50px\"><b><a href='kassespor.php?nysort=nr&sort=$sort&valg=$valg$hreftext'>".findtekst(932,$sprog_id)."</a></b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:50px\"><b><a href='kassespor.php?nysort=ref&sort=$sort&valg=$valg$hreftext'>".findtekst(933,$sprog_id)."</a></b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:100px\"><b><a href='kassespor.php?nysort=sum&sort=$sort&valg=$valg$hreftext'>".findtekst(934,$sprog_id)."</a></b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:100px\"><b><a href='kassespor.php?nysort=felt_1&sort=$sort&valg=$valg$hreftext'>".findtekst(935,$sprog_id)."</a></b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:100px\"><b><a href='kassespor.php?nysort=felt_2&sort=$sort&valg=$valg$hreftext'>".findtekst(936,$sprog_id)."</a></b></td>\n";
 #print "<td style=\"text-align:center;width:100px\"><b><a href='kassespor.php?nysort=felt_3&sort=$sort&valg=$valg$hreftext'>Betaling 2</a></b></td>\n";
 #print "<td style=\"text-align:center;width:100px\"><b><a href='kassespor.php?nysort=felt_4&sort=$sort&valg=$valg$hreftext'>Modtaget 2</a></b></td>\n";
-print "<td style=\"text-align:center;width:100px\"><b>Retur</a></b></td>\n";
+print "<td style=\"padding-top: 20px; text-align:right;width:100px\"><b>".findtekst(937,$sprog_id)."</a></b></td><td></td>\n";
 print "</tr>\n";
-
-print "<form name=ordreliste action=kassespor.php method=post>";
-print "<input type=hidden name=valg value=\"$valg\">";
 print "<input type=hidden name=sort value=\"$sort\">";
 #print "<input type=hidden name=nysort value=\"$nysort\">";
 print "<input type=hidden name=kontoid value=\"$kontoid\">";
 print "<input type=hidden name=start value=\"$start\">";
 print "<tr>";
-print "<td align=center><span title= 'Vælg 3 eller 4. 3 er ikke ikke bogført, 4 er bogført '>";
-print "<select class=\"inputbox\" style=\"text-align:right;width:40px;height:20px;font-size:12px\" name=\"status\">";
+print "<th><span title= '".findtekst(1804, $sprog_id)." '>"; #20210805
+print "<select class=\"inputbox\" style=\"text-align:right;width:40px;height:30px;font-size:12px\" name=\"status\">";
 if ($status=='') {
 	print "<option value=\"\"></option>"; 
 	print "<option value=\"3\">3</option>"; 
@@ -262,30 +320,30 @@ if ($status=='') {
 	print "<option value=\"\"></option>"; 
 	print "<option value=\"3\">3</option>";
 }
-print "</select></td>\n";
-print "<td align=center><span title= 'Angiv et id-nummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:60px;height:20px;font-size:12px\" name=\"idnumre\" value=\"$idnumre\"></td>\n";
-print "<td align=center><span title= 'Angiv en bondato eller angiv to adskilt af kolon (f.eks 010605:300605)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:110px;height:20px;font-size:12px\" name=\"fakturadatoer\" value=\"$fakturadatoer\"></td>\n";
-print "<td align=center><span title= 'Angiv et tidspunkt  (f.eks. 17.35) eller et interval f.eks. 17.00:18.00'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:20px;font-size:12px\" name=\"logtimes\" value=\"$logtimes\"></td>\n";
+print "</select></th>\n";
+print "<th class='text-center'><span title= '".findtekst(1610, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:60px;height:30px;font-size:12px\" name=\"idnumre\" value=\"$idnumre\"></th>\n";#20210804
+print "<th class='text-center'><span title= '".findtekst(1805, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:110px;height:30px;font-size:12px\" name=\"fakturadatoer\" value=\"$fakturadatoer\"></th>\n";
+print "<th class='text-center'><span title= '".findtekst(1806, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:30px;font-size:12px\" name=\"logtimes\" value=\"$logtimes\"></th>\n";
 #print "<td></td>\n";
-print "<td align=center><span title= 'Angiv et bonnummer eller angiv to adskilt af kolon (f.eks 345:350)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:110px;height:20px;font-size:12px\" name=\"fakturanumre\" value=\"$fakturanumre\"></td>\n";
-print "<td align=center><span title= 'Angiv et kasse nr. eller angiv to adskilt af kolon (f.eks 3:4)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:20px;font-size:12px\" name=\"kasser\" value=\"$kasser\"</td>\n";
-print "<td align=center><span title= 'Vælg et bord'><select class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:20px;font-size:12px\" name=\"borde\">\n";
+print "<th class='text-center'><span title= '".findtekst(1807, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:110px;height:30px;font-size:12px\" name=\"fakturanumre\" value=\"$fakturanumre\"></th>\n";
+print "<th class='text-center'><span title= '".findtekst(1808, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:30px;font-size:12px\" name=\"kasser\" value=\"$kasser\"</th>\n";
+print "<th class='text-center'><span title= '".findtekst(1809, $sprog_id)."'><select class=\"inputbox\" type=\"text\" style=\"text-align:right;width:50px;height:30px;font-size:12px\" name=\"borde\">\n";
 if ($borde) print "<option>$borde</option>\n";
 print "<option></option>\n";
 for ($x=0;$x<count($bordnavn);$x++) {
 	if ($bordnavn[$x] != $borde) print "<option value=\"$bordnavn[$x]\">$bordnavn[$x]</option>\n";
 }
-print "</select></td>\n";
-print "<td align=center><span title= 'Angiv brugernavn p&aring; ekspedient'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:150px;height:20px;font-size:12px\" name=\"refs\" value=\"$refs\"></td>\n";
-print "<td align=center><span title= 'Angiv et bel&oslash;b eller angiv to adskilt af kolon (f.eks 10000,00:14999,99)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:20px;font-size:12px\" name=\"summer\" value=\"$summer\"></td>\n";
-print "<td align=center><span title= 'Angiv betalingform'><select class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:22px;font-size:12px\" name=\"betalinger\">";
+print "</select></th>\n";
+print "<th class='text-center'><span title= '".findtekst(1810, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:150px;height:30px;font-size:12px\" name=\"refs\" value=\"$refs\"></th>\n";
+print "<th class='text-center'><span title= '".findtekst(1617, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:30px;font-size:12px\" name=\"summer\" value=\"$summer\"></th>\n";
+print "<th class='text-center'><span title= '".findtekst(1811, $sprog_id)."'><select class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:30px;font-size:12px\" name=\"betalinger\">";
 if ($betalinger) print "<option>$betalinger</option>\n";
 print "<option></option>\n";
 for ($x=0;$x<count($bet_type);$x++) {
 	if ($bet_type[$x] != $betalinger) print "<option>$bet_type[$x]</option>\n";
 }
-print "</select></td>\n";
-print "<td align=center><span title= 'Angiv et modtaget bel&oslash;b for betaling 1 eller angiv to adskilt af kolon (f.eks 10000,00:14999,99)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:20px;font-size:12px\" name=\"modtagelser\" value=\"$modtagelser\"></td>\n";
+print "</select></th>\n";
+print "<th class='text-center'><span title= '".findtekst(1812, $sprog_id)."'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:30px;font-size:12px\" name=\"modtagelser\" value=\"$modtagelser\"></th>\n";
 #print "<td align=center><span title= 'Angiv betalingform 2'><select class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:22px;font-size:12px\" name=\"betalinger2\">";
 #if ($betalinger2) print "<option>$betalinger2</option>\n";
 #print "<option></option>\n";
@@ -293,20 +351,32 @@ print "<td align=center><span title= 'Angiv et modtaget bel&oslash;b for betalin
 #	if ($bet_type[$x] != $betalinger2) print "<option>$bet_type[$x]</option>\n";
 #}
 #print "</select></td>\n";
-#print "<td align=center><span title= 'Angiv et modtaget bel&oslash;b for betaling 2 eller angiv to adskilt af kolon (f.eks 10000,00:14999,99)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:20px;font-size:12px\" name=\"modtagelser2\" value=\"$modtagelser2\"></td>\n";
+#print "<td align=center><span title= 'Angiv et modtaget bel&oslash;b for betaling 2 eller angiv to adskilt af kolon (f.eks 10000,00:14999,99)'><input class=\"inputbox\" type=\"text\" style=\"text-align:right;width:100px;height:30px;font-size:12px\" name=\"modtagelser2\" value=\"$modtagelser2\"></td>\n";
 #print "<td><br></td>\n";
-print "<td></td><td><input class='button blue small' type=submit value=\"OK\" name=\"submit\"></td>\n";
+print "<th></th><th width=5% class='text-center'><input class='button blue small' type=submit value=\"OK\" name=\"submit\"></th>\n";
 print "</form></tr>\n";
-udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$start,'skriv',$borde,$status);
 
-print "<tr><td colspan=\"9\" align=\"right\"><b>".dkdecimal($omsaet,2)."</b></td><td colspan=\"2\" align=\"right\"><b>".dkdecimal($modtaget,2)."</b></td><td colspan=\"1\" align=\"right\"><b>".dkdecimal($retursum,2)."</b></td></tr>"; 
+if ($menu=='T') {
+	print "</thead><tbody>";
+} else {
+	print "";
+}
+
+
+udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fakturanumre,$summer,$betalinger,$betalinger2,$modtagelser,$modtagelser2,$kasser,$refs,$linjeantal,$start,'skriv',$borde,$status);
+if ($menu=='T') {
+	print "</tbody><tfoot>";
+} else {
+	print "<tr><td colspan=20><hr></td></tr>\n";
+}
+print "<tr><td colspan=\"9\" align=\"right\"><b>".dkdecimal($omsaet,2)."</b></td><td colspan=\"2\" align=\"right\"><b>".dkdecimal($modtaget,2)."</b></td><td colspan=\"1\" align=\"right\"><b>".dkdecimal($retursum,2)."</b></td><td></td></tr>"; 
 
 for ($z=0;$z<count($bet_type);$z++) {
 	if ($bet_sum[$z]) print "<tr><td colspan=\"10\" align=\"right\"><b>$bet_type[$z]</b></td><td align=\"right\"><b>".dkdecimal($bet_sum[$z],2)."</b></td></tr>"; 
 }
 for ($z=0;$z<count($bet_type);$z++) {
 	if (strtolower($bet_type[$z])=='kontant'){
-		print "<tr><td colspan=\"10\" align=\"right\"><b>Tilgang kasse</b></td><td align=\"right\"><b>".dkdecimal($bet_sum[$z]-$retursum,2)."</b></td></tr>"; 
+		print "<tr><td colspan=\"10\" align=\"right\"><b>".findtekst(938,$sprog_id)."</b></td><td align=\"right\"><b>".dkdecimal($bet_sum[$z]-$retursum,2)."</b></td><td></td><td></td></tr>"; 
 	}
 }
 ####################################################################################
@@ -379,7 +449,6 @@ function udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fa
 		$moms[$x]=$r['moms'];
 		$art[$x]=$r['art'];
 		$dkksum[$x]=dkdecimal($sum[$x]+$moms[$x],2);
-		if (!$bord[$x]) $bord[$x] = 0;
 		$x++;
 	}
 	for ($x=0;$x<count($id);$x++) {
@@ -438,7 +507,10 @@ function udskriv($fakturadatoer,$logtimes,$afdelinger,$sort,$nysort,$idnumre,$fa
 					if (!isset($ordre_id[$y-1]) || $ordre_id[$y]!=$ordre_id[$y-1]) {
 					print "<td align=right>".dkdecimal($retur,2)."<br></td>\n";
 						$retursum+=$retur;
-					} else print "<td align=right><br></td>\n";
+					} else {
+						print "<td align=right><br></td>\n";
+					}
+					print "<td></td>";
 				}
 			}
 		}
@@ -447,10 +519,20 @@ if (!isset ($y)) $y = NULL;
 	return ($y);
 } #endfunction udskriv()
 ?>
+
+<?php
+
+if ($menu=='T') {
+	print "</tfoor></table></div>";
+	include_once '../includes/topmenu/footer.php';
+} else {
+	print "
 </tbody>
 </table>
 	</td></tr>
-</tbody></table>
+	</tbody></table>";
+	include_once '../includes/oldDesign/footer.php';
+	print "</body></html>";
+}
 
-</body></html>
-
+?>

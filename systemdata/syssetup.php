@@ -83,303 +83,8 @@ if ($menu=='T') {
 	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"1\"><tbody>";
 }
 $valg=if_isset($_GET['valg']);
-
-if ($_POST){ 
-	$id=if_isset($_POST['id']);
-	$beskrivelse=if_isset($_POST['beskrivelse']);
-	$kodenr=if_isset($_POST['kodenr']);
-	$kode=if_isset($_POST['kode']);
-	$art=if_isset($_POST['art']);
-	$box1=if_isset($_POST['box1']);
-	$box2=if_isset($_POST['box2']);
-	$box3=if_isset($_POST['box3']);
-	$box4=if_isset($_POST['box4']);
-	$box5=if_isset($_POST['box5']);
-	$box6=if_isset($_POST['box6']);
-	$box7=if_isset($_POST['box7']);
-	$box8=if_isset($_POST['box8']);
-	$box9=if_isset($_POST['box9']);
-	$box10=if_isset($_POST['box10']);
-	$box11=if_isset($_POST['box11']);
-	$box12=if_isset($_POST['box12']);
-	$box13=if_isset($_POST['box13']);
-	$box14=if_isset($_POST['box14']);
-	$antal=if_isset($_POST['antal']);
-#cho "Antal $antal<br>";	
-	$valg=if_isset($_POST['valg']);
-
-	$s_art=array();
-	$artantal=0;
-	transaktion('begin');
-	$y=0;
-	for($x=0; $x<=$antal; $x++) {
-		$set=0;
-		if (!isset ($box6[$x])) $box6[$x] = null;
-		if (!isset ($box7[$x])) $box7[$x] = null;
-		if (!isset ($box8[$x])) $box8[$x] = null;
-		if (!isset ($box9[$x])) $box9[$x] = null;
-		if (!isset ($box10[$x])) $box10[$x] = null;
-		if (!isset ($box11[$x])) $box11[$x] = null;
-		if (!isset ($box12[$x])) $box12[$x]= null;
-		if (!isset ($box13[$x])) $box13[$x] = null;
-		if (!isset ($box14[$x])) $box14[$x] = null;
-		if (!isset ($box2[$x])) $box2[$x] = null;
-		if (!isset ($box3[$x])) $box3[$x] = null;
-		if (!isset ($box3[$y])) $box3[$y] = null;
-		if (!isset ($box4[$x])) $box4[$x] = null;
-		if (!isset ($box4[$y])) $box4[$y] = null;
-		if (!isset ($box5[$x])) $box5[$x] = null;
-		if (!isset ($box1[$x])) $box1[$x] = null;
-		if (isset($art[$x])) $set=1;
-		if (isset($beskrivelse[$x])) $set=1;
-		if (isset($kodenr[$x])) $set=1;
-		if (isset($id[$x])) $set=1;
-		if ($set) {
-			$id[$y]=(float)$id[$x];
-			$kodenr[$y]=(int)$kodenr[$x];
-			$kode[$y]=$kode[$x]; #20160118
-			$beskrivelse[$y]=db_escape_string(trim($beskrivelse[$x]));
-			$art[$y]=trim($art[$x]);
-			$box1[$y]=trim($box1[$x]);
-			$box2[$y]=trim($box2[$x]);
-			$box3[$y]=trim($box3[$x]);
-			$box4[$y]=trim($box4[$x]);
-			$box5[$y]=trim($box5[$x]);
-			$box6[$y]=trim($box6[$x]);
-			$box7[$y]=trim($box7[$x]);
-			$box8[$y]=trim($box8[$x]);
-			$box9[$y]=trim($box9[$x]);
-			$box10[$y]=trim($box10[$x]);
-			$box11[$y]=trim($box11[$x]);
-			$box12[$y]=trim($box12[$x]);
-			$box13[$y]=trim($box13[$x]);
-			$box14[$y]=trim($box14[$x]);
-			$y++;
-		}
-	}	
-	
-#	array_splice($kodenr,$y);
-	transaktion('begin');
-	for($x=0; $x<$y; $x++) {
-	########## Til brug for sortering ########
-		 if (($art[$x])&&(!in_array($art[$x],$s_art))) {
-			$artantal++;
-			$s_art[$artantal]=$art[$x];
-			$s_kode[$artantal]=$kode[$x];
-		}
-#cho "KN $id[$x] $art[$x] $kodenr[$x] $beskrivelse[$x]<br>";
-		
-		################################
-/*
-		$beskrivelse[$x]=db_escape_string(trim($beskrivelse[$x]));
-		$kodenr[$x]=trim($kodenr[$x]);
-		$box1[$x]=trim($box1[$x]);
-		$box2[$x]=trim($box2[$x]);
-		$box3[$x]=trim($box3[$x]);
-		$box4[$x]=trim($box4[$x]);
-		$box5[$x]=trim($box5[$x]);
-		$box6[$x]=trim($box6[$x]);
-		$box7[$x]=trim($box7[$x]);
-		$box8[$x]=trim($box8[$x]);
-		$box9[$x]=trim($box9[$x]);
-		$box10[$x]=trim($box10[$x]);
-		$box11[$x]=trim($box11[$x]);
-		$box12[$x]=trim($box12[$x]);
-		$box13[$x]=trim($box13[$x]);
-		$box14[$x]=trim($box14[$x]);
-*/
-		if (($art[$x]=='VG')&&($box8[$x]!='on')&&($box9[$x]=='on')) {
-			$alerttext="Der kan kun f&oslash;res batchkontrol p&aring; lagerf&oslash;rte varer";
-			print "<BODY onload=\"javascript:alert('$alerttext')\">";
-			$box9[$x]='';
-		}
-		if ($art[$x]=='DG' || $art[$x]=='KG'){
-#cho "art $art[$x]<br>";
-			if (!$box3[$x]) $box3[$x]='DKK';
-#cho "SELECT box2 FROM grupper where id='$id[$x]'<br>";
-#cho __line__." ID: $id[$x]<br>";
-			if ($r=db_fetch_array(db_select("SELECT box2 FROM grupper where id='$id[$x]'",__FILE__ . " linje " . __LINE__))) {
-echo "$box2[$x] && $r[box2] && $box2[$x]!=$r[box2]<br>";
-			if($box2[$x] && $r['box2'] && $box2[$x]!=$r['box2']) {
-				list($regnstart,$regnslut)=explode(chr(9),regnstartslut($regnaar));
-				if ($regnstart>$dd || $regnslut<$dd) {
-					print tekstboks('Forkert regnskabsår aktivt');
-					break 1;
-				}
-				$genberegn=1;
-				$gl_smlkto=$r['box2'] ;
-#cho "GL samlekonto $gl_smlkto Ny $box2[$x]<br>";
-#xit;
-				$z=0;
-				$gruppesum=0;
-				$qtxt="select id,kontonr from adresser where art = '".substr($art[$x],0,1)."' and gruppe='$kodenr[$x]'";
-				$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
-				while($r=db_fetch_array($q)){
-					$adr_konto_id[$z]=$r['id'];
-					$adr_kontonr[$z]=$r['kontonr'];
-					$z++;
-				}
-				for ($z=0;$z<count($adr_konto_id);$z++){
-					#cho "$z select amount,valutakurs from openpost where udlignet='0' and konto_id='$adr_konto_id[$z]'<br>";
-					$qtxt="select amount,valutakurs from openpost where udlignet='0' and konto_id='$adr_konto_id[$z]'<br>";
-					$q=db_select("select amount,valutakurs from openpost where udlignet='0' and konto_id='$adr_konto_id[$z]'",__FILE__ . " linje " . __LINE__);
-					while($r=db_fetch_array($q)){
-						$gruppesum+=$r['amount']*100/$r['valutakurs'];		
-					}
-				}
-				$gruppesum=afrund($gruppesum,3);
-				if ($gruppesum>0) $debkred='kredit';
-				elseif($gruppesum<0)  $debkred='debet';
-				$gruppesum=abs($gruppesum);
-				if ($gruppesum){
-					$posttekst="samlekonto D$kodenr[$x] flyttet fra konto $gl_smlkto til $box2[$x] af $brugernavn";
-					$qtxt="insert into transaktioner"; 
-					$qtxt.="(kontonr,bilag,transdate,logdate,logtime,beskrivelse,$debkred,faktura,kladde_id,afd,ansat,projekt,valuta,valutakurs,ordre_id,moms)";
-					$qtxt.="values";
-					$qtxt.="('$gl_smlkto','0','".date("Y-m-d")."','".date("Y-m-d")."','".date("H:i")."','$posttekst','$gruppesum','0','0','0','0','','DKK','100','0','0')";
-					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-					($debkred=='debet')?$debkred='kredit':$debkred='debet';
-					$qtxt="insert into transaktioner";
-					$qtxt.="(kontonr,bilag,transdate,logdate,logtime,beskrivelse,$debkred,faktura,kladde_id,afd,ansat,projekt,valuta,valutakurs,ordre_id,moms)";
-					$qtxt.="values";
-					$qtxt.="('$box2[$x]','0','".date("Y-m-d")."','".date("Y-m-d")."','".date("H:i")."','$posttekst','$gruppesum','0','0','0','0','','DKK','100','0','0')";
-					db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-				}
-				$qtxt="select valuta from kontoplan where regnskabsaar = '$regnaar' and kontonr='$box2[$x]'";
-				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-				if ($valutakode=$r['valuta']) {
-					$qtxt="select box1 from grupper where art= 'VK' and kodenr='$valutakode'";
-					$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-					$valuta=$r['box1'];
-					if (!$valuta) {
-						$alerttext="Valuta $valuta eksisterer ikke";
-						print tekstboks($alerttext);
-						break 1;
-
-					}
-				}	else $valuta='DKK';
-				$box3[$x]=$valuta;
-				genberegn($regnaar);
-			}}
-			if ($art[$x]=='DG'&& $box6[$x]) $box6[$x]=usdecimal($box6[$x]);
-			if ($art[$x]=='DG'&& $box6[$x]) $box7[$x]=usdecimal($box7[$x]);
-		}
-		if ($art[$x]=='VG' && $box8[$x]=='on' && $box10[$x]=='on') {
-			$alerttext="Operationer kan ikke lagerf&oslash;res";
-			print "<BODY onload=\"javascript:alert('$alerttext')\">";
-			$box8[$x]=''; $box9[$x]='';
-		} 
-		if ($art[$x]=='VPG') {
-			list($box1[$x],
-			$box2[$x],
-			$box3[$x],
-			$box4[$x])=explode(";", opdater_varer(
-			$kodenr[$x],
-			$art[$x],
-			$box1[$x],
-			$box2[$x],
-			$box3[$x],
-			$box4[$x])); 
-		} 
-		if ($art[$x]=='VTG') {
-			list($box1[$x],
-			$box2[$x],
-			$box3[$x],
-			$box4[$x])=explode(";", opdater_varer(
-			$kodenr[$x],
-			$art[$x],
-			$box1[$x],
-			$box2[$x],
-			$box3[$x],
-			$box4[$x])); 
-		} 
-		if ($art[$x]=='VRG') opdater_varer($kodenr[$x],$art[$x],$box1[$x],$box2[$x],$box3[$x],$box4[$x]); 
-		if (($art[$x]=='SM')||($art[$x]=='KM')||($art[$x]=='YM')||($art[$x]=='EM')||($art[$x]=='VK')) $box2[$x]=usdecimal($box2[$x]); 
-		if ($art[$x]=='VK' ) $box3[$x]=usdate($box3[$x]);
-#		if ($art[$x]=='PRJ' ) $kodenr[$x]=$kodenr[$x]*1;
-		if (!$fejl && ($kode[$x])||($id[$x])) {
-			$fejl=tjek ($id [$x],$beskrivelse[$x],$kodenr[$x],$kode[$x],$art[$x],$box1[$x],$box2[$x],$box3[$x],$box4[$x],$box5[$x],$box6[$x],$box7[$x],$box8[$x],$box9[$x]);
-			if (!$fejl && ($id[$x]==0)&&($kode[$x])&&($kodenr[$x])&&($art[$x])) {
-				$query = db_select("SELECT id FROM grupper WHERE kodenr = '$kodenr[$x]' and kode = '$kode[$x]' and art = '$art[$x]'",__FILE__ . " linje " . __LINE__);
-				if ($row = db_fetch_array($query)) {
-					if ($art[$x]=='SM'){print "<big><b>Der findes allerede en salgsmomskonto med nr: $kodenr[$x]</b></big><br>"; $nopdat=1;}
-					if ($art[$x]=='KM'){print "<big><b>Der findes allerede en k&oslash;bssmomskonto med nr: $kodenr[$x]</b></big><br>"; $nopdat=1;}
-					if ($art[$x]=='YM'){print "<big><b>Der findes allerede en konto til moms af ydelsesk&oslash;b i udlandet med nr: $kodenr[$x]</b></big><br>"; $nopdat=1;}
-					if ($art[$x]=='EM'){print "<big><b>Der findes allerede en konto til moms af varek&oslash; i udlandet med nr: $kodenr[$x]</b></big><br>"; $nopdat=1;}
-					if ($art[$x]=='SD'){print "<big><b>Der findes allerede en debitor-samlekonto nr: $kodenr[$x]</b></big><br>"; $nopdat=1;}
-					if ($art[$x]=='KD'){print "<big><b>Der findes allerede en kreditor-samlekonto nr: $kodenr[$x]</b></big><br>"; $nopdat=1;}
-				}
-				elseif ($art[$x]=='RA'){nytaar($beskrivelse[$x],$kodenr[$x],$kode[$x],$art[$x],$box1[$x],$box2[$x],$box3[$x],$box4[$x],$box5[$x],$box6[$x]);}
-				elseif ($art[$x]!='PV') {
-					db_modify("insert into grupper (beskrivelse,kodenr,kode,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14) values ('$beskrivelse[$x]','$kodenr[$x]','$kode[$x]','$art[$x]','$box1[$x]','$box2[$x]','$box3[$x]','$box4[$x]','$box5[$x]','$box6[$x]','$box7[$x]','$box8[$x]','$box9[$x]','$box10[$x]','$box11[$x]','$box12[$x]','$box13[$x]','$box14[$x]')",__FILE__ . " linje " . __LINE__);
-					if ($art[$x]=='LG'){
-						if (!db_fetch_array(db_select("SELECT * FROM lagerstatus",__FILE__ . " linje " . __LINE__))) {
-							$q1=db_select("SELECT id,beholdning FROM varer WHERE beholdning !='0' order by id",__FILE__ . " linje " . __LINE__);
-							while ($r1=db_fetch_array($q1)) {
-								db_modify("insert into lagerstatus (beholdning,vare_id,lager) values ('$r1[beholdning]','$r1[id]','0')",__FILE__ . " linje " . __LINE__); 
-							}
-						}
-					}
-				}
-			}	
-			elseif ((($id[$x]>0)&&($kodenr[$x])&&($kodenr[$x]!='-'))&&($art[$x])){ # &&(($box1[$x])||($box3[$x])||($art[$x]=='VK')))
-			  if ($art[$x]=='PV') {db_modify("update grupper set box1 = '$box1[$x]',box2 = '$box2[$x]',box3 = '$box3[$x]' WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__);}
-				else {
-					db_modify("update grupper set beskrivelse = '$beskrivelse[$x]',kode = '$kode[$x]',box1 = '$box1[$x]',box2 = '$box2[$x]',box3 = '$box3[$x]',box4 = '$box4[$x]',box5 = '$box5[$x]',box6 = '$box6[$x]',box7 = '$box7[$x]',box8 = '$box8[$x]',box9 = '$box9[$x]',box10 = '$box10[$x]',box11 = '$box11[$x]',box12 = '$box12[$x]',box13 = '$box13[$x]',box14 = '$box14[$x]' WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__);
-				}
-				if ($art[$x]=='VK') { #ValutaKoder
-				if ($r=db_fetch_array(db_select("select id,kurs from valuta where valdate = '$box3[$x]' and gruppe =	'$kodenr[$x]'",__FILE__ . " linje " . __LINE__))) {
-						if ($r['kurs'] != $box2[$x]) db_modify("update valuta set kurs = '$box2[$x]' where id = '$r[id]'",__FILE__ . " linje " . __LINE__);
-					} else db_modify("insert into valuta(gruppe,valdate,kurs) values ('$kodenr[$x]','$box3[$x]','$box2[$x]')",__FILE__ . " linje " . __LINE__); 
-				} 			
-			} elseif (($id[$x]>0)&&($kodenr[$x]=="-")&&($art[$x]!='PV')) {
-			if ($art[$x]=='VPG') {
-					if ($box1[$x]) db_modify("update varer set kostpris = $box1[$x] WHERE prisgruppe = '$kodenr[$x]'",__FILE__ . " linje " . __LINE__);
-					if ($box2[$x]) db_modify("update varer set salgspris = $box2[$x] WHERE prisgruppe = '$kodenr[$x]'",__FILE__ . " linje " . __LINE__);
-					if ($box3[$x]) db_modify("update varer set retail_price = $box3[$x] WHERE prisgruppe = '$kodenr[$x]'",__FILE__ . " linje " . __LINE__);
-					if ($box4[$x]) db_modify("update varer set tier_price = $box4[$x] WHERE prisgruppe = '$kodenr[$x]'",__FILE__ . " linje " . __LINE__);
-				}
-				if ($art[$x]=='LG') { #LagerGrupper
-					$r1=db_fetch_array(db_select("SELECT kodenr FROM grupper WHERE id=$id[$x]",__FILE__ . " linje " . __LINE__));
-					$q2=db_select("SELECT beholdning,vare_id FROM lagerstatus WHERE lager =  '$r1[kodenr]'",__FILE__ . " linje " . __LINE__);
-					while ($r2=db_fetch_array($q2)) {
-						$b2=$r2['beholdning']*1; # 20170405
-						if ($r3=db_fetch_array(db_select("SELECT * FROM lagerstatus WHERE lager = '0' and vare_id = '$r2[vare_id]'",__FILE__ . " linje " . __LINE__))) {
-							$b3=$r3['beholdning']*1; # 20170405
-							db_modify("update lagerstatus set beholdning = $b3+$b2 WHERE id = $r3[id]",__FILE__ . " linje " . __LINE__);
-						} elseif($b2) {
-						db_modify("insert into lagerstatus (beholdning,vare_id,lager) values ('$b2','$r2[vare_id]','0')",__FILE__ . " linje " . __LINE__); 
-						}
-					}
-					db_modify("delete FROM lagerstatus WHERE lager = '$r1[kodenr]'",__FILE__ . " linje " . __LINE__);
-					db_modify("update batch_kob set lager = 0 WHERE lager =  '$r1[kodenr]'",__FILE__ . " linje " . __LINE__);
-					db_modify("delete FROM grupper WHERE id = '$id[$x]'");
-					$q1=db_select("SELECT kodenr FROM grupper WHERE art='LG' and kodenr > '$r1[kodenr]' order by kodenr",__FILE__ . " linje " . __LINE__);
-					while ($r1=db_fetch_array($q1)) {
-						db_modify("update lagerstatus set lager = $r1[kodenr]-1 WHERE lager = '$r1[kodenr]'",__FILE__ . " linje " . __LINE__);
-						db_modify("update batch_kob set lager = $r1[kodenr]-1 WHERE lager =  '$r1[kodenr]'",__FILE__ . " linje " . __LINE__);
-					}	
-					if (!db_fetch_array(db_select("SELECT kodenr FROM grupper WHERE art='LG'"))) db_modify("delete FROM lagerstatus",__FILE__ . " linje " . __LINE__);	
-				} elseif ($art[$x]=='SM'||$art[$x]=='KM'||$art[$x]=='YM'||$art[$x]=='EM') {
-					$r1=db_fetch_array(db_select("SELECT kodenr FROM grupper WHERE id=$id[$x]",__FILE__ . " linje " . __LINE__));
-					$tmp=substr($art[$x],0,1).$r1['kodenr'];
-					if ($r1=db_fetch_array(db_select("SELECT id FROM kontoplan WHERE moms='$tmp'",__FILE__ . " linje " . __LINE__))) print "<BODY onload=\"javascript:alert('Der er referencer til $tmp i kontoplanen. $tmp ikke slettet!')\">";
-					elseif ($r1=db_fetch_array(db_select("SELECT id FROM grupper WHERE (art='DG' or art = 'KG') and box1='$tmp'",__FILE__ . " linje " . __LINE__))) print "<BODY onload=\"javascript:alert('Der er reference til $tmp i debitor-/kreditorgrupper. $tmp ikke slettet!')\">";
-					else db_modify("delete FROM grupper WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__);
-				} elseif ($art[$x]=='VK') db_modify("delete FROM valuta WHERE gruppe = '$kodenr[$x]'",__FILE__ . " linje " . __LINE__);
-				else {
-					$r1=db_fetch_array(db_select("SELECT kodenr FROM grupper WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__));
-					if ($art[$x]=='VG' && db_fetch_array(db_select("SELECT id FROM varer WHERE gruppe = '$r1[kodenr]'",__FILE__ . " linje " . __LINE__))) {
-							print "<BODY onload=\"javascript:alert('Der er varer i varegruppe $r1[kodenr] - varegruppe ikke slettet!')\">";
-					} else db_modify("delete FROM grupper WHERE id = '$id[$x]'",__FILE__ . " linje " . __LINE__);
-				}
-			}
-		}
-	}
-	transaktion('commit');
-	if ($genberegn) genberegn($regnaar);
-}
-#########################################################################################################################################
+include_once("syssetupIncludes/saveData.php");
+##############################################################################################################################
 if ($nopdat!=1) {
 	$x=0;
 ($valg=="projekter")?$sort='kodenr desc':$sort='kodenr';
@@ -387,12 +92,15 @@ if ($nopdat!=1) {
 #		if ($db_type=='mysql' || $db_type=='mysqli') $tmp="CAST(kodenr AS SIGNED)";
 #		else $tmp="to_number(textcat('0',kodenr),text(99999999))";
 #	} 
-	$qtxt = "SELECT * FROM grupper order by kodenr";
-	if ($valg=="projekter") $qtxt.=' desc';
-	$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	$feltbredde=6;
 	$stockIO=NULL;
-	while ($row = db_fetch_array($query)){
+	$qtxt = "SELECT * FROM grupper ";
+	$qtxt.= "	WHERE (art = 'SM' OR art = 'KM'  OR art = 'EM' OR art = 'YM' OR art = 'MR' OR art = 'DG' ";
+	$qtxt.= "OR art = 'KG' OR art = 'VG' OR art = 'POS' OR art = 'OreDif') and fiscal_year = '$regnaar' ";
+	$qtxt.= "order by kodenr";
+	if ($valg=="projekter") $qtxt.=' desc';
+	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
+	while ($row = db_fetch_array($q)){
 		$x++;
 		$id[$x]=$row['id'];
 		$beskrivelse[$x]=htmlentities(stripslashes($row['beskrivelse']),ENT_COMPAT,$charset);
@@ -422,34 +130,44 @@ $y=$x+1;
 print "<tr><td valign = top><table border=0><tbody>";
 print "<form name=syssetup action=syssetup.php method=post>";
 if ($valg=='moms'){
-	$spantekst1='En beskrivende tekst efter eget valg';
-	$spantekst2='Det nummer i kontoplanen som salgsmomsen skal konteres p&aring;.';
-	$spantekst3='Moms %.';
+	$spantxt1='En beskrivende tekst efter eget valg';
+	$spantxt2='Det nummer i kontoplanen som salgsmomsen skal konteres p&aring;.';
+	$spantxt3='Moms %.';
+	$spantxt4='Map til';
+	$spantxt5='Momskode hos SKAT';
 	print "<tr><td></td><td colspan=3><b><span title='Den moms du skal betale til SKAT'>".findtekst(994,$sprog_id)."</span></td></tr>\n";
-	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantekst1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='$spantekst2'>".findtekst(440,$sprog_id)."<span></td><td align=\"center\"><span title='$spantekst3'>".findtekst(995,$sprog_id)."</span></td></tr>\n";		#20210513
-	$y=skriv_formtabel('SM',$x,$y,$art,$id,'S',$kodenr,$beskrivelse,$box1,'6' ,$box2,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
+	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantxt1'>".findtekst(914,$sprog_id)."</span></td>";
+	print "<td align=\"center\"><span title='$spantxt2'>".findtekst(440,$sprog_id)."</span></td>";
+	print "<td align=\"center\"><span title='$spantxt3'>".findtekst(995,$sprog_id)."</span></td>";
+	print "<td></td><td align=\"center\"><span title='$spantxt5'>$spantxt4</span></td></tr>\n";		#20210513
+	$y=skriv_formtabel('SM',$x,$y,$art,$id,'S',$kodenr,$beskrivelse,$box1,'6' ,$box2,'6','','6',$box4,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 	print "<tr><td><br></td></tr>\n";
-	$spantekst2='Det nummer i kontoplanen som k&oslash;bsmomsen skal konteres p&aring;.';
+	$spantxt2='Det nummer i kontoplanen som k&oslash;bsmomsen skal konteres p&aring;.';
 	print "<tr><td></td><td colspan=3><b><span title='Den moms du skal have retur fra SKAT'>".findtekst(996,$sprog_id)."</span></td></tr>\n";
-	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantekst1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='$spantekst2'>".findtekst(440,$sprog_id)."<span></td><td align=\"center\"><span title='$spantekst3'>".findtekst(995,$sprog_id)."</span></td></tr>\n";
-	$y=skriv_formtabel('KM',$x,$y,$art,$id,"K",$kodenr,$beskrivelse,$box1,'6',$box2,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
+	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantxt1'>".findtekst(914,$sprog_id)."</span></td>";
+	print "<td align=\"center\"><span title='$spantxt2'>".findtekst(440,$sprog_id)."<span></td>";
+	print "<td align=\"center\"><span title='$spantxt3'>".findtekst(995,$sprog_id)."</span></td>\n";
+	print "<td></td><td align=\"center\"><span title='$spantxt5'>$spantxt4</span></td></tr>\n";		#20210513
+	$y=skriv_formtabel('KM',$x,$y,$art,$id,"K",$kodenr,$beskrivelse,$box1,'6',$box2,'6','','6',$box4,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 	print "<tr><td><br></td></tr>\n";
-	$spantekst2='Konto til postering af salgsmoms for ydelsesk&oslash;b i udlandet';
-	$spantekst4='Konto til postering af k&oslash;bsmoms for ydelsesk&oslash;b i udlandet';
-	$spantekst5="Ved ydelsesk&oslash;b i udlandet,skal der betales dansk moms p&aring; vegne af s&aelig;lgeren. \nSamtidig kan k&oslash;bsmomsen tr&aelig;kkes fra s&aring; resultatet bliver 0.";
-	print "<tr><td></td><td colspan=3><b><span title='$spantekst5'>".findtekst(997,$sprog_id)."</td></tr>\n";
-	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantekst1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='$spantekst2'>".findtekst(440,$sprog_id)."<span></td><td align=\"center\"><span title='$spantekst3'>".findtekst(995,$sprog_id)."</span></td><td align=\"center\"> <span title='$spantekst4'>".findtekst(1013,$sprog_id)."</span></td></tr>\n";
-	$y=skriv_formtabel('YM',$x,$y,$art,$id,"Y",$kodenr,$beskrivelse,$box1,'6',$box2,'6',$box3,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
+	$spantxty2='Konto til postering af salgsmoms for ydelsesk&oslash;b i udlandet';
+	$spantxty4='Konto til postering af k&oslash;bsmoms for ydelsesk&oslash;b i udlandet';
+	$spantxty5="Ved ydelsesk&oslash;b i udlandet,skal der betales dansk moms p&aring; vegne af s&aelig;lgeren. \nSamtidig kan k&oslash;bsmomsen tr&aelig;kkes fra s&aring; resultatet bliver 0.";
+	print "<tr><td></td><td colspan=3><b><span title='$spantxty5'>".findtekst(997,$sprog_id)."</td></tr>\n";
+	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantxt1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='$spantxt2'>".findtekst(440,$sprog_id)."<span></td><td align=\"center\"><span title='$spantxt3'>".findtekst(995,$sprog_id)."</span></td><td align=\"center\"> <span title='$spantxt4'>".findtekst(1013,$sprog_id)."</span></td>\n";
+	print "<td align=\"center\"><span title='$spantxt5'>$spantxt4</span></td></tr>\n";		#20210513
+	$y=skriv_formtabel('YM',$x,$y,$art,$id,"Y",$kodenr,$beskrivelse,$box1,'6',$box2,'6',$box3,'6',$box4,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 	print "<tr><td><br></td></tr>\n";
-	$spantekst2='Konto til postering af salgsmoms for k&oslash;b i udlandet';
-	$spantekst4='Konto til postering af k&oslash;bsmoms for k&oslash;b i udlandet';
-	$spantekst5="Ved varek&oslash;b i udlandet,skal der betales dansk moms p&aring; vegne af s&aelig;lgeren. \nSamtidig kan k&oslash;bsmomsen tr&aelig;kkes fra s&aring; resultatet bliver 0";
-	print "<tr><td></td><td colspan=3><b><span title='$spantekst5'>".findtekst(998,$sprog_id)."</span></b></td></tr>\n";
-	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantekst1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='$spantekst2'>".findtekst(440,$sprog_id)."<span></td><td align=\"center\"><span title='$spantekst3'>".findtekst(995,$sprog_id)."</span></td><td align=\"center\"> <span title='$spantekst4'>".findtekst(1013,$sprog_id)."</span></td></tr>\n";
-	$y=skriv_formtabel('EM',$x,$y,$art,$id,"E",$kodenr,$beskrivelse,$box1,'6',$box2,'6',$box3,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
+	$spantxt2='Konto til postering af salgsmoms for k&oslash;b i udlandet';
+	$spantxte4='Konto til postering af k&oslash;bsmoms for k&oslash;b i udlandet';
+	$spantxte5="Ved varek&oslash;b i udlandet,skal der betales dansk moms p&aring; vegne af s&aelig;lgeren. \nSamtidig kan k&oslash;bsmomsen tr&aelig;kkes fra s&aring; resultatet bliver 0";
+	print "<tr><td></td><td colspan=3><b><span title='$spantxte5'>".findtekst(998,$sprog_id)."</span></b></td></tr>\n";
+	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantxt1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='$spantxt2'>".findtekst(440,$sprog_id)."<span></td><td align=\"center\"><span title='$spantxt3'>".findtekst(995,$sprog_id)."</span></td><td align=\"center\"> <span title='$spantxt4'>".findtekst(1013,$sprog_id)."</span></td>\n";
+	print "<td align=\"center\"><span title='$spantxt5'>$spantxt4</span></td></tr>\n";		#20210513
+	$y=skriv_formtabel('EM',$x,$y,$art,$id,"E",$kodenr,$beskrivelse,$box1,'6',$box2,'6',$box3,'6',$box4,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 	print "<tr><td><br></td></tr>\n";
 	print "<tr><td></td><td colspan=3><b>".findtekst(1009,$sprog_id)."</b></td></tr>\n";
-	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantekst1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='F&oslash;rste kontonummer som skal indg&aring; i rapporten'>Fra</span></td><td align=\"center\"><span title='Sidste kontonummer som skal indg&aring; i rapporten'>Til</span></td><td><span title='Kontonummer for samlet varek&oslash;b i EU'>Rubrik A1</span></td><td><span title='Kontonummer for samlet ydelsesk&oslash;b i EU'>Rubrik A2</span></td><td><span title='Kontonummer for samlet varesalg i EU'>Rubrik B1</span></td><td><span title='Kontonummer for samlet ydelsessalg i EU'>Rubrik B2</span></td><td><span title='Kontonummer for samlet vare- og ydelsessalg uden for EU'>Rubrik C</span></td></tr>\n";
+	print "<tr><td></td><td>Nr.</td><td align=\"center\"><span title='$spantxt1'>".findtekst(914,$sprog_id)."</span></td><td align=\"center\"><span title='F&oslash;rste kontonummer som skal indg&aring; i rapporten'>Fra</span></td><td align=\"center\"><span title='Sidste kontonummer som skal indg&aring; i rapporten'>Til</span></td><td><span title='Kontonummer for samlet varek&oslash;b i EU'>Rubrik A1</span></td><td><span title='Kontonummer for samlet ydelsesk&oslash;b i EU'>Rubrik A2</span></td><td><span title='Kontonummer for samlet varesalg i EU'>Rubrik B1</span></td><td><span title='Kontonummer for samlet ydelsessalg i EU'>Rubrik B2</span></td><td><span title='Kontonummer for samlet vare- og ydelsessalg uden for EU'>Rubrik C</span></td></tr>\n";
 	$y=skriv_formtabel('MR',$x,$y,$art,$id,"R",$kodenr,$beskrivelse,$box1,'6',$box2,'6',$box3,'6',$box4,'6',$box5,'6',$box6,'6',$box7,'6','-','6','-','6','-','6','-','6','-','6','-','6','-','2');
 }
 elseif($valg=='debitor'){
@@ -503,26 +221,26 @@ elseif($valg=='varer'){
 		print "<tr>";
 		print "<td align=\"center\"></td><td></td><td></td>";
 		if ($stockIO) print "<td align=\"center\">".findtekst(608,$sprog_id)."-</td><td align=\"center\">".findtekst(608,$sprog_id)."-</td>";
-		print "<td align=\"center\">K&oslash;b</td><td align=\"center\">".findtekst(1007,$sprog_id)."</td>";
+		print "<td align=\"center\"><!--K&oslash;b--></td><td align=\"center\"><!--".findtekst(1007,$sprog_id)."--></td>";
 		#<td align=\"center\">Lager-</td>";
-		print "<td title=\"$t6\" align=\"center\">Omvendt-</td><td align=\"center\">".findtekst(770,$sprog_id)."-</td><td align=\"center\">".findtekst(608,$sprog_id)."-</td><td align=\"center\">Opera-</td>\n";
+		print "<td title=\"$t6\" align=\"center\">Omvendt-</td><td align=\"center\">".findtekst(770,$sprog_id)."-</td><td align=\"center\">".findtekst(608,$sprog_id)."-</td><td align=\"center\">Batch-</td><td align=\"center\">Opera-</td>\n";
 		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>".findtekst(1012,$sprog_id)."</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>".findtekst(1007,$sprog_id)."</td>\n";
 		print "<td title='Kontonummer for en af Varek&oslash;b uden for EU, Ydelsesk&oslash;b uden for EU eller Vare- og ydelsesk&oslash;b uden for EU.'>".findtekst(1012,$sprog_id)." uden</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>Salg uden</td></tr>\n";
 		print "<tr><td></td><td>Nr.</td><td align=\"center\">".findtekst(914,$sprog_id)."</td>";
 		if ($stockIO) print "<td align=\"center\">tilgang</td><td align=\"center\">tr&aelig;k</td>";
-		print "<td align=\"center\">".findtekst(1012,$sprog_id)."</td><td align=\"center\">".findtekst(1007,$sprog_id)."</td>"; 
+		print "<td align=\"center\">".findtekst(1012,$sprog_id)."</td><td align=\"center\">Salg<!--".findtekst(1007,$sprog_id)."--></td>";
 		#<td align=\"center\">regulering</td>
-		print "<td  title=\"$t6\" align=\"center\">betaling</td><td align=\"center\">fri</td><td align=\"center\">f&oslash;rt</td><td align=\"center\">tion</td>\n";
-		print "<td title='Kontonummer for enten k&oslash; af Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>i EU</td>\n";
+		print "<td  title=\"$t6\" align=\"center\">betaling</td><td align=\"center\">fri</td><td align=\"center\">f&oslash;rt</td><td>kontrol</td><td align=\"center\">tion</td>\n";
+		print "<td title='Kontonummer for enten Varek&oslash;b i EU (Rubrik A1) eller Ydelsesk&oslash;b i EU (Rubrik A2) - se Indstillinger - Moms'>i EU</td>\n";
 		print "<td title='Kontonummer for enten Varesalg til EU (Rubrik B1) eller Ydelsessalg til EU (Rubrik B2) - se Indstillinger - Moms'>til EU</td>\n";
 		print "<td title='Kontonummer for en af Varek&oslash;b uden for EU, Ydelsesk&oslash;b uden for EU eller Vare- og ydelsesk&oslash;b uden for EU.'>for EU</td>\n";
 		print "<td title='Kontonummer for en af Varesalg uden for EU, Ydelsessalg uden for EU eller Vare- og ydelsessalg uden for EU (Rubrik C). Hvis en af de to f&oslash;rste angives, s&aring; skal kontonummeret v&aelig;re blandt de kontonumre, som summeres til en samlekonto for Vare- og ydelsessalg uden for EU (Rubrik C).'>for EU</td></tr>\n";
 		if ($stockIO) {
-		$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box10,'checkbox','-','2',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
+		$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,$box1,'4',$box2,'4',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box9,'checkbox',$box10,'checkbox',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
 	} else {
-			$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,'-','','-','',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box10,'checkbox','-','2',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
+			$y=skriv_formtabel('VG',$x,$y,$art,$id,'&nbsp;',$kodenr,$beskrivelse,'-','','-','',$box3,'4',$box4,'4','-','',$box6,'checkbox',$box7,'checkbox',$box8,'checkbox',$box9,'checkbox',$box10,'checkbox',$box11,'4',$box12,'4',$box13,'4',$box14,'4');
 		}
 	} else {
 		print "<tr><td colspan=20 align=\"center\"><b>".findtekst(774,$sprog_id)."</td></tr><tr><td colspan=20><hr></td></tr>\n";
@@ -584,73 +302,8 @@ print "</form>";
 print "</div>";
 
 ###########################################################################################################################
-function nytaar($beskrivelse,$kodenr,$kode,$art,$box1,$box2,$box3,$box4,$box5,$box6) {
-	$query = db_select("SELECT id FROM grupper WHERE art = 'RA'",__FILE__ . " linje " . __LINE__);
-	print "<form name=nytaar action=syssetup.php method=post>";
-	print "<tr><td colspan=4 align = center><big><b>".findtekst(1002,$sprog_id)." $beskrivelse</td></tr>\n";
-	if (!$row = db_fetch_array($query)) {
-		print "<tr><td colspan=2 align=\"center\"> ".findtekst(999,$sprog_id)."</td><td align = center>".findtekst(1000,$sprog_id)."</td><td align = center>".findtekst(1001,$sprog_id)."</td></tr>\n";
-		$query = db_select("SELECT id, kontonr,beskrivelse FROM kontoplan WHERE kontotype='D' or kontotype='S' order by kontonr",__FILE__ . " linje " . __LINE__);
-		while ($row = db_fetch_array($query)) {
-			print "<tr><input type=hidden name=kontonr[$y] value=$row[kontonr]><td>$row[kontonr]</td><td>$row[beskrivelse]</td><td width=10 align=right><input class=\"inputbox\" type=\"text\" size=10 name=debet[$y]></td><td align=right><input class=\"inputbox\" type=\"text\" size=10 name=kredit[$y]></td></tr>\n";
-		}
-	} else {
-		print "<tr><td> ".findtekst(1003,$sprog_id)."</td><td><input class=\"inputbox\" type=\"checkbox\" name=aabn_bal></td></tr>\n";
-	}
-	print "<tr><td colspan = 4 align = center><input type=submit accesskey=\"g\" value=\"".findtekst(471,$sprog_id)."\" name=\"submit\"></td></tr>\n";
-	print "</form>";
-	exit;
-}
 
 ###########################################################################################################################
-function tjek ($id,$beskrivelse,$kodenr,$kode,$art,$box1,$box2,$box3,$box4,$box5,$box6,$box7,$box8,$box9) {
-	$fejl=NULL;
-	
-	if ($beskrivelse)	{
-		if ($art=='VG')	{
-			if ($box2){ # 20150130 Test Lager Tilgang og Træk (start)
-				if (!$box1) print tekstboks('"Lager Tilgang" skal udfyldes, n&aring;r "Lager Tr&aelig;k" er angivet.');
-				elseif(!$fejl) $fejl=kontotjek($box1);
-			}
-
-			if ($box1){ 
-				if (!$box2) print tekstboks('"Lager Tr&aelig;k" skal udfyldes n&aring;r "Lager Tilgang" er angivet.');
-				elseif(!$fejl) $fejl=kontotjek($box2);
-			} #20150130 Test Lager Tilgang og Træk (slut)
-			if (!$box3) print tekstboks('Varek&oslash;b skal udfyldes'); # 20141212A
-			elseif(!$fejl) $fejl=kontotjek($box3);
-			if (!$box4) print tekstboks('Varesalg skal udfyldes'); # 20141212A
-			elseif(!$fejl) $fejl=kontotjek($box4);
-			if (!$fejl && $box5) $fejl=kontotjek($box5);
-			if (!$fejl && $box6) $fejl=kontotjek($box6);
-		}
-		if ($art=='KM' || $art=='SM' || $art=='EM' || $art=='YM') { # 20132127
-			if (!is_numeric($kodenr) && $kodenr!='-') { #20140621
-				print tekstboks('Nr skal være numerisk! ('.$kodenr.')'); # 20141212A
-				return ('1');
-			}
-		}
-		if (!$fejl && $art=='KG' && $box9 && !$box6) {
-			$fejl="S. moms grp skal udfyldes når OB (Omvendt betalingspligt) er afmærket";
-			print tekstboks($fejl); # 20141212A
-		}
-		if (!$fejl && ($art=='DS'||$art=='KS'||$art=='KM'||$art=='SM')) $fejl=kontotjek($box1);
-#cho __line__."<br>";		
-		if (!$fejl && ($art=='DG'||$art=='KG')) $fejl=momsktotjek($art,$box1);
-#cho __line__."<br>";		
-		if (!$fejl && $art=='KG') $fejl=momsktotjek('DG',$box6);
-#cho __line__."<br>";		
-		if (!$fejl && ($art=='DG'||$art=='KG')) $fejl=kontotjek($box2);
-#cho __line__."<br>";		
-		if (!$fejl && ($art=='DG'||$art=='KG')) $fejl=kontotjek($box5);
-#cho __line__."<br>";		
-		if (!$fejl && ($art=='DG'||$art=='KG')) $fejl=sprogtjek($box4);
-#cho __line__."<br>";		
-		if (!$fejl && ($art=='LG')) $fejl=afdelingstjek($box1);
-#cho __line__."<br>";		
-		return $fejl;	
-	}
-}
 
 ###########################################################################################################################
 function kontotjek ($konto) { 

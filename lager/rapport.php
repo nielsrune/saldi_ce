@@ -4,7 +4,7 @@
 //               \__ \/ ^ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/rapport.php --- patch 4.0.6 --- 2022.03.21---
+// --- lager/rapport.php --- patch 4.1.0 --- 2024.04.04---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -60,6 +60,7 @@
 // 20210406 LOE - Added sprog_id as global value to this function - 20210406
 // 20220320 PHR	- Inserted "if ($kun_salg)" in query to limit numbber of items
 // 20220321 PHR - Cost price now found from kostpriser if to_date != current date. 
+// 20240404 PHR - $date_to is only used if different from dd
 
 	@session_start();
 	$s_id=session_id();
@@ -142,7 +143,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	#global $connection;
 	global $bgcolor,$bgcolor5,$brugernavn;
 	global $db,$jsvars,$md,$menu;
-	global $popup,$returside,$top_bund;
+	global $popup,$regnaar,$returside,$top_bund;
 	global $sprog_id; #20210406
 
 #	$regnaar=$regnaar*1; #fordi den er i tekstformat og skal vaere numerisk
@@ -211,7 +212,7 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 	$vg_nr[0]='0';
 	$vg_navn[0]='Alle';
 	$x=1;
-	$q = db_select("select * from grupper where art = 'VG' order by kodenr",__FILE__ . " linje " . __LINE__);
+	$q = db_select("select * from grupper where art = 'VG' and fiscal_year = '$regnaar' order by kodenr",__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)){
 		$vg_nr[$x]=$r['kodenr'];
 		$vg_navn[$x]=$r['beskrivelse'];
@@ -364,11 +365,11 @@ function forside($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$ku
 function varegruppe($date_from,$date_to,$varenr,$varenavn,$varegruppe,$detaljer,$kun_salg,$lagertal,$vk_kost,$afd,$lev,$ref) {
 
 #	global $connection;
-	global $bgcolor,$bgcolor5;
+	global $bgcolor,$bgcolor5,$brugernavn;
 	global $db;
 	global $jsvars;
 	global $md,$menu;
-	global $returside;
+	global $regnaar, $returside;
 	global $top_bund;
 	global $sprog_id; #20210406
 	
@@ -450,13 +451,13 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 	print "</td></tr>\n";
 	$lagergruppe=array();
 	if ($gruppenr) {
-		$qtxt="select box8,box9 from grupper where kodenr ='$gruppenr' and art='VG'";
+		$qtxt="select box8,box9 from grupper where kodenr ='$gruppenr' and art='VG' and fiscal_year = '$regnaar'";
 		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$batch_kontrol=$r['box9'];
 		if ($r['box8']=='on') $lagergruppe[0]=$gruppenr;	
 	} else {
 		$x=0;
-		$qtxt="select kodenr,box8,box9 from grupper where art='VG' order by kodenr";
+		$qtxt="select kodenr,box8,box9 from grupper where art='VG' and fiscal_year = '$regnaar' order by kodenr";
 		$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 		while ($r = db_fetch_array($q)){
 			if ($r['box8']=='on') {
@@ -629,10 +630,12 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 		$v_kostpris[$x]=$r['kostpris'];
 		$samlevare[$x]=$r['samlevare'];
 		if ($kun_salg || ($lagertal && in_array($v_gr[$x],$lagergruppe) && !$samlevare[$x])) {
-			$qtxt="select sum(antal) as beholdning from batch_kob where vare_id='$v_id[$x]' and fakturadate <= '$date_to'";
+			$qtxt = "select sum(antal) as beholdning from batch_kob where vare_id='$v_id[$x]'";
+			if ($date_to != date("Y-m-d")) $qtxt.= " and fakturadate <= '$date_to'"; //20240404
 			$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$beholdning[$x]+=$r2['beholdning'];
-			$qtxt="select sum(antal) as beholdning from batch_salg where vare_id='$v_id[$x]' and fakturadate <= '$date_to'";
+			$qtxt = "select sum(antal) as beholdning from batch_salg where vare_id='$v_id[$x]'";
+			if ($date_to != date("Y-m-d")) $qtxt.= " and fakturadate <= '$date_to'"; //20240404
 			$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$beholdning[$x]-=$r2['beholdning'];
 		}
@@ -721,7 +724,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 				print "<tr><td colspan=\"$cols\"><hr></td></tr>\n";
 				fwrite($csvfile, "-----------\r\n");
 				
-				print "<tr><td></td><td align=\"right\"><b>".dkdecimal($t_kobt,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_k_pris,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_moms,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_k_pris+$t_moms,2)."</b></td></tr>\n";
+				print "<tr><td></td><td align=\"right\">.<b>".dkdecimal($t_kobt,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_k_pris,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_moms,2)."</b></td><td align=\"right\"><b>".dkdecimal($t_k_pris+$t_moms,2)."</b></td></tr>\n";
 				fwrite($csvfile, dkdecimal($t_kobt,2).";".dkdecimal($t_k_pris,2).";".dkdecimal($t_moms,2).";".dkdecimal($t_k_pris+$t_moms,2)."\r\n");
 				print "<tr><td colspan=\"$cols\"><hr></td></tr>\n";
 		}
@@ -896,7 +899,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 			}
 		} else {
 			if (!$x && $lagertal) {
-				$qtxt="select beskrivelse from grupper where art='VG' and kodenr='".$v_gr[$x]."'";
+				$qtxt="select beskrivelse from grupper where art='VG' and fiscal_year = '$regnaar' and kodenr='".$v_gr[$x]."'";
 				$vg=$v_gr[$x];
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
@@ -920,9 +923,9 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 				print "<td align='right'>".dkdecimal($beholdning[$x],2)."</td>";#20180925
 				fwrite($csvfile, dkdecimal($beholdning[$x],2)."\r\n");
 			} else {
-				if (!isset($ov_qty[$y])) $ov_qty[$y]=0; 
+				if (!isset($ov_qty[$x])) $ov_qty[$x]=0; 
 				print "<td align='right'>".dkdecimal($ov_qty[$x],2)."</td>";
-				fwrite($csvfile, dkdecimal($ov_qty[$y],2).";");
+				fwrite($csvfile, dkdecimal($ov_qty[$x],2).";");
 				print "<td align='right'>".dkdecimal($t_kobt,2)."</td>";
 				fwrite($csvfile, dkdecimal($t_kobt,2).";");
 				print "<td align='right'>".dkdecimal($t_k_pris,2)."</td>";
@@ -962,7 +965,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 				if (!isset($g_moms[$vg])) $g_moms[$vg]=NULL;
 				if (!isset($g_Ksum[$vg])) $g_Ksum[$vg]=NULL;
 				if (!isset($g_stockvalue[$vg])) $g_stockvalue[$vg]=NULL;
-				$qtxt="select beskrivelse from grupper where art='VG' and kodenr='$vg'";
+				$qtxt="select beskrivelse from grupper where art='VG' and fiscal_year = '$regnaar' and kodenr='$vg'";
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 				print "<tr bgcolor='$linjebg'><td><b>$r[beskrivelse]</b></td>";
@@ -1002,7 +1005,7 @@ $luk= "<a class='button red small' accesskey=L href=\"rapport.php?varegruppe=$va
 				($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 				print "<tr bgcolor='$linjebg'><td colspan=\"$cols\"><hr></td></tr>\n";
 					fwrite($csvfile, "-------------\r\n");
-					$qtxt="select beskrivelse from grupper where art='VG' and kodenr='".$v_gr[$x+1]."'";
+					$qtxt="select beskrivelse from grupper where art='VG' and fiscal_year = '$regnaar' and kodenr='".$v_gr[$x+1]."'";
 					if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 						($linjebg==$bgcolor)?$linjebg=$bgcolor5:$linjebg=$bgcolor;
 						print "<tr bgcolor='$linjebg'><td colspan='2'><b><big>$r[beskrivelse]</big></b></tr>\n\n";

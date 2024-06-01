@@ -21,6 +21,7 @@ $s_id=session_id();
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
 // Copyright (c) 2003-2023 Saldi.dk ApS
 // -------------------------------------------------------------------------
@@ -172,7 +173,8 @@ if (!$row['levdate']){
 		}
 		for ($x=1; $x<=$linjeantal; $x++) {
 			if (($vare_id[$x])&&($antal[$x]!=0)) {
-				$query = db_select("select * from grupper where art='VG' and kodenr='$gruppe[$x]'",__FILE__ . " linje " . __LINE__);
+				$qtxt = "select * from grupper where art='VG' and kodenr='$gruppe[$x]' and fiscal_year = '$regnaar'";
+				$query = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				$row = db_fetch_array($query);
 				$vgbeskrivelse=$row['beskrivelse']; $box1=trim($row['box1']); $box2=trim($row['box2']); $box3=trim($row['box3']); $box4=trim($row['box4']); $box8=trim($row['box8']); $box9=trim($row['box9']);
 				$box11=trim($row['box11']);$box13=trim($row['box13']);

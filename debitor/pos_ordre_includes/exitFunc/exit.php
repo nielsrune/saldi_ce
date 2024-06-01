@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/exitFunc/exit.php --- lap 4.0.5 --- 2021.12.03---
+// --- debitor/pos_ordre_includes/exitFunc/exit.php --- lap 4.1.0 --- 2024.3.13---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,16 +19,20 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // LN 20190510 Move function find_bon here
 // 20210125 PHR Varouis changes related to voucer.
 // 20211203 PHR drawer will now remail closed if no cash is involved
-
+// 20240209 PHR Added indbetaling to vibrant & flatpay
+// 20240313 MMK/PHR Vipps / Mobilepay
 
 function afslut($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn,$payment_id=null) {
+#cho "$id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn,$payment_id<br>";
+
 print "\n<!-- Function afslut (start)-->\n";
 	global $afd;
 	global $betalingsbet,$bruger_id,$brugernavn;
@@ -46,8 +50,6 @@ print "\n<!-- Function afslut (start)-->\n";
 	$modtaget  = (float)$modtaget;
 	$modtaget2 = (float)$modtaget2;
 
-
-
 	if ($id && $betaling) {
 		include('../debitor/pos_ordre_includes/voucherFunc/voucherPay.php');
 #cho __FILE__ ." ".__LINE__."<br>";
@@ -63,7 +65,6 @@ print "\n<!-- Function afslut (start)-->\n";
 		exit(0);
 	}
 	}
-	
 #cho __LINE__."<br>";	
 // Indsat til Claus ---->
 /*	
@@ -95,6 +96,7 @@ print "\n<!-- Function afslut (start)-->\n";
 	$diff=afrund($a-$b,2);
 #cho __FILE__." ".__LINE__."<br>";	
 	if (!$indbetaling && $diff > 0) { #20160902
+			include_once("pos_ordre_includes/paymentFunc/partPayment.php");
 		delbetal($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling,$godkendt,$kortnavn,$betvaluta,$betvalkurs);
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id&betaling=ukendt\">\n";
 		exit;
@@ -106,9 +108,12 @@ print "\n<!-- Function afslut (start)-->\n";
 	}
 	$tmp=array();
 	$betalingskort=array();
+#echo __line__." $betaling -> $modtaget<br>";
 #cho __FILE__." ".__LINE__." $godkendt | $kortnavn<br>";	
 	if ($godkendt!='OK') { #20131205
-		$r = db_fetch_array(db_select("select box3,box4,box5,box6 from grupper where art = 'POS' and kodenr='2'",__FILE__ . " linje " . __LINE__)); 
+#cho __FILE__." ".__LINE__." $godkendt | $kortnavn<br>";
+		$qtxt = "select box3,box4,box5,box6 from grupper where art = 'POS' and kodenr='2' and fiscal_year = '$regnaar'";
+		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$x=$kasse-1;
 		$tmp=explode(chr(9),$r['box3']);
 		$printserver=trim($tmp[$x]);
@@ -116,8 +121,9 @@ print "\n<!-- Function afslut (start)-->\n";
 		$terminal_ip=trim($tmp[$x]);
 		$betalingskort=explode(chr(9),$r['box5']);
 		$div_kort_kto=trim($r['box6']);
-		if ($terminal_ip) { # 20131210  div ændringer i rutine
-			$r = db_fetch_array(db_select("select box4,box5 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
+		if ($terminal_ip || strtolower($betaling) == "mobilepay") { # 20131210  div ændringer i rutine
+			$qtxt = "select box4,box5 from grupper where art = 'POS' and kodenr = '1' and fiscal_year = '$regnaar'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$kortantal=$r['box4']*1;
 			$korttyper=explode(chr(9),$r['box5']);
 			if ($div_kort_kto) {
@@ -129,9 +135,21 @@ print "\n<!-- Function afslut (start)-->\n";
 				$amount=0;
 				for($x=0;$x<$kortantal;$x++) {
 					if ($betaling==$korttyper[$x] && $betalingskort[$x] && !$amount) $amount=$modtaget;
-					elseif ($betaling==$korttyper[$x] && $betalingskort[$x] && $amount) return ("Der kan ikke betales med 2 betalingskort");
+					elseif ($betaling==$korttyper[$x] && $betalingskort[$x] && $amount) {
+						return ("Der kan ikke betales med 2 betalingskort");
+					}
 					if ($betaling2==$korttyper[$x] && $betalingskort[$x] && !$amount) $amount=$modtaget2;
-					elseif ($betaling2==$korttyper[$x] && $betalingskort[$x] && $amount) return ("Der kan ikke betales med 2 betalingskort");
+					elseif ($betaling2==$korttyper[$x] && $betalingskort[$x] && $amount) {
+						return ("Der kan ikke betales med 2 betalingskort");
+					}
+				}
+				if(!$amount && strtolower($betaling) == "mobilepay"){
+					$qtxt = "SELECT var_value FROM settings WHERE var_name = 'client_id' AND var_grp = 'mobilepay'";
+					$q = db_select($qtxt, __FILE__ . " linje " . __LINE__);
+					if(db_num_rows($q) >= 1) {
+						$amount = $modtaget;
+						$payment = 'mobilepay';
+					}
 				}
 			}
 			if ($amount) {
@@ -166,23 +184,29 @@ print "\n<!-- Function afslut (start)-->\n";
 				$qtxt="select max(id) as pos_bet_id from pos_betalinger where ordre_id='$id' and betalingstype='!'";
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
 				$pos_bet_id=$r['pos_bet_id'];
-
+				// MobilePay
+				if ($payment == "mobilepay") {
+					$tmp="payments/mobilepay.php?amount=$belob&id=$id&indbetaling=$indbetaling";
+					setcookie("saldi_bet",$tmp,time()+60*60*24*7);
+					print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">\n";
+					exit;
+				} else {
         # Check for flatpay or ip term
         $qtxt = "SELECT var_value FROM settings WHERE var_name='terminal_type' AND pos_id=$kasse";
 		    $r = db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__)); 
 
         if ($r[0] == "Flatpay") {
-          $tmp="payments/flatpay.php?amount=$belob&id=$id";
+						$tmp="payments/flatpay.php?amount=$belob&id=$id&indbetaling=$indbetaling";
           setcookie("saldi_bet",$tmp,time()+60*60*24*7);
           print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">\n";
           exit;
-        } else if (str_starts_with($r[0], "Vibrant")) {
-          $tmp="payments/vibrant.php?amount=$belob&id=$id";
+					} else if ("Vibrant:" == substr($r[0], 0, 8)) {
+						$tmp="payments/vibrant.php?amount=$belob&id=$id&indbetaling=$indbetaling";
           setcookie("saldi_bet",$tmp,time()+60*60*24*7);
           print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">\n";
           exit;
         }
-
+				}
 				$tmp="http://$terminal_ip/pointd/kvittering.php?url=$url&server=$server&serverfile=$serverfile&id=$id&db=$db&pos_bet_id=$pos_bet_id&kommando=kortbetaling&belob=$belob&betaling=$betaling&betaling2=$betaling2&modtaget=$modtaget&modtaget2=$modtaget2&indbetaling=$indbetaling&tidspkt=$tidspkt";
 				setcookie("saldi_bet",$tmp,time()+60*60*24*7);
 				print "<meta http-equiv=\"refresh\" content=\"0;URL=$tmp\">\n";
@@ -190,7 +214,8 @@ print "\n<!-- Function afslut (start)-->\n";
 			}
 		}
 	} elseif ($kortnavn) { #20140129
-		$qtxt = "select box3,box4,box5,box6 from grupper where art = 'POS' and kodenr='2'";
+#cho __line__."<br>";
+		$qtxt = "select box3,box4,box5,box6 from grupper where art = 'POS' and fiscal_year = '$regnaar'";
 		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)); 
 		
 		$x=$kasse-1;
@@ -201,7 +226,8 @@ print "\n<!-- Function afslut (start)-->\n";
 		$betalingskort=explode(chr(9),$r['box5']);
 		$div_kort_kto=trim($r['box6']);
 		if ($terminal_ip && $div_kort_kto) { 
-			$r = db_fetch_array(db_select("select box4,box5 from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__));
+			$qtxt = "select box4,box5 from grupper where art = 'POS' and kodenr = '1' and fiscal_year = '$regnaar'";
+			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$kortantal=$r['box4']*1;
 			$korttyper=explode(chr(9),$r['box5']);
 			$lkt=explode(chr(9),strtolower($r['box5']));
@@ -215,6 +241,8 @@ print "\n<!-- Function afslut (start)-->\n";
 			elseif ($betaling2=='Betalingskort') $betaling2="|".$kortnavn;
 		}
 	}
+#cho __line__." $betaling | $kortnavn<br>";
+#xit;
 	$projekt=NULL;
 	$tid=date("H:i");
 	$qtxt="select box9 from grupper where art='POSBUT' and (box7 < box8) and (box7<'$tid' and box8>'$tid')";
@@ -239,10 +267,18 @@ print "\n<!-- Function afslut (start)-->\n";
 #xit;
 
 	include("settlePOS.php"); #20190510
-	
 	if ($svar=='OK') { #20150213
 		transaktion("commit");
-		$qtxt = "select id from grupper where art = 'POS' and kodenr = '1' and box10 = 'on'";
+		$qtxt = "insert into pos_events (ev_type,ev_time,cash_register_id,employee_id,order_id,file,line) ";
+		$qtxt.= "values ";
+		$qtxt.= "('11001','". date('U') ."','$kasse','$bruger_id','$id','".__file__."','".__line__."')";
+		db_modify ($qtxt,__FILE__ . " linje " . __LINE__);
+		$qtxt = "insert into pos_events (ev_type,ev_time,cash_register_id,employee_id,order_id,file,line) ";
+		$qtxt.= "values ";
+		$qtxt.= "('13004','". date('U') ."','$kasse','$bruger_id','$id','".__file__."','".__line__."')";
+		db_modify ($qtxt,__FILE__ . " linje " . __LINE__);
+
+		$qtxt = "select id from grupper where art = 'POS' and kodenr = '1' and box10 = 'on' and fiscal_year = '$regnaar'";
 		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			if ($tracelog) {
 				fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
@@ -250,16 +286,17 @@ print "\n<!-- Function afslut (start)-->\n";
 			pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling);
 		}
 	}
-	$qtxt = "select id from grupper where art = 'POS' and kodenr = '1' and box10='on'";
-	echo "$qtxt<br>";
-	
+	$qtxt = "select id from grupper where art = 'POS' and kodenr = '1' and box10='on' and fiscal_year = '$regnaar'"; # Box10 = Print Receipt
+#cho "$qtxt<br>";
+	$retur = ($modtaget+$modtaget2) - ($sum+$moms);
 	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-echo "ID $r[id]<br>";
 	if ($tracelog) {
 			fwrite ($tracelog, __file__." ".__line__." Calls: pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling)\n");
 		}
 		pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetaling);
-	 } elseif (!$konto_id && ($betaling == 'Kontant' || $betaling2 == 'Kontant' || $modtaget+$modtaget2 != $sum+$moms)) {#20160211+20211203
+	 } elseif ( !$konto_id && ($betaling == 'Kontant' || $betaling2 == 'Kontant' || abs($retur) > 0.01 )) {
+		file_put_contents("../temp/skuffe.log",__file__." $konto_id && ($betaling == 'Kontant' || $betaling2 == 'Kontant' || $modtaget+$modtaget2 != $sum+$moms", FILE_APPEND);
+		 #20160211+20211203
 		$url="://".$_SERVER['SERVER_NAME'].=$_SERVER['PHP_SELF'];
 		$url=str_replace("/debitor/pos_ordre.php","",$url);
 		if ($_SERVER['HTTPS']) $url="s".$url;
@@ -275,7 +312,10 @@ echo "ID $r[id]<br>";
 			} 
 		}
 		if ($printserver=='box' || !$printserver) $printserver=$_COOKIE['saldi_printserver'];
-		print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/saldiprint.php?&url=$url&bruger_id=$bruger_id&bon=&bonantal=1&id=$id&skuffe=1&returside=$returside&logo=\">\n";
+		if (!$printserver) $printserver = 'localhost';
+		$skuffe=1;
+		file_put_contents("../temp/skuffe.log",__file__." $id B: $betaling S: $skuffe\n", FILE_APPEND);
+		print "<meta http-equiv=\"refresh\" content=\"0;URL=http://$printserver/saldiprint.php?&url=$url&bruger_id=$bruger_id&bon=&bonantal=1&id=$id&skuffe=$skuffe&returside=$returside&logo=\">\n";
 		exit;
   } else { #20160211
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";

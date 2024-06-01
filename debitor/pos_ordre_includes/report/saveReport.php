@@ -28,8 +28,8 @@
 //
 // LN 20190306 Save report to the database
 
-function saveLastReport($dataArray)
-{
+function saveLastReport($dataArray) {
+	global $kasse;
     $date = date("Y/m/d");
     $count = 0;
     $reportNumber = getReportNumber(false);
@@ -81,9 +81,20 @@ function saveLastReport($dataArray)
 }
 
 function writeToDatabase($date, $type, $descr, $count, $repNr, $total) {
+	global $kasse;
 	if (!$total) $total = 0;
 	$qtxt = "INSERT INTO report (date, type, description, count, report_number, total) values ";
   $qtxt.= "('$date', '$type', '$descr', $count, '$repNr', $total)";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "update corrections set report_number = '$repNr' where report_number = '0' and kasse = '$kasse'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "update deleted_order set report_number = '$repNr' where report_number = '0' and kasse = '$kasse'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "update price_correction set report_number = '$repNr' where report_number = '0' and kasse = '$kasse'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "update proforma set report_number = '$repNr' where report_number = '0' and kasse = '$kasse'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+	$qtxt = "update returnings set report_number = '$repNr' where report_number = '0' and kasse = '$kasse'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 }
 

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/diverse.php -----patch 4.0.8 ----2023-07-23------------
+// --- systemdata/diverse.php -----patch 4.1.0 ----2024-01-18------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -21,7 +21,7 @@
 // See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2023 Saldi.dk ApS
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2012.09.20 Tilføjet integration med ebconnect
 // 2013.01.19 funktioner lagt i selvstændig fil (../includes/sys_div_func.php)
@@ -78,6 +78,8 @@
 // 20211123 PHR added paperflowId & paperflowBearer
 // 20220514 PHR mailText is now removed when account is reset.  
 // 20221231 PHR	sektion 'bilag' box3 (ftp passwd) is now urlencoded as it failed with special characters in password. 
+// 20231228 PBLM Added mobilePay (diverse valg)
+// 20240126 PBLM Added nemhandel (diverse valg)
 
 @session_start();
 $s_id=session_id();
@@ -89,13 +91,30 @@ $css="../css/standard.css";
 $diffkto=NULL;
 
 include("../includes/connect.php");
+
+
+////////////////// nemhandel ///////////////////////
+ // Getting the api key and tenant id from the database
+ $query = db_select("SELECT var_value, var_name FROM settings WHERE var_grp = 'peppol'", __FILE__ . " linje " . __LINE__);
+ while($res = db_fetch_array($query)){
+     if($res["var_value"] !== ""){
+         if($res["var_name"] == "apiKey"){
+             $key = $res["var_value"];
+         }elseif($res["var_name"] == "tenantId"){
+             $tenantId = $res["var_value"];
+         }
+     }
+ }
+ $apiKey = $tenantId . "&" . $key;
+////////////////// nemhandel end ///////////////////////
+
+
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("sys_div_func.php"); # 20150424a
 include("skriv_formtabel.inc.php"); # 20150424c
 
 $defaultProvision=$sqlstreng=NULL;
-
 if ($menu=='T') {
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
@@ -201,7 +220,9 @@ if ($_POST) {
 		$qp_md5secret       = if_isset($_POST['qp_md5secret']);
 		$qp_itemGrp         = if_isset($_POST['qp_itemGrp']);
     $vibrant_api        = if_isset($_POST['vibrant_id']);
+		$mobilepay		  	= if_isset($_POST['mobilepay'],array());
     $copay_api          = if_isset($_POST['copay_id']);
+		$nemhandel			= if_isset($_POST['nemhandel']);
     
     # Vibrant API save
     if ($vibrant_api) {
@@ -219,6 +240,139 @@ if ($_POST) {
         db_modify($qtxt, __FILE__ . " linje " . __LINE__);
       }
     }
+
+		#mobilePay
+		for ($i=1; $i<=count($mobilepay); $i++) {
+			$qtxt = "SELECT var_value FROM settings WHERE var_name='storeId' and pos_id = '$i'";
+			$r = db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__));
+			if($r) {
+				$qtxt = "UPDATE settings SET var_value='".$mobilepay[$i-1]."' WHERE var_name='storeId' and pos_id = '$i'";
+				db_modify($qtxt, __FILE__ . " linje " . __LINE__);
+			} elseif ($mobilepay[$i-1]) {
+				$qtxt = "INSERT INTO settings(var_name, var_grp, var_value, var_description, pos_id) ";
+				$qtxt.= "VALUES ('storeId', 'mobilepay', '".$mobilepay[$i-1]."', 'The mobilepay API key', '$i')";
+				db_modify($qtxt, __FILE__ . " linje " . __LINE__);
+			}
+		}
+
+	// Nemhandel
+	if($nemhandel){
+		file_put_contents("../temp/$db/nemhandel-$timestamp.json", "$nemhandel");
+		function createCompany(){
+			$query = db_select("SELECT * FROM adresser WHERE art = 'S'", __FILE__ . " linje " . __LINE__);
+			$res = db_fetch_array($query);
+			// check if there is alraedy "DK" before the cvr number
+			if(substr($res["cvrnr"], 0, 2) == "DK"){
+				$res["cvrnr"] = substr($res["cvrnr"], 2);
+			}
+	
+			$data = [
+				"name" => $res["firmanavn"],
+				"cvr" => "DK".$res["cvrnr"],
+				"currency" => "",
+				"country" => "DK",
+				"webhookUrl" => "",
+				"defaultEndpoint" => [
+					"endpointType" => "DK:CVR",
+					"endpointIdentifier" => "DK".$res["cvrnr"],
+					"registerAsRecipient" => true
+				],
+				"defaultAddress" => [
+					"name" => $res["firmanavn"],
+					"department" => "",
+					"streetName" => explode(" ",$res["addr1"])[0],
+					"additionalStreetName" => $res["addr2"],
+					"buildingNumber" => end(explode(" ", $res["addr1"])),
+					"inhouseMail" => $res["email"],
+					"cityName" => $res["bynavn"],
+					"postalCode" => $res["postnr"],
+					"countrySubentity" => "",
+					"countryCode" => "DK"
+				],
+				"defaultContact" => [
+					"id" => "",
+					"name" => $res["firmanavn"],
+					"email" => $res["email"],
+					"sms" => $res["tlf"]
+				],
+				"payment" => [
+					"bankName" => $res["bank_navn"],
+                	"bankRegNo" => $res["bank_reg"],
+                	"bankAccount" => $res["bank_konto"],
+					"bic" => "",
+					"iban" => "",
+					"creditorIdentifier" => ""
+				],
+				"doNotReceiveUBL" => false,
+			];
+	
+			/* echo json_encode($data, JSON_PRETTY_PRINT); */
+			return $data;
+		}
+
+		$query = db_select("SELECT * FROM settings WHERE var_name = 'companyID'", __FILE__ . " linje " . __LINE__);
+		if(db_num_rows($query) === 0){
+			// If the company id is not in the database, create it
+			$guid = "00000000-0000-0000-0000-000000000000";
+			$data = createCompany();
+			file_put_contents("../temp/$db/query-$timestamp.json", ["data" => json_encode($data)]);
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, "https://easyubl.net/api/Company/Update/$guid");
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json", "Authorization: ".$apiKey));
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data, JSON_UNESCAPED_UNICODE));
+			$response = curl_exec($ch);
+			curl_close($ch);
+
+			$response = json_decode($response, true);
+			if ($response === false || isset($response["error"]) || isset($response["errorNumber"]) || $response === null || $response === ""){
+				// An error occurred
+				$errorNumber = curl_errno($ch);
+				$errorMessage = curl_error($ch);
+				$error = ['error' => $errorNumber, 'message' => $errorMessage];
+				json_encode($error, JSON_PRETTY_PRINT);
+				
+				// save response in file in temp folder
+				$timestamp = date("Y-m-d-H-i-s");
+				file_put_contents("../temp/$db/Create-in-nemhandel-error-$timestamp.json", $error);
+				?>
+				<script>
+					alert("Der opstod en fejl under oprettelsen (Nemhandel). Prøv igen senere eller kontakt support.");
+				</script>
+				<?php
+				exit;
+			} elseif(isset($response["companyID"]) && $response["companyID"] === "00000000-0000-0000-0000-000000000000") {
+				file_put_contents("../temp/$db/Create-in-nemhandel-error-$timestamp.json", $response);
+				?>
+				<script>
+					alert("Der opstod en fejl under oprettelsen (Nemhandel). Prøv igen senere eller kontakt support");
+				</script>
+				<?php
+				exit;
+			}else{
+				// Request successful
+				file_put_contents("../temp/$db/companyId-$timestamp.json", $response);
+				$query = db_select("SELECT * FROM settings WHERE var_name = 'globalId'", __FILE__ . " linje " . __LINE__);
+				$globalid = db_fetch_array($query)["var_value"];
+				$companyId = $response["companyID"];
+				$query = db_modify("INSERT INTO settings (var_name, var_grp, var_value) VALUES ('companyID', 'easyUBL', '$companyId')", __FILE__ . " linje " . __LINE__);
+				file_put_contents("../temp/$db/create-in-ssl2-$timestamp.json", ["globalid" => $globalid, "companyId" => $companyId]);
+				
+				// Send the company id to ssl2.saldi.dk for storage
+				$ch = curl_init();
+				curl_setopt($ch, CURLOPT_URL, "https://saldi.dk/locator/locator.php?action=insertCompanyId&companyId=$companyId&globalId=$globalid");
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+				curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
+				$res = curl_exec($ch);
+	
+				// save response in file in temp folder
+				$timestamp = date("Y-m-d-H-i-s");
+				file_put_contents("../temp/$db/Create-in-nemhandel-$timestamp.json", $res);
+				curl_close($ch);
+			}
+		}
+	}
 
     # Copayone API save
     if ($copay_api) {
@@ -907,7 +1061,7 @@ if ($_POST) {
 		$kasseprimo=if_isset($_POST['kasseprimo']);
 		$kasseprimo         = (int)usdecimal($kasseprimo);
 		$koekkenprinter=if_isset($_POST['koekkenprinter']);
-		$kortno=if_isset($_POST['kortno']);
+		$kortno             = if_isset($_POST['kortno'],array());
 		$mellemkonti=if_isset($_POST['mellemkonti']);
 		$optalassist=if_isset($_POST['optalassist']);
 		$printer_ip=if_isset($_POST['printer_ip']);
@@ -955,6 +1109,7 @@ if ($_POST) {
 			if (!isset($voucher[$x])) $voucher[$x] = '';
 			if (!isset($voucherText[$x])) $voucherText[$x] = '';
 		}
+		$kort = array();
 		for ($x=0;$x<count($kortno);$x++) { // hjemmelavet sortering da array_multisort flytter '$betalingskort'
 			if ($kortno[$x]<=9) $kortno[$x]='0'.$kortno[$x];
 			$kort[$x] = "$kortno[$x]".chr(9)."$korttyper[$x]".chr(9)."$kortkonti[$x]".chr(9)."$betalingskort[$x]".chr(9);
@@ -1174,16 +1329,18 @@ if ($_POST) {
 				$txt = str_replace('XXXXX',$rabatvarenr,findtekst(289,$sprog_id));
 				print "<BODY onload=\"JavaScript:alert('$txt')\">";
 		}
-		if  (($id1==0) && ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'POS' and kodenr='1'",__FILE__ . " linje " . __LINE__)))) $id1=$r['id'];
+		$qtxt = "select id from grupper WHERE art = 'POS' and kodenr='1' and fiscal_year = '$regnaar'";
+		if  (($id1==0) && ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))) $id1=$r['id'];
 		elseif ($id1==0){
-			db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14) values ('POS_valg','1','POS','$box1','$box2','$box3','$box4','$box5','$box6','$box7','','$box9','$box10','$box11','$box12','$box13','$box14')",__FILE__ . " linje " . __LINE__);
+			db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14,fiscal_year) values ('POS_valg','1','POS','$box1','$box2','$box3','$box4','$box5','$box6','$box7','','$box9','$box10','$box11','$box12','$box13','$box14','$regnaar')",__FILE__ . " linje " . __LINE__);
 		} elseif ($id1 > 0) {
 			db_modify("update grupper set  box1='$box1',box2='$box2',box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='$box7',box8='$box8',box9='$box9',box10='$box10',box11='$box11',box12='$box12',box13='$box13',box14='$box14' WHERE id = '$id1'",__FILE__ . " linje " . __LINE__);
 		}
 #cho __line__." $box13_2<br>";
 		if ($id2) {
-			$qtxt="update grupper set box1='$kasseprimo',box2='$optalassist',box3='$box3_2',box4='$box4_2',box5='$box5_2',box6='$div_kort_kto',box7='$box7_2',";
-			$qtxt.="box8='$box8_2',box9='$box9_2',box10='$box10_2',box11='$box11_2',box12='$vis_saet',box13='$box13_2',box14='$box14_2' WHERE id = '$id2'";
+			$qtxt = "update grupper set box1 = '$kasseprimo',box2='$optalassist',box3='$box3_2',box4='$box4_2',";
+			$qtxt.= "box5='$box5_2',box6='$div_kort_kto',box7='$box7_2',box8='$box8_2',box9='$box9_2',box10='$box10_2',";
+			$qtxt.= "box11='$box11_2',box12='$vis_saet',box13='$box13_2',box14='$box14_2' WHERE id = '$id2'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		if ($id3) { 
@@ -1358,9 +1515,11 @@ if ($_POST) {
 			$diffkto=$box2;
 			$box2='';
 		}
-		if  ((!$id) && ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'OreDif'",__FILE__ . " linje " . __LINE__)))) $id=$r['id'];
+		if  ((!$id) && ($r = db_fetch_array(db_select("select id from grupper WHERE art = 'OreDif' and fiscal_year = '$regnaar'",__FILE__ . " linje " . __LINE__)))) $id=$r['id'];
 		elseif (!$id){
-			db_modify("insert into grupper (beskrivelse,kodenr,art,box1,box2) values ('Oredifferencer','1','OreDif','$box1','$box2')",__FILE__ . " linje " . __LINE__);
+			$qtxt = "insert into grupper (beskrivelse,kodenr,art,box1,box2,fiscal_year) ";
+			$qtxt.= "values ('Oredifferencer','1','OreDif','$box1','$box2','$regnaar')";
+			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} elseif ($id > 0) {
 			db_modify("update grupper set  box1='$box1',box2='$box2' WHERE id = '$id'",__FILE__ . " linje " . __LINE__);
 		}
@@ -1454,13 +1613,13 @@ if ($_POST) {
 				setcookie("timezone",$timezone,time()+60*60*24*30,'/');
 			}
 		} elseif (isset($_POST['nulstil']) && $_POST['nulstil']) { #20170731
-			$qtxt = "TRUNCATE ansatmappe,ansatmappebilag,batch_kob,batch_salg,betalinger,betalingsliste,bilag,bilag_tjekskema,budget,"; 
-			$qtxt.= "corrections,crm,deleted_order,drawer,gavekort,gavekortbrug,historik,jobkort,jobkort_felter,kassekladde,kladdeliste,";
-			$qtxt.= "kontokort,kostpriser,loen,loen_enheder,lagerstatus,mappe,mappebilag,misc_meta_data,modtageliste,modtagelser,";
-			$qtxt.= "navigator,noter,opgaver,ordrelinjer,ordrer,ordretekster,pbs_kunder,pbs_linjer,pbs_liste,pbs_ordrer,pos_betalinger,";
-			$qtxt.= "price_correction,proforma,provision,queries,rabat,regulering,reservation,returnings,sager,sagstekster,serienr,"; 
-			$qtxt.= "shop_adresser,shop_ordrer,shop_varer,simulering,tabeller,tidsreg,tjekpunkter,tmpkassekl,transaktioner,report,valuta";
-			$qtxt.=" restart identity";
+			$qtxt = "TRUNCATE ansatmappe,ansatmappebilag,batch_kob,batch_salg,betalinger,betalingsliste,bilag,bilag_tjekskema,";
+			$qtxt.= "budget,corrections,crm,deleted_order,drawer,gavekort,gavekortbrug,historik,jobkort,jobkort_felter,";
+			$qtxt.= "kassekladde,kladdeliste,kontokort,kostpriser,loen,loen_enheder,lagerstatus,mappe,mappebilag,misc_meta_data,";
+			$qtxt.= "modtageliste,modtagelser,navigator,noter,openpost,opgaver,ordrelinjer,ordrer,ordretekster,";
+			$qtxt.= "pbs_kunder,pbs_linjer,pbs_liste,pbs_ordrer,pos_betalinger,price_correction,proforma,provision,queries,rabat,";
+			$qtxt.= "regulering,reservation,returnings,sager,sagstekster,serienr,shop_adresser,shop_ordrer,shop_varer,";
+			$qtxt.= "simulering,tabeller,tidsreg,tjekpunkter,tmpkassekl,transaktioner,report,valuta restart identity";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			db_modify("DELETE FROM grupper WHERE art='RA' and kodenr !='1'",__FILE__ . " linje " . __LINE__);
 			db_modify("DELETE FROM kontoplan WHERE regnskabsaar!='1'",__FILE__ . " linje " . __LINE__);

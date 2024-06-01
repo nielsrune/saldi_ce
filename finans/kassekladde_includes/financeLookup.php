@@ -39,7 +39,7 @@ function financeLookup($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato
 			print  "<table class='dataTable2' border='0' cellspacing='1' align='center';>";
 	} else {
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
-	print"<td width=\"10%\" $top_bund><a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$datodato&beskrivelse=$beskrivelse&d_type=$d_type&debet=$debet&k_type=$k_type&kredit=$kredit&faktura=$faktura&belob=$belob&momsfri=$momsfri&afd=$afd&projekt=$projekt&ansat=$ansat&valuta=$valuta&lobenr=$lobenr' accesskey=L>".findtekst(30, $sprog_id)."</a></td>\n";
+	print"<td width=\"10%\" $top_bund><a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id' accesskey=L>".findtekst(30, $sprog_id)."</a></td>\n";
 	print"<td width=\"80%\" $top_bund>Finansopslag</td>\n";
 	print"<td width=\"10%\" $top_bund align=\"right\"><br></td>\n";
 	print"</tbody></table>";

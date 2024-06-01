@@ -75,8 +75,7 @@ function returnedReceipts($kasse)
     return $returnedArray;
 }
 
-function ordersWithDiscount($kasse,$date)
-{
+function ordersWithDiscount($kasse,$date) {
     $idArray = makeOrderIdArray($kasse,$date);
     $qtxt = "select ordrelinjer.* from ordrelinjer,ordrer where ";
     $qtxt.= "rabat>'0' and ordrer.id = ordrelinjer.ordre_id and ordrer.fakturadate = '$date'";
@@ -94,13 +93,13 @@ function ordersWithDiscount($kasse,$date)
     return $discountArray;
 }
 
-function cancelledOrders($kasse)
-{
-    $delOrder = db_select("select * from deleted_order where kasse='$kasse'", __FILE__ . "linje" . __LINE__);
+function cancelledOrders($kasse) {
+	$qtxt = "select * from deleted_order where kasse='$kasse' and report_number = '0'";
+	$delOrder = db_select($qtxt, __FILE__ . "linje" . __LINE__);
     $deletedArray['count'] = 0;
     $deletedArray['totalPrice'] = 0;
     while ($order = db_fetch_array($delOrder)) {
-        $price = number_format($order['price'], 2, ',', '');
+		$price = (float)number_format($order['price'], 2, ',', '');
         $price = abs($price);
         $deletedArray['count']++;
         $deletedArray['totalPrice'] += $price;
@@ -109,13 +108,13 @@ function cancelledOrders($kasse)
     return $deletedArray;
 }
 
-function correctionOrders($kasse)
-{
-    $corrections = db_select("select * from corrections where kasse='$kasse'", __FILE__ . "linje" . __LINE__);
+function correctionOrders($kasse) {
+	$qtxt = "select * from corrections where kasse='$kasse' and report_number = '0'";
+	$corrections = db_select($qtxt, __FILE__ . "linje" . __LINE__);
     $correctedArray['count'] = 0;
     $correctedArray['totalPrice'] = 0;
     while ($order = db_fetch_array($corrections)) {
-        $price = number_format($order['price'], 2, ',', '');
+		$price = (float)number_format($order['price'], 2, ',', '');
         $price = abs($price);
         $correctedArray['count']++;
         $correctedArray['totalPrice'] += $price;
@@ -124,13 +123,13 @@ function correctionOrders($kasse)
     return $correctedArray;
 }
 
-function priceCorrectionOrders($kasse)
-{
-    $priceCorrections = db_select("select * from price_correction where kasse='$kasse'", __FILE__ . "linje" . __LINE__);
+function priceCorrectionOrders($kasse) {
+		$qtxt = "select * from price_correction where kasse='$kasse' and report_number = '0'";
+	$priceCorrections = db_select($qtxt, __FILE__ . "linje" . __LINE__);
     $priceCorrectionArray['count'] = 0;
     $priceCorrectionArray['totalPrice'] = 0;
     while ($order = db_fetch_array($priceCorrections)) {
-        $price = number_format($order['price'], 2, ',', '');
+		$price = (float)number_format($order['price'], 2, ',', '');
         $price = abs($price);
         $priceCorrectionArray['count']++;
         $priceCorrectionArray['totalPrice'] += $price;
@@ -139,8 +138,7 @@ function priceCorrectionOrders($kasse)
     return $priceCorrectionArray;
 }
 
-function saleWithoutVat($kasse,$date)
-{
+function saleWithoutVat($kasse,$date) {
     $idArray = makeOrderIdArray($kasse,$date);
     $orderQuery = db_select("select * from ordrelinjer", __FILE__ . " linje " . __LINE__);
     $saleWithoutVatArray['count'] = 0;
@@ -159,9 +157,9 @@ function saleWithoutVat($kasse,$date)
     return $saleWithoutVatArray;
 }
 
-function proformaReceipts($kasse)
-{
-    $proformaQuery = db_select("select * from proforma where id='$kasse'", __FILE__ . " linje " . __LINE__);
+function proformaReceipts($kasse) {
+	$qtxt = "select * from proforma where id='$kasse' and report_number = '0'";
+	$proformaQuery = db_select($qtxt, __FILE__ . " linje " . __LINE__);
     $proformaArray['count'] = 0;
     $proformaArray['totalPrice'] = 0;
     while($proforma = db_fetch_array($proformaQuery)) {

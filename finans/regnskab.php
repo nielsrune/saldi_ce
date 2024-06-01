@@ -4,41 +4,43 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------finans/regnskab.php----lap 3.7.2------2018-11-22------------
-// LICENS
+// -- ---------finans/regnskab.php ----------- patch 4.0.7 --- 2023.03.04 ---
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2018 saldi.dk aps
-// ----------------------------------------------------------------------
+// Copyright (c) 2003-2023 Saldi.dk ApS
+// --------------------------------------------------------------------------
 
-// 2012.10.11 Indsat "and (lukket != 'on' or saldo != 0)" søg 20121011
-// 2012.11.06 Resultat føres ikke ned på resultatkonto. Søg 20121106
-// 2013.02.10 Break ændret til break 1
-// 2014.03.28	Rettet $modulnr til 3
-// 2015.01.08 Div ændringer jvf. aut_lager. Søg $aut_lager
-// 2015.01.25 Fejl i lagerberegning i statusrapport- lagetræk blev lagt til værdi, ombyttet + & - - Søg 20150125
-// 2015.04.08 Fejl i lagerberegning i statusrapport- medtog sidste dag i foregående md - tilføjet 'start' til find_lagervaerdi Søg find_lagervaerdi
-// 2016.01.16	Diverse i forbindelse med indførelse af valutakonti	Søg 'valuta'
-// 2018.02.09	PHR Tilføjet ,2 i alle forekomster af dkdecimal.
-// 2018.10.28 CA Tilføjet manglende / forrest i linje 27
-// 2108.11.21 PHR Oprydning udefinerede variabler.
-// 2018.11.22 PHR Knap for Beregn lagerværdi.
-// 2018.12.14 MS Topmenu
+// 20121011 Indsat "and (lukket != 'on' or saldo != 0)" søg 20121011
+// 20121106 Resultat føres ikke ned på resultatkonto. Søg 20121106
+// 20130210 Break ændret til break 1
+// 20140328	Rettet $modulnr til 3
+// 20150108 Div ændringer jvf. aut_lager. Søg $aut_lager
+// 20150125 Fejl i lagerberegning i statusrapport- lagetræk blev lagt til værdi, ombyttet + & - - Søg 20150125
+// 20150408 Fejl i lagerberegning i statusrapport- medtog sidste dag i foregående md - tilføjet 'start' til find_lagervaerdi Søg find_lagervaerdi
+// 20160116	Diverse i forbindelse med indførelse af valutakonti	Søg 'valuta'
+// 20180209	PHR Tilføjet ,2 i alle forekomster af dkdecimal.
+// 20181028 CA Tilføjet manglende / forrest i linje 27
+// 21081121 PHR Oprydning udefinerede variabler.
+// 20181122 PHR Knap for Beregn lagerværdi.  
+// 20181214 MS Topmenu
+// 20210225 LOE replaced the text with value from findtekst function
+// 20210225 LOE tranlated kontoplan.txt to English and implemented activeLanguage where Danish is the default
+// 20210607 LOE updated the if function retrieving the data from kontoplan.txt file for Danish and English languages
+// 20210721 LOE translated some texts here and also updated title texts with translated ones.
+// 20220624 CA  rolled back retrieving data from kontoplan.txt DA and EN cause it overwrites existing accounting plans.
 
 @session_start();
 $s_id=session_id();
@@ -56,38 +58,38 @@ include("../includes/std_func.php");
 include("../includes/finansfunk.php");
 	
 $beregn_lager=if_isset($_POST['beregn_lager']);
-
-
 if ($menu=='T') {
 include_once '../includes/top_header.php';
 include_once '../includes/top_menu.php';
 print "<div id=\"header\">"; 
-print "<span class=\"headerTxt\">Regnskab</span>";     
-#print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=debitor/ordre&amp;title=debitor\" class=\"button green small right\">Ny ordre</a>--></div>";       
-print "</div><!-- end of header -->";
-#print "<div class=\"maincontentLargeHolder\">\n";
-#	$leftbutton="<a title=\"Klik her for at lukke kladdelisten\" href=\"../index/menu.php\" accesskey=\"L\">LUK</a>";
-	$rightbutton="<a href=../finans/budget.php accesskey=b>Budget</a>";
+	print "<div class=\"headerbtnLft\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">".findtekst(322, $sprog_id)."</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 } else {
 	print "<center>";
 #	print "<table width=100% border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 #	print "	<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 	print "		<table width='100%' height='20' align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 	print "			<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\">";
-	if ($popup) print "<a href=../includes/luk.php accesskey=L>Luk</a></td>";
-	else print "<a href=\"../index/menu.php\" accesskey=\"L\">Luk</a></td>";
-	print "<td width=\"80%\" $top_bund> Regnskab</td> ";
+	if ($popup) print "<a href=../includes/luk.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>";//20210225
+	else print "<a href=\"../index/menu.php\" accesskey=\"L\">".findtekst(30,$sprog_id)."</a></td>";
+	print "<td width=\"80%\" $top_bund> ".findtekst(849,$sprog_id)."</td> ";
 	print "<td width=\"10%\" $top_bund><a href=\"budget.php\" accesskey=\"B\">Budget</a></td> ";
 	print "</tbody></table> ";
 	print "</td></tr> ";
 }
 $query = db_select("select * from grupper where kodenr='$regnaar' and art='RA'",__FILE__ . " linje " . __LINE__);
+
 $row = db_fetch_array($query);
 $startmaaned=$row['box1'];
 $startaar=$row['box2'];
 $slutmaaned=$row['box3'];
 $slutaar=$row['box4'];
 $slutdato=31;
+
+
 
 ($startaar >= '2015')?$aut_lager='on':$aut_lager=NULL;
 $vis_medtag_lager=0;
@@ -270,7 +272,18 @@ while (!checkdate($slutmaaned,$slutdato,$slutaar)){
 $regnstart = $startaar. "-" . $startmaaned . "-" . '01';
 $regnslut = $slutaar . "-" . $slutmaaned . "-" . $slutdato;
 
+#######
+
+// $t = activeLanguage();
+// if($t == 'English'){
+// 	echo "this is English";
+// }else{
+	
+// }
+
+########
 $csv=fopen("../temp/$db/regnskab.csv","w");
+
 $ktonr=array();
 $x=0;
 $query = db_select("select kontonr from transaktioner where transdate>'$regnstart' and transdate<'$regnslut' order by transdate",__FILE__ . " linje " . __LINE__);
@@ -281,25 +294,26 @@ while ($row = db_fetch_array($query)){
 ($vis_valuta)?$cols=5:$cols=4;
 $cols+=$maanedantal;
 #print "<div style=\"position:relative;top:0px;left:0px;height:100%width:100%;overflow:auto;\">";
-print "<table width=100% cellpadding=\"0\" cellspacing=\"1px\" border=\"0\" valign = \"top\"> ";
+print "<table width=100% cellpadding=\"0\" cellspacing=\"1px\" border=\"0\" valign = \"top\" class='dataTable'> ";
 print "<tbody> ";
 
 if ($vis_medtag_lager) {
-	$title="Klik for at beregne den altuelle lagerværdi i forhold lagertilgang og afgang reguleret på varekøb"; 
+	$title= findtekst(1624, $sprog_id); 
 	print  "<tr>";
 	print "<td colspan='$cols' align='center'>";
 	print "<form name='stockvalue' method='post' action='regnskab.php'>";
-	print "&nbsp;<input type='submit' title='$title' name='beregn_lager' value='Beregn lagerværdi'>";
+	print "&nbsp;<input type='submit' title='$title' name='beregn_lager' value='".findtekst(595,$sprog_id)." ".findtekst(596,$sprog_id)."'>";
 	print "</form></td></tr>";
 }
-print "<tr><td><b> Kontonr.</b></td> ";
-print "<td><b> Kontonavn</b></td> ";
+
+print "<tr><td><b> ".findtekst(804, $sprog_id)."</b></td> "; #20210721
+print "<td><b> ".findtekst(805, $sprog_id)."</b></td> ";
 fwrite($csv,"Kontonr;Kontonavn");
 if ($vis_valuta) {
-	print "<td align=\"center\"><b>Valuta</b></td>";
+	print "<td align=\"center\"><b>".findtekst(776, $sprog_id)."</b></td>";
 	fwrite($csv,";Valuta");
 }
-print "<td title=\"Saldi ved regnskabs&aring;rets begyndelse. De fleste overf&oslash;rt fra regnskabet &aring;ret f&oslash;r.\" align=right><b> Primo</a></b></td> ";
+print "<td title=\"".findtekst(1625, $sprog_id)."\" align=right><b> ".findtekst(1229, $sprog_id)."</a></b></td> ";
 fwrite($csv,";Primo");
 #for ($z=1; $z<=$maanedantal; $z++) {
 #	print "<td title=\"$z. regnskabsm&aring;ned\" align=right><b> MD_$z<b><br></td>";
@@ -374,7 +388,13 @@ for ($x=1; $x<=$kontoantal; $x++){
 if ($menu=='T') print "</div>";	
 ####################################################################################################
 fclose($csv);
-print "<tr><td><a href=\"../temp/$db/regnskab.csv\">regnskab.csv</a>";
+print "<tr><td colspan='20'><center><input type='button' style='width: 200px' onclick=\"document.location='../temp/$db/regnskab.csv'\" value='Regnskab.CSV'></input></center></td></tr>";
 print "</tbody></table>";
 print "</body></html>";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
 ?>

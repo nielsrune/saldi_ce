@@ -1421,6 +1421,40 @@ textarea {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%2379b2ff'><polygon points='0,0 100,0 50,50'/></svg>");
 }
 
+/* Left */
+::-webkit-scrollbar-button:single-button:horizontal:decrement {
+  height: 12px;
+  width: 16px;
+  background-position-y: 4px;
+  background-position-x: 4px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%23FFFFFF'><polygon points='80 13, 15 50, 80 89'/></svg>");
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:decrement:hover {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%2379b2ff'><polygon points='80 13, 15 50, 80 89'/></svg>");
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:decrement:active {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%2379b2ff'><polygon points='80 13, 15 50, 80 89'/></svg>");
+}
+
+/* Right */
+::-webkit-scrollbar-button:single-button:horizontal:increment {
+  height: 12px;
+  width: 16px;
+  background-position-y: 4px;
+  background-position-x: 4px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%23FFFFFF'><polygon points='24 18, 85 50, 24 83'/></svg>");
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:increment:hover {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%2379b2ff'><polygon points='24 18, 85 50, 24 83'/></svg>");
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:increment:active {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120' fill='%2379b2ff'><polygon points='24 18, 85 50, 24 83'/></svg>");
+}
+
 /* Scrolling bar for textarea */
 
 /* Works on Chrome/Edge/Safari */

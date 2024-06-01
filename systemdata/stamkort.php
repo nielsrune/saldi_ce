@@ -1,5 +1,5 @@
 <?php
-// -- ---------systemdata/stamdata.php------------------ ver 4.0.8 -- 2023-05-30 --
+// -- ---------systemdata/stamdata.php---patch 4.0.8 ----2023-08-2--------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -14,8 +14,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2023 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2012.08.21 Tilføjet leverandørservice - PBS
 // 2014.11.20 Opdater mastersystem ved ændring af email.
@@ -25,6 +26,7 @@
 // 20190304 Set countryConfig depending on the users permission
 // 20210628 LOE Translated some texts to English and Norsk
 // 20230530 PHR Employee no is now shown.
+// 20230803 LOE Initialized some varibles and made some modifications
 
 @session_start();
 $s_id=session_id();
@@ -57,7 +59,7 @@ print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\">
 
 
 if (!isset ($notes)) $notes = NULL;
-
+$id=$email=$firmanavn=$addr1=$addr2=$postnr=$bynavn=$bank_navn=$kontakt=$cvrnr=$tlf=$fax=$pbs_nr=$fi_nr=$bank_reg=$bank_konto=$countryConfig=NULL;
 if ($_POST) {
     $country = isset($_POST['landeconfig']) ?  $_POST['landeconfig'] : getCountry();
 	$id=$_POST['id'];
@@ -72,7 +74,7 @@ if ($_POST) {
 	$fax=addslashes(trim($_POST['fax']));
 	$cvrnr=addslashes(trim($_POST['cvrnr']));
 	$ans_id=if_isset($_POST['ans_id']);
-	$ans_ant=$_POST['ans_ant'];
+	$ans_ant=if_isset($_POST['ans_ant']);
 	$lukket_ant=if_isset($_POST['lukket_ant']);
 	$posnr=if_isset($_POST['posnr']);
 	$bank_navn=addslashes(trim($_POST['bank_navn']));
@@ -127,6 +129,7 @@ if ($_POST) {
 $saldinames=array('ssl.saldi.dk','ssl2.saldi.dk','ssl3.saldi.dk','ssl4.saldi.dk','udvikling.saldi.dk');
 $q = db_select("select * from adresser where art = 'S'",__FILE__ . " linje " . __LINE__);
 $r = db_fetch_array($q);
+if($r != false){
 $countryConfig = $r['land'];
 $id=$r['id']*1;
 $kontonr=$r['kontonr'];
@@ -150,7 +153,8 @@ $pbs=$r['pbs'];
 $fi_nr=$r['bank_fi'];
 $smtp=$r['felt_1']; 
 $gruppe=$r['gruppe'];
-if (!$gruppe) $gruppe=1;
+}
+if (!isset($gruppe)) $gruppe=1;
 while(strlen($gruppe)<5) $gruppe='0'.$gruppe; 
 #	$id=0;
 
@@ -162,9 +166,14 @@ print "<tr><td>".findtekst(28,$sprog_id)."</td><td><input class=\"inputbox\" typ
 print "<tr><td>Adresse</td><td><input class=\"inputbox\" type=\"text\" style='width:200;' name=\"addr1\" value=\"$addr1\"></td></tr>";
 print "<tr><td>Adresse2</td><td><input class=\"inputbox\" type=\"text\" style='width:200;' name=\"addr2\" value=\"$addr2\"></td></tr>";
 print "<tr><td>".findtekst(363, $sprog_id)."</td><td><input class=\"inputbox\" type=\"text\" size=\"3\" name=\"postnr\" value=\"$postnr\"><input class=\"inputbox\" type=\"text\" size=19 name=bynavn value=\"$bynavn\"></td></tr>";
+if(isset($id) & $id != NULL){
+	
 if(db_fetch_array(db_select("select id from ansatte where konto_id = '$id' and lukket != 'on'",__FILE__ . " linje " . __LINE__))) {
 	$tekst=findtekst(1880, $sprog_id); #20210820
 	print "<tr><td title = \"".$tekst."\">e-mail/kopi til ref</td><td><input class=\"inputbox\" type=\"text\" style='width:180;' name=\"ny_email\" value=\"$email\"><input  title = \"$tekst\" type=\"checkbox\" name=\"mailfakt\" $mailfakt></td></tr>";
+} else {
+	print "<tr><td>e-mail</td><td><input class=\"inputbox\" type=\"text\" style='width:180;' name=\"ny_email\" value=\"$email\"></td></tr>";
+}
 } else {
 	print "<tr><td>e-mail</td><td><input class=\"inputbox\" type=\"text\" style='width:180;' name=\"ny_email\" value=\"$email\"></td></tr>";
 }
@@ -247,7 +256,11 @@ if ($id) {
 		}
 	}
 	print "<tbody></table></td></tr>";
+}else{
+	$href='http://saldi.dk/dok/saldi_gdpr_20180525.pdf';
+	print "<tr><td>Databehandleraftale</td><td><a href=\"$href\" target=\"blank\"><button type='button' style='width:200px;'>Databehandleraftale</button></a></td></tr>";
 }
+
 if (! $menu=='T') print "<tr><td colspan=2><br></td></tr>\n";  # 20150331
 print "<tr><td colspan=2 align=center><input type=\"submit\" accesskey=\"g\" value=\"".findtekst(471, $sprog_id)."\" name=\"submit\"></td>";
 ?>

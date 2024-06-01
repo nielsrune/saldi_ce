@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- kreditor/ordreIncludes/insertAccount.php --- lap 4.0.7 --- 2023.05.09 ---
+// --- kreditor/ordreIncludes/insertAccount.php----patch 4.0.8 ----2023-07-23--
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,10 +19,14 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
 // Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
-// 2020509 PHR hp8
+// 20230509 PHR php8
+// 20230718 LOE Minor modification
+// 20231207 PHR lock table while finding next ordrenr.
+
 if (!function_exists('insertAccount')) {
 function insertAccount($id, $konto_id) {
 	global $addr1,$addr2,$afd,$art;
@@ -34,7 +38,7 @@ function insertAccount($id, $konto_id) {
 	global $momssats;
 	global $postnr;
 	global $status,$sum;
-	global $valuta;
+	global $valuta,$omlev;
 	$tidspkt=date("U");
 
 	$afd         = (int)if_isset($afd,0);
@@ -89,12 +93,11 @@ function insertAccount($id, $konto_id) {
 	} elseif ($konto_id) print "<BODY onLoad=\"javascript:alert('Kreditor er ikke tilknyttet en kreditorgruppe')\">";
 	$momssats=(float)$momssats;
 	if ((!$id)&&($firmanavn)) {
+		transaktion('begin');
 		$ordredate=date("Y-m-d");
-		$qtxt = "select ordrenr from ordrer where art='KO' or art='KK' order by ordrenr desc";
-		$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
-		if ($r = db_fetch_array($q)) $ordrenr=$r['ordrenr']+1;
+		$qtxt = "select max(ordrenr) as ordrenr from ordrer where art='KO' or art='KK'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $ordrenr=$r['ordrenr']+1;
 		else $ordrenr=1;
-
 		$qtxt = "insert into ordrer ";
 		$qtxt.= "(ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,kontakt,lev_navn,lev_addr1,";
 		$qtxt.= "lev_addr2,lev_postnr,lev_bynavn,lev_kontakt,betalingsdage,betalingsbet,cvrnr,notes,art,ordredate,";
@@ -104,7 +107,6 @@ function insertAccount($id, $konto_id) {
 		$qtxt.= "'$land','$kontakt','$lev_navn','$lev_addr1','$lev_addr2','$lev_postnr','$lev_bynavn','$lev_kontakt',";
 		$qtxt.= "'$betalingsdage','$betalingsbet','$cvrnr','$notes','$art','$ordredate','$email','$momssats',$status,";
 		$qtxt.="'$brugernavn','$afd','$lager','$sum','$brugernavn','$tidspkt','$valuta','$kred_ord_id','$omlev')";
-
 /*		
 		$qtxt = "insert into ordrer ";
 		$qtxt.= "(ordrenr, konto_id, kontonr, firmanavn, addr1, addr2, postnr, bynavn, land,betalingsdage,  ";
@@ -116,6 +118,7 @@ function insertAccount($id, $konto_id) {
 		$qtxt.= "'0', '$brugernavn', '$tidspkt', '$valuta','$omlev', '$email', '$mail_fakt', '$udskriv_til')";
 */
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+		transaktion('commit');
 		$qtxt = "select max(id) as id from ordrer where ordrenr = '$ordrenr' and konto_id = '$konto_id' and tidspkt = '$tidspkt'";
 		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			$id=$r['id'];

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/settleCommission/moveToOwnAccount.php --- patch 4.0.8 -- 2023-09-12 --
+// --- debitor/pos_ordre_includes/settleCommission/moveToOwnAccount.php --- patch 4.0.9 -- 2023-11-20 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -22,7 +22,8 @@
 //
 // Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
-// 20200912 corrected error in VAT sign (was positve when is should be negative)
+// 20230912 corrected error in VAT sign (was positve when is should be negative)
+// 20231120	PHR Added checkLineId to avoid same line counnted more than once.
 
 $minDate=$fakturadate[0];
 $a=count($fakturadate)-1;
@@ -72,7 +73,7 @@ for ($co=0;$co<count($coAc);$co++) {
 	$qtxt.= "and ordrelinjer.varenr like '$itNo[$co]' and ordrelinjer.kostpris > '0' ";
 	$qtxt.= "and (ordrer.report_number = '0' or ordrer.report_number = '$reportNumber') and ordrelinjer.ordre_id = ordrer.id ";
 	$qtxt.= "and pos_betalinger.ordre_id = ordrer.id and ordrer.felt_5 = '$kasse' order by ordrelinjer.vare_id";
-#cho __line__." $qtxt<br>";	
+echo __line__." $qtxt<br>";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$itemId[$v]=$r['vare_id'];
@@ -93,31 +94,36 @@ for ($co=0;$co<count($coAc);$co++) {
 			}
 		}
 	}
+	$checkLineId = array();
+	$i=0;
 	for ($c = 0;$c < count($cGroup);$c++) {
-		$commission = $commissionVat = 0;
+		$commission = $commissionVat = $costVat = 0;
 		for ($v=0;$v<count($cItemId[$c]);$v++) {
-			$qtxt = "select ordrelinjer.pris,ordrelinjer.antal,ordrelinjer.rabat,ordrelinjer.kostpris,ordrelinjer.momssats ";
+			$kontrol = 0;
+			$qtxt = "select ordrelinjer.id,ordrelinjer.varenr,ordrelinjer.ordre_id,ordrelinjer.pris,ordrelinjer.antal,";
+			$qtxt.= "ordrelinjer.rabat,ordrelinjer.kostpris,ordrelinjer.momssats ";
 			$qtxt.= "from ordrelinjer,ordrer,pos_betalinger where ";
-			$qtxt.= "(ordrer.art like 'D%' or ordrer.art = 'PO') and ordrer.fakturadate >= '$minDate' and ordrer.fakturadate <= '$maxDate' ";
-			$qtxt.= "and ordrelinjer.pris != '0' and ordrer.status = '3' and ordrelinjer.ordre_id = ordrer.id ";
-			$qtxt.= "and pos_betalinger.ordre_id = ordrer.id and ordrelinjer.vare_id='". $cItemId[$c][$v] ."' and ordrer.felt_5 = '$kasse'";
-#cho __line__." $qtxt<br>";	
+			$qtxt.= "(ordrer.art like 'D%' or ordrer.art = 'PO') and ordrer.fakturadate >= '$minDate' ";
+			$qtxt.= "and ordrer.fakturadate <= '$maxDate' and ordrelinjer.antal != '0' and ordrelinjer.pris != '0' ";
+			$qtxt.= "and ordrer.status = '3' and ordrelinjer.ordre_id = ordrer.id ";
+			$qtxt.= "and pos_betalinger.ordre_id = ordrer.id and ordrelinjer.vare_id='". $cItemId[$c][$v] ."' ";
+			$qtxt.= "and ordrer.felt_5 = '$kasse' order by ordrer.id";
 			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while ($r=db_fetch_array($q)) {
-				$linePrice   = $r['pris']*$r['antal'] - ($r['pris']*$r['antal']*$r['rabat']/100);
-#cho __line__." $r[rabat]<br>";	
+				if (!in_array($r['id'],$checkLineId)) {
+					$checkLineId[$i]=$r['id'];
+					$linePrice   = afrund($r['pris']*$r['antal'] - ($r['pris']*$r['antal']*$r['rabat']/100),2);
 				$lineVat     = $linePrice * $r['momssats']/100;
 				$cost        = $r['kostpris'] * $r['antal'];
-#cho __line__." $linePrice $cost<br>";	
 				$costVat    +=afrund( $cost  * $r['momssats']/100,2);
 				$commission += afrund($linePrice-$cost,2); 
-// echo __line__." $commission<br>";	
-#				$commissionVat += afrund($costVat,2); 
+					$kontrol += afrund($linePrice-$cost,2);
+echo __line__." $r[id] $r[varenr] $r[antal] $r[ordre_id] $linePrice | $cost ".afrund($linePrice-$cost,2) ." > $commission > $kontrol<br>";
+					$i++;
+				}
 			}
 		}
-#cho __line__." $commission $commissionVat<br>";	
 		$qtxt = "select box4 from grupper where art = 'VG' and kodenr = '$cGroup[$c]'";
-#cho __line__." $qtxt<br>";	
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$fromAccount=$r['box4'];
 		$qtxt = "select moms from kontoplan where kontonr = '$fromAccount' and regnskabsaar <= '$regnaar' ";
@@ -141,7 +147,6 @@ for ($co=0;$co<count($coAc);$co++) {
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Moms af kommisionssalg, Kasse $kasse','$fromVatAccount','0','$debet','$kredit',0,'$afd','$dd','$logtime','',";
 			$qtxt.="'$ansat_id','0','$kasse','$reportNumber','0')";
-#cho __line__." $qtxt<br>";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else $commissionVat = 0;
 		if ($commission) {
@@ -152,13 +157,12 @@ for ($co=0;$co<count($coAc);$co++) {
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Kommisionssalg, Kasse $kasse','$fromAccount','0','$debet','$kredit',0,'$afd','$dd','$logtime','',";
 			$qtxt.="'$ansat_id','0','$kasse','$reportNumber','$commissionVat')";
-#cho __line__." $qtxt<br>";	
+echo __line__." $qtxt<br>";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 		if ($commission && $toVatPercent) {
 			if ($fromVatPercent) $toVat = afrund($commission * $toVatPercent / 100,2);
 			else $toVat = afrund($commission * $toVatPercent / (100+$toVatPercent),2);
-#cho __line__." $costVat $commission CV $fromVat<br>";
 			$debet=$kredit=0;
 			($toVat > 0)?$kredit=$toVat:$debet=abs($toVat);
 			$qtxt="insert into transaktioner (bilag,transdate,beskrivelse,kontonr,faktura,debet,kredit,kladde_id,afd,logdate,logtime,";
@@ -166,7 +170,6 @@ for ($co=0;$co<count($coAc);$co++) {
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Moms af kommisionssalg, Kasse $kasse','$toVatAccount','0','$debet','$kredit',0,'$afd','$dd','$logtime','',";
 			$qtxt.="'$ansat_id','0','$kasse','$reportNumber','0')";
-#cho __line__." $qtxt<br>";	
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else $toVat = 0;
 		if ($commission) {
@@ -179,7 +182,6 @@ for ($co=0;$co<count($coAc);$co++) {
 			$qtxt.=" values ";
 			$qtxt.="('0','$dd','Kommisionssalg, Kasse $kasse','$coAc[$co]','0','$debet','$kredit',0,'$afd','$dd','$logtime',";
 			$qtxt.="'','$ansat_id','0','$kasse','$reportNumber','$toVat')";
-#cho __line__." $qtxt<br>";	
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	}

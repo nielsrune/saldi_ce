@@ -113,14 +113,15 @@
 
         // Automatically set the sales price from cost price at product list import
         print "<tr title='".findtekst(2079,$sprog_id)."'>";
-        print "<td>".findtekst(2076,$sprog_id)."</td>";
+#       print "<td>".findtekst(2076,$sprog_id)."</td>";
+        print "<td>Salgspris DG</td>";
         print "<td colspan='2'>";
         print "<input type='text' style='text-align:right' size='8' name='salgspris_multiplier' value='".dkdecimal($salgspris_multiplier)."' onchange='javascript:docChange = true;'>";
         print "<select name='salgspris_method'>";
-        print "<option value='percentage'".(($salgspris_method=='percentage')?" selected='selected'":"").">".findtekst(2064,$sprog_id)."</option>";
+        print "<option value='percentage'".(($salgspris_method=='percentage')?" selected='selected'":"").">%</option>";
         print "<option value='amount'".(($salgspris_method=='amount')?" selected='selected'":"").">".findtekst(2065,$sprog_id)."</option>";
-        print "</select>";
-        print "<select name='salgspris_rounding'>";
+        print "</select></td></tr>";
+        print "<tr><td>Afrunding</td><td><select name='salgspris_rounding'>";
         print "<option value='no_rounding'".(($salgspris_rounding=='no_rounding')?" selected='selected'":"").">".findtekst(2066,$sprog_id)."</option>";
         print "<option value='std_rounding'".(($salgspris_rounding=='std_rounding')?" selected='selected'":"").">".findtekst(2069,$sprog_id)."</option>";
         print "<option value='rounding_up'".(($salgspris_rounding=='rounding_up')?" selected='selected'":"").">".findtekst(2067,$sprog_id)."</option>";
@@ -131,11 +132,12 @@
 
         // Automatically set the B2B price from cost price at product list import
         print "<tr title='".findtekst(2079,$sprog_id)."'>";
-        print "<td>".findtekst(2075,$sprog_id)."</td>";
+#        print "<td>".findtekst(2075,$sprog_id)."</td>";
+        print "<td>B2B DG</td>";
         print "<td colspan='2'>";
         print "<input type='text' style='text-align:right' size='8' name='tier_price_multiplier' value='".dkdecimal($tier_price_multiplier)."' onchange='javascript:docChange = true;'>";
         print "<select name='tier_price_method'>";
-        print "<option value='percentage'".(($tier_price_method=='percentage')?" selected='selected'":"").">".findtekst(2064,$sprog_id)."</option>";
+        print "<option value='percentage'".(($tier_price_method=='percentage')?" selected='selected'":"").">%</option>";
         print "<option value='amount'".(($tier_price_method=='amount')?" selected='selected'":"").">".findtekst(2065,$sprog_id)."</option>";
         print "</select>";
         print "<select name='tier_price_rounding'>";
@@ -146,10 +148,11 @@
         print "</select>";
         print "</td>";
         print "</tr>";
-
+/*
         // Automatically set the retail price from cost price at product list import
         print "<tr title='".findtekst(2079,$sprog_id)."'>";
-        print "<td>".findtekst(2080,$sprog_id)."</td>";
+#       print "<td>".findtekst(2080,$sprog_id)."</td>";
+        print "<td>Vejl Pris >DG</td>";
         print "<td colspan='2'>";
         print "<input type='text' style='text-align:right' size='8' name='retail_price_multiplier' value='".dkdecimal($retail_price_multiplier)."' onchange='javascript:docChange = true;'>";
         print "<select name='retail_price_method'>";
@@ -164,6 +167,7 @@
         print "</select>";
         print "</td>";
         print "</tr>";
+*/
     } else {
         print "<tr><td colspan='3'><input type='checkbox' name='show_advanced_price_calc'> ".findtekst(2105,$sprog_id)."</td></tr>\n";
     }

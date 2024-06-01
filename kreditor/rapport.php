@@ -1,6 +1,6 @@
 <?php
 
-// --- kreditor/rapport.php --- patch 4.0.5 --- 2023-03-23 ---
+// --- kreditor/rapport.php-----patch 4.0.8 ----2023-07-23--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,8 +15,9 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2023.03.23 PBLM Fixed minor errors
 
@@ -58,33 +59,25 @@ if (isset($_GET['ny_rykker'])) {
 	exit;
 }
 $rapportart=NULL;
-if (isset($_POST['find'])) {
-#	echo "find";
-}
 if (isset($_POST['openpost'])) $rapportart='openpost';
 if (isset($_POST['kontosaldo'])) $rapportart='kontosaldo';
+if (isset($_POST['kontokort'])) $rapportart='kontokort';
 if (isset($_POST['accountChart'])) $rapportart='accountChart'; 
 if (isset($_POST['dato'])) {
 	$dato=$_POST['dato'];
 	list($dato_fra,$dato_til)=($dato != 0 ? explode(":",$dato) : 0);
-#	if (!$dato_til) {
-#		$dato_til=$dato_fra;
-#		$dato_fra='010100';
-#	}
-# echo "dato $dato | $dato_fra | $dato_til<br>"; 
+
 	$fromdate=usdate($dato_fra);
 	$todate=usdate($dato_til);
-# echo "dato $dato | $dato_fra | $dato_til<br>"; 
+
+	
 }
 if (isset($_POST['konto'])) {
 	$konto=$_POST['konto'];
-	echo $konto;
 	list($konto_fra,$konto_til)=($konto != "" ? explode(":",$konto) : "");
 	if(is_numeric($konto_fra) && !$konto_til) $konto_til=$konto_fra; 
-# echo "konto $dato | $konto_fra | $konto_til<br>"; 
 }
 
-#echo "R $rapportart<br>";
 $husk=if_isset($_POST['husk']);
 if (isset($_POST['salgsstat']) && $_POST['salgsstat']) {
  	if ($husk) db_modify("update grupper set box1='$husk',box2='$dato_fra',box3='$dato_til',box4='$konto_fra',box5='$konto_til',box6='$rapportart' where art='DRV' and kodenr='$bruger_id'",__FILE__ . " linje " . __LINE__);

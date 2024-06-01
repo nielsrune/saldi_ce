@@ -76,7 +76,7 @@ if ($status>=1) {
 		if ($r['id'] && !$r['gruppe']) { # 20211201 
 		alert("Vare med varenummer $varenr[$x] er ikke tilknyttet en varegruppe (Pos nr. $x)");
 	} else {
-		$qtxt = "select box9 from grupper where kodenr = '$r[gruppe]' and art = 'VG'";
+		$qtxt = "select box9 from grupper where kodenr = '$r[gruppe]' and art = 'VG' and fiscal_year = '$regnaar'";
 		$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$box9[$x] = trim($r['box9']);
 		$tidl_lev[$x]=0;
@@ -158,7 +158,6 @@ print "<td>$txt</td>";
 $txt = "<input type=button value='Serienr.' name='vis_snr$x' onchange='javascript:docChange = true;'>";
 print "<td onClick='serienummer($linje_id[$x])'>$txt</td>";
 	}
-	$box9[$x] = if_isset($box9[$x],NULL);
 	if ($antal[$x]<0 && $art!='KK' && $box9[$x]=='on') {
 $txt = "<span title= '".findtekst(1496, $sprog_id)."'><img alt='".findtekst(1515, $sprog_id)."' src=../ikoner/serienr.png>";
 print "<td align=center onClick='batch($linje_id[$x])'>$txt</td>";
@@ -271,7 +270,7 @@ if (!$r['valutakurs']) $r['valutakurs']=100;
 if ($valuta=='DKK' && $r['valuta']!='DKK') $opp_amount=$r['amount']*$r['valutakurs']/100;
 elseif ($valuta!='DKK' && $r['valuta']=='DKK') {
 	$qtxt = "select kurs from grupper, valuta where grupper.art='VK' and grupper.box1='$valuta' and ";
-	$qtxt.= "valuta.gruppe = ".nr_cast("grupper.kodenr")." and valuta.valdate <= '$r[transdate]' order by valuta.valdate desc";
+	$qtxt.= "valuta.gruppe = grupper.kodenr and valuta.valdate <= '$r[transdate]' order by valuta.valdate desc";
 	if ($r3=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 $opp_amount=$r['amount']*100/$r3['kurs'];
 	} else alert("Ingen valutakurs for faktura $r[faktnr]");

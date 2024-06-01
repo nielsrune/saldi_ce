@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/exitFunc/settlePOS.php --- lap 4.0.6 --- 2022.08.12 ---
+// --- debitor/pos_ordre_includes/exitFunc/settlePOS.php --patch 4.0.8 ----2023-08-31----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -13,15 +13,16 @@
 // of this license or later version of your choice.
 // However, respect the following:
 //
-// It is forbidden to use this program in competition with Saldi.DK ApS
+// It is forbidden to use this program in competition with Saldi335.DK ApS
 // or other proprietor of the program without prior written agreement.
 //
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2019-2022 saldi.dk aps
-// ----------------------------------------------------------------------
+// Copyright (c) 2003-2023 Saldi.dk ApS
+// -----------------------------------------------------------------------------------------
 //
 // 20190510 LN Get data from grupper depending on the $status
 // 20200305	PHR added db_escape_string and set $f_vatAccount=0 if no Vat.
@@ -36,9 +37,12 @@
 
 	$x=0;
 	if ($status<3) {
+		$qtxt = "select box9 from grupper where art = 'POS' and kodenr = '2'";
+		if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			$diffkonti=explode(chr(9),$r['box9']);
+			$difkto=$diffkonti[$kasse-1];
+		}	else $difkto = 0; 
 		$linje_id = array();
-		$r=db_fetch_array(db_select("select box2 from grupper where art='OreDif'",__FILE__ . " linje " . __LINE__));
-		$difkto=$r['box2'];
 		$qtxt = "select box8 from grupper where art = 'POS' and kodenr = '1'";
 		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$rabatvareid=$r['box8'];
@@ -75,7 +79,7 @@
 		}
 		$linjeantal=$x;
 		transaktion("begin");
-/*
+/* Don't enable until tested using m_rabat !!!!!!
 		for($x=1;$x<=count($linje_id);$x++) {
 #			if ($pris[$x] != 0 && $rabat[$x] != 0 && $kostpris[$x] != 0 && $fast_db[$x] != 0) {
 				$qtxt = "select salgspris,kostpris from varer where id = '$vare_id[$x]'";
@@ -271,7 +275,7 @@
 // summen at varer excl moms og momsen separat. Hvis der er difference på summen tillægges/frratrækkes de enkelte varer så mange tienedele ører som muligt
 // uden at den afrundede værdi incl moms ændres, indtil summen ex. moms + moms svarer til summen af varer incl moms. 20131205
 		$tmp=afrund($incl_moms-($sum+$moms),2);
-	if (abs($tmp)<=$linjeantal/200) {#max 0,5 øre afrundingsfejl pr linje;
+		if (abs($tmp) < $linjeantal/100) {#max 0,5 øre afrundingsfejl pr linje;
 			$sum+=$tmp;
 			for($x=1;$x<=$linjeantal;$x++) {
 				if (!$saet[$x]) {
@@ -303,6 +307,19 @@
 	$tidspkt = date("H:i");
 	$dd      = date("Y-m-d");
 	$betalt  = afrund($betalt,3);
+echo __line__." $modtaget $retur $receipt_id<br>";
+	if ($betaling == 'Kontant') {
+		$tmp = $modtaget;
+		$modtaget = pos_afrund($modtaget,$diffkto,$betvalkurs);
+		$retur-= $tmp - $modtaget;
+		if (!$betaling2) $betalt = pos_afrund($betalt,$diffkto,$betvalkurs);
+	}
+echo __line__." $modtaget $retur<br>";
+	if ($betaling2 == 'Kontant') {
+		$tmp = $modtaget;
+		$modtaget2 = pos_afrund($modtaget2,$diffkto,$betvalkurs);
+		$retur-= $tmp - $modtaget2;
+	}
 	$qtxt = "update ordrer set levdate = '$dd',fakturadate = '$dd',sum='$sum', moms='$moms', betalt='$betalt',";
 	$qtxt.= "status='2',felt_1='$betaling',felt_2='$modtaget',felt_3='$betaling2',felt_4='$modtaget2',felt_5='$kasse',";
 	$qtxt.= "tidspkt='$tidspkt',projekt='$projekt',ref='$brugernavn' where id='$id'";
@@ -310,6 +327,7 @@
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	setcookie("saldi_bet",'',time()-3600);
 	$ms=afrund($sum+$moms,3);
+	$receipt_id = (int)$receipt_id;
 	$qtxt = "select sum (amount*valutakurs/100) as paid from pos_betalinger where ordre_id='$id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 	$leftToPay = $_POST['sum'] - $r['paid'];
@@ -317,22 +335,32 @@
 		if ($betaling == 'Cash' || $betaling == 'Cash on amount') $betaling='Kontant';
 			if (!is_array($vare_id)) $vare_id = array();
 			if ($modtaget || ($incl_moms == 0 && count($vare_id) > 0)) { #20210710
-			$qtxt = "SELECT table_name FROM information_schema.columns WHERE table_name='pos_betalinger' ";
-			$qtxt.= "and column_name='payment_id'";
-			if (!db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))){
-				db_modify("ALTER TABLE pos_betalinger ADD column payment_id integer",__FILE__ . " linje " . __LINE__);
-			}
 			$qtxt="select id  from pos_betalinger where ordre_id='$id'and betalingstype ='!'";
 			if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 				$qtxt = "update pos_betalinger set betalingstype='$betaling',amount='$modtaget',valuta='$betvaluta',";
-				$qtxt.= "valutakurs='$betvalkurs',payment_id='". (int)$payment_id ."' ";
+				$qtxt.= "valutakurs='$betvalkurs',payment_id='". (int)$payment_id ."',receipt_id='$receipt_id' ";
 				$qtxt.="where id='$r[id]'";
 			} else {
-				$qtxt="insert into pos_betalinger(ordre_id,betalingstype,amount,valuta,valutakurs) values ";
-				$qtxt.="('$id','$betaling','$modtaget','$betvaluta','$betvalkurs')";
+				$qtxt="insert into pos_betalinger(ordre_id,betalingstype,amount,valuta,valutakurs,receipt_id) values ";
+				$qtxt.="('$id','$betaling','$modtaget','$betvaluta','$betvalkurs','$receipt_id')";
 			}
+echo "$qtxt<br>";
+#xit;
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+			if ($betaling == 'Kontant') $evType =	'12001';
+			elseif ($betaling == 'Dankort') $evType =	'12002';
+			elseif (strpos(strtolower($betaling),'card')) $evType =	'12003';
+			elseif (strpos(strtolower($betaling),'kort')) $evType =	'12003';
+			else $evType =	'11999';
+
+			$qtxt = "insert into pos_events (ev_type,ev_time,cash_register_id,employee_id,order_id,file,line) ";
+			$qtxt.= "values ";
+			$qtxt.= "('$evType','". date('U') ."','$kasse','$bruger_id','$id','".__file__."','".__line__."')";
+			db_modify ($qtxt,__FILE__ . " linje " . __LINE__);
+
 		}
+echo "Retur $retur<br>";
+		
 #cho __FILE__." ".__LINE__." <br>";	
 		if (!$indbetaling) {
 				$svar=levering($id,'on','','');

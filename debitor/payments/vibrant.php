@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- payments/flatpay.php ---------- lap 3.9.9----2023.03.15-------
+// ---- payments/vibrant.php --- lap 4.1.0 --- 2024.02.09 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,8 +20,10 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2012-2023 saldi.dk aps
+// Copyright (c) 2024-2024 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20240209 PHR Added indbetaling
+// 20240301 PHR Added $printfile and call to saldiprint.php
 
 @session_start();
 $s_id = session_id();
@@ -42,6 +44,7 @@ $raw_amount = (float) usdecimal(if_isset($_GET['amount'], 0));
 $pretty_amount = dkdecimal($raw_amount, 2);
 $ordre_id = if_isset($_GET['id'], 0);
 $kasse = $_COOKIE['saldi_pos'];
+$indbetaling = if_isset($_GET['indbetaling'], 0);
 
 print "<div id='container'>";
 print "<span>Vibrant terminal startet, afventer kort.</span>";
@@ -50,6 +53,7 @@ print "<div id='status' style='background-color: #fbbc04' >Afventer kort...</div
 print "<span>Terminalen timer ud om </span><span id='timestatus'>40</span><span> sekunder</span><br>";
 print "<button id='continue' class='btn' onClick='failed();' disabled style='display: block'>Tilbage</button>";
 print "<button id='continue-success' class='btn' onClick='successed();'>Tilbage</button>";
+print "<button id='continue-error' class='btn' onClick='errored();' style='display: none'>Tilbage</button>";
 print "</div>";
 print "<div id='bg'></div>";
 
@@ -64,6 +68,9 @@ $APIKEY = db_fetch_array($q)[0];
 $q=db_select("SELECT var_value FROM settings WHERE pos_id=$kasse AND var_grp='vibrant_terms'",__FILE__ . " linje " . __LINE__);
 $terminal_id = db_fetch_array($q)["var_value"];
 
+$printfile = 'https://'.$_SERVER['SERVER_NAME'];
+$printfile.= str_replace('debitor/payments/vibrant.php',"temp/$db/receipt_$kasse.txt",$_SERVER['PHP_SELF']);
+
 print "
 <script>
   var count = 40-1;
@@ -72,7 +79,7 @@ print "
 
   const successed = (event) => {
     console.log(cardScheme);
-    window.location.replace(`../pos_ordre.php?id=$ordre_id&godkendt=OK&amount=$raw_amount&cardscheme=\${cardScheme}&payment_id=\${payment_id}&receipt_id=\${receipt_id}`)
+    window.location.replace(`../pos_ordre.php?id=$ordre_id&godkendt=OK&indbetaling=$indbetaling&amount=$raw_amount&cardscheme=\${cardScheme}&payment_id=\${payment_id}&receipt_id=\${receipt_id}`)
   };
   const failed = (event) => {
     console.log('Failed click');
@@ -99,6 +106,17 @@ print "
       }
       document.getElementById('timestatus').innerText = count;  
       count--;
+      if (count == 0) {
+        setTimeout(() => {
+          documentgetElementById('continue').style.display = 'none';
+          var elm = document.getElementById('continue-error');
+          elm.style.display = 'block';
+	  var elm = document.getElementById('status');
+	  elm.style.backgroundColor = '#ea3a3a';
+	  elm.innerText = `Fejl: Intet svar fra terminalen, timeout`;
+          document.getElementById('bg').style.backgroundColor = '#fb9389';
+        }, 5000);
+      }
       if (count != -1) {
         count_down();
       }
@@ -160,7 +178,7 @@ print "
         paused = true;
         var elm = document.getElementById('status');
         elm.style.backgroundColor = '#ea3a3a';
-        elm.innerText = `Fejl: \${res.status_text}`;
+        elm.innerText = `Fejl: \${res.error}`;
         document.getElementById('bg').style.backgroundColor = '#fb9389';
         document.getElementById('continue').style.display = 'block';
         document.getElementById('continue').disabled = false;
@@ -182,10 +200,22 @@ print "
         );
         var charge_json = await charge.json();
 
-//console.log(charge_json);
-//return;
-
-// id & paymentIntent
+        fetch(
+          'save_receipt.php',
+          {
+            method: 'POST',
+	    headers: {
+	      'Content-Type': 'application/json',
+	    },
+	    body: JSON.stringify({
+	      data: charge_json, 
+	      id: '$ordre_id',
+	      type: 'vibrant'
+	    })
+          }
+        );
+        window.open(\"http://localhost/saldiprint.php?bruger_id=99&bonantal=1&printfil=$printfile&skuffe=0&gem=1','','width=200,height=100\")
+        receipt_id = `\${charge_json.id}-\${charge_json.paymentIntent}`;
 
         cardScheme = charge_json['paymentMethodDetails']['cardPresent']['brand']
 

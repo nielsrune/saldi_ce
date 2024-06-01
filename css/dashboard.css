@@ -1,0 +1,27 @@
+*{  
+    margin: 0;
+    padding: 0; 
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.keynumberbox {
+    min-width: 315px;
+}
+
+h1 {font-size: 27px;}
+h4 {font-size: 13px;}
+h2 {font-size: 23px;}
+span {font-size: 13px;}
+
+@media (max-width: 450px) {
+    .keynumberbox {
+        min-width: 100%;
+    }
+}
+
+canvas {
+  width:100% !important;
+  height:300px !important;
+}
+

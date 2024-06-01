@@ -130,7 +130,8 @@ function pos_txt_print($id,$betaling,$betaling2,$modtaget,$modtaget2,$indbetalin
 		while(strlen($beskrivelse[$x])<26) $beskrivelse[$x]=$beskrivelse[$x]." ";
 		$linjeantal=$x;
 	}
-	$temp = find_kassesalg($kasse, 0,'DKK');
+	include_once("pos_ordre_includes/boxCountMethods/findBoxSale.php");
+	$temp = findBoxSale($kasse, 0,'DKK');
 	$omsatning=$temp[1] + $temp[7];
 	$reportArray = setupReport($type, $kasse,$reportNumber); #Make report if that was the case
   $uniqueShopId = getUniqueBoxId($kasse);

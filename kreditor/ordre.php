@@ -980,7 +980,7 @@ function ordreside($id) {
 	global $krediteret;
 	global $labelprint;
 	global $momssum;
-	global $returside;
+	global $regnaar,$returside;
 	global $sort,$sprog_id,$submit;
 
 	$afd = $betalingsdage = $gruppe = $kred_ord_id = $konto_id = $lager = $momssats = $ordrenr = $status = 0;

@@ -2,34 +2,32 @@
 	@session_start();
 	$s_id=session_id();
 
-// --------------debitor/levering.php--------lap 3.5.6-------2016.09.13--------------
-// LICENS
+// --------------debitor/levering.php--------patch 4.0.8 ----2023-21-12-----
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 // 
-// Programmet er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
-//
-// Copyright (c) 2004-2016 DANOSOFT ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
-// 2013.05.06 Rettet lidt i fejlhåndtering.
-// 2013.05.08 Tilføjet "and status < 2" så status ikke bliver sat tilbage ved klik på tilbagenap på mus.
-// 2016.09.13 Tilføjet oioubl Søg 20160913
+// 2013.05.06 Rettet lidt i fejlhï¿½ndtering.
+// 2013.05.08 Tilfï¿½jet "and status < 2" sï¿½ status ikke bliver sat tilbage ved klik pï¿½ tilbagenap pï¿½ mus.
+// 2016.09.13 Tilfï¿½jet oioubl Sï¿½g 20160913
 
 $id=NULL;	
 if (isset($_GET['id'])) $id=($_GET['id']);
-
+echo __line__."<br>";
 if ($id && $id>=1) { 
 	$modulnr=5;
 	include("../includes/connect.php");
@@ -47,7 +45,7 @@ if ($id && $id>=1) {
 	if ($svar=='OK') {
 		transaktion("commit");
 		if ($hurtigfakt=='on') {
-			db_modify("update ordrer set status=2 where id='$id' and status<2",__FILE__ . " linje " . __LINE__);
+			db_modify("update ordrer set status= '2' where id='$id' and status < '2'",__FILE__ . " linje " . __LINE__);
 			print "<meta http-equiv=\"refresh\" content=\"0;URL=bogfor.php?id=$id&genfakt=$genfakt&mail_fakt=$mail_fakt&pbs=$pbs&oioubl=$oioubl\">"; #20160913
 			exit;
 		} else print "<meta http-equiv=\"refresh\" content=\"0;URL=ordre.php?id=$id\">";

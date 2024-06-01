@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- index/index.php --- lap 4.0.6 --- 2022-06-18 ---
+// --- index/index.php -----patch 4.0.8 ----2023-08-02--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -17,10 +17,11 @@
 // or other proprietor of the program without prior written agreement.
 //
 // The program is published with the hope that it will be beneficial,
-// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
-// GNU General Public License for more details.
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20140321	Tilføjet link til glemt kode
 // 20161104	Div ændringer relateret til bedre sikkerhed
@@ -32,11 +33,13 @@
 // 20220330 LOE Made some modifications here.
 // 20220426 DAPE Fixed language select, made language selector dynamic to take new languages whenever they're implemented in tekster.csv
 // 20220618 PHR Changed 'language' and 'language_id' to 'languageId'
+// 20230726 LOE Minor modification
 
 $regnskab=''; $brugernavn=''; $kode=''; $languageId=''; 
 $css="../css/login.css";
-
-if (filesize("../includes/connect.php") < 10) unlink ("../includes/connect.php");
+if(file_exists("../includes/connect.php")){
+if (filesize("../includes/connect.php") < 10) unlink ("../includes/connect.php"); 
+}
 if (!file_exists("../includes/connect.php")) {
 	print "<meta http-equiv=\"refresh\" content=\"2;url=install.php\">\n"; #20210512
 	print "</head><body>\n\n";
@@ -49,13 +52,23 @@ if (!file_exists("../includes/connect.php")) {
 #cho $_SERVER['HTTP_USER_AGENT'];
 if (!isset($timezone)) $timezone='Europe/Copenhagen';
 
-
-
 include("../includes/connect.php");
 include("../includes/db_query.php");
 #include("../includes/online.php"); #20210929
 include("../includes/std_func.php");
 $hm=$rs=$bn=null; #20211007
+
+
+print "
+<script>
+if(window.self !== window.top) {
+//run this code if in an iframe
+// alert('in frame');
+parent.location.href = \"../index/index.php\";
+} 
+</script>";
+
+
 
 if(isset($_POST['languageId'])){
 	$languageId = $_POST['languageId'];
@@ -85,7 +98,9 @@ if (!isset($_POST['fejltxt']) && isset($_POST['regnskab']) && isset($_POST['brug
 	print "<input type=\"hidden\" name=\"regnskab\" value=\"$_POST[regnskab]\">\n";
 	print "<input type=\"hidden\" name=\"brugernavn\" value=\"$_POST[brugernavn]\">\n";
 	print "<input type=\"hidden\" name=\"password\"  value=\"$_POST[password]\">\n";
+	if(isset($_COOKIE['languageId'])){
 	print "<input type=\"hidden\" name=\"languageId\"  value=\"$_COOKIE[languageId]\">\n"; #20220330
+	}
 	print "<input type=\"hidden\" name=\"vent\"  value=\"$_POST[vent]\">\n";
 	print "<body onload=\"document.login.submit()\">";
 	print "</form>";

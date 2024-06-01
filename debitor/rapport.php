@@ -51,13 +51,19 @@ include("../includes/rapportfunc.php");
 #print "<script LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\" SRC=\"../javascript/overlib.js\"></script>";
 global $sprog_id; //2021
 
-if ($popup) $returside="../includes/luk.php";
-else $returside="../index/menu.php";
+if ($popup)
+	$returside = "../includes/luk.php";
+else
+	$returside = "../index/menu.php";
 
-if (!isset ($rapportart)) $rapportart = NULL;
-if (!isset ($_GET['submit'])) $_GET['submit'] = NULL;
-if (!isset ($_GET['returside'])) $_GET['returside'] = NULL;
-if (!isset ($_GET['udlign'])) $_GET['udlign'] = NULL;
+if (!isset($rapportart))
+	$rapportart = NULL;
+if (!isset($_GET['submit']))
+	$_GET['submit'] = NULL;
+if (!isset($_GET['returside']))
+	$_GET['returside'] = NULL;
+if (!isset($_GET['udlign']))
+	$_GET['udlign'] = NULL;
 
 if (isset($_GET['ny_rykker'])) {
 	$dato_fra=$_GET['dato_fra'];
@@ -79,22 +85,33 @@ if (isset($_GET['ny_rykker'])) {
 			autoudlign($udlign[$x]);
 		}
 	}	
-	if ($rapportart == 'accountChart') $rapportart = 'kontokort';
-	if ($rapportart == 'accountChart') include_once ("../includes/reportFunc/accountChart.php");
+	if ($rapportart == 'accountChart')
+		$rapportart = 'kontokort';
+	if ($rapportart == 'accountChart')
+		include_once("../includes/reportFunc/accountChart.php");
 	$rapportart($dato_fra, $dato_til,$konto_fra,$konto_til,$rapportart, 'D');
 	exit;
 }
 $rapportart=NULL;
-if (isset($_POST['openpost'])) $rapportart='openpost';
-if (isset($_POST['kontosaldo'])) $rapportart='kontosaldo';
-if (isset($_POST['accountChart'])) $rapportart='accountChart'; 
+if (isset($_POST['openpost']))
+	$rapportart = 'openpost';
+if (isset($_POST['kontosaldo']))
+	$rapportart = 'kontosaldo';
+if (isset($_POST['kontokort']))
+	$rapportart = 'kontokort';
+if (isset($_POST['accountChart']))
+	$rapportart = 'accountChart';
+if ($rapportart == 'accountChart')
+	include_once("../includes/reportFunc/accountChart.php");
 if (isset($_POST['dato'])) {
 	$dato=$_POST['dato'];
-	if (strpos($dato,':')) list($dato_fra,$dato_til)=explode(":",$dato);
+	if (strpos($dato, ':'))
+		list($dato_fra, $dato_til) = explode(":", $dato);
 	elseif ($dato) {
 		$dato_til=$dato_fra=$dato;
 		$dato_fra='01-01-2000';
-	} else $dato_til=$dato_fra=NULL;  
+	} else
+		$dato_til = $dato_fra = NULL;
 	if ($dato_fra) {
 		$fromdate=usdate($dato_fra);
 		$dato_fra=str_replace("-20","",dkdato($fromdate));
@@ -108,18 +125,25 @@ if (isset($_POST['dato'])) {
 }
 if (isset($_POST['konto'])) {
 	$konto=$_POST['konto'];
-	if (strpos($konto,':')) list($konto_fra,$konto_til)=explode(":",$konto);
-	else $konto_fra=$konto_til=$konto;
-	if (!is_numeric($konto_fra)) $konto_til=NULL; 
+	if (strpos($konto, ':'))
+		list($konto_fra, $konto_til) = explode(":", $konto);
+	else
+		$konto_fra = $konto_til = $konto;
+	if (!is_numeric($konto_fra))
+		$konto_til = NULL;
 
 }
 $husk=if_isset($_POST['husk']);
 if (isset($_POST['salgsstat']) && $_POST['salgsstat']) {
- 	if ($husk) db_modify("update grupper set box1='$husk',box2='$dato_fra',box3='$dato_til',box4='$konto_fra',box5='$konto_til',box6='$rapportart' where art='DRV' and kodenr='$bruger_id'",__FILE__ . " linje " . __LINE__);
+	if ($husk)
+		db_modify("update grupper set box1='$husk',box2='$dato_fra',box3='$dato_til',box4='$konto_fra',box5='$konto_til',box6='$rapportart' where art='DRV' and kodenr='$bruger_id'", __FILE__ . " linje " . __LINE__);
 	print "<meta http-equiv=\"refresh\" content=\"1;URL=../includes/salgsstat.php?dato_fra=$dato_fra&dato_til=$dato_til&konto_fra=$konto_fra&konto_til=$konto_til&art=D\">"; 
 	exit;
 }
-
+if (isset($_POST['saft'])) {
+	header("Location: saftCashRegister.php");
+	exit();
+}
 
 if (isset($_POST['submit']) || $rapportart) {
 #	$husk=$_POST['husk'];
@@ -145,9 +169,12 @@ if (isset($_POST['submit']) || $rapportart) {
 #		list ($regnaar, $firmanavn)= explode("-", $_POST['regnaar']);
 		$firmanavn = trim(if_isset($firmanavn));
 #	}
-	if (!isset ($_POST['konto_id'])) $_POST['konto_id'] = NULL;
-	if (!isset ($_POST['kontoudtog'])) $_POST['kontoudtog'] = NULL;
-	if (!isset ($_POST['rykkerbelob'])) $_POST['rykkerbelob'] = NULL;
+	if (!isset($_POST['konto_id']))
+		$_POST['konto_id'] = NULL;
+	if (!isset($_POST['kontoudtog']))
+		$_POST['kontoudtog'] = NULL;
+	if (!isset($_POST['rykkerbelob']))
+		$_POST['rykkerbelob'] = NULL;
 	if (($submit=="mail kontoudtog")||($submit=="opret rykker")||($submit=="ryk alle")){
 		$kontoantal=$_POST['kontoantal'];
 		$konto_id=$_POST['konto_id'];
@@ -164,7 +191,8 @@ if (isset($_POST['submit']) || $rapportart) {
 		}
 		} 
 		$kontoantal=$y;
-		if (!isset ($tmp)) $tmp = NULL;
+		if (!isset($tmp))
+			$tmp = NULL;
 		if ($tmp){
 			if ($submit=="mail kontoudtog") {
 				print "<BODY onload=\"window.open('mail_kontoudtog.php?kontoliste=$tmp&dato_fra=$dato_fra&dato_til=$dato_til&kontoantal=$kontoantal','','$jsvars')\">";
@@ -178,8 +206,9 @@ if (isset($_POST['submit']) || $rapportart) {
 		} else {
 			$alert = findtekst(1791, $sprog_id); #20210805
 			$alert1 = findtekst(1792, $sprog_id);
-			if ($submit=="mail kontoudtog") {print "<BODY onload=\"javascript:alert('$alert')\">";}
-			else {
+			if ($submit == "mail kontoudtog") {
+				print "<BODY onload=\"javascript:alert('$alert')\">";
+			} else {
 				print "<BODY onload=\"javascript:alert('$alert2')\">";
 			}
 		}
@@ -208,12 +237,14 @@ if (isset($_POST['submit']) || $rapportart) {
 			$tmp2=0;
 			for($x=1; $x<=$rykkerantal; $x++){
 				if ($rykkerbox[$x]=='on') {
-					if ($tmp) $tmp=$tmp.";";
+					if ($tmp)
+						$tmp = $tmp . ";";
 					$tmp=$tmp.$rykker_id[$x];
 					$tmp2++;	
 				}
 			}
-			if ($submit=="udskriv" && $tmp2>0) print "<BODY onload=\"window.open('rykkerprint.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
+			if ($submit == "udskriv" && $tmp2 > 0)
+				print "<BODY onload=\"window.open('rykkerprint.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
 			elseif ($submit=="ny rykker" && $tmp2>0) {
 				print "<BODY onload=\"window.open('ny_rykker.php?rykker_id=$tmp&kontoantal=$tmp2','','$jsvars')\">";
 				$ny_rykker=1;
@@ -229,7 +260,8 @@ if (isset($_POST['submit']) || $rapportart) {
 			} 
 		} elseif (strstr($submit,"bogf")) {
 			for($x=1; $x<=$rykkerantal; $x++){
-				if ($rykkerbox[$x]=='on') bogfor_rykker($rykker_id[$x]);
+				if ($rykkerbox[$x] == 'on')
+					bogfor_rykker($rykker_id[$x]);
 			}
 		}
 /*
@@ -252,7 +284,8 @@ if (isset($_POST['submit']) || $rapportart) {
 #	$regnaar=$_GET['regnaar'];
 	$submit=$_GET['submit'];
 	$returside=$_GET['returside'];
-	if ($udlign=$_GET['udlign']) autoudlign($udlign);
+	if ($udlign = $_GET['udlign'])
+		autoudlign($udlign);
 }	elseif (isset($_GET['kontonr'])){
 	$konto_fra=$_GET['kontonr'];
 	$konto_til=$_GET['kontonr'];
@@ -271,16 +304,25 @@ if (isset($_POST['submit']) || $rapportart) {
 #if ($dato_fra) $dato_fra=find_maaned_nr($dato_fra); 
 #if ($dato_til) $dato_til=find_maaned_nr($dato_til); 
 
-if ($udlign=if_isset($_GET['udlign'])) echo "dada"; #autoudlign($udlign);
-if (strstr($rapportart, "ben post")) $rapportart="openpost";
-if (!isset ($submit)) $submit=NULL;
-if ($submit != 'ok') $submit='forside';
-elseif ($rapportart) $submit=$rapportart;
+if ($udlign = if_isset($_GET['udlign']))
+	echo "dada"; #autoudlign($udlign);
+if (strstr($rapportart, "ben post"))
+	$rapportart = "openpost";
+if (!isset($submit))
+	$submit = NULL;
+if ($submit != 'ok')
+	$submit = 'forside';
+elseif ($rapportart)
+	$submit = $rapportart;
 
-if (!isset ($dato_fra)) $dato_fra=NULL;
-if (!isset ($dato_til)) $dato_til=NULL;
-if (!isset ($konto_fra)) $konto_fra=NULL;
-if (!isset ($konto_til)) $konto_til=NULL;
+if (!isset($dato_fra))
+	$dato_fra = NULL;
+if (!isset($dato_til))
+	$dato_til = NULL;
+if (!isset($konto_fra))
+	$konto_fra = NULL;
+if (!isset($konto_til))
+	$konto_til = NULL;
 
 $submit($dato_fra,$dato_til,$konto_fra,$konto_til,$rapportart,'D',$returside);
 

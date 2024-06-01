@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---- debitor/pos_ordre_includes/voucherFunc/useVoucher.php --- lap 3.9.9 --- 2021.01.25 ---
+// ---- debitor/pos_ordre_includes/voucherFunc/useVoucher.php --- lap 4.1.0 --- 2024.01.17 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,8 +20,9 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2021 saldi.dk aps
+// Copyright (c) 2021-2024 Saldi.dk ApS
 // --------------------------------------------------------------------------
+// 20240117 PHR - Inserted check to avoid double insert in voucheruse
 
 #function handleGiftcard($orderId) {
 if (!function_exists('useVoucher')) {
@@ -61,21 +62,20 @@ function useVoucher($orderId, $voucherName) {
 			#alert("Der står ikke nok på gavekortet, amount: " . $amount . ", pris: " . $price . ", gk id: " . $voucherId);
 			alert("Der står ikke nok på $voucherName #$gkNb, saldo: " . $tmp );
 			$_COOKIE['giftcard'] = false;
-#			print "<meta http-equiv=\"refresh\" content=\"0;URL=pos_ordre.php?id=$id\">\n";
-#			exit;
 		} elseif ($gkNb) {
-			#alert("Betalingen bliver gennemført, pris: " . $price . ", gavekort beløb: " . $amount . ", gk id: " . $voucherId);
-#			alert("Betalingen bliver gennemført");
 			$subAmount = -1 * $price;
 			($vat)?$subVat = afrund($subAmount / (($amount+$vat)/$vat),2):$subVat = 0;
-#cho "$subAmount -> $subVat<br>";			
-#xit;
 			$subAmount-= $subVat;
 			if ($subAmount) {
-				$qtxt = "insert into voucheruse (voucher_id, order_id, amount, vat) values ('$voucherId', '$orderId', '$subAmount', '$subVat')";
-#cho "$qtxt<br>";
+				$qtxt = "select id from voucheruse where voucher_id ='$voucherId' and order_id = '$orderId' and amount = '$subAmount' ";
+				$qtxt.= "and vat = '$subVat'";
+				if ($r = db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__))) { #20240117
+					echo "-";
+				} else {
+					$qtxt = "insert into voucheruse (voucher_id, order_id, amount, vat) ";
+					$qtxt.= "values ('$voucherId', '$orderId', '$subAmount', '$subVat')";
 				db_modify($qtxt, __FILE__ . " linje " . __LINE__);
-			#db_modify("update voucheruse set amount='$newAmount' where voucher_id='$voucherId'", __FILE__ . "linje" . __LINE__);
+				}
 				$_COOKIE['giftcard'] = true;
 				return $price;
 			} else $_COOKIE['giftcard'] = false;

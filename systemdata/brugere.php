@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------systemdata/brugere.php------------- lap 4.0.8 -- 2022-03-16 --
+// --------------systemdata/brugere.php-----patch 4.0.8 ----2023-07-23-----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -17,19 +17,28 @@
 // or other proprietor of the program without prior written agreement.
 //
 // The program is published with the hope that it will be beneficial,
-// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
-// GNU General Public License for more details.
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003 - 2022 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
-// 20150327 CA  Topmenudesign tilføjet                             søg 20150327
-// 20161104	PHR	Ændret kryptering af adgangskode
+// 20150327 CA  - Topmenudesign tilføjet                             søg 20150327
+// 20161104	PHR	- Ændret kryptering af adgangskode
 // 20181220 MSC - Rettet isset fejl
 // 20190221 MSC - Rettet topmenu design
 // 20190225 MSC - Rettet topmenu design
-// 20190321 PHR Added 'read only' attribut at 'varekort'
-// 20190415 PHR Corrected an error in module order printet on screen, resulting in wrong rights to certain modules
-// 20200709 PHR Various changes in variable names and user deletion.
+// 20190321 PHR - Added 'read only' attribut at 'varekort'
+// 20190415 PHR - Corrected an error in module order printet on screen, resulting in wrong rights to certain modules
+// 20200709 PHR - Various changes in variable names and user deletion.
+// 20210711 LOE - Translated some texts to Norsk and English from Dansk
+// 20210828 LOE - Added a functionality to enable users select language from user's page
+// 20210831 LOE - Added more funtionalities
+// 20210901 LOE - This block of code added to authenticate user IP
+// 20210908 LOE - Added input box for IP addresses
+// 20210909 LOE - Modified some codes relating to Ip
+// 20211015 LOE - Modified some codes to adjust to IP moved to settings table
+// 20220514 MSC - Implementing new design
 // 20230316 PHR Replaced *1 by (int)
 
 @session_start();
@@ -46,24 +55,49 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 
 if (!isset ($colbg)) $colbg = NULL;
-$modules=array('kontoplan','indstillinger','kassekladde','regnskab','finansrapport','debitorordre','debitorkonti','kreditorordre','kreditorkonti','varer','enheder','backup','debitorrapport','kreditorrapport','produktionsordre','varerapport');
+$da = str_replace(" ", "",(findtekst(1141, $sprog_id)));
+$ka = str_replace(" ", "",(findtekst(1140, $sprog_id)));
+
+$kontoplan   	  =  lcfirst(findtekst(113, $sprog_id));   $indstillinger    = lcfirst(findtekst(613, $sprog_id)); #20210711
+$kassekladde 	  =  lcfirst(findtekst(601, $sprog_id));   $regnskab	     = lcfirst(findtekst(322, $sprog_id));
+$finansrapport    =  lcfirst(findtekst(895, $sprog_id));   $debitorordre     = lcfirst(findtekst(1255, $sprog_id));
+$debitorkonti     =  lcfirst(findtekst(1256, $sprog_id));  $kreditorordre    = lcfirst(findtekst(1257, $sprog_id));
+$kreditorkonti    =  lcfirst(findtekst(1258, $sprog_id));  $varer 		     = lcfirst(findtekst(110, $sprog_id));
+$enheder		  =  lcfirst(findtekst(1259, $sprog_id));  $backup		     = lcfirst(findtekst(521, $sprog_id));
+$debitorrapport   =  lcfirst($da);                         $kreditorrapport  = lcfirst($ka);
+$produktionsordre =  lcfirst(findtekst(1260, $sprog_id));  $varerapport		 = lcfirst(findtekst(965, $sprog_id));
+
+
+
+$modules=array($kontoplan,$indstillinger,$kassekladde,$regnskab,$finansrapport,$debitorordre,$debitorkonti,
+$kreditorordre,$kreditorkonti,$varer,$enheder,$backup,
+$debitorrapport,$kreditorrapport,$produktionsordre,$varerapport);
+#$modules=array('kontoplan','indstillinger','kassekladde','regnskab','finansrapport','debitorordre','debitorkonti','kreditorordre','kreditorkonti','varer','enheder','backup','debitorrapport','kreditorrapport','produktionsordre','varerapport');
 
 
 if ($menu=='T') {  # 20150327 start
         include_once '../includes/top_header.php';
         include_once '../includes/top_menu.php';
-        print "<div id=\"header\">\n";
-        print "<div class=\"headerbtnLft\"></div>\n";
-        print "</div><!-- end of header -->";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
         print "<div id=\"leftmenuholder\">";
         include_once 'left_menu.php';
         print "</div><!-- end of leftmenuholder -->\n";
 		print "<div class=\"maincontentLargeHolder\">\n";
-        print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>";
+	print "<div class='divSys'>";
+    print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTableSys\" width='100%'><tbody>";
 } else {
 	include("top.php");
 	print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" align=\"center\"><tbody>"; 
 }  # 20150327 stop
+
+$ip_address = if_isset($_SERVER['REMOTE_ADDR']);
+$proxy_ip = if_isset($_SERVER['HTTP_X_FORWARDED_FOR']);
+$client_ip = if_isset($_SERVER['HTTP_CLIENT_IP']); #20210828
 
 $addUser=if_isset($_POST['addUser']);
 $deleteUser=if_isset($_POST['deleteUser']);
@@ -71,6 +105,9 @@ $id=if_isset($_POST['id']);
 $updateUser=if_isset($_POST['updateUser']);
 $ret_id=if_isset($_GET['ret_id']);
 $slet_id=if_isset($_GET['slet_id']);
+$yd = get_ip(); #20211015
+
+#var_dump($yd, $db);
 if ($addUser || $updateUser) {
 	$tmp=if_isset($_POST['random']);
 	$brugernavn=trim(if_isset($_POST[$tmp]));
@@ -78,8 +115,17 @@ if ($addUser || $updateUser) {
 	$kode2=trim(if_isset($_POST['kode2']));
 	$medarbejder=trim(if_isset($_POST['medarbejder']));
 	$employeeId=if_isset($_POST['employeeId']);
+	// $restore_user = if_isset($_POST['ruser_ip']); #20210831
+	 $insert_ip = if_isset($_POST['insert_ip']); #20210908
+	// $user_ip = if_isset($_POST['user_ip']); #20210831
+	 $re_id=if_isset($_POST['re_id']); #20210909
+	if($insert_ip){
+	$user_ip=$insert_ip;
+	// input_ip($user_ip, $id);
+	} #20210908
+	
 	$rights=$_POST['rights'];
-	$roRights = if_isset($_POST['roRights'],NULL);
+	$roRights=$_POST['roRights'];
 	$rettigheder=NULL;
 	for ($x=0;$x<16;$x++) {
 		if (!isset($rights[$x])) $rights[$x]=NULL;
@@ -121,6 +167,14 @@ if ($addUser || $updateUser) {
 			db_modify("update brugere set brugernavn='$brugernavn', kode='$kode', rettigheder='$rettigheder', ansat_id=$employeeId[0] where id=$id",__FILE__ . " linje " . __LINE__);
 	}
 	}
+	if($user_ip){
+		restrict_user_ip($user_ip, $re_id); #20210831 + 20210909+20211015
+	}
+	// if($restore_user){
+	// 	restore_user_ip($restore_user, $re_id); #20210831 + 20210909
+	// }
+	
+
 } elseif (($deleteUser)) {
 	$qtxt="select ansat_id from brugere where id ='$id'";
 	$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -132,14 +186,35 @@ if ($addUser || $updateUser) {
 }
 
 print "<tr><td valign = 'top'>";
-print "<table border=0><tbody><tr><td>"; # 20150327
+print "<table border=0 width='100%'><tbody><tr><td>"; # 20150327
 print "<form name='bruger' action='brugere.php' method='post'>";
+if ($menu=='T') {
+	print "<table cellpadding='0' cellspacing='0' border='0' width='100%' class='dataTableSys'><tbody>"; #B
+} else {
 print "<table cellpadding='0' cellspacing='0' border='0' width='70%'><tbody>"; #B
+}
 
 print "<tr><td colspan='2'></td>";
 print str_repeat("<td align='center' width='8px'><br></td>", 30);
 print "</tr>";
-$modules=array('Sikkerhedskopi','Debitorrapport','Varemodtagelse','Kreditorrapport','Varelager','Produktionsordrer','Kreditorkonti','Varerapport','Kreditorordrer','Debitorkonti','Debitorordrer','Finansrapport','Regnskab','Kassekladde','Indstillinger','Kontoplan');
+$da = str_replace(" ", "",(findtekst(1141, $sprog_id))); #20210711
+$ka = str_replace(" ", "",(findtekst(1140, $sprog_id)));
+
+$Sikkerhedskopi = findtekst(614, $sprog_id);   $Debitorrapport    = findtekst(449, $sprog_id);
+$Varemodtagelse = findtekst(182, $sprog_id);   $Kreditorrapport   = $ka;
+$Varelager      = findtekst(1261, $sprog_id);  $Produktionsordrer = findtekst(1260, $sprog_id);
+$Kreditorkonti  = findtekst(1258, $sprog_id);  $Varerapport       = findtekst(965, $sprog_id);
+$Kreditorordrer = findtekst(1257, $sprog_id);  $Debitorkonti	  = findtekst(1256, $sprog_id);
+$Debitorordrer  = findtekst(1255, $sprog_id);  $Finansrapport     = findtekst(895, $sprog_id);
+$Regnskab		= findtekst(849, $sprog_id);   $Kassekladde       = findtekst(601, $sprog_id);
+$Indstillinger  = findtekst(122, $sprog_id);   $Kontoplan		  = findtekst(113, $sprog_id);
+
+#var_dump($Produksjonsordrer);
+
+$modules=array($Sikkerhedskopi,$Debitorrapport,$Varemodtagelse,$Kreditorrapport,$Varelager,$Produktionsordrer,$Kreditorkonti,$Varerapport,
+$Kreditorordrer,$Debitorkonti,$Debitorordrer,$Finansrapport,$Regnskab,$Kassekladde,$Indstillinger,$Kontoplan);
+#$modules=array('Sikkerhedskopi','Debitorrapport','Varemodtagelse','Kreditorrapport','Varelager','Produktionsordrer','Kreditorkonti','Varerapport','Kreditorordrer','Debitorkonti','Debitorordrer','Finansrapport','Regnskab','Kassekladde','Indstillinger','Kontoplan');
+
 
 $cs=14;
 for ($x=0;$x<count($modules);$x++) {
@@ -157,7 +232,7 @@ print "<tr><td colspan = '$cs' align='right'> $modules[$x] &nbsp;</td>";
 print "<tr><td colspan = $cs align='right'> &nbsp;</td>"; print str_repeat("<td align=center>|</td>", $x); 
 print "<td colspan=9></td></tr>";
 
-print "<tr><td><b>Navn &nbsp;</b></td><td><b>Brugernavn</b></td></tr>";
+print "<tr><td><b>Navn &nbsp;</b></td><td><b>".findtekst(823, $sprog_id)."</b></td></tr>"; 
 $query = db_select("select * from brugere order by brugernavn",__FILE__ . " linje " . __LINE__);
 while ($row = db_fetch_array($query)) {
 	if ($row['id']!=$ret_id) {
@@ -203,8 +278,8 @@ if ($ret_id) {
 		print "</td>";
 	}
 	print "</tr>";
-	print "<tr><td>Adgangskode</td><td><input class=\"inputbox\" type=password size=20 name=kode value='********************'></td></tr>";
-	print "<tr><td>Gentag kode</td><td><input class=\"inputbox\" type=password size=20 name=kode2 value='********************'></td></tr>";
+	print "<tr><td>".findtekst(747, $sprog_id)."</td><td><input class=\"inputbox\" type=password size=20 name=kode value='********************'></td></tr>";
+	print "<tr><td>".findtekst(328, $sprog_id)."</td><td><input class=\"inputbox\" type=password size=20 name=kode2 value='********************'></td></tr>";
 	$x=0;
 	if ($r2 = db_fetch_array(db_select("select id from adresser where art = 'S'",__FILE__ . " linje " . __LINE__))) {
 		$employeeId=array();
@@ -221,7 +296,7 @@ if ($ret_id) {
 		}
 	}
 	$ansat_antal=$x;
-	print "<tr><td> Medarbejder</td>";
+	print "<tr><td> ".findtekst(589, $sprog_id)."</td>";
 	print "<td><SELECT NAME=employeeId[0]>";
 	print "<option value=\"$employeeId[0]\">$employeeInitials[0]</option>";
 	for ($x=1; $x<=$ansat_antal; $x++) { 
@@ -229,6 +304,12 @@ if ($ret_id) {
 	} 
 	if ($medarbejder) print "<option></option>";
 	print "</SELECT></td></tr>";
+
+		print "<input type=hidden name=re_id value=$ret_id>"; #20210909+20211015
+	
+		###########################################20210831
+	print "<tr><td>".findtekst(1904, $sprog_id)."</td><td><input class=\"inputbox\" type= text  name=insert_ip maxlength=49></td></tr>"; #20210908
+	
 	print "</tbody></table></td></tr>";
 	print "<tr><td><br></td></tr>";
 	print "<tr><td><br></td></tr>";
@@ -238,14 +319,15 @@ if ($ret_id) {
 		$class = "class='inputbox'";
 	}
 	print "<td colspan='12' align = 'center'>";
-	print "<input style='width:100px;background-color:44ff44;' type=submit value=\"Opdat&eacute;r\" name=\"updateUser\">&nbsp;";
-	print "<input style='width:100px;background-color:ff4444;' type=submit value=\"Slet\" name=\"deleteUser\" onclick=\"confirm('Slet $userName?')\"></td>";
+	print "<input style='width:100px;background-color:44ff44;' type=submit value=\"".findtekst(1091, $sprog_id)."\" name=\"updateUser\">&nbsp;";
+	print "<input style='width:100px;background-color:ff4444;' type=submit value=\"".findtekst(1099, $sprog_id)."\" name=\"deleteUser\" onclick=\"confirm('Slet $userName?')\"></td>";
 } else {
 	$tmp="navn".rand(100,999);				#For at undgaa at browseren "husker" et forkert brugernavn.
 	print "<input type=hidden name=random value = $tmp>";
-	print "<tr><td> Ny&nbsp;bruger</td>";
+	print "<tr><td> ".findtekst(333, $sprog_id)."</td>";
 	print "<td><input class=\"inputbox\" type=\"text\" size='20' name='$tmp'></td>";
-	print "</tr><tr><td></td><td>Adgang</td>";
+	$s = findtekst(329, $sprog_id); $as = explode(" ", $s); 
+	print "</tr><tr><td></td><td>$as[0]</td>";
 	for ($x=0;$x<16;$x++) {
 		print "<td><input class='inputbox' type='checkbox' name=\"rights[$x]\"></td>\n";
 	}
@@ -259,21 +341,33 @@ if ($ret_id) {
 		print "</td>";
 	}
 	print "</tr>";
-	print "<tr><td> Adgangskode</td><td><input class=\"inputbox\" type=password size=20 name=kode></td></tr>";
-	print "<tr><td> Gentag kode</td><td><input class=\"inputbox\" type=password size=20 name=kode2></td></tr>";
+	print "<tr><td> ".findtekst(327, $sprog_id)."</td><td><input class=\"inputbox\" type=password size=20 name=kode></td></tr>";
+	print "<tr><td> ".findtekst(328, $sprog_id)."</td><td><input class=\"inputbox\" type=password size=20 name=kode2></td></tr>";
 	print "</tbody></table></td></tr>";
 	print "<tr><td><br></td></tr>";
 	print "<tr><td><br></td></tr>";
 	print "<td colspan=12 align = center>";
-	print "<input style='width:200px;background-color:#aaaaff;' type=submit value=\"Tilf&oslash;j\" name=\"addUser\"></td>";
+	if ($menu=='T') {
+		print "<input style='width:200px;' class='blue medium button' type=submit value=\"".findtekst(1175, $sprog_id)."\" name=\"addUser\"></td>";
+	} else {
+		print "<input style='width:200px;background-color:#aaaaff;' type=submit value=\"".findtekst(1175, $sprog_id)."\" name=\"addUser\"></td>";
+	}
 }
 print "</tr>";
 # print "</tbody></table></td></tr>";
 
-?>
+print "
 </tbody>
 </table>
 </td></tr>
 </tbody></table>
-<?php if ($menu=='T') print "</div> <!-- end of maincontent -->\n";  # 20150327 ?>
-</body></html>
+</div></div>
+";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
+?>

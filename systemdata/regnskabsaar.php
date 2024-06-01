@@ -64,7 +64,7 @@ if ($aktiver) {
 	if (!$revisor) db_modify("update brugere set regnskabsaar = '$aktiver' where id = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 }
 if ($deleteYear) {
-	include ("financialYearInc/deleteFinancialYear.php");
+	include_once("fiscalYearInc/deleteFiscalYear.php");
 	deleteFinancialYear($deleteYear);
 }
 

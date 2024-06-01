@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- kreditor/orderIncludes/closedOrder.php --- lap 4.0.7 --- 2022.11.06 ---
+// --- kreditor/orderIncludes/closedOrder.php ---patch 4.0.8 --2023-07-23--
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,10 +19,13 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2022 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20221106 PHR - Various changes to fit php8 / MySQLi		
+// 20220629 MSC - Implementing new design
+// 20231219 MSC - Copy pasted new design into code
 	
 print "<input type=\"hidden\" name=\"konto_id\" value=$konto_id>";
 print "<input type=\"hidden\" name=\"kontonr\" value=\"$kontonr\">";
@@ -50,7 +53,13 @@ print "<input type=\"hidden\" name=\"modtagelse\" value=\"$modtagelse\">";
 print "<input type=\"hidden\" name=\"lev_adr\" value=\"$lev_adr\">";
 print "<input type=\"hidden\" name=\"valuta\" value=\"$valuta\">";
 
-print "<table cellpadding='0' cellspacing='0' bordercolor='#ffffff' border='1' valign = 'top'><tbody>";
+if ($menu=='T') {
+	$border= "border='0'";
+} else {
+	$border= "border='1' bordercolor='#FFF'";
+}
+
+print "<table cellpadding='0' cellspacing='0' $border valign = 'top' class='dataTableForm' width='100%'><tbody>";
 #	$ordre_id=$id;
 print "<tr><td width='25%'><table cellpadding=0 cellspacing=0 border=0 width=100%>";
 print "<tr><td width=100><b>".findtekst(284,$sprog_id)."</td><td width=100>$kontonr</td></tr>\n"; #2021.05.14
@@ -92,7 +101,7 @@ print "<tr><td>".findtekst(398,$sprog_id)."</td><td colspan=2>$lev_kontakt</td><
 print "<tr><td>$lev_adr</td></tr>\n";
 print "</td></tr></tbody></table></td>";
 print "</td></tr><tr><td align='center' colspan='3'>";
-print "<table cellpadding='0' cellspacing='0' bordercolor='#ffffff' border='1' width='100%'><tbody>";
+print "<table cellpadding='0' cellspacing='0' $border width='100%'><tbody>";
 print "<tr><td colspan=7></td></tr><tr>";
 #	print "<td align=center><b>pos</td><td align=center><b>varenr</td><td align=center><b>ant.</td><td align=center><b>enhed</td><td align=center><b>beskrivelse</td><td align=center><b>".findtekst(915,$sprog_id)."</td><td align=center><b>%</td><td align=center><b>ialt</td><td align=center><b>solgt</td>";
 print "<td align=center title='".findtekst(1502, $sprog_id)."'><b>Pos.</td><td align=center><b>".findtekst(917, $sprog_id).".</td><td align=center><b>".findtekst(916, $sprog_id)."</td><td align=center><b>".findtekst(945, $sprog_id)."</td><td align=center><b>".findtekst(914, $sprog_id)."</td><td align=center><b>".findtekst(915,$sprog_id)."</td><td align=center title='".findtekst(1503, $sprog_id)."'><b>%</td><td align=center><b>".findtekst(947, $sprog_id)."</td>"; #20210716
@@ -185,7 +194,7 @@ for ($x=1; $x<=$linjeantal; $x++) {
 	if (($ialt)&&($art=='KK')) {$ialt=$ialt*-1;}
 	print "<td align=right>".dkdecimal($ialt,2)."</td>";
 	print "<input type=\"hidden\" name=projekt[$x] value=\"$projekt[$x]\">";
-	if ($vis_projekt && !$projekt[0]) {
+	if ($vis_projekt && !$projekt[0] && $projekt[$x]) {
 		$r=db_fetch_array(db_select("select beskrivelse from grupper where art = 'PROJ' and kodenr='$projekt[$x]'",__FILE__ . " linje " . __LINE__));
 		print "<td align=right title='$r[projekt]'>$projekt[$x]</td>";
 	}
@@ -215,7 +224,7 @@ $ialt=dkdecimal($sum+$moms,2);
 $sum=dkdecimal($sum,2);
 $moms=dkdecimal($moms,2);
 print "<tr><td colspan=8></td></tr>\n";
-print "<tr><td colspan=8><table border='1' bordercolor='#ffffff' cellspacing='0' cellpadding='0' width='100%'><tbody>";
+print "<tr><td colspan=8><table $border cellspacing='0' cellpadding='0' width='100%'><tbody>";
 print "<tr>";
 print "<td align=center>".findtekst(887,$sprog_id)."</td><td align=center>$sum</td>";
 print "<td align=center>Moms</td><td align=center>$moms</td>";
