@@ -22,9 +22,17 @@
 //
 // Copyright (c) 2003-2022 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20230111 MSC - Implementing new design
+// 20231219 MSC - Copy pasted new design into code
+
+global $menu;
 
 print "<!-- BEGIN orderIncludes/openOrders.php -->";
+if ($menu=='T') {
+	print "<table cellpadding='1' cellspacing='0' bordercolor='#ffffff' border='1' valign = 'top' width=100%' class='dataTableForm'><tbody>";
+} else {
 print "<table cellpadding='1' cellspacing='0' bordercolor='#ffffff' border='1' valign = 'top' width=80%'><tbody>";
+}
 include ("orderIncludes/openOrderData.php");
 $x=0;
 $qtxt = "select * from ordrelinjer where ordre_id = '$id' order by posnr";

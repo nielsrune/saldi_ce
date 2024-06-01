@@ -1,26 +1,28 @@
 <?php
-	@session_start();
-	$s_id=session_id();
-
-// ----------/systemdata/formularimport.php-----lap 2.0.7b---2009-05-26-23:30--
-// LICENS
+// --- /systemdata/formularimport.php-----patch 4.0.8 ----2023-07-22--------------
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2008 DANOSOFT ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
-
 # SKAL OMSKRIVES TIL IMPORT AF SKABELONER og ikke overskrivning med standardskabeloner
+
+@session_start();
+$s_id=session_id();
+
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/db_query.php");
@@ -44,7 +46,7 @@ else {
 	print "<form name=formularimport action=$_SERVER[PHP_SELF] method=\"post\">";
 	print "<div style=\"text-align: center;\">$font<small>Dette vil overskrive alle eksisterende formularer med standardops&aelig;tningen<br>";
 	print "<div style=\"text-align: center;\">$font og slette formularer med andet sprog end dansk<br>";
-	print "Klik på [OK] for at fortsætte<br><br>";
+	print "Klik pï¿½ [OK] for at fortsï¿½tte<br><br>";
 	print "<input type=submit value=\"Afbryd\" name=\"afbryd\">&nbsp;&nbsp;<input type=submit value=\"OK\" name=\"ok\">";
 	print "</small></font></div></form>";
 }

@@ -3,7 +3,7 @@
     #varegruppe->
     print "<tr><td width=33%>".findtekst(774,$sprog_id)."</td>";
     if (!$gruppe) $gruppe=1;
-    $qtxt="select beskrivelse,box10 from grupper where art='VG' and kodenr = '$gruppe'";
+    $qtxt="select beskrivelse,box10 from grupper where art='VG' and kodenr = '$gruppe' and fiscal_year = '$regnaar'";
     $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
     if ($r['box10'] && !$operation) {
         $r2 = db_fetch_array(db_select("select MAX(operation) as operation from varer where lukket !='on'",__FILE__ . " linje " . __LINE__));
@@ -14,9 +14,9 @@
     <SELECT class=\"inputbox\" NAME=\"ny_gruppe\" style=\"width: 18em\">";
     print "<option value=\"$gruppe\">$gruppe $r[beskrivelse]</option>";
     if (!$beholdning || !$batchItem) { # batchItem added 20090210 to make groupchange possible if stockItem is set.
-        if ($samlevare=='on') $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' and box8!='on' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
-        elseif ($beholdning) $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' and box8='on' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);# tilfoejet 20090210
-        else $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
+        if ($samlevare=='on') $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' and box8!='on' and fiscal_year = '$regnaar' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
+        elseif ($beholdning) $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' and box8='on' and fiscal_year = '$regnaar'  order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);# tilfoejet 20090210
+        else $query = db_select("select * from grupper where art='VG' and kodenr!='$gruppe' and fiscal_year = '$regnaar' order by ".nr_cast('kodenr')."",__FILE__ . " linje " . __LINE__);
         while ($row = db_fetch_array($query)) {
             print "<option value=\"$row[kodenr]\">$row[kodenr] $row[beskrivelse]</option>";
         }

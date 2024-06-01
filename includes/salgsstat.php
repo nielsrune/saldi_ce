@@ -4,31 +4,31 @@
 //                        \__ \/ _ \| |_| |) | |    
 //                        |___/_/ \_|___|___/|_|
 //
-// ----------includes/salgsstat.php-----------------------lap 3.6.0---2015-11-29--
-// LICENS
+// ----------includes/salgsstat.php------patch 4.0.7--- 2023.12.21 --
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk aps eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2016 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------------
 // 
 // 20160309	- ændret $antal[$x][$y] til $r['antal'] da antal ikke skal summeres ved sumberegning
 // 20210329 - Loe translated with findtekst function some of these texts
+// 20220905 MSC - Implementing new design
 // 01-05-2023 PBLM Fixed minor errors
+// 20231213 MSC - Copy pasted new design into code
 
 @session_start();
 $s_id=session_id();
@@ -89,9 +89,14 @@ elseif ($art=='D') $luk="../debitor/rapport.php";
 else $luk="../kreditor/rapport.php";
 
 if ($menu=='T') {
-	include_once '../includes/topmenu/header.php';
-	print "<div class='$kund'>$title</div>
-	<div class='content-noside'>";
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=$luk accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 } else {
 	include_once '../includes/oldDesign/header.php';
 	print "<table width = 100% cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tbody>";
@@ -223,13 +228,7 @@ for ($x=0;$x<count($q_konto_id);$x++) {
 	}
 
 	if ($menu=='T') {
-		print "<center><input type='button' onclick=\"location.href='../debitor/rapport.php'\" accesskey='L' value='".findtekst(30,$sprog_id)."'></center>";
-	} else {
-		print "";
-	}
-
-	if ($menu=='T') {
-		include_once '../includes/topmenu/footerDebRapporter.php';
+		include_once '../includes/topmenu/footer.php';
 	} else {
 		include_once '../includes/oldDesign/footer.php';
 	}
@@ -263,5 +262,10 @@ function begraens($dato_fra,$dato_til,$konto_fra,$konto_til,$kontonr,$firmanavn,
 	print "</td></tr>";
 
 	print "</tbody></table>";
+}
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
 }
 ?>

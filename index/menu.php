@@ -4,8 +4,8 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -----------index/menu.php---------lap 4.0.3-------2021-10-11--------
-/// LICENSE
+// -----------index/menu.php------ ver 4.0.8 --- 2024-01-08 ---
+//                           LICENSE
 //
 // This program is free software. You can redistribute it and / or
 // modify it under the terms of the GNU General Public License (GPL)
@@ -17,33 +17,60 @@
 // or other proprietor of the program without prior written agreement.
 //
 // The program is published with the hope that it will be beneficial,
-// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
-// GNU General Public License for more details.
-//
-// Copyright (c) 2003-2021 saldi.dk aps
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20180807 Corrected query to check if'kasse' is activated 20180807
 // 20210223 LOE replaced string Sikkerhedskopi with findtekst value
 // 20210721 LOE Fixed a bug and alsoo updated some texts not translated
 // 20210817 LOE Quotation mark added to some database variables where they were missing
 // 20211011 PHR Removed paperflow link as it is in 'kreditor'
-// 20230320 MSC Added redicret to mobile version
+// 20230320 MSC Added redirect to mobile version
+// 20230714 LOE Minor modification + 20230805
+// 11122023 PBLM 
+// 20240108 LOE Minor modification.
 
 @session_start();	# Skal angives oeverst i filen??!!
 $s_id=session_id();
+(isset($_COOKIE['saldi_std']))?$regnskab = $_COOKIE['saldi_std']:$regnskab = NULL;
 $title="$regnskab Oversigt";
 $css="../css/standard.css";
-
-
 $produktion=0; # Menucolumn PRODUKTION id disabled until module is reasy for use
 $ansat_id=$popup=NULL;
 if (isset($_GET['online'])) $online=$_GET['online'];
 else $online=0;
 
+if(!isset($regnskab)){
+	//throw error and exit, wrong call made. Could happen when trying to access menu.php before installation
+	//$alerttxt="An error occured. Please contact https://saldi.dk\\n";
+	header('Location: index.php'); 
+	print "<BODY onLoad=\"javascript:alert('$alerttxt')\">";
+	exit;
+}
 $modulnr=0;
 include("../includes/connect.php");
+include("gettingApiKey.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+if (isset($_GET['useMain']))	 {
+	($_GET['useMain'] == 'on')?$menu = 'S':$menu = '';
+	$qtxt = "update grupper set box3 ='$menu' where  art = 'USET' and kodenr = '$bruger_id'"; 
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+}
+if ($menu == 'S') {
+	print "<script>try {parent.location.href = '../index/main.php'} catch {window.location.href = '../index/main.php'}</script>";
+	die();
+} else {
+	print "<script>
+if(window.self !== window.top) {
+//run this code if in an iframe
+// alert('in frame');
+parent.location.href = \"../index/menu.php\";
+} 
+</script>";
+}
 
 $provision=0;
 if (trim($ansat_id)) {
@@ -55,15 +82,16 @@ if (file_exists("../doc/vejledning.pdf")) $vejledning="../doc/vejledning.pdf";
 else $vejledning="http://saldi.dk/dok/komigang.html";
 
 if ($menu=='T') {
-	$android = strpos($_SERVER['HTTP_USER_AGENT'],"Android");
-	$bberry = strpos($_SERVER['HTTP_USER_AGENT'],"BlackBerry");
-	$iphone = strpos($_SERVER['HTTP_USER_AGENT'],"iPhone");
-	$ipod = strpos($_SERVER['HTTP_USER_AGENT'],"iPod");
-	$webos = strpos($_SERVER['HTTP_USER_AGENT'],"webOS");
-	if ($android || $bberry || $iphone || $ipod || $webos== true) 
-	{ 
-	header('Location: ../mobile/menu.php');
-	}
+	#MOBILE SITE CODE
+	#$android = strpos($_SERVER['HTTP_USER_AGENT'],"Android");
+	#$bberry = strpos($_SERVER['HTTP_USER_AGENT'],"BlackBerry");
+	#$iphone = strpos($_SERVER['HTTP_USER_AGENT'],"iPhone");
+	#$ipod = strpos($_SERVER['HTTP_USER_AGENT'],"iPod");
+	#$webos = strpos($_SERVER['HTTP_USER_AGENT'],"webOS");
+	#if ($android || $bberry || $iphone || $ipod || $webos== true) 
+	#{ 
+	#header('Location: ../mobile/menu.php');
+	#}
 
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
@@ -97,24 +125,24 @@ function oldmenu() {
 	global $textcolor;
 	global $vejledning,$version;
 
-print "<table style=\"width:100%;height:100%;\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n";
-print "<tr><td align=\"center\" valign=\"top\">\n";
-print "<table style=\"width:100%;height:20px;\" align=\"center\" border=\"0\" cellspacing=\"4\" cellpadding=\"0\"><tbody>\n";
-# print "<td  $top_bund width=\"10%\"> Ver $version</td>\n";
-print "<tr><td width=\"45%\"><div class=\"top_bund\">".date_default_timezone_get()." ".date("H:i")."&nbsp;</div></td>\n";
-print "<td width=\"10%\" align = \"center\"><div class=\"top_bund\"><a href=\"$vejledning\" target=\"_blank\" ";
-	print " title=\"".findtekst(1622, $sprog_id)."\">".findtekst(92,$sprog_id)."</a></div></td>\n";
-print "<td><div class=\"top_bund\">&nbsp;</div></td>\n";
-print "<td width=\"20\" title=\"".findtekst(161,$sprog_id)."\"><div class=\"luk\" onclick=\"location.href='logud.php';\" style=\"cursor:pointer;\"></div></td>\n";
-print "</tbody></table></td></tr><tr><td align=\"center\" valign=\"middle\">\n";
+	print "<table style='width:100%;height:100%;' border='0' cellspacing='0' cellpadding='0'><tbody>\n";
+	print "<tr><td align='center' valign='top'>\n";
+	print "<table style='width:100%;height:20px;' align='center' border='0' cellspacing='4' cellpadding='0'><tbody>\n";
+	# print "<td  $top_bund width='10%'> Ver $version</td>\n";
+	print "<tr><td width='45%'><div class='top_bund'>".date_default_timezone_get()." ".date("H:i")."&nbsp;</div></td>\n";
+	print "<td width='10%' align = 'center'><div class='top_bund'><a href='$vejledning' target='_blank' ";
+	print " title='".findtekst(1622, $sprog_id)."'>".findtekst(92,$sprog_id)."</a></div></td>\n";
+	print "<td><div class='top_bund'>&nbsp;</div></td>\n";
+	print "<td width='20' title='".findtekst(161,$sprog_id)."'><div class='luk' onclick='location.href=\"logud.php\";' style='cursor:pointer;'></div></td>\n";
+	print "</tbody></table></td></tr><tr><td align='center' valign='middle'>\n";
 
-print "<table align=\"center\" style=\"border:3px solid $bgcolor2;\"><tbody>\n";
+	print "<table align='center' style='border:3px solid $bgcolor2;border-radius:5px;'><tbody>\n";
 print "<tr><td style=\"background:url(../img/blaa2hvid_bg.gif);color:$textcolor;\" colspan=\"5\" align=\"center\">";
 print "<table style=\"border:1px solid $bgcolor2;width:100%;\"><tbody><tr>";
 print "<td width=\"10%\">";
-if (file_exists("../img/logo.png")) print "<img style=\"border:0px solid;width:50px;heigth:50px\" alt=\"\" src=\"../img/logo.png\">";
-print "</td><td width=\"80%\" align=\"center\">".findtekst(94,$sprog_id)."</td><td width=\"10%\" align=\"right\">";
-if (file_exists("../img/logo.png")) print "<img style=\"border:0px solid;width:50px;heigth:50px\" alt=\"\" src=\"../img/logo.png\">";
+#	if (file_exists("../img/logo.png")) print "<img style=\"border:0px solid;width:50px;heigth:50px\" alt=\"\" src=\"../img/logo.png\">";
+	print "</td><td width=\"80%\" align=\"center\"><img src='../img/saldiLogo.png' alt='Saldi Logo' width='25px' height='25	px'></td><td width=\"10%\" align=\"right\">";
+#	if (file_exists("../img/logo.png")) print "<img style=\"border:0px solid;width:50px;heigth:50px\" alt=\"\" src=\"../img/logo.png\">";
 print "</td></tr></tbody></table>";
 print "</td></tr>\n";
 print "<tr style=\"height:35px;\"><td colspan=\"5\" align=\"center\"><big><big><b>";
@@ -348,6 +376,7 @@ print "</tr>\n";
 print	"</tbody></table>\n";
 print	"</td></tr>\n";
 print	"<tr><td align=\"center\" valign=\"bottom\">\n";
+	print "<a href = 'menu.php?useMain=on'>Nyt design</a><br>";
 print "<div class=top_bund><small>SALDI&nbsp;version&nbsp;$version&nbsp;-&nbsp;Copyright&nbsp;&copy;&nbsp;$copyright</small></div></td></tr>\n";
 print	"</tbody></table>\n";
 print	"</center></body></html>\n";
@@ -364,3 +393,13 @@ if ($menu=='T') {
 	include_once '../includes/oldDesign/footer.php';
 }
 ?>
+<script>
+	// prompt user for bank account number
+/* 	function promptBankAccount() {
+		var bankAccount = prompt("I overensstemmelse med bogføringsloven skal der være en konto i kontoplanen, der repræsenterer banken. Venligst angiv dit valgte kontonummer.", "")
+		if (bankAccount != null) {
+			alert("Din konto nummer er opdateret")
+		}
+	}
+	promptBankAccount() */
+</script>

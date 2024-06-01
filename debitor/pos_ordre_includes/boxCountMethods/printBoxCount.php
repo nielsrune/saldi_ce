@@ -133,8 +133,9 @@ function setPrintTxt($fp, $log, $FromCharset, $ToCharset, $ore_50, $kr_1, $kr_2,
 				db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 
 			}
 		}
-		$omsatning  = (float)$omsatning;
 		$byttepenge = (float)$byttepenge;
+		$omsatning  = (float)$omsatning;
+		$optalt     = (float)$optalt; 
 		$tilgang    = (float)$tilgang;
 		$qtxt2 = "('$dd','cashCount','$cashCountTxt[turnover]','0','$omsatning','$reportNumber')";
 		db_modify($qtxt.$qtxt2,__FILE__ . " linje " . __LINE__); 

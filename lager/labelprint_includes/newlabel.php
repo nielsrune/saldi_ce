@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ----------/lager//labelprint_includes/newlabel.php--lap 3.9.9---2021-02-04	---
+// ----------/lager//labelprint_includes/newlabel.php--lap 4.1.0---2024-01-23	---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,13 +20,14 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2020-2021 saldi.dk aps
+// Copyright (c) 2020-2024 saldi.dk aps
 // ----------------------------------------------------------------------
 // 
 // 20200702 PHR Added support for more labels.
 // 20200812 PHR Changed _b to kb and _n to kn 
 // 20200812 PHR Added ' and hidden is 'FALSE' 
 // 20201205 PHR timestamp written to lastprint when printed
+// 20240123 PHR Added $firstprint & $lastprint.
 
 $line=explode("\n",$txt);
 $top=$txt='';
@@ -131,8 +132,12 @@ for ($l=0;$l<count($labels);$l++) {
 					$col=$r['col'];
 				}
 				$barcode[$row][$col]=$r['barcode'];
-				$description[$row][$col]=$r['description'];
 				$createdate[$row][$col]=date('dmy',$r['created']);
+				$description[$row][$col]=$r['description'];
+				if ($r['firstprint']) $firstprint[$row][$col]=date("dmy",$r['firstprint']);
+				else $firstprint[$row][$col] = NULL;
+				if ($r['lastprint']) $lastprint[$row][$col]=date("dmy",$r['lastprint']);
+				else $lastprint[$row][$col] = NULL;
 				$price[$row][$col]=$r['price'];
 				if ($price[$row][$col]) {
 					$price[$row][$col]=dkdecimal($price[$row][$col]);
@@ -179,6 +184,8 @@ for ($l=0;$l<count($labels);$l++) {
 			$labelTxt=str_replace('$trademark',$r['trademark'],$labelTxt);
 			$labelTxt=str_replace('$barcode',$barcode[$a][$b],$labelTxt);
 			$labelTxt=str_replace('$createdate',if_isset($createdate[$a][$b],NULL),$labelTxt);
+			$labelTxt=str_replace('$firstprint',if_isset($firstprint[$a][$b],NULL),$labelTxt);
+			$labelTxt=str_replace('$lastprint',if_isset($lastprint[$a][$b],NULL),$labelTxt);
 			if ($brotherTD) $labelTxt=str_replace('$stregkode',$barcode[$a][$b],$labelTxt);
 			elseif ($stregkode) {
 				$labelTxt=str_replace('$stregkode',$stregkode,$labelTxt);

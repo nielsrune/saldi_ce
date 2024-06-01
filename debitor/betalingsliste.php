@@ -1,28 +1,27 @@
 <?php
-// ---------debitor/betalingsliste.php-----------------------Patch 3.5.9---2015.11.04---
-// LICENS
+// ---------debitor/betalingsliste.php---patch 4.0.8 ----2023-07-12--------------
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
-// 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// En dansk oversaettelse af licensen kan laeses her:
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2004-2015 DANOSOFT ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // -----------------------------------------------------------------------------------
 //
 // 2015.11.04 Kopieret fra kreditor (phr) 
 // 20211102 MSC - Implementing new design
+// 20220901 MSC - Implementing new design
 
 @session_start();
 $s_id=session_id();
@@ -72,9 +71,13 @@ if (!$sort) {
 }
 
 if ($menu=='T') {
-
-	include_once '../includes/topmenu/header.php';
-	print "<div class='$kund'>$title</div>
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=rapport.php accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>
 	<div class='content-noside'>";
 	if ($vis=='alle') {
 		print "<center><div style='padding:10px'><input type='button' onclick=\"location.href='betalingsliste.php?sort=$sort&rf=$rf'\" value='Vis egne'>";
@@ -183,7 +186,7 @@ print "</tr>\n";
 		$listedato=dkdato($r['listedate']);
 		print "<td>$listedato<br></td>";
                 print "<td>".htmlentities(stripslashes($r['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
-                print "<td>".htmlentities(stripslashes($r['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
+    print "<td>".htmlentities(stripslashes($r['listenote']),ENT_QUOTES,$charset)."<br></td>";
 		print "<td align = center>$r[bogfort]<br></td>";
 		print "<td><span onclick = \"location.href = 'betalingsliste.php?sort=$sort&rf=$rf&vis=";
 		($vis)?print $vis:print 'alle';
@@ -203,7 +206,7 @@ print "</tr>\n";
 		$listedato=dkdato($r['listedate']);
 		print "<td>$listedato<br></td>";
                 print "<td>".htmlentities(stripslashes($r['oprettet_af']),ENT_QUOTES,$charset)."<br></td>";
-#                print "<td>".htmlentities(stripslashes($r['kladdenote']),ENT_QUOTES,$charset)."<br></td>";
+                print "<td>".htmlentities(stripslashes($r['listenote']),ENT_QUOTES,$charset)."<br></td>";
 ## Da der ikke blev sat bogfringsdato foer ver. 0.23 skal det saettes hak ved lister bogfrt fr denne version...
 		if (isset($r['bogforingsdate']) && $r['bogforingsdate']){
 			$bogforingsdato=dkdato($r['bogforingsdate']);
@@ -225,17 +228,16 @@ if ($menu=='T') {
 	<tfoot><tr><td></td></tr></tfoot>
 	</table>
 	</div>
-	<center><input type='button' onclick=\"location.href='rapport.php'\" accesskey='L' value='".findtekst(30,$sprog_id)."'></center>
 	";
-	include_once '../includes/topmenu/footerDebRapporter.php';
+	include_once '../includes/topmenu/footer.php';
 } else {
 	print "
 </tbody>
 </table>
 	</td></tr>
 </tbody></table>
-</body></html>
 ";
+include_once '../includes/oldDesign/footer.php';
 }
 
 

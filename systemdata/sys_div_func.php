@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/sys_div_func.php --- ver 4.0.5 -- 2022.04.		13 ---
+// --- systemdata/sys_div_func.php --- ver 4.1.0 -- 2024.01.18 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 Saldi.DK ApS
+// Copyright (c) 2003-2024 Saldi.DK ApS
 // -----------------------------------------------------------------------
 // Kaldes fra systemdata/diverse.php
 // 2013.11.01 Tilføjet fravalg af tjek for forskellige datoer på samme bilag i kasseklasse. Søg 20131101
@@ -86,6 +86,7 @@
 // 20211123 PHR added paperflow
 // 20211123 PHR added paperflowId & paperflowBearer
 // 20220413 PHR Renamed pos_valg til posOptions and moved function to diverse/posOptions.php
+// 20231228 PBLM Added mobilePay (diverse valg)
 
 	include("sys_div_func_includes/chooseProvision.php");
 
@@ -113,7 +114,7 @@ function kontoindstillinger($regnskab,$skiftnavn) {
 		print "<tr><td colspan='6'><hr></td></tr>\n";
 		$tmp=date('U')-60*60*24*365;
 		$tmp=date("Y-m-d",$tmp);
-		$r=db_fetch_array(db_select("select count(id) as transantal from transaktioner where transdate>='$tmp'",__FILE__ . " linje " . __LINE__));
+		$r=db_fetch_array(db_select("select count(id) as transantal from transaktioner where logdate>='$tmp'",__FILE__ . " linje " . __LINE__));
 		$transantal=$r['transantal']*1;
 		print "<tr><td>".findtekst(1233,$sprog_id)." $transantal ".findtekst(1234,$sprog_id)."</td></tr>";
 		$r=db_fetch_array(db_select("select felt_1,felt_2,felt_3,felt_4 from adresser where art = 'S'",__FILE__ . " linje " . __LINE__));
@@ -307,6 +308,8 @@ function kontoplan_io() {
 		print "</td></tr>\n\n";
 		print "<tr><td colspan='3'>".findtekst(1356, $sprog_id)." ".findtekst(1357, $sprog_id)." </td>";
 		print "<td align = center><form action='importer_kontoplan.php'><input class='button blue medium' type='submit' style='width: 8em' value='".findtekst(1356, $sprog_id)."' accesskey='i'></form></td><tr>";
+		print "<tr><td colspan='3'>Importer mappingfil til offentlig standard kontoplan</td>";
+		print "<td align = center><form action='importAccountMap.php'><input class='button blue medium' type='submit' style='width: 8em' value='".findtekst(1356, $sprog_id)."' accesskey='i'></form></td><tr>";
 #		print "<td align = center><a href='importer_kontoplan.php' style='text-decoration:none' accesskey='i'>Import&eacute;r</a></td><tr>";
 	}
 #	print "</tbody></table></td></tr>";
@@ -674,10 +677,10 @@ function personlige_valg() {
 } # endfunc personlige_valg
 
 function div_valg() {
-	global $sprog_id;
+	global $bgcolor,$bgcolor5;
 	global $docubizz;
-	global $bgcolor;
-	global $bgcolor5;
+	global $regnaar;
+	global $sprog_id;
 
 	$batch=$ebconnect=$extra_ansat=$forskellige_datoer=$paperflow=NULL;
 	$gls_id=$gls_pass=$gls_user=$gls_ctId=NULL; #20211019 $gls_ctId added
@@ -816,15 +819,16 @@ function div_valg() {
 		$qtxt="delete from tekster where tekst_id = '767' or tekst_id = '768'";
 		db_modify ($qtxt,__FILE__ . " linje " . __LINE__);
 	}
-	print "<tr>\n<td title='".findtekst(767,$sprog_id)."'>".findtekst(768,$sprog_id)." (kr. 300,- / md)</td>\n";
+	print "<tr>\n<td title='".findtekst(767,$sprog_id)."'>".findtekst(768,$sprog_id)."</td>\n";
 	print "<td title='".findtekst(768,$sprog_id)."'>\n";
 	print "<!-- 768 : Brug 'Mit salg' -->";
 	print "<input name='mySale' class='inputbox' type='checkbox' $mySale>\n";
 	print "</td></tr>\n";
+/*
 	echo "mySale: $mySale <br>";
 	echo "mySaleLabel: $mySaleLabel <br>";
 	echo "mySaleTest: $mySaleTest";
-	
+*/
 	if ($mySale){
 	print "<tr>\n<td title='Deaktivere labels for kunder så det kun er ejeren der kan oprette dem'>Deaktiver labels for kunder</td>\n";
 	print "<td title='Deaktiver labels for kunder'>\n";
@@ -1102,6 +1106,165 @@ function div_valg() {
     <input name='vibrant_id' class='inputbox' style='width:150px;' type='text' value='$APIKEY'>
   </td>\n</tr>\n";
   
+  # Vibrant login setup
+  $qtxt = "SELECT var_name, var_value FROM settings WHERE var_grp='vibrant_account'";
+  $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
+
+	$mtxt=findtekst(3021,$sprog_id);
+	$mtitle=findtekst(3022,$sprog_id);
+  print "<tr>\n<td title='$mtitle'><!-- Tekst 3013 -->$mtxt <!-- Tekst 3014 --></td>\n";
+
+  # If an account is already setup, show the "Show account" button
+  if ($r) {
+	  $ntxt=findtekst(3024,$sprog_id); # Show account
+
+    print "<td title='$mtitle'>
+      <button type='button' onclick='alert(\"Dit login til din vibrant terminalen: \\n\\n$r[var_name] \\n$r[var_value]\")'>$ntxt</button>
+    </td>\n</tr>\n";
+  } else { # No vibrant account in the system
+	  $ytxt=findtekst(3023,$sprog_id); # Create account
+
+    print "<td title='$mtitle'>
+      <button type='button' onclick='show_popup_vibrant()'>$ytxt</button>
+    </td>\n</tr>\n";
+  } # TODO: #popupbox for styleing (DONE), setup name, email and password fields for create login
+
+  print "
+<div class='blackdrop'></div>
+
+<div id='popupbox'>
+  <h1>Vibrant</h1>
+  <p>Opret en konto til dine vibrant terminaler, du skal kun bruge en konto og vi opbevare din email og adgangskode for dig.</p>
+  <br>
+  <span>Navn</span><br>
+  <input id='vibrant-acc-name' type='text' placeholder='Navn'></input>
+  <br><br><span>Email</span><br>
+  <input id='vibrant-acc-email' type='text' placeholder='Email'></input>
+  <br><br><span>Adgangskode</span><br>
+  <input id='vibrant-acc-passwd' type='password' placeholder='Password'></input>
+  <br><br><button onclick='hide_popup_vibrant()' type='button'>Gem</button>
+</div>
+
+<script>
+  function show_popup_vibrant() {
+    document.getElementById('popupbox').style.display = 'block';
+    document.getElementsByClassName('backdrop')[0].style.display = 'block';
+  }
+
+  function hide_popup_vibrant() {
+    var name = document.getElementById('vibrant-acc-name').value;
+    var email = document.getElementById('vibrant-acc-email').value;
+    var passwd = document.getElementById('vibrant-acc-passwd').value;
+
+    data = {
+      'name': name,
+      'email': email,
+      'roleIds': [
+        'ro_1xBHy6kquVWMne9caAaXps',
+        'ro_bzDKsUpAeFsFm8kUUXkXTy'
+      ],                           
+      'password': passwd       
+    }
+
+    fetch('https://pos.api.vibrant.app/pos/v1/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': '$APIKEY'
+      },
+      body: JSON.stringify(data) 
+    })
+      .then(response => {
+        if (!response.ok) {
+          console.log(response);
+          response.json().then((res) => {console.log(res); alert(res.error + ' : ' + res.message)}).catch(error => {
+            throw new Error('Network response was not ok');
+          })
+          throw new Error('Network response was not ok');
+        }
+        console.log('Response:', response);
+        fetch('diverseIncludes/create_vibrant_login.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({name: name, email: email, passwd: passwd}) 
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            console.log('Response:', response);
+            location.reload();
+          })
+          .catch(error => {
+            console.error('Fetch Error:', error);
+          });
+      })
+      .catch(error => {
+        console.error('Fetch Error:', error);
+      });
+
+
+    // document.getElementById('popupbox').style.display = 'none';
+    // document.getElementsByClassName('backdrop')[0].style.display = 'none';
+  }
+</script>
+";
+ // MobilePay
+ function createGUID() {
+    if (function_exists('com_create_guid') === true)
+    {
+        return trim(com_create_guid(), '{}');
+    }
+    
+    return sprintf('%04X%04X-%04X-%04X-%04X-%04X%04X%04X', mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(16384, 20479), mt_rand(32768, 49151), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535));
+}
+
+$query = db_select("SELECT * FROM grupper WHERE art = 'POS' AND kodenr = 1 AND fiscal_year = $regnaar",__FILE__ . " linje " . __LINE__);
+$antalKasser = db_fetch_array($query)["box1"];
+echo "<tr><td>OBS: du skal skrive samme storeId ved de forskellige kasser med mindre de er i en anden butik.</td></tr>";
+for($i = 1; $i <= $antalKasser; $i++){
+	$query = db_select("SELECT * FROM settings WHERE var_name = 'storeId' AND pos_id = $i",__FILE__ . " linje " . __LINE__);
+	if(db_num_rows($query) > 0) {
+		$mobilepay = db_fetch_array($query)["var_value"];
+	} else {
+		$mobilepay = "";
+	}
+
+	print "<tr>\n<td title='MobilePay'>MobilePay storeId kasse #$i</td>\n";
+	print "<td title='MobilePay'>\n";
+	print "<input name='mobilepay[]' class='inputbox' type='text' style='width:150px;' value='$mobilepay'>\n";
+	print "</td></tr>\n";  
+
+	$query = db_select("SELECT * FROM settings WHERE var_name='beaconId' and pos_id = $i",__FILE__ . " linje " . __LINE__);
+	if(db_num_rows($query) == 0){
+		$beaconId = createGUID();
+		db_modify("INSERT INTO settings (var_name, var_value) VALUES ('beaconId', '$beaconId')",__FILE__ . " linje " . __LINE__);
+	} else {
+		$beaconId = db_fetch_array($query)["var_value"];
+	}
+
+	print "<tr>\n<td title='MobilePay'>MobilePay QR kode kasse #$i</td>\n";
+	print "<td title='MobilePay'>\n";
+	print "<div id='qrcode$i'></div>";
+	print "</td></tr>\n";
+
+	?>
+	<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+	<script>
+		var qrcode = new QRCode(document.getElementById("qrcode<?php echo $i ?>"), {
+			text: "mobilepaypos://pos?id=<?php echo $beaconId ?>&source=qr",
+			width: 128,
+			height: 128,
+			colorDark : "#000000",
+			colorLight : "#ffffff",
+			correctLevel : QRCode.CorrectLevel.H
+		})
+	</script>
+	<?php
+}
+
   # API key for copayone
   $qtxt = "SELECT var_value FROM settings WHERE var_name='copayone_auth'";
   $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -1117,6 +1280,7 @@ function div_valg() {
   </td>\n</tr>\n";
 
 	
+
 	print "<tr><td colspan='2'>&nbsp;</td></tr>";
 	print "<tr><td colspan='1'>&nbsp;</td><td style='text-align:center'>\n";
 	print "     <input class='button green medium' name='submit' type=submit accesskey='g' value='".findtekst(471, $sprog_id)."'>\n";
@@ -1148,6 +1312,7 @@ function div_valg() {
       }
 
       function close_popup(){
+        document.getElementById('popupbox').style.display = 'none';
         document.getElementById('popup-flatpay').style.display = 'none';
         document.getElementsByClassName('backdrop')[0].style.display = 'none';
       }
@@ -1216,7 +1381,7 @@ function ordre_valg() {
 	$beskrivelse=$r['beskrivelse'];
 	$kodenr=$r['kodenr'];
 	($r['box1']=='on')?$incl_moms="checked":$incl_moms=NULL; 
-	$rabatvareid=$r['box2'];
+	$rabatvareid=(int)$r['box2'];
 	($r['box3']=='on')?$folge_s_tekst="checked":$folge_s_tekst=NULL;
 	($r['box4']=='on')?$hurtigfakt="checked":$hurtigfakt=NULL;
 	if (strstr($r['box5'],';')) {
@@ -2351,7 +2516,7 @@ function bilag() {
 	}
 		print "<tr bgcolor='$bgcolor5'><td colspan='6'><b>".findtekst(797, $sprog_id)."</b></td></tr>\n";
 		print "<tr><td colspan='6'><br>".findtekst(1335, $sprog_id)."</td></tr>\n";
-		print "<tr><td colspan='6'>".findtekst(1336, $sprog_id)."</td></tr>\n";
+#		print "<tr><td colspan='6'>".findtekst(1336, $sprog_id)."</td></tr>\n";
 		print "<tr><td colspan='6'></td></tr>\n";
 		print "<tr><td colspan='6'>".findtekst(1337, $sprog_id)."</td></tr>\n";
 		print "<tr><td colspan='6'>".findtekst(1338, $sprog_id)."</td></tr>\n";

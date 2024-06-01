@@ -4,8 +4,8 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------------------finans/bogfor.php------ lap 4.0.8 -- 2023-06-26 -----
-// LICENS
+// ---------------finans/bogfor.php---------- patch 4.0.7 --- 2023.03.04 ---
+//                           LICENSE
 //
 // This program is free software. You can redistribute it and / or
 // modify it under the terms of the GNU General Public License (GPL)
@@ -17,10 +17,10 @@
 // or other proprietor of the program without prior written agreement.
 //
 // The program is published with the hope that it will be beneficial,
-// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
-// GNU General Public License for more details.
-//
-// Copyright (c) 2003-2023 saldi.dk aps
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20121122 - Åbne poster udlignes ikke mere automatisk hvis forskelligt projektnummer. Søg 20121122
 // 20130210 - Break ændret til break 1
@@ -112,12 +112,12 @@ if ($menu=='T') {
 if ($menu=='T') {
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
-	print "<div id=\"header\"> 
-			<div class=\"headerbtnLft\"></div>
-			<span class=\"headerTxt\">$overskrift</span>";     
-	print "<div class=\"headerbtnRght\"></div>";       
-	print "</div><!-- end of header -->
-		<div class=\"maincontentLargeHolder\">\n";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 } else {
 print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
@@ -380,11 +380,11 @@ print "<form name=kassekladde action=bogfor.php?funktion=$funktion method=post>"
 if ($funktion=='bogfor') {
 	$query = db_select("select kladdenote from kladdeliste where id=$kladde_id",__FILE__ . " linje " . __LINE__);
 	$row = db_fetch_array($query);
-	print "<td align=center valign=\"top\" height=10px><b><font face=\"Helvetica, Arial, sans-serif\">Bem&aelig;rkning:&nbsp;</b><input type=text size=95 name=kladdenote value='$row[kladdenote]'></td>";
+	print "<td align=center valign=\"top\" height=10px><center><b><font face=\"Helvetica, Arial, sans-serif\">Bem&aelig;rkning:&nbsp;</b><input type=text size=95 name=kladdenote value='$row[kladdenote]'></center></td>";
 	print "</tr><tr><td height=10px><hr></td></tr>";
 }
 $d_sum=0; $k_sum=0;
-print "<tr><td align = center valign=\"top\"><table class='dataTable2' border=1 cellspacing=0 cellpadding=0><tbody>";
+print "<tr><td align = center valign=\"top\"><center><table class='dataTableSmall' border=1 cellspacing=0 cellpadding=0><tbody>";
 print "<tr><td colspan=\"6\" class='tableHeader'><b>".findtekst(1088,$sprog_id)."</b></td></tr>
 	<tr><td class='tableText'>$font ".findtekst(440,$sprog_id)."</td>
 	<td class='tableText'>$font ".(findtekst(914,$sprog_id))."</td>
@@ -629,7 +629,7 @@ if (!$fejl) { #20140228
 		}
 		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button green medium' type=submit $onclick accesskey=\"b\" value=\"Bogf&oslash;r\" name=\"bogfor\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"".findtekst(30,$sprog_id)."\" name=\"luk\"></td></tr>";
 	} else {
-		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button white medium' type=submit $onclick accesskey=\"b\" value=\"".findtekst(1085,$sprog_id)." ".findtekst(1086,$sprog_id)."\" name=\"simuler\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"".findtekst(30,$sprog_id)."\" name=\"luk\"></td></tr>";
+		print "<tr><td colspan=6 class='tableHeader'><br></td></tr><tr><td colspan=6 align=center><input class='button gray medium' type=submit $onclick accesskey=\"b\" value=\"".findtekst(1085,$sprog_id)." ".findtekst(1086,$sprog_id)."\" name=\"simuler\"> <input class='button red medium' type=submit accesskey=\"l\" value=\"".findtekst(30,$sprog_id)."\" name=\"luk\"></td></tr>";
 	}
 	print "</form>";
 }
@@ -1217,4 +1217,9 @@ function valutaopslag($amount, $valuta, $transdate)
 }
 ######################################################################################################################################
 
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
 ?>

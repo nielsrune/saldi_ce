@@ -40,6 +40,8 @@
 // 20211109 MSC - Implementing new design
 // 20220201 PHR Moved functions to '../includes/payListFunc.php'
 // 20230618 PHR BUG correction: When fetch from 'kontokort' the CURRENT list is now updated, if account exists in list.  
+// 20220901 MSC - Implementing new design
+// 20231213 MSC - Implementing new design
 
 $dan_liste=$gem=$listenote=$slet_ugyldige=$udskriv=NULL;
 
@@ -134,9 +136,14 @@ $linjebg=$bgcolor;
 $erh_title= "ERH355 = Bankoverf. med normal advisering";
 
 if ($menu=='T') {
-	include_once '../includes/topmenu/header.php';
-	print "<div class='$kund'>$title</div>
-	<div class='content-noside'>";
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
 	print "<div class='dataTablediv'><table cellpadding='1' cellspacing='0' border='0' width='100%' valign = 'top' class='dataTable'><thead>";
 } else {
 	include_once '../includes/oldDesign/header.php';
@@ -534,5 +541,13 @@ $q=db_select("select * from betalinger where liste_id=$liste_id order by modt_na
 }
 	
 print "</td></tr>";
+
+if ($menu=='T') {
+	print "</tfoot></table></div>";
+	include_once '../includes/topmenu/footer.php';
+} else {
+	print "</tbody></table>";
+	include_once '../includes/oldDesign/footer.php';
+}
 print "</form>";
 ?>

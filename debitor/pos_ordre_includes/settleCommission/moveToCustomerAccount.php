@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -- debitor/pos_ordre_includes/settleCommission/moveToCustomerAccount.php- patch 4.0.1 -- 2021-04-10 --
+// -- debitor/pos_ordre_includes/settleCommission/moveToCustomerAccount.php --- patch 4.0.9 -- 2023-11-20 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,9 +20,10 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2021 saldi.dk aps
+// Copyright (c) 2003-2023 saldi.dk aps
 // ----------------------------------------------------------------------
 // 20210410 PHR Addad CreatePayList
+// 20231120	PHR Added checkLineId to avoid same line counnted more than once.
 
 $coAc=$itNo=array();
 /*
@@ -130,21 +131,22 @@ for ($co=0;$co<count($coAc);$co++) {
 			}
 		}
 	}
-	$orderId=array();
-	$oid=0;
+	$checkLineId = $orderId = array();
+	$i = $oid = 0;
 	for ($c = 0 ; $c < count($cGroup) ; $c++) {
 		$commissionSum=0;
 		for ($v=0;$v<count($cItemId[$c]);$v++) {
 			$commission = 0;
 			$qtxt = "select ordrer.id as orderid,ordrelinjer.pris,ordrelinjer.antal,ordrelinjer.rabat,ordrelinjer.kostpris,";
-			$qtxt.= "ordrelinjer.momssats from ordrelinjer,ordrer,pos_betalinger where (ordrer.art like 'D%' or ordrer.art = 'PO') ";
+			$qtxt.= "ordrelinjer.momssats,ordrelinjer.id as line_id from ordrelinjer,ordrer,pos_betalinger ";
+			$qtxt.= "where (ordrer.art like 'D%' or ordrer.art = 'PO') ";
 			$qtxt.= "and ordrer.fakturadate <= '$commissionToDate' and ordrer.fakturadate >= '$commissionFromDate' ";
 			$qtxt.= "and ordrelinjer.pris != '0' and ordrer.status >= '3' "; #and (settletime = '0' or settletime = '$settletime')
 			$qtxt.= "and ordrelinjer.ordre_id = ordrer.id and pos_betalinger.ordre_id = ordrer.id and ";
 			$qtxt.= "ordrelinjer.vare_id='". $cItemId[$c][$v] ."' and ordrer.felt_5 = '$kasse'";
 			$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 			while ($r=db_fetch_array($q)) {
-				if ($r['kostpris'] > 0) {
+				if ($r['kostpris'] > 0 && !in_array($r['line_id'],$checkLineId)) {
 					if (!in_array($r['orderid'],$orderId)) {
 						$orderId[$oid] = $r['orderid'];
 						$oid++;
@@ -155,6 +157,8 @@ for ($co=0;$co<count($coAc);$co++) {
 					$cost        = $r['kostpris'] * $r['antal'];
 #					$cost        = $cost + ($cost  * $r['momssats']/100);
 					$commission += afrund($cost,2); 
+					$checkLineId[$i] = $r['line_id'];
+					$i++;
 				}
 			}
 			$commissionSum += $commission;

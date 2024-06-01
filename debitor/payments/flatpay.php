@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ------------- payments/flatpay.php ---------- lap 3.9.9----2023.03.15-------
+// --- payments/flatpay.php --- lap 4.1.0 --- 2024.02.27 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,8 +20,10 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2012-2023 saldi.dk aps
+// Copyright (c) 2024-2024 saldi.dk aps
 // ----------------------------------------------------------------------
+// 20240209 PHR Added indbetaling
+// 20240227 PHR Added $printfile and call to saldiprint.php
 
 @session_start();
 $s_id = session_id();
@@ -41,8 +43,8 @@ include ("../../includes/stdFunc/usDecimal.php");
 $raw_amount = (float) usdecimal(if_isset($_GET['amount'], 0));
 $pretty_amount = dkdecimal($raw_amount, 2);
 $ordre_id = if_isset($_GET['id'], 0);
+$indbetaling = if_isset($_GET['indbetaling'], 0);
 $kasse = $_COOKIE['saldi_pos'];
-
 print "<div id='container'>";
 print "<span>Flatpay terminal startet, afventer kort.</span>";
 print "<h3>$pretty_amount kr.</h3>";
@@ -61,9 +63,14 @@ $q=db_select("select var_value from settings where var_name = 'flatpay_auth'",__
 $guid = db_fetch_array($q)[0];
 # $q=db_select("select var_value from settings where var_name = 'flatpay_terminal_id' and group_id = $kasse",__FILE__ . " linje " . __LINE__);
 # $terminal_id = db_fetch_array($q)[0];
-
-$q=db_select("SELECT box4 FROM grupper WHERE beskrivelse='Pos valg' AND kodenr=2",__FILE__ . " linje " . __LINE__);
+$qtxt = "SELECT box4 FROM grupper WHERE beskrivelse = 'Pos valg' AND kodenr = '2' and fiscal_year = '$regnaar'";
+$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 $terminal_id = explode(chr(9),db_fetch_array($q)[0])[$kasse-1];
+
+if ($db=='pos_10' || $db=='laja_15') {
+  $printfile = 'https://'.$_SERVER['SERVER_NAME'];
+  $printfile.= str_replace('debitor/payments/flatpay.php',"temp/$db/receipt_$kasse.txt",$_SERVER['PHP_SELF']);
+} else $printfile = NULL;
 
 print "
 <script>
@@ -84,7 +91,7 @@ print "
 
   const successed = (event) => {
     console.log(cardScheme);
-    window.location.replace(`../pos_ordre.php?id=$ordre_id&godkendt=OK&amount=$raw_amount&cardscheme=\${cardScheme}`)
+    window.location.replace(`../pos_ordre.php?id=$ordre_id&godkendt=OK&indbetaling=$indbetaling&amount=$raw_amount&cardscheme=\${cardScheme}`)
   };
   const failed = (event) => {
     console.log('Failed click');
@@ -134,6 +141,22 @@ print "
         console.log('Letgoo 200');
         paused = true;
         var json_data = await res.json();
+
+        fetch(
+          'save_receipt.php',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              data: json_data, 
+              id: '$ordre_id',
+              type: 'flatpay'
+            })
+          }
+        );
+        window.open(\"http://localhost/saldiprint.php?bruger_id=99&bonantal=1&printfil=$printfile&skuffe=0&gem=1','','width=200,height=100\")
         cardScheme = json_data.cardScheme;
         console.log(json_data);
 
@@ -142,7 +165,7 @@ print "
         if (json_data.transApproved) {
           elm.style.backgroundColor = '#51e87d';
           elm.innerText = 'Success';
-          countdown(5);
+          countdown(0);
           document.getElementById('continue-success').style.display = 'block';
           document.getElementById('continue').style.display = 'none';
         } else if (json_data.transCancelled) {

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.0.9 -- 2023.12.20 --
+// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.1.0 -- 2024.01.12 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2014-2023 saldi.dk aps
+// Copyright (c) 2014-2024 saldi.dk aps
 // ----------------------------------------------------------------------------
 //
 // 2014.05.08 - Indsat diverse til bordhåndtering, bruger nr fra ordrer til bordnummer (PHR - Danosoft) Søg 20140508 eller $bordnr 
@@ -65,6 +65,7 @@
 // 20220726 PHR Added barcodeNew to be inserted into orderline colunm 'barcode'
 // 20230613 PHR php8
 // 20231220 PHR added htmlentities to #20210829
+// 20240112 PHR Set $myDe to '-' if empty 
 
 function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$rabat_ny,$lager_ny) {
 	print "\n<!-- Function varescan (start)-->\n";
@@ -209,6 +210,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 				$myAc=$r['account_id'];
 				$myPr=$r['price'];
 				$myDe=$r['description'];
+				if (!$myDe) $myDe = '-';
 				$myCo=$r['condition'];
 				$barcodeNew = $r['barcode'];
 				$qtxt="select kontonr from adresser where id='$myAc'";
@@ -218,6 +220,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 					$myAc=$r['account_id'];
 					$myPr=$r['price'];
 					$myDe=$r['description'];
+					if (!$myDe) $myDe = '-';
 					$myCo=$r['condition'];
 					$barcodeNew = $r['barcode'];
 					$qtxt="select kontonr from adresser where id='$myAc'";
@@ -390,7 +393,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 		print "<input type=\"hidden\" name = \"pre_bordnr\" value=\"$bordnr\">\n";  #20140508
 		#print "<input type=\"hidden\" name = \"vare_id\" value=\"$vare_id[0]\">\n";
 		print "<input type=\"hidden\" name = \"momssats\" value=\"$momssats\">\n";
-		print "<input type='hidden' name = 'beskrivelse_old' value='". htmlentities($beskrivelse[0]) ."'>\n"; #20210829
+		print "<input type='hidden' name = 'beskrivelse_old' value=\"". htmlentities($beskrivelse[0]) ."\">\n"; #20210829
 		print "<input type='hidden' name = 'pris_old' value=\"$pris[0]\">\n"; #20210829
 		if ($myDe) print "<input type='hidden' name = 'beskrivelse_ny' value=\"$myDe\">\n"; #20210829
 		print "<input type='hidden' name = 'barcodeNew' value=\"$barcodeNew\">\n"; #20210829

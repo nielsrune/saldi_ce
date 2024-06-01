@@ -734,7 +734,8 @@ function input($menu_id,$rows,$cols) {
 				if ($c==10) print "<OPTION value='10'>$buttonTextArr[close]</OPTION>";
 				if ($c==11) print "<OPTION value='11'>$buttonTextArr[draw]</OPTION>";
 				if ($c==12) print "<OPTION value='12'>$buttonTextArr[print]</OPTION>";
-				if ($c==40) print "<OPTION value='40'>Udskriv</OPTION>"; # LN 20190205
+				if ($c==40 && $landeconfig == 'Norway') print "<OPTION value='40'>Proforma</OPTION>"; # LN 20190205
+				elseif ($c==40) print "<OPTION value='40'>Udskriv</OPTION>"; # LN 20190205
 				if ($c==41) print "<OPTION value='41'>X-Rapport</OPTION>"; # LN 20190205
 				if ($c==42) print "<OPTION value='42'>Z-Rapport</OPTION>"; # LN 20190305
 				if ($c==43) print "<OPTION value='43'>$buttonTextArr[copy]</OPTION>"; # LN 20190305
@@ -883,6 +884,7 @@ function output ($menu_id,$rows,$cols,$radius,$width,$height,$fontsize,$bgcolor2
 
 # Setup popups
 print "<div id='modal-bg' onclick='close_menu_popup()'></div>";
+/*
 print "<div id='menu-popup' class='popup'>";
 print "<input type='text' id='search-menu' placeholder='Søg efter en menu' onkeyup='filter_table(\"search-menu\", \"menu-table\")'>";
 print "<table id='menu-table' class='search-table'>";
@@ -903,7 +905,8 @@ while ($r = db_fetch_array($q)) {
 }
 print "</tbody></table>";
 print "</div>";
-
+*/
+/*
 print "<div id='vare-popup' class='popup'>";
 print "<input type='text' id='search-vare' placeholder='Søg efter en vare' onkeyup='filter_table(\"search-vare\", \"vare-table\")'>";
 print "<table id='vare-table' class='search-table'>";
@@ -926,6 +929,7 @@ while ($r = db_fetch_array($q)) {
   ";
   $x++;
 }
+*/
 print "</tbody></table>";
 print "</div>";
 

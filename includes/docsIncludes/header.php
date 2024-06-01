@@ -1,5 +1,5 @@
 <?php
-// --- includes/documents.php --- patch 4.0.6------2022.03.05---
+// --- includes/documents.php -----patch 4.0.8 ----2023-07-25-----------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -14,11 +14,13 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2022 Saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
+//20230725 LOE Minor modification for kassekladde
 
-if ($source=="kassekladde") $tmp="../finans/kassekladde.php?kladde_id=$sourceId&fokus=$fokus";
+if ($source=="kassekladde") $tmp="../finans/kassekladde.php?kladde_id=$kladde_id&id=$sourceId&fokus=$fokus"; #20230725
 elseif ($source=="debitorOrdrer") $tmp="../debitor/ordre.php?id=$sourceId&fokus=$fokus"; #20140122
 elseif ($source=="creditorOrder") $tmp="../kreditor/ordre.php?id=$sourceId&fokus=$fokus"; #20140122
 else $tmp="../debitor/historikkort.php?id=$sourceId&fokus=$fokus";

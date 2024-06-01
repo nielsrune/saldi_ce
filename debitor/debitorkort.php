@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/debitorkort.php --- lap 4.0.8 --- 2023-02-23 ---
+// --- debitor/debitorkort.php --- lap 4.0.8 --- 2023-09-25 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -39,6 +39,7 @@
 // 20211006   PHR added 'anonymize'
 // 20221229 PHR some cleanup
 // 20230223 PHR repaired 'anonymize' after translalation error and renamed kategori to katString where is string
+// 20230925 PHR php8
 
 @session_start();
 $s_id=session_id();
@@ -49,7 +50,7 @@ $cat_id = array();
 print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/overlib.js\"></script>\n";
 
 $modulnr=6;
-$title="SALDI - debitorkort";
+$title="Debitorkort";
 $css="../css/standard.css";
 
  include("../includes/connect.php");
@@ -294,7 +295,7 @@ if (isset($_POST['id']) || isset($_POST['firmanavn'])){
  		 	if ((ord($y)<48)||(ord($y)>57)) {$y=0;}
  		 	$tmp2=$tmp2.$y;
  		}
- 		$tmp2=$tmp2*1;
+ 		$tmp2=(float)$tmp2;
  		if ($tmp2!=$ny_kontonr) {
 			$alerttekst=findtekst(345,$sprog_id);
 			print "<BODY onLoad=\"javascript:alert('$alerttekst')\"><!--tekst 345-->";
@@ -595,16 +596,36 @@ $tekst=findtekst(154,$sprog_id);
 if ($menu=='T') {
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
-	print "<div id=\"header\"> 
-			<div class=\"headerbtnLft\"><a class='button red small' href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L>Luk</a></div>
-			<span class=\"headerTxt\">Debitorkort</span>";     
-	print "<div class=\"headerbtnRght\"></div>";       
-	print "</div><!-- end of header -->
-		<div class=\"maincontentLargeHolder\">\n";
-	print  "<table border='0' cellspacing='1' class='dataTable2'>";
-} elseif ($menu=='S') {
-	include("../includes/sidemenu.php");
+	print "<div id=\"header\">"; 
+	## add onClick=\"JavaScript:opener.location.reload();\" but still get style from headlink MALENE
+	print "<div class=\"headerbtnLft headLink\"><a href=\"javascript:confirmClose('$returside?returside=$returside&id=$ordre_id&fokus=$fokus&konto_id=$id','$tekst')\" accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a>";
+	if ($jobkort) {
+		print "&nbsp;&nbsp;";   
+	} else {
+		print "";
+	}
+	print "</div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\"><a href='historikkort.php?id=$id&returside=debitorkort.php' title='".findtekst(131,$sprog_id)."'><i class='fa fa-history fa-lg'></i></a>&nbsp;&nbsp;<a href='rapport.php?rapportart=kontokort&konto_fra=$kontonr&konto_til=$kontonr&returside=../debitor/debitorkort.php?id=$id' title='".findtekst(133,$sprog_id)."'><i class='fa fa-vcard fa-lg'></i></a>";
+	if (substr($rettigheder,5,1)=='1') {
+		print "&nbsp;&nbsp;<a href='ordreliste.php?konto_id=$id&valg=faktura&returside=../debitor/debitorkort.php?id=$id' title='".findtekst(134,$sprog_id)."'><i class='fa fa-dollar fa-lg'></i></a>";     
 } else {
+		print "";
+	}
+	if ($jobkort) {
+		print "&nbsp;&nbsp;<a href='jobliste.php?konto_id=$id&returside=debitorkort.php' title='".findtekst(38,$sprog_id)."'><i class='fa fa-list-ul fa-lg'></i></a>";     
+	} else {
+		print "";	
+	}
+	print "</div></div>";
+	print "<div class='content-noside'>";
+	print  "<table border='0' cellspacing='1' class='dataTableForm' width='100%'>";
+} else {
+#if ($menu=='S') {
+#	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
+#	print "<tr><td style = 'width:150px;'>";
+#	print "</td><td><table cellpadding=\"1\" cellspacing=\"1\" border=\"0\" width=\"100%\" valign = \"top\">";
+#}
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n"; # TABEL 1 ->
 print "<tr><td align=\"center\" valign=\"top\">\n";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>"; # TABEL 1.1 ->
@@ -972,15 +993,15 @@ if (is_numeric($rename_category)){
 }
 
 print "</tbody></table></td>";# <- TABEL 1.2.4.1
-print "<td><table border=0><tbody>"; # TABEL 1.2.4.2 ->
+print "<td><table border=0 width='100%'><tbody>"; # TABEL 1.2.4.2 ->
 
 $bg=$bgcolor5;
-print "<tr bgcolor=$bg><td colspan=\"5\" valign=\"top\">".findtekst(391,$sprog_id)."<br><!--tekst 391--><textarea name=\"notes\" rows=\"6\" cols=\"85\">$notes</textarea></td></tr>\n";
+print "<tr bgcolor=$bg><td colspan=\"5\" valign=\"top\"><b>".findtekst(391,$sprog_id).":</b><br><!--tekst 391--> <div class='textwrapper'><textarea name=\"notes\" rows=\"6\" cols=\"85\" style='width:100%;'>$notes</textarea></div></td></tr>\n";
 #print "<tr><td> <a href=ansatte.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=$id>Kontaktperson</a></td><td><br></td>\n";
 print "</tbody></table></td></tr>";# <- TABEL 1.2.4.2
 print "<tr><td colspan=2><table border=\"0\" width=\"100%\"><tbody>"; # TABEL 1.2.4.3 ->
 	
-print "<tr><td colspan=6><hr></td></tr>\n";
+print "<tr><td colspan=6></td></tr>\n";
 $x = 0;
 	if ($kontotype == 'erhverv') {
 	print "<tr bgcolor=$bg><td colspan=6><b>".findtekst(392,$sprog_id)."<!--tekst 392--></b></td></tr>\n";
@@ -993,8 +1014,8 @@ $x = 0;
  		 	$x++;
 			($bg==$bgcolor) ? $bg=$bgcolor5 : $bg=$bgcolor;
  		 	print "<tr bgcolor=$bg>\n";
- 			print "<td width=10><input class='inputbox' type='text' size=1 name=posnr[$x] value=\"$x\"></td><td title=\"".htmlentities($r['notes'],ENT_COMPAT,$charset)."\"><a href=ansatte.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=$id&id=$r[id]>".htmlentities($r['navn'],ENT_COMPAT,$charset)."</a></td>\n";
- 			print "<td>$r[tlf]</td><td>$r[mobil]</td><td> $r[email]</td></tr>\n";
+ 			print "<td width=10><input class='inputbox' type='text' size=2 name=posnr[$x] value=\"$x\"></td><td title=\"".htmlentities($r['notes'],ENT_COMPAT,$charset)."\"><a href=ansatte.php?returside=$returside&ordre_id=$ordre_id&fokus=$fokus&konto_id=$id&id=$r[id]>".htmlentities($r['navn'],ENT_COMPAT,$charset)."</a></td>\n";
+ 			print "<td>$r[tlf]</td><td>$r[mobil]</td><td> $r[email]</td></td><td></td></tr>\n";
  			print "<input class='inpPasswordutbox' type=hidden name=ans_id[$x] value=$r[id]>\n";
  			if ($x==1) {print "<input class='inputbox' type=hidden name=kontakt value='$r[navn]'>";}
 		}
@@ -1036,7 +1057,6 @@ print "</tbody></table></td></tr>"; # <- TABEL 1.2
 print "<tr><td align = 'center' valign = 'bottom'>\n";
 if ($menu=='T')
 {
-} elseif ($menu=='S') {
 } else {
 	print "<table width='100%' align='center' border='0' cellspacing='1' cellpadding='0'><tbody>"; # TABEL 1.3 ->
 	print "<td width='25%' $top_bund>&nbsp;</td>\n";
@@ -1071,6 +1091,9 @@ print "<td width=\"25%\" $top_bund>&nbsp;</td>\n";
 print "</td></tbody></table></td></tr>"; # <- TABEL 1.3
 print "</tbody></table>"; # <- TABEL 1
 }
+	if ($menu=='S') {
+	print "</tbody></table>";
+}
 
 function split_navn($firmanavn) {
 	$y=0;
@@ -1087,5 +1110,11 @@ function split_navn($firmanavn) {
 }
 
 print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/cvrapiopslag.js\"></script>\n";
+
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
 ?>
-</body></html>

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- finans/rapport_includes/kontokort_moms.php --- lap 3.9.9 --- 2021-02-11 ---
+// --- finans/rapport_includes/kontokort_moms.php -- ver 4.0.8 -- 2023-09-08 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -19,9 +19,10 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2020-2021 saldi.dk ApS
-// ----------------------------------------------------------------------
+// Copyright (c) 2003-2023 Saldi.dk ApS
+// ------------------------------------------------------------------------------
 //
 // 20190924 PHR Added option 'Poster uden afd". when "afdelinger" is used. $afd='0' 
 // 20210107 PHR Added totals for each account. 
@@ -37,6 +38,7 @@ function kontokort_moms($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, 
 	global $db;
 	global $md,$menu;
 	global $prj_navn_fra,$prj_navn_til;
+	global $sprog_id;
 	global $top_bund;
 	
 	$title = 'Rapport • Kontokort med Moms';

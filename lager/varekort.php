@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/varekort.php --- lap 4.0.8 --- 2023-10-18 ---
+// --- lager/varekort.php --- lap 4.1.0 --- 2024-01-05 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -88,7 +88,7 @@
 // 20230910 PHR - Moved a several routines to seperate files in productCardIncludes.
 // 20231006 PHR - some changes in Variants - Must be totally rewritten
 // 20231018 PHR - More changes in Variants - Must be totally rewritten
-
+// 20240105 PHR _ Error in $ant_be_af
 ob_start(); //Starts output buffering
 
 @session_start();
@@ -370,7 +370,7 @@ if ($saveItem || $submit = trim($submit)) {
 		} else $kostpris[0] = 0;
 	} else $kostpris[0] = usdecimal($kostpris[0],2);
 	
-    $qtxt = "select * from grupper where art='VG' and kodenr = '$gruppe'";
+    $qtxt = "select * from grupper where art='VG' and kodenr = '$gruppe' and fiscal_year = '$regnaar'";
     if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
         $stockItem = if_isset($r['box8'],0);
         $batchItem = if_isset($r['box9'],0);
@@ -382,7 +382,7 @@ if ($saveItem || $submit = trim($submit)) {
 	$begin=1;
 	if ($ny_kategori && $ny_kategori!=$tmp) {
 		$x=0;
-		$qtxt = "select id,box2 from grupper where art='V_CAT' and box1='".db_escape_string($ny_kategori)."' and box2='$master'";
+        $qtxt = "select id,box2     pper where art='V_CAT' and box1='".db_escape_string($ny_kategori)."' and box2='$master'";
 		$r=db_fetch_array($q=db_select($qtxt,__FILE__ . " linje " . __LINE__));
 #		$master_id=$r['id']*1;
 		if (!$rename_category && $r=db_fetch_array($q=db_select("select id from grupper where art='V_CAT' and lower(box1) = '".db_escape_string(strtolower($ny_kategori))."' and box2='$master'",__FILE__ . " linje " . __LINE__))) {
@@ -460,9 +460,9 @@ if ($id && is_array($lagerlok)) {
 		}
 		$qtxt="select id from variant_varer where vare_id='$id' and (variant_type='$ny_variant_type' or variant_stregkode='$var_type_stregk')";
 		if($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-			$tmp=$r['id'];
+            alert ("stregkode $var_type_stregk eller variant allerde allerede i brug.");
 		} else {
-#			($variantsum)?$var_type_beh=0:$var_type_beh=$beholdning*1; # 20201020 disabled as it made mismatch in qty's
+            ($variantsum)?$var_type_beh=0:$var_type_beh=$beholdning*1; # 20201020 disabled as it made mismatch in qty's
 			if (!$ny_variant_type) $ny_variant_type=1;
             $qtxt="insert into variant_varer(vare_id,variant_type,variant_stregkode,variant_beholdning) values ('$id','$ny_variant_type','$var_type_stregk','0')"; 
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__); 
@@ -502,9 +502,9 @@ if ($id && is_array($lagerlok)) {
 	}
 */	
 	if ($ny_gruppe && $ny_gruppe != $gruppe) {
-		$r=db_fetch_array(db_select("select box8 from grupper where art='VG' and kodenr = '$ny_gruppe'",__FILE__ . " linje " . __LINE__));
+        $r=db_fetch_array(db_select("select box8 from grupper where art='VG' and kodenr = '$ny_gruppe' and fiscal_year = '$regnaar'",__FILE__ . " linje " . __LINE__));
 		$tmp1= ($r['box8']);
-		$r=db_fetch_array(db_select("select box8 from grupper where art='VG' and kodenr = '$gruppe'",__FILE__ . " linje " . __LINE__));
+        $r=db_fetch_array(db_select("select box8 from grupper where art='VG' and kodenr = '$gruppe' and fiscal_year = '$regnaar'",__FILE__ . " linje " . __LINE__));
 		$tmp2= ($r['box8']);
 		if ($tmp1=='on' && $tmp1 != $tmp2) {
 			$r=db_fetch_array(db_select("select sum(antal) as antal from batch_kob where vare_id='$id'",__FILE__ . " linje " . __LINE__));
@@ -543,12 +543,13 @@ if ($id && is_array($lagerlok)) {
 
 # Genererer tekststrenge med maengderabatter - decimaltaltal rettes til "us" og felter med antal "0" fjernes.
 	for ($x=0;$x<count($m_rabat_array);$x++) {
-		if (!isset($m_rabat_array[$x])) $m_rabat_array[$x]=NULL;
-		if (!isset($m_antal_array[$x])) $m_antal_array[$x]=NULL;
-		$tmp1=usdecimal($m_rabat_array[$x],2)*1;
-		$tmp2=usdecimal($m_antal_array[$x],2)*1;
+        if (!isset($m_rabat_array[$x])) $m_rabat_array[$x]=0;
+        if (!isset($m_antal_array[$x])) $m_antal_array[$x]=0;
+        $tmp1=usdecimal($m_rabat_array[$x],8)*1;
+        $tmp2=usdecimal($m_antal_array[$x],8)*1;
 		if ($incl_moms && $m_type!="percent") $tmp1*=100/(100+$incl_moms);
-	if ($tmp2) {
+
+        if ($tmp1 && $tmp2) {
 			if ($m_antal) {
 				$m_rabat=$m_rabat.";".$tmp1;
 				$m_antal=$m_antal.";".$tmp2;
@@ -732,7 +733,12 @@ if ($id && is_array($lagerlok)) {
 				if (!is_numeric($provision)) $provision = 0; 
 				$provision = afrund($provision,0);
 			}
-			
+            if ($salgspris_multiplier > 0) {
+                $salgspris = $kostpris[0]*100/$salgspris_multiplier;
+            }
+            if ($tier_price_multiplier > 0) {
+                $tier_price = $kostpris[0]*100/$tier_price_multiplier;
+            }
             $qtxt = "update varer set stregkode='$stregkode',enhed='$enhed',enhed2='$enhed2',indhold='$indhold',";
             $qtxt.= "forhold='$forhold',salgspris = '$salgspris',kostpris = '$kostpris[0]',";
             $qtxt.= "provisionsfri = '$provisionsfri',gruppe = '$gruppe',prisgruppe = '$prisgruppe',";
@@ -790,13 +796,13 @@ if ($id && is_array($lagerlok)) {
 			if (($operation)&&($r=db_fetch_array(db_select("select varenr from varer where operation = '$operation' and id !=$id",__FILE__ . " linje " . __LINE__)))) {
 				print "<BODY onLoad=\"javascript:alert('Operationsnr: $operation er i brug af $r[varenr]! Operationsnr ikke &aelig;ndret')\">";
 			} elseif ($operation) {
-				$r=db_fetch_array(db_select("select box10 from grupper where art='VG' and kodenr = '$gruppe'",__FILE__ . " linje " . __LINE__));
+                $r=db_fetch_array(db_select("select box10 from grupper where art='VG' and kodenr = '$gruppe' and fiscal_year = '$regnaar'",__FILE__ . " linje " . __LINE__));
                 if ($r['box10']!='on') $operation=0;
 				db_modify("update varer set operation = '$operation' where id = '$id'",__FILE__ . " linje " . __LINE__);
 			}
 	
 ######################################## Stykliste ############################################
-            if ($samlevare=='on' && count($ant_be_af)) {
+            if ($samlevare=='on' && $ant_be_af > 0) {
 				for ($x=1; $x<=$ant_be_af; $x++) {
 					$be_af_ant[$x]=usdecimal($be_af_ant[$x],2);
 					if ($be_af_pos[$x]=="-") $be_af_ant[$x]=0; 
@@ -1141,7 +1147,7 @@ if ($id > 0) {
 		$useCommission = $r['var_value'];
 	} else $useCommission = NULL;
 #	$kpris=dkdecimal($row['kostpris']);
-    $q = db_select("select * from grupper where art='VG' and kodenr = '$gruppe'",__FILE__ . " linje " . __LINE__);
+    $q = db_select("select * from grupper where art='VG' and kodenr = '$gruppe' and fiscal_year = '$regnaar'",__FILE__ . " linje " . __LINE__);
     $r = db_fetch_array($q);
     $stockItem = if_isset($r['box8'],0);
     $batchItem = if_isset($r['box9'],0);

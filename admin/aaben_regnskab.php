@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --------/admin/aaben_regnskab.php-----lap 4.0.5 ------2022-03-11--------
+// --- admin/aaben_regnskab.php --- lap 4.0.9 --- 2023-11-03 ---
 // LICENSE
 // 
 // This program is free software. You can redistribute it and / or
@@ -19,14 +19,16 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 2015.01.04 Initerer variablen $nextver så den bypasser versionskontrol i online.php
 // 2018.11.07 Rettet stavefejl i variablen $regnskabsaar linje 63
 // 2020.03.08 PHR A lot of changes regarding MySQLi and handling missing or empty databases.
 // 2020.02.22 PHR Added call to locator and added global_id;
 // 2020.03.11 PHR Added call to betweenUpdates and added global_id to table regnskab if not exist;
+// 2023.11.03 PHR Added call to online.php after tjek4opdat
 
 @session_start();
 $s_id=session_id();
@@ -122,7 +124,10 @@ $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $dbver=$r['box1'];
 $tmp = str_replace(".",";",$dbver);		
 list($a, $b, $c)=explode(";", trim($tmp));
-if ($dbver<$version) tjek4opdat($dbver,$version);	
+if ($dbver<$version) {
+	tjek4opdat($dbver,$version);
+	include("../includes/online.php");
+}
 if (file_exists("../includes/betweenUpdates.php")) {
 	include("../includes/betweenUpdates.php");
 }

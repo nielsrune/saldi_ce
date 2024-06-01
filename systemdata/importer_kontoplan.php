@@ -224,6 +224,7 @@ for ($y=0; $y<=$feltantal; $y++) {
 	if ($feltnavn[$y]!='Kontotype') print "<option>Kontotype</option>\n";
 	if ($feltnavn[$y]!='Moms') print "<option>Moms</option>\n";
 	if ($feltnavn[$y]!='Fra_kto') print "<option>Fra_kto</option>\n";
+	if ($feltnavn[$y]!='map_to') print "<option value='map_to'>Map til</option>\n";
 	if ($regnaar==1 && $feltnavn[$y]!='primo') print "<option>primo</option>\n";
 }
 
@@ -248,7 +249,7 @@ if ($fp) {
 				$felt[$y]=trim($felt[$y]);
 				$felt[$y]=trim($felt[$y],'"');
 				# if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
-				if ($feltnavn[$y]=='Kontonr' && ($felt[$y]!=$felt[$y]*1 || in_array($felt[$y],$kontonumre))) {
+				if ($feltnavn[$y]=='Kontonr' && ($felt[$y]!=(int)$felt[$y] || in_array($felt[$y],$kontonumre))) {
 					if (!$alert) alert('Røde linjer indeholder fejl i kontonummer og bliver ikke importeret');
 					$alert=1;
 					$skriv_linje=2;
@@ -266,7 +267,7 @@ if ($fp) {
 				if ($feltnavn[$y]=='Moms') {
 					$a=substr($felt[$y],0,1);
 					$b=substr($felt[$y],1);
-					if (($felt[$y])&&((!in_array($a,$momstyper))||($b!=$b*1))) {
+					if (($felt[$y])&&((!in_array($a,$momstyper))||($b != (int)$b))) {
 						if (!$alert) alert('Røde linjer indeholder fejl (Moms) og bliver ikke importeret');
 						$alert=1;
 						$skriv_linje=2;
@@ -275,7 +276,7 @@ if ($fp) {
 				}
 				if ($feltnavn[$y]=='Fra_kto' && $sumkonto)  {
 					if (!$felt[$y]) $felt[$y]='0';
-					if ($felt[$y]!=$felt[$y]*1) {
+					if ($felt[$y] != (int)$felt[$y]) {
 						if (!$alert) alert('Røde linjer indeholder fejl (Fra kto) og bliver ikke importeret');
 						$alert=1;
 						$skriv_linje=2;
@@ -395,10 +396,10 @@ if ($fp) {
 				$feltnavn[$y]=strtolower($feltnavn[$y]);
 				if ((substr($felt[$y],0,1) == '"')&&(substr($felt[$y],-1) == '"')) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
 				if ((substr($felt[$y],0,1) == "'")&&(substr($felt[$y],-1) == "'")) $felt[$y]=substr($felt[$y],1,strlen($felt[$y])-2);
-				if (($feltnavn[$y]=='Kontonr')&&(($felt[$y]!=$felt[$y]*1)||(in_array($felt[$y],$kontonumre)))) {
+				if (($feltnavn[$y]=='Kontonr')&&(($felt[$y] != (int)$felt[$y])||(in_array($felt[$y],$kontonumre)))) {
 					$skriv_linje=2;
 				} elseif ($feltnavn[$y]=='Kontonr') $kontonumre[$x]=$felt[$y];
-				if (($feltnavn[$y]=='kontonr')&&($felt[$y]!=$felt[$y]*1)) {
+				if (($feltnavn[$y]=='kontonr') && ($felt[$y] != (int)$felt[$y])) {
 					$skriv_linje=2;
 				}
 				if ($feltnavn[$y]=='beskrivelse') {
@@ -413,16 +414,23 @@ if ($fp) {
 				if ($feltnavn[$y]=='moms') {
 					$a=substr($felt[$y],0,1);
 					$b=substr($felt[$y],1);
-					if (($felt[$y])&&((!in_array($a,$momstyper))||($b!=$b*1))) {
+					if (($felt[$y])&&((!in_array($a,$momstyper))||($b != (int)$b))) {
 						$skriv_linje=2;
 					}				
 				} 
 				if (($feltnavn[$y]=='fra_kto')&&($sumkonto))  {
 					if (!$felt[$y]) $felt[$y]='0';
-					if ($felt[$y]!=$felt[$y]*1) {
+					if ($felt[$y] != (int)$felt[$y]) {
+						$skriv_linje=2;
+					}
+				}
+				if (($feltnavn[$y]=='fra_kto')&&($sumkonto))  {
+					if (!$felt[$y]) $felt[$y]='0';
+					if ($felt[$y] != (int)$felt[$y]) {
 						$skriv_linje=2;
 					}		
 				} elseif ($feltnavn[$y]=='fra_kto') $felt[$y]='0';
+				if ($feltnavn[$y]=='map_to') $felt[$y] = (int)$felt[$y];
 				if ($feltnavn[$y]=='primo')  {
 					if (!is_numeric($felt[$y])) {
 						$felt[$y]=usdecimal($felt[$y]);
@@ -468,12 +476,12 @@ function nummertjek ($nummer){
 	$retur=1;
 	$nummerliste=array("1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", ".", "-");
 	for ($x=0; $x<strlen($nummer); $x++) {
-		if (!in_array($nummer{$x}, $nummerliste)) $retur=0;
+		if (!in_array($nummer[$x], $nummerliste)) $retur=0;
 	}
 	if ($retur) {
 		for ($x=0; $x<strlen($nummer); $x++) {
-			if ($nummer{$x}==',') $komma++;
-			elseif ($nummer{$x}=='.') $punktum++;		
+			if ($nummer[$x]==',') $komma++;
+			elseif ($nummer[$x]=='.') $punktum++;
 		}
 		if ((!$komma)&&(!$punktum)) $retur='US';
 		elseif (($komma==1)&&(substr($nummer,-3,1)==',')) $retur='DK';

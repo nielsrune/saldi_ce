@@ -586,7 +586,7 @@
 586	Vælg	Select	Velge
 587	formularskabelon	form template	skjemamal
 588	Pos. Kontakt	Pos. Contact	Pos. Ta kontakt med
-589	Medarbejder	Employee	Ansatt
+589	Ansat	Employee	Ansatt
 590	Vis fratrådte	Show resigned	Show trakk seg
 591	Kreditornr	Creditor number	Kreditornummer
 592	Konto	account	regnskap
@@ -765,7 +765,7 @@
 765	Font str.	Font size	Skriftstørrelse	
 766	Fontstørrelse på tekster som ikke er knap tekster i POS	Font size for texts that are not scarce texts in POS	Skriftstørrelse for tekster som ikke er knappe tekster i POS	
 767	`Mit salg` findes i debitorkonti. Anvendes til at give provisions kunder adgang til at se deres salg (loppemarkeder og lign.). 	My sales` can be found in debtor accounts. Used to give commission customers access to see their sales (flea markets and the like).	`Salget mitt 'finnes i debitorkontoer. Brukes for å gi kommisjonskunder tilgang til å se deres salg (loppemarkeder og lignende).	
-768	Aktivér `Mit salg`	Activate `My sales`	Aktiver &apos	Mitt salg&apos													
+768	Aktivér &apos;Mit salg&apos;	Activate &apos;My sales&apos;	Aktiver &apos;Mitt salg&apos;
 769	Bank BIC	Bank BIC	Bank BIC	
 770	Moms	VAT	Mva	
 771	Debitor-/kreditorgrupper	Debtor / creditor groups	Gjeld / kreditorgrupper	
@@ -1223,8 +1223,8 @@
 1223	Brug fakturanummer som bilagsnummer	Use invoice number as document number	Bruk fakturanummer som dokumentnummer
 1224	Brug modtagelsesnummer som bilagsnummer	Use the receipt number as the document number	Bruk kvitteringsnummeret som dokumentnummer
 1225	Indtast primotal for 1. regnskabsår:	Enter prime number for 1st financial year:	Angi primtall for 1. regnskapsår:
-1226	Ret 1. regnskabs&år:	Modify 1st accounting & year:	Høyre første regnskap og år:
-1227	Opret 1. regnskabsår:	Create 1st financial year:	Opprett 1. regnskapsår:
+1226	Ret 1. regnskabsår:	Modify 1st fiscal year:	 Rett 1. regnskapår:
+1227	Opret 1. regnskabsår:	Create 1st fiscal year:	Opprett 1. regnskapsår:
 1228	Overfør 	Transfer	Overføre
 1229	Primo	First	Først
 1230	Lås lagerværdi	Lock stock value	Lås aksjeverdi
@@ -1333,7 +1333,7 @@
 1333	Ny tjekliste	New checklist	Ny sjekkliste
 1334	Ny tjek gruppe	New check group	Ny sjekkgruppe
 1335	Denne sektion indeholder de informationer, som er nødvendige for at kunne håndtere scannede bilag	This section contains the information needed to handle scanned documents	Denne delen inneholder informasjonen som trengs for å håndtere skannede dokumenter
-1336	Du kan vælge at lade os opbevare dine scannede bilag for kr. 30,- pr. måned pr. GB,	You can choose to let us store your scanned vouchers for DKK 30 per month per. GB,	Du kan velge å la oss lagre de skannede kupongene for DKK 30 per måned pr. GB,
+1336	Du kan vælge at lade os opbevare dine scannede bilag for kr. 75,- pr. måned pr. GB,	You can choose to let us store your scanned vouchers for € 10 per month per. GB,	Du kan velge å la oss lagre de skannede kupongene for NOK 100 per måned pr. GB,
 1337	hvilket ligeledes giver mulighed for at sende indscannede bilag pr. e-mail til serveren	which also allows you to send scanned vouchers per. email to the server	som også lar deg sende skannede bilag pr. e-post til serveren
 1338	og efterfølgende importere dem i kassekladden.	and subsequently import them into the cash journal.	og deretter importere dem til kontantjournalen.
 1339	Bilag sendes til	Attachments are sent to	Vedlegg sendes til
@@ -1472,7 +1472,7 @@
 1472	Genfaktureringsdato. Dette felt skal kun udfyldes, hvis der er tale om et abonnement eller \nlignende, som skal faktureres igen på et senere tidspunkt. \nSkriv datoen for næste fakturering	Re-invoicing date. This field should only be filled in if it is a \nsubscription, or similar that needs to be invoiced again at a later date. \nWrite the date of the next billing	Dato for fakturering på nytt. Dette feltet skal bare fylles ut hvis det er et abonnement eller \nlignende, som må faktureres på et senere tidspunkt. \n Skriv datoen for neste fakturering
 1473	Hvis hele ordren skal registreres på et projekt, vælges projektet her. Ellers anvendes projektfeltet på ordrelinjen.	If the entire order is to be registered on a project, the project is selected here. Otherwise, the project field is used on the order line.	Hvis hele bestillingen skal registreres på et prosjekt, velges prosjektet her. Ellers brukes prosjektfeltet på ordrelinjen.
 1474	Ved fakturering ændres emneteksten til	When invoicing, the subject text is changed to	Ved fakturering endres emneteksten til
-1775	Ved fakturering ændres mailteksten til	When invoicing, the email text changes to	Ved fakturering endres e-postteksten til
+1475	Ved fakturering ændres mailteksten til	When invoicing, the email text changes to	Ved fakturering endres e-postteksten til
 1476	Mail emne	Mail subject	Postemne
 1477	Positionsnummer. Rækkefølgen ændres ved at overskrive positionsnumrene (1,5 hvis mellem 1 og 2). En enkelt linje slettes ved at skrive minustegn som positionsnummer.	Position number. The order is changed by overwriting the position numbers (1.5 if between 1 and 2). A single line is deleted by typing a minus sign as the position number.	Posisjonsnummer. Rekkefølgen endres ved å overskrive posisjonstallene (1,5 hvis mellom 1 og 2). En enkelt linje slettes ved å skrive et minustegn som posisjonsnummer.
 1478	Varenummer. Skriv hele varenumret eller klik på Opslag for at vælge. Hvis du vil vælge mellem varenumre startende med t, så skriv t* i feltet og klik på Opslag.	Item number. Enter the entire item number or click Lookup to select. If you want to choose between item numbers starting with t, type t* in the field and click Lookup.	Artikkelnummer. Skriv inn hele varenummeret, eller klikk på Oppslag for å velge. Hvis du vil velge mellom varenummer som begynner med t, skriver du t* i feltet og klikker på Oppslag.
@@ -2061,7 +2061,7 @@
 2061	alle varer	all products	alla varor														
 2062	kun eksisterende varer	only existing products	endast befintliga objekt														
 2063	Beregn salgspris efter købspris plus	Calculate Sales price from purchase price plus	Beräkna försäljningspris med inköpspris plus														
-2064	procent	percentage	procent														
+2064	%	%	%
 2065	beløb	amount	belopp														
 2066	uden afrunding	no rounding	utan avrundning 														
 2067	rund op	round up	avrunda uppåt														
@@ -2131,3 +2131,38 @@
 3022	Kontoen du anvender til at logge ind på din vibrant terminal med	The login you use to login to your terminal with	Innloggingsnett brukt til terminalen din
 3023	Opret login	Create login	Opprett login
 3024	Vis login	Show login	Vis login
+3025	Regnskab Basis 	Accounting Basis	Regnskapsgrunnlag
+3026	Hent en regnskabsfil med årsrapportens regnskabstal i CSV-format	Download an accounting file with the annual report's accounting figures in CSV format	Last ned en regnskapsfil med årsrapportens regnskapstall i CSV-format
+3027	Bemærk!	Note!	Merk!
+3028	For at udskrive en csv skal nedenstående kontonummer mappes til <u>standard kontonummer</u>.	To print a csv, the account number below must be mapped to the <u>standard account number</u>.	For å skrive ut en csv må kontonummeret nedenfor tilordnes <u>standard kontonummer</u>.
+3029	For at udskrive en csv skal de	To print a csv, the	For å skrive ut en csv må de
+3030	nedenstående kontonumre mappes til <u>standard kontonumre</u>.	account numbers below must be mapped to <u>standard account numbers</u>.	kontonumrene nedenfor tilordnes <u>standard kontonumre</u>.
+3031	Inde i	Inside	Inne i
+3032	systemdata &#8658; diverse &#8658; Import & Export	system data &#8658; miscellaneous &#8658; Import & Export	systemdata &#8658; diverse &#8658; Import & Export
+3033	kan du under	you can under	kan du under
+3034	Indlæs/udlæs kontoplan	Load/Export chart of accounts	Laste/Eksportere kontoplan
+3035	Importer mappingfil til offentlig standard kontoplan	Import mapping file to public standard chart of accounts	Importere tilordningsfil til offentlig standard kontoplan
+3036	De kontonumre som <u>ikke</u> kan mappes ændres i	The account numbers that cannot be mapped can be changed in	Kontonumrene som ikke kan kartlegges kan endres i
+3037	systemdata &#8658; kontoplan	system data &#8658; chart of accounts	systemdata &#8658; kontoplan
+3038	Her kan man under det enkelte kontonummer tilføje standard kontonummer i feltet	Here, under the individual account number, you can add the standard account number in the field	Her kan du under det enkelte kontonummeret legge til standard kontonummer i feltet
+3039	Map til	Map to	Kart til
+3040	Sidst på siden kan man se en udskrift af Standard Kontoplan	At the end of the page you can see a printout of the Standard Account Plan	På slutten av siden kan du se en utskrift av Standard Account Plan
+3041	eksisterer ikke	doesn't exist	eksisterer ikke
+3042	Standard Kontoplan	Standard Chart of Accounts	Standard Kontoplan
+3043	Vis Standard Kontoplan	Show Standard Chart of Accounts	Vis standard kontoplan
+3044	Luk Standard Kontoplan	Close Standard Chart of Accounts	Lukk Standard kontoplan
+3045	For at generere en SAF-T fil skal nedenstående kontonummer mappes til <u>standard kontonummer</u>.	To generate a SAF-T file, the account number below must be mapped to <u>standard account number</u>	For å generere en SAF-T-fil, må kontonummeret nedenfor tilordnes <u>standard kontonummer</u>
+3046	For at generere en SAF-T fil skal de	To generate a SAF-T file, the	For å generere en SAF-T-fil, må de
+3047	Her kan du oprette en SAF-T Financial rapport:	Here you can create a SAF-T Financial report:Her kan du lage en SAF-T finansiell rapport:
+3048	Opret	Create	Skape
+3049	Vis XML-fil	Show XML file	Vis XML-fil
+3050	Luk XML-fil	Close XML file	Lukk XML-fil
+3051	er blevet oprettet.	has been created.	er opprettet.
+3052	Filen er downloadet	The file has been downloaded	Filen er lastet ned
+3053	Import af XML SAF-T fil	Import of XML SAF-T file	Import av XML SAF-T-fil
+3054	Importer SAF-T XML fil til kassekladde.	Import SAF-T XML file to cash journal.	Importer SAF-T XML-fil til kassejournal.
+3055	Periode start:	Period start:	Periodestart:
+3056	Periode slut:	Period end:	Periodeslutt:
+3057	Indlæs data til kassekladde her:	Load data to cash journal here:	Last inn data til kassejournal her:
+3058	Filtypenavn ikke tilladt, vælg venligst en XML-fil.	File extension not allowed, please choose a XML file.	Filtypen er ikke tillatt, velg en XML-fil.
+3059	XML filen indeholder ingen data.	The XML file contains no data.	XML-filen inneholder ingen data.

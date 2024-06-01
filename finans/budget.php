@@ -4,38 +4,37 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------finans/budget.php ---------------------- 3.7.5 -- 2019-02-16 --
-// LICENS
+// -------------finans/budget.php ----------- patch 4.0.7 --- 2023.03.04 ---
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af "The Free Software Foundation", enten i version 2
-// af denne licens eller en senere version, efter eget valg.
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med saldi.dk ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
-//
-// En dansk oversaettelse af licensen kan laeses her:
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
-//
-// Copyright (c) 2003-2019 saldi.dk ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------------
 //
-// 20130210 Break ændret til break 1
+// 20130210 -Break ændret til break 1
 // 20140909 - Dubletter i regnskab saldi_660  
 // 20140923 - Definerer $MD som array da den bruges både som en og 2 dimentionelt. Følge af 20140909
 // 20141007 - Definerer $id & $amount som arrays da de bruges både som en og 2 dimentionelt. Følge af 20140909
 // 20141219 - rettelse til 20141007 - $id & $amount skal ikke devineres som arrays ved "udflyld med sidste års tal".
 // 20150622 CA  Budgetdata kan hentes som CSV-fil. 
 // 21081121 PHR Oprydning udefinerede variabler.
-// 2018.12.17 msc Design tilrettelse
-// 2018.12.21 MSC - Rettet topmenu design til
-// 2019.02.16 PHR	- Ændret csv til ISO-8859-1.
+// 20181217 msc Design tilrettelse
+// 20181221 MSC Rettet topmenu design til
+// 20190216 PHR	Ændret csv til ISO-8859-1.
+// 20210312 LOE Translated the former Danish text here to English and Applied findtekst function to this and the menu items
+// 20220926 MSC Removed a 2 number in title for budget
 
 @session_start();
 $s_id=session_id();
@@ -84,7 +83,7 @@ if (!$udfyld && isset($_POST['gem'])) {
 			if ($setall[$x] || $setall[$x]=='0') $amount[$x][$z]=$setall[$x];
 			$tmp=substr($amount[$x][$z],-4);
 			if(strpos($tmp,",")) $amount[$x][$z]=usdecimal($amount[$x][$z]);
-			$tal=round($amount[$x][$z],0);
+			$tal=round(if_isset($amount[$x][$z],0),0);
 			if ($b_id) {
 				db_modify("update budget set amount='$tal' where id='$b_id'",__FILE__ . " linje " . __LINE__);
 			} elseif ($tal) {
@@ -108,15 +107,13 @@ while ($r=db_fetch_array($q)) {
 if ($menu=='T') {
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
-	print "<div id=\"header\"> 
-    <div class=\"headerbtnLft\"></div>
-    <span class=\"headerTxt\">Budget</span>";     
-	print "<div class=\"headerbtnRght\"><!--<a href=\"index.php?page=debitor/ordre&amp;title=debitor\" class=\"button green small right\">Ny ordre</a>--></div>";       
-	print "</div><!-- end of header -->";
-	print "<div class=\"maincontentLargeHolder\">\n";
-	print  "<table class='dataTable2' width='100%' border='0' cellspacing='0'>";
-#	$leftbutton="<a title=\"Klik her for at lukke kladdelisten\" href=\"../index/menu.php\" accesskey=\"L\">LUK</a>";
-	$rightbutton="<a href=../finans/budget.php accesskey=b>Budget</a>";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "<div class=\"headerTxt\">$title $beskrivelse[0]</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'>";
+	print  "<table class='dataTable' width='100%' border='0' cellspacing='0'>";
 } else {
 print "<div align=\"center\">";
 
@@ -124,10 +121,10 @@ print "<table width=100% border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody
 print "	<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 print "		<table width=100% align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 print "			<td width=\"10%\" $top_bund><font face=\"Helvetica, Arial, sans-serif\">";
-if ($popup) print "<a href=../includes/luk.php accesskey=L>Luk</a></td>";
-else print "<a href=\"../index/menu.php\" accesskey=\"L\">Luk</a></td>";
+	if ($popup) print "<a href=../includes/luk.php accesskey=L>".findtekst(30,$sprog_id)."</a></td>"; # 20210312
+	else print "<a href=\"../index/menu.php\" accesskey=\"L\">".findtekst(30,$sprog_id)."</a></td>";
 print "			<td width=\"80%\" $top_bund>$title $beskrivelse[0]</td> ";
-print "			<td width=\"10%\" $top_bund><a href=\"regnskab.php\" accesskey=\"R\">Regnskab</a></td> ";
+	print "			<td width=\"10%\" $top_bund><a href=\"regnskab.php\" accesskey=\"R\">".findtekst(115,$sprog_id)."</a></td> ";
 print "			</tbody></table> ";
 print "	</td></tr> ";
 }		
@@ -255,19 +252,19 @@ if ($menu=='T') {
 }
 print "<tbody>";
 print "<form name=udfyld action=budget.php?regnaar=$regnaar&returside=$returside method=post>";
-print "<tr><td><br></td><td colspan=15>Udfyld med sidste &aring;rs tal ";
+print "<tr><td><br></td><td colspan=15>".findtekst(806, $sprog_id)." ";
 print "<select class=\"inputbox\" NAME=\"plusminus\">";
 if ($plusminus) print "<option value=\"$plusminus\">$plusminus</option>";
 if ($plusminus != "+") print "<option value=\"+\">+</option>";
 if ($plusminus != "-") print "<option value=\"-\">-</option>";
 print "</select>";
 $procent=$procent*1;
-print "<input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=2 name=\"procent\" value=\"$procent\">% ";
+print " &nbsp;<input class=\"inputbox\" type=\"text\" style=\"text-align:right\" size=2 name=\"procent\" value=\"$procent\">% &nbsp;";
 print "<input class='button blue small' type=submit name=udfyld value=OK>";
 print "</td></tr>";
 print "</form>";
-print "<tr><td><b> Kontonr.</b></td> ";
-print "<td><b> Kontonavn</b></td> ";
+print "<tr><td><b>".findtekst(804, $sprog_id)."</b></td> ";
+print "<td><b>".findtekst(805, $sprog_id)."</b></td> ";
 ##print "<td title=\"Ved regnskabs&aring;rets begyndelse. De fleste overf&oslash;rt fra regnskabet &aring;ret f&oslash;r.\" align=right><b> Primo</a></b></td> ";
 #for ($z=1; $z<=$maanedantal; $z++) {
 #	print "<td width=20 title=\"$z. regnskabsm&aring;ned\"><b> MD_$z<b><br></td>";
@@ -352,15 +349,21 @@ fclose($fp);
 print "<input type='hidden' name='kontoantal' value='$kontoantal'>\n";
 print "<input type='hidden' name='maanedantal' value='$maanedantal'>\n";
 print "<tr>\n";
-print "<td><input class='button green small' type='submit' name='gem' value='Gem' accesskey='g'></td>\n";
-print "<td colspan='12'>Hent budget som datafil ved at h&oslash;jreklikke p&aring; <a href='".$filnavn."'>dette link</a> og v&aelig;lg \"Gem link som ...\"."; 
+print "<td colspan='20'><center><input class='button green medium' style='width:150px;' type='submit' name='gem' value='Gem' accesskey='g'>\n</center></td></tr>";  # 20210312
+print "<tr><td colspan='20'><center>".findtekst(807, $sprog_id)." <a href='".$filnavn."'>".findtekst(809, $sprog_id)." </a>".findtekst(808, $sprog_id)." \".</center></td></tr>"; 
 print "</tr>\n";
 print "</form>\n"; # 20150622 del 3 slut
 ####################################################################################################
-?>
-</tbody>
+
+print "</tbody>
 </table>
 	</td></tr>
-</tbody></table>
+</tbody></table>";
 
-</body></html>
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+?>
+

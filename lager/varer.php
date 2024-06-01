@@ -160,16 +160,17 @@ if (isset($_GET)) {
 		$i_forslag=array();
 		$bestilt=array();
 	}
-	if (isset($_GET['start'])) {
-		$start = $_GET['start'];
-		setcookie("saldiProductListStart", $start);
-	} elseif(isset($_COOKIE['saldiProductListStart'])) $start=$_COOKIE['saldiProductListStart'];
+	$linjeantal = $start = NULL;
+	if (isset($_GET['start'])) $start = $_GET['start'];
+	elseif (isset($_POST['start'])) $start = $_POST['start'];
+	if ($start)	setcookie("saldiProductListStart", $start);
+	elseif(isset($_COOKIE['saldiProductListStart'])) $start=$_COOKIE['saldiProductListStart'];
 	else $start=1;
-	if (isset($_GET['linjeantal'])) {
-		$linjeantal = $_GET['linjeantal'];
-		setcookie("saldiProductListLines", $start);
-	} elseif(isset($_COOKIE['saldiProductListLines'])) $start=$_COOKIE['saldiProductListLines'];
-#	else $linjeantal=500;
+	if (isset($_GET['linjeantal'])) $linjeantal = $_GET['linjeantal'];
+	elseif (isset($_POST['linjeantal'])) $linjeantal = $_POST['linjeantal'];
+	if ($linjeantal)	setcookie("saldiProductListLines", $linjeantal);
+	elseif(isset($_COOKIE['saldiProductListLines'])) $linjeantal=$_COOKIE['saldiProductListLines'];
+	else $linjeantal=100;
 	$slut = if_isset($_GET['slut']);
 #	else $slut=$start+$linjeantal;
 	$varenummer= db_escape_string(if_isset($_GET['varenummer']));
@@ -245,7 +246,7 @@ $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 if (isset($r['var_value']) && $vatOnItemCard=$r['var_value']) {
 	$itemGroup=array();
 	$x=0;
-	$qtxt = "select kodenr,box4 from grupper where art='VG' and box7!='on' order by box4";
+	$qtxt = "select kodenr,box4 from grupper where art='VG' and box7!='on' and fiscal_year = '$regnaar' order by box4";
 	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
 		$itemGroup[$x]       = $r['kodenr'];
@@ -261,7 +262,7 @@ if (isset($r['var_value']) && $vatOnItemCard=$r['var_value']) {
 			$vatType[$x]='';
 			$vatNo[$x]=0;
 		}
-		$qtxt="select box2 from grupper where art='SM' and kodenr = '". (int)$vatNo[$x] ."'";
+		$qtxt="select box2 from grupper where art='SM' and kodenr = '". (int)$vatNo[$x] ."' and fiscal_year = '$regnaar'";
 		($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))?$vatRate[$x]=$r['box2']:$vatRate[$x]='0';
 	}
 }
@@ -551,7 +552,7 @@ global $href_vnr;
 global $i_forslag,$i_ordre,$i_tilbud,$itemGroup;
 global $jsvars;
 global $makeSuggestion;
-global $popup;
+global $popup,$regnaar;
 global $showTrademark,$stock;
 global $v_startstjerne,$v_slutstjerne,$v_strlen,$varenummer,$vatOnItemCard,$vatRate,$vis_kostpriser,$vis_lukkede,$vis_K,$vis_lev,$vis_VG;
 
@@ -638,7 +639,7 @@ if (!$vis_K[0]) {
 }
 	$x=0;
 	$lagergrupper=array();
-	$q=db_select("select * from grupper where art='VG' and box8='on'",__FILE__ . " linje " . __LINE__);
+	$q=db_select("select * from grupper where art='VG' and box8='on' and fiscal_year = '$regnaar'",__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)){ 
 		$x++;
 		$lagergrupper[$x]=$r['kodenr'];
@@ -782,6 +783,7 @@ $vis2=1;
 			if ($vatOnItemCard) {
 				for($x=0;$x<count($itemGroup);$x++){
 					if ($gruppe[$v]==$itemGroup[$x]) $vatPrice[$v]=$salgspris[$v]+=$salgspris[$v]/100*$vatRate[$x];
+#if ($varenr[$v] == '2219') echo "$salgspris[$v]<br>";
 				}
 			}
 			if (!$makeSuggestion) {
@@ -804,7 +806,8 @@ $vis2=1;
 				}
 				elseif ($row['samlevare']=='on') {$kostpris=dkdecimal($row['kostpris'],2);}
 				if (!$csv) print "<td align=right>$kostpris</td>";
-				$query2 = db_select("select box8 from grupper where art='VG' and kodenr='$row[gruppe]'",__FILE__ . " linje " . __LINE__);
+				$qtxt = "select box8 from grupper where art='VG' and kodenr='$row[gruppe]' and fiscal_year = '$regnaar'";
+				$query2 = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 				$row2 =db_fetch_array($query2);
 				if (($row2['box8']=='on')||($row['samlevare']=='on')){
 					$ordre_id=array();
@@ -876,7 +879,7 @@ return($z);
 ##############################################
 
 function genbestil($vare_id, $antal) {
-	global $brugernavn;
+	global $brugernavn,$db,$regnaar;
 	
 	$r = db_fetch_array(db_select("select ansat_id from brugere where brugernavn = '$brugernavn'",__FILE__ . " linje " . __LINE__));
 	if ($r['ansat_id']) {
@@ -900,7 +903,8 @@ function genbestil($vare_id, $antal) {
 			$qtxt="select * from adresser where id = $lev_id";
 			$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			if ($r['gruppe']) {
-				$qtxt="select box1 from grupper where kode = 'K' and art = 'KG' and kodenr = '$r[gruppe]'";
+				$qtxt = "select box1 from grupper ";
+				$qtxt.= "where kode = 'K' and art = 'KG' and kodenr = '$r[gruppe]' and fiscal_year = '$regnaar'";
 				$r1 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$kode=substr($r1['box1'],0,1); $kodenr=substr($r1['box1'],1);
 			}	else {
@@ -908,7 +912,7 @@ function genbestil($vare_id, $antal) {
 				$r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				print "<BODY onLoad=\"javascript:alert('Leverand&oslash;rgruppe ikke korrekt opsat for varenr $r[varenr]')\">";
 			}
-			$qtxt="select box2 from grupper where art = 'KM' and kode = '$kode' and kodenr = '$kodenr'";
+			$qtxt = "select box2 from grupper where art = 'KM' and kode = '$kode' and kodenr = '$kodenr' and fiscal_year = '$regnaar'";
 			$r1 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			$momssats=$r1['box2']*1;
 			$qtxt="insert into ordrer (ordrenr,konto_id,kontonr,firmanavn,addr1,addr2,postnr,bynavn,land,"; #218180822

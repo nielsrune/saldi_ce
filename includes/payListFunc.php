@@ -24,6 +24,7 @@
 // -----------------------------------------------------------------------------------
 //
 // 20220131 Moved functions from debitor/betalinger.php
+// 20231213 MSC - Implementing new design
 
 function betalingskontrol($erh,$fra_kto,$egen_ref,$til_kto,$kort_ref,$modt_navn,$belob,$valuta,$betalingsdato) {
 	global $myCtry;
@@ -674,14 +675,5 @@ function udskriv_xml($db_id,$bruger_id,$liste_id){
 #	}
 	print "<tr><td width=40%><br></td><td $top_bund title=\"Klik på knappen for at &aring;bne betalingsfilen eller h&oslash;jreklik for at gemme\"> <a href='$filnavn'>Se / gem betalingsfil</a></td><td width=40%><br></td></tr>\n";
 }
-
-	if ($menu=='T') {
-		print "</tfoot></table></div>";
-		print "<center><input type='button' onclick=\"location.href='betalingsliste.php'\" accesskey='L' value='".findtekst(30,$sprog_id)."'></center>";
-		include_once '../includes/topmenu/footerDebRapporter.php';
-	} else {
-		print "</tbody></table>";
-		include_once '../includes/oldDesign/footer.php';
-	}
 
 ?>

@@ -6,8 +6,15 @@ if ($rapportart == "openpost") $title = "Poster";
 
 if ($menu=='T') {
   $top_bund = "";
+  #Top table padding
+  $padding = "style='padding: 25px 20px 10px 20px;'";
+  #Info table padding
+  $padding2 = "style='padding: 20px 10px 5px 10px;'";
+  $padding1_5 = "padding: 20px 10px 5px 10px;";
 } else {
   $top_bund = $top_bund;
+  $padding = "";
+  $padding2 = "";
 }
 
 ?>
@@ -18,9 +25,9 @@ if ($menu=='T') {
         <head>
             <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
             <title><?php if (isset($title)) {echo "◖ Saldi • $title ◗";} else {echo "◖ Saldi ◗";} ?></title>
-            <link rel='ICON' href='../img/topmenu/favicon.ico' type='image/ico' />
+            <link rel='ICON' href='../../../img/topmenu/favicon.ico' type='image/ico' />
             <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
-            <link href='../css/topmenu/bootstrap.min.css' rel='stylesheet'>
+            <link href='../../../css/topmenu/bootstrap.min.css' rel='stylesheet'>
             <link rel="stylesheet" type="text/css" title="darkcolor" href="../css/topmenu/darkcolor.css">
             <link rel="stylesheet" type="text/css" title="darkcolor" href="../css/topmenu/dropdown.css">
             <link rel="alternate stylesheet" type="text/css" title="darkgrey" href="../css/topmenu/darkgrey.css">
@@ -29,12 +36,12 @@ if ($menu=='T') {
             <link rel="alternate stylesheet" type="text/css" title="lightcolor" href="../css/topmenu/dropdown.css">
 			      <link rel="alternate stylesheet" type="text/css" title="lightgrey" href="../css/topmenu/lightgrey.css">
             <link rel="alternate stylesheet" type="text/css" title="lightgrey" href="../css/topmenu//dropdown.css">
-            <script src='../javascript/topmenu/jquery.min.js'></script>
-            <script src='../javascript/topmenu/jbootstrap.min.js'></script>
-            <script src='../javascript/topmenu/slide-menu.js'></script>
-            <script src='../javascript/topmenu/dropdown-click-menu.js'></script>
-            <script src='../javascript/topmenu/cookie-stylesheet.js'></script>    
-            <script LANGUAGE="JavaScript" SRC="../javascript/overlib.js"></script>
+            <script src='../../../javascript/topmenu/jquery.min.js'></script>
+            <script src='../../../javascript/topmenu/jbootstrap.min.js'></script>
+            <script src='../../../javascript/topmenu/slide-menu.js'></script>
+            <script src='../../../javascript/topmenu/dropdown-click-menu.js'></script>
+            <script src='../../../javascript/topmenu/cookie-stylesheet.js'></script>    
+            <script LANGUAGE="JavaScript" SRC="../../../javascript/overlib.js"></script>
         </head>
     <body>
 
@@ -49,14 +56,14 @@ if ($menu=='T') {
 
     $classtable='class="tableTopmenu"';
     $border='border:0px';
-    $bgcolor='#5e5e5e';
+    $bgcolor='';
     $textcolor='';
     $textcolor2='';
     $textcolor3='';
     $bgcolor2='';
     $bgcolor3='';
     $bgcolor4='';
-    $bgcolor5='';
+    $bgcolor5='#5e5e5e';
     $bgcolor01='';
     $bgnuance1 ='';
     $bgnuance = '';
@@ -77,22 +84,22 @@ if ($menu=='T') {
             <div class='menu-list'>
               <ul>
               <li>
-                  <a href='../debitor/ordreliste.php?valg=ordrer'><?php echo findtekst(985,$sprog_id) ?></a>
+                  <a href='../../../debitor/ordreliste.php?valg=ordrer'><?php echo findtekst(985,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../debitor/ordreliste.php?valg=faktura'><?php echo findtekst(986,$sprog_id) ?></a>
+                  <a href='../../../debitor/ordreliste.php?valg=faktura'><?php echo findtekst(986,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../debitor/debitor.php?valg=debitor'><?php echo findtekst(606,$sprog_id) ?></a>
+                  <a href='../../../debitor/debitor.php?valg=debitor'><?php echo findtekst(606,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../debitor/debitor.php?valg=historik'><?php echo findtekst(131,$sprog_id) ?></a>
+                  <a href='../../../debitor/debitor.php?valg=historik'><?php echo findtekst(131,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../debitor/rapport.php'><?php echo findtekst(124,$sprog_id) ?></a>
+                  <a href='../../../debitor/rapport.php'><?php echo findtekst(124,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../sager/sager.php'><?php echo findtekst(987,$sprog_id) ?></a>
+                  <a href='../../../sager/sager.php'><?php echo findtekst(987,$sprog_id) ?></a>
                 </li>
                 </ul>
                 <div class='menu-end'>&nbsp;</div>
@@ -105,16 +112,16 @@ if ($menu=='T') {
             <div class='menu-list'>
               <ul>
                 <li>
-                  <a href='../kreditor/ordreliste.php?valg=ordrer'><?php echo findtekst(985,$sprog_id) ?></a>
+                  <a href='../../../kreditor/ordreliste.php?valg=ordrer'><?php echo findtekst(985,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../kreditor/ordreliste.php?valg=fakture'><?php echo findtekst(989,$sprog_id) ?></a>
+                  <a href='../../../kreditor/ordreliste.php?valg=fakture'><?php echo findtekst(989,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../kreditor/kreditor.php'><?php echo findtekst(606,$sprog_id) ?></a>
+                  <a href='../../../kreditor/kreditor.php'><?php echo findtekst(606,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../kreditor/rapport.php'><?php echo findtekst(603,$sprog_id) ?></a>
+                  <a href='../../../kreditor/rapport.php'><?php echo findtekst(603,$sprog_id) ?></a>
                 </li>
               </ul>
               <div class='menu-end'>&nbsp;</div>
@@ -127,16 +134,16 @@ if ($menu=='T') {
             <div class='menu-list'>
               <ul>
                 <li>
-                  <a href='../finans/kladdeliste.php'><?php echo findtekst(105,$sprog_id) ?></a>
+                  <a href='../../../finans/kladdeliste.php'><?php echo findtekst(105,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../finans/regnskab.php'><?php echo findtekst(849,$sprog_id) ?></a>
+                  <a href='../../../finans/regnskab.php'><?php echo findtekst(849,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../finans/budget.php'><?php echo findtekst(1067,$sprog_id) ?></a>
+                  <a href='../../../finans/budget.php'><?php echo findtekst(1067,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../finans/rapport.php'><?php echo findtekst(603,$sprog_id) ?></a>
+                  <a href='../../../finans/rapport.php'><?php echo findtekst(603,$sprog_id) ?></a>
                 </li>
               </ul>
               <div class='menu-end'>&nbsp;</div>
@@ -149,13 +156,13 @@ if ($menu=='T') {
             <div class='menu-list'>
               <ul>
                 <li>
-                  <a href='../lager/varer.php'><?php echo findtekst(110,$sprog_id) ?></a>
+                  <a href='../../../lager/varer.php'><?php echo findtekst(110,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../lager/modtageliste.php'><?php echo findtekst(610,$sprog_id) ?></a>
+                  <a href='../../../lager/modtageliste.php'><?php echo findtekst(610,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../lager/rapport.php'><?php echo findtekst(603,$sprog_id) ?></a>
+                  <a href='../../../lager/rapport.php'><?php echo findtekst(603,$sprog_id) ?></a>
                 </li>
               </ul>
               <div class='menu-end'>&nbsp;</div>
@@ -168,13 +175,13 @@ if ($menu=='T') {
             <div class='menu-list'>
               <ul>
                 <li>
-                  <a href='../systemdata/kontoplan.php'><?php echo findtekst(113,$sprog_id) ?></a>
+                  <a href='../../../systemdata/kontoplan.php'><?php echo findtekst(113,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../systemdata/syssetup.php'><?php echo findtekst(613,$sprog_id) ?></a>
+                  <a href='../../../systemdata/syssetup.php'><?php echo findtekst(613,$sprog_id) ?></a>
                 </li>
                 <li>
-                  <a href='../admin/backup.php'><?php echo findtekst(521,$sprog_id) ?></a>
+                  <a href='../../../admin/backup.php'><?php echo findtekst(521,$sprog_id) ?></a>
                 </li>
               </ul>
               <div class='menu-end'>&nbsp;</div>
@@ -201,7 +208,7 @@ if ($menu=='T') {
                   </div>
                 </li>
                 <li>
-                  <a href='../index/logud.php'><?php echo findtekst(93,$sprog_id) ?></a>
+                  <a href='../../../index/logud.php'><?php echo findtekst(93,$sprog_id) ?></a>
                 </li>
               </ul>
               <div class='menu-end'>&nbsp;</div>
@@ -222,8 +229,8 @@ if ($menu=='T') {
 <div class='head'>
    <div class='logo'>
      <div class='logo-container' title='Klik for at komme tilbage til forsiden'>
-     <a href='../index/menu.php' class='logolink'>
-      <img style='pointer-events:none;' src='../img/topmenu/logo.PNG'> <div class='logo-name'>Saldi</div><div class='regnskab-name'> • <?php global $regnskab; echo $regnskab; ?></div>
+     <a href='../../../index/menu.php' class='logolink'>
+      <img style='pointer-events:none;' src='../../../img/topmenu/logo.PNG'> <div class='logo-name'>Saldi</div><div class='regnskab-name'> • <?php global $regnskab; echo $regnskab; ?></div>
     </a>
      </div>
    </div>

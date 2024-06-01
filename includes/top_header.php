@@ -1,30 +1,30 @@
 <?php
-// -----------------includes/top_header.php----lap 3.4.4---2014-10-30----
-// LICENS
+// ------includes/top_header.php---patch 4.0.8 ----2023-07-12------------
+//                           LICENSE
 //
-// Dette program er fri software. Du kan gendistribuere det og / eller
-// modificere det under betingelserne i GNU General Public License (GPL)
-// som er udgivet af The Free Software Foundation; enten i version 2
-// af denne licens eller en senere version efter eget valg
-// Fra og med version 3.2.2 dog under iagttagelse af følgende:
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
 // 
-// Programmet må ikke uden forudgående skriftlig aftale anvendes
-// i konkurrence med DANOSOFT ApS eller anden rettighedshaver til programmet.
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
 //
-// Dette program er udgivet med haab om at det vil vaere til gavn,
-// men UDEN NOGEN FORM FOR REKLAMATIONSRET ELLER GARANTI. Se
-// GNU General Public Licensen for flere detaljer.
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
+// See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// En dansk oversaettelse af licensen kan laeses her:
-// http://www.fundanemt.com/gpl_da.html
-//
-// // Copyright (c) 2004-2014 DANOSOFT ApS
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20141030 CA  Understøttelse for andre vinduesstørrelser. Søg 20141030
+// 20231107 PK Added css- and javascript-link for flatpickr
 
 global $regnskab;
 
-if ( ! isset($viewport_width) ) $viewport_width=1024;
+if (!isset($viewport_width))
+  $viewport_width = 1024;
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -32,11 +32,15 @@ if ( ! isset($viewport_width) ) $viewport_width=1024;
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <?php
 print "        <meta name=\"viewport\" content=\"width=".$viewport_width."\">\n"; # 20141030
-if(isset($meta_returside)) print "$meta_returside";
+if (isset($meta_returside))
+  print "$meta_returside";
 
 ?>
         <link rel="stylesheet" type="text/css" href="../css/top_menu.css">
         <link rel="stylesheet" type="text/css" href="../css/left_menu.css">
+        <link rel="stylesheet" type="text/css" href="../css/saft.css">
+        <link rel="stylesheet" type="text/css" href="../css/prism.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         <script type="text/javascript" src="../javascript/overlib.js"></script>
 				<script type="text/javascript" src="../javascript/confirmclose.js"></script>
         <script type="text/javascript" src="../javascript/jquery-1.8.2.min.js"></script> 
@@ -45,7 +49,10 @@ if(isset($meta_returside)) print "$meta_returside";
         <script type="text/javascript" src="../javascript/jquery.tablednd.js"></script>
         <script type="text/javascript" src="../javascript/jquery.tablesorter.min.js"></script>
         <script type="text/javascript" src="../javascript/jquery.placeholder.min.js"></script>
-        <link rel='ICON' href='../img/topmenu/favicon.ico?=v1' type='image/ico' />
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://npmcdn.com/flatpickr/dist/flatpickr.min.js"></script>
+        <script src="https://npmcdn.com/flatpickr/dist/l10n/da.js"></script>
+        <link rel='ICON' href='../img/topmenu/favicon.ico?=v7' type='image/ico' />
         <link href='../css/topmenu/bootstrap.min.css' rel='stylesheet'>
         <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' rel='stylesheet'>
         <link rel="stylesheet" type="text/css" title="lightcolor" href="../css/topmenu/lightcolor-v1.css">
@@ -100,6 +107,10 @@ if(isset($meta_returside)) print "$meta_returside";
         }
         </style>
         <![endif]-->
-        <title><?php if (isset($title)) {echo "◖ Saldi • $title ◗";} else {echo "◖ Saldi ◗";} ?></title>
+        <title><?php if (isset($title)) {
+          echo "◖ Saldi • $title ◗";
+        } else {
+          echo "◖ Saldi ◗";
+        } ?></title>
     </head>
     <body>

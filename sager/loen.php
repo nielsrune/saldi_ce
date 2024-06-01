@@ -110,6 +110,7 @@
 // 20230502 PHR - Error in query
 // 20230522 PHR - Workaround for stillads_5 as tent is in list 13 and all others have tent in 11
 // 20230524 PHR - Moved functions to folder loenIncludes.
+// 20240220 PK - Added javascript that prevent user from double click.
 
 @session_start();
 $s_id=session_id();
@@ -175,7 +176,8 @@ if ($overtid==NULL) {
 }
 
 $funktion=if_isset($_GET['funktion']);
-if (!$funktion) $funktion="loenliste";
+if (!$funktion)
+	$funktion = "loenliste";
 $sort=if_isset($_GET['sort']);
 $nysort=if_isset($_GET['nysort']);
 $vis=if_isset($_GET['vis']);
@@ -231,7 +233,7 @@ $vis=if_isset($_GET['vis']);
 					color: #FFF;
 				}
 			</style>
-			<title>". $pageTitle ."</title>
+			<title>Stillads</title>
 		</head>
 		<body>
 		<div id=\"wrapper\">";
@@ -239,8 +241,10 @@ $vis=if_isset($_GET['vis']);
 		print "<div id=\"breadcrumbbar\">
 			<ul id=\"breadcrumb\">
 				<li>";
-				if (substr($sag_rettigheder,2,1)) print "<a href=\"sager.php\" title=\"Sager\"><img src=\"../img/home.png\" alt=\"Sager\" class=\"home\" /></a>\n";
-				else print "<a href=\"#\" title=\"Hjem\"><img src=\"../img/home.png\" alt=\"Hjem\" class=\"home\" /></a>";
+if (substr($sag_rettigheder, 2, 1))
+	print "<a href=\"sager.php\" title=\"Sager\"><img src=\"../img/home.png\" alt=\"Sager\" class=\"home\" /></a>\n";
+else
+	print "<a href=\"#\" title=\"Hjem\"><img src=\"../img/home.png\" alt=\"Hjem\" class=\"home\" /></a>";
 				print "</li>";
 				if ($funktion=='ret_loen') {
 					include('loenIncludes/retLoen.php');
@@ -262,8 +266,10 @@ $vis=if_isset($_GET['vis']);
 				<li>Current page</li>-->
 				<li>Løn</li>";
 				}
-				if ($funktion=='ret_loen') print "<li style=\"float:right;\"><a href=\"#\" title=\"Print skema\" onclick=\"printDiv('printableArea')\" style=\"background-image: none;\"><img src=\"../img/printIcon2.png\" alt=\"Print skema\" class=\"printIcon\" /></a></li>"; #20150623-2
-				if ($funktion=='loenafregning') print "<li style=\"float:right;\"><a href=\"#\" title=\"Print skema\" onclick=\"printDiv('printableArea')\" style=\"background-image: none;\"><img src=\"../img/printIcon2.png\" alt=\"Print skema\" class=\"printIcon\" /></a></li>";
+if ($funktion == 'ret_loen')
+	print "<li style=\"float:right;\"><a href=\"#\" title=\"Print skema\" onclick=\"printDiv('printableArea')\" style=\"background-image: none;\"><img src=\"../img/printIcon2.png\" alt=\"Print skema\" class=\"printIcon\" /></a></li>"; #20150623-2
+if ($funktion == 'loenafregning')
+	print "<li style=\"float:right;\"><a href=\"#\" title=\"Print skema\" onclick=\"printDiv('printableArea')\" style=\"background-image: none;\"><img src=\"../img/printIcon2.png\" alt=\"Print skema\" class=\"printIcon\" /></a></li>";
 		print "
 			</ul>
 			</div><!-- end of breadcrumbbar -->
@@ -276,11 +282,28 @@ $vis=if_isset($_GET['vis']);
 				print "</div><!-- end of maincontent -->
 
 		</div><!-- end of wrapper -->
+
+<script type=\"text/javascript\">
+	// Prevent Double Submits
+	document.querySelectorAll('form').forEach(form => {
+		form.addEventListener('submit', (e) => {
+		// Prevent if already submitting
+		if (form.classList.contains('is-submitting')) {
+			e.preventDefault();
+		}
+		
+		// Add class to hook our visual indicator on
+		form.classList.add('is-submitting');
+	});
+});
+</script>
 		<script type=\"text/javascript\" src=\"../javascript/jquery.loen.js\"></script>
 	</body>
 	</html>";
 
-function tjek_fordeling($ansat_id,$startdate,$loendate){
+
+function tjek_fordeling($ansat_id, $startdate, $loendate)
+{
 	list($sy,$sm,$sd)=explode("-",$startdate);
 	$r=db_fetch_array(db_select("select * from grupper where art='loen'",__FILE__ . " linje " . __LINE__));
 	list($traineemdr,$traineepct)=explode(chr(9),$r['box5']);
@@ -292,8 +315,10 @@ function tjek_fordeling($ansat_id,$startdate,$loendate){
 		$sm-=12;
 	}
 	$st=strtotime($sy."-".$sm."-".$sd);
-	if ($lt <= $st) return($traineepct);
-	else return('100');
+	if ($lt <= $st)
+		return ($traineepct);
+	else
+		return ('100');
 }
 
 ?>

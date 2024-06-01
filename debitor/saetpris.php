@@ -1,5 +1,5 @@
 <?php
-// --- debitor/saetpris.php --- lap 4.0.2 --- 2015-03-04 ---
+// --- debitor/saetpris.php ---patch 4.0.8 ----2023-08-31----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -14,11 +14,15 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2015-2021 saldi.dk aps
+// Copyright (c) 2003-2023 Saldi.dk ApS
 // -----------------------------------------------------------------------
 // 2015.03.04	PHR Tilføjet mulighed for at slette et sæt
 // 2021.05.01 PHR Added  and box8!='0' as it is now set to 0 where updating 'varegrupper'
+// 20220831 MSC - Implementing new design
+// 20230829 MSC - Copy pasted new design into code
+// 20231002 MSC - Copy pasted new design into code
 
 @session_start();
 $s_id=session_id();
@@ -31,7 +35,7 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/ordrefunc.php");
 
-print "<div align=\"center\">";
+global $menu;
 
 $id=if_isset($_GET['id']);
 $saet=if_isset($_GET['saet']);
@@ -61,7 +65,19 @@ if ($id && $forfra && $saet) {
 
 }
 
+if ($menu=='T') {
+	include_once '../includes/top_header.php';
+	include_once '../includes/top_menu.php';
+	($art=='PO')?$href="pos_ordre.php?id=$id":$href="ordre.php?id=$id";
+	print "<div id=\"header\">"; 
+	print "<div class=\"headerbtnLft headLink\"><a href=$href accesskey=L title='Klik her for at komme tilbage'><i class='fa fa-close fa-lg'></i> &nbsp;".findtekst(30,$sprog_id)."</a></div>";     
+	print "<div class=\"headerTxt\">$title</div>";     
+	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
+	print "</div>";
+	print "<div class='content-noside'><center>";
+} else {
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\"><tbody>";
+}
 
 if ($saet=$_POST['saetvalg']) {
 	if ($saet=='nyt_saet') {
@@ -144,7 +160,7 @@ if (!$saet) {
 $r=db_fetch_array(db_select("select box2 from grupper where art='OreDif'",__FILE__ . " linje " . __LINE__));
 $difkto=$r['box2'];
 $x=0;
-$linje_id=array();
+$linje_id=$medtag=array();
 $r=db_fetch_array(db_select("select count(saet) as saet from ordrelinjer where ordre_id='$id' and saet='$saet'",__FILE__ . " linje " . __LINE__));
 $valgt=$r['saet'];
 $q=db_select("select * from ordrelinjer where ordre_id='$id' and (saet='0' or saet='$saet' or saet is NULL) order by ordrelinjer.posnr",__FILE__ . " linje " . __LINE__);
@@ -179,7 +195,7 @@ $saetpris=0;
 $normalsum=0;
 $kostsum=0;
 
-print "<tr><td width=\"100%\" align=\"center\" colspan=\"3\"><big><b>Sæt $saet<b></big></td></tr>";
+print "<tr><td width=\"100%\" align=\"center\" colspan=\"3\"><big><b>Sæt $saet</b></big></td></tr>";
 print "<tr><td width=\"45%\" align=\"right\" valign=\"top\"><table cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tbody>";
 print "<form name=\"saetpris\" align=\"center\" action=\"saetpris.php?id=$id\" method=post autocomplete=\"off\">\n";
 print "<tr><td align=\"center\" colspan=\"4\">$snavn</td></tr>";
@@ -223,7 +239,8 @@ print "<tr><td>
 	<!--Kostpris</td><td colspan=\"2\" align=\"right\">".dkdecimal($kostsum)."--></td></tr>";
 print "<tr><td>Normalpris</td><td title=\"Kostpris: ".dkdecimal($kostsum)."\" colspan=\"2\" align=\"right\">".dkdecimal($normalsum)."</td></tr>";
 if (in_array("checked",$medtag)) {
-	print "<tr><td>Sætpris</td><td  title=\"Kostpris: ".dkdecimal($kostsum)."\" colspan=\"2\" align=\"right\"><input type=\"text\" style=\"text-align:right\" value=\"".dkdecimal($saetpris)."\" name=\"ny_saetpris\"></td></tr>";
+	print "<tr><td>Sætpris</td><td  title=\"Kostpris: ".dkdecimal($kostsum)."\" colspan=\"2\" align=\"right\">
+	<input type=\"text\" style=\"text-align:right\" value=\"".dkdecimal($saetpris)."\" name=\"ny_saetpris\"></td></tr>";
 }
 print "<tr><td colspan=\"4\"><hr></td></tr>";
 print "<tr><td colspan=\"4\"><input type=\"hidden\" name=\"fokus\"><input type=\"hidden\" name=\"pre_fokus\" value=\"$fokus\">";
@@ -232,6 +249,7 @@ print "</form>";
 print "</tbody></table></td><td width=\"10%\"><br></td>";
 $fokus="ny_saetpris";
 tastatur($id,$fokus,$saet);
+
 
 function tastatur($id,$fokus,$saet) {
 	global $art;
@@ -245,7 +263,7 @@ function tastatur($id,$fokus,$saet) {
 	if (!$x) $saets[0]=1; 
 	
 	print "\n<!-- Function tastatur (start)-->\n";
-	print "<TD height=\"100%\" valign=\"top\" align=\"left\" width=\"45%\"><TABLE BORDER=\"0\" CELLPADDING=\"4\" CELLSPACING=\"4\"><TBODY>\n";
+	print "<TD height=\"100%\" valign=\"top\" align=\"left\" width=\"45%\"><TABLE BORDER=\"0\" CELLPADDING=\"4\" CELLSPACING=\"4\" class='tablePadding'><TBODY>\n";
 	print "<TR>\n";
 		$stil="STYLE=\"width:80px;height:40px;font-size:120%;\"";
 		print "<TD><INPUT TYPE=\"button\" $stil NAME=\"one\"   VALUE=\"1\" OnClick=\"saetpris.$fokus.value += '1';saetpris.$fokus.focus();\"></TD>\n";
@@ -288,13 +306,20 @@ function tastatur($id,$fokus,$saet) {
 	print "\n<!-- Function tastatur (slut)-->\n";
 }
 
+print "</tbody></table>";
+
+if ($menu=='T') {
+	include_once '../includes/topmenu/footer.php';
+} else {
+	include_once '../includes/oldDesign/footer.php';
+}
+
 ?>
 <script language="javascript">
 document.saetpris.<?php echo $fokus?>.focus();
 </script>
 <?php
-#cho $fokus;
+#cho $fokus;<b>
 
-print "</tbody></table>";
 #####################################################################################################
 

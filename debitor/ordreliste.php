@@ -137,6 +137,8 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
 	
+$oLog=fopen("../temp/$db/olog.txt","w");
+$time_start = microtime(true);
 global $color;
  //	
 #print "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"><html><head><title>Ordreliste - Kunder</title><meta http-equiv=\"content-type\" content=\"text/html; charset=ISO-8859-1\"></head>";
@@ -195,7 +197,8 @@ if (!$returside && $konto_id && !$popup) $returside="debitorkort.php?id=$konto_i
 
 if (isset($_GET['valg'])) setcookie("saldi_ordreliste","$valg");
 else $valg = if_isset($_COOKIE['saldi_ordreliste']);
-
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 $r2=db_fetch_array(db_select("select max(id) as id from grupper",__FILE__ . " linje " . __LINE__));
 
 if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '3' and box4='on'",__FILE__ . " linje " . __LINE__))) $hurtigfakt='on';
@@ -216,6 +219,8 @@ if ($r=db_fetch_array(db_select("select id from adresser where art = 'S' and pbs
  $pbs=1;
 } else $pbs=0;
 
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 
   
@@ -263,6 +268,9 @@ if (!$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 #cho "$r[box9]<br>";
 	$find=explode("\n",$r['box9']);
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
+
 if (!$returside) {
 #	$r=db_fetch_array(db_select("select box2,box7 from grupper where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'",__FILE__ . " linje " . __LINE__)); 
 #	$returside=$r['box2'];
@@ -279,6 +287,8 @@ if (!$popup) {
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__); #20150308
 }		
 $tidspkt=date("U");
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
  
 #if (isset($_POST)) {
 if ($submit=if_isset($_POST['submit'])) {
@@ -320,11 +330,15 @@ elseif ($valg=="$faktura1") {$status="ordrer.status >= 3";}
 else {$status="(ordrer.status = 1 or ordrer.status = 2)";}
 
 if ($r=db_fetch_array(db_select("select distinct id from ordrer where projekt > '0' and $status",__FILE__ . " linje " . __LINE__))) $vis_projekt='on';
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 
 	$ordre_id = if_isset($_POST['ordre_id']);
 	$checked = if_isset($_POST['checked']);
 	
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 
 
@@ -435,6 +449,8 @@ if ($valg=="$ordrer1") {
 	if ($valg=='pbs') print "<td width = 20% align=center $knap_ind>".findtekst(385, $sprog_id)."</td>";
 	elseif ($pbs) print "<td width = 20% align=center><a href='ordreliste.php?valg=pbs&konto_id=$konto_id&returside=$returside'>".findtekst(385, $sprog_id)."</a></td>";
 	print "</tbody></table></td>\n"; # <- Tabel 1.1.1
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 	if ($valg=='pbs') {
 		if ($popup) print "<td width=10% $top_bund onClick=\"javascript:ordre=window.open('pbs_import.php?returside=x','ordre','scrollbars=1,resizable=1');ordre.focus();\"><a accesskey=N href=ordreliste.php?sort=$sort>Import PBS</a></td>\n";
 		else  print "<td width=10% $top_bund><a href=pbs_import.php?returside=ordreliste.php>Import PBS</a></td>\n";
@@ -466,6 +482,8 @@ if ($valg=="$ordrer1") {
 	}
 	print "<center>"; #20141107
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 $qtxt="select box3,box4,box5,box6,box10 from grupper where art = 'OLV' and kodenr = '$bruger_id' and kode='$valg'";
 $r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -496,6 +514,8 @@ if (in_array('kundeordnr',$vis_felt)) {
 	if ($gem_fra && $gem_til && $gem_til-$gem_fra > 10) $gem_fra=$gem_til=NULL;
 }
 ####################################################################################
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 $udvaelg=NULL;
 $tmp=trim($find[0]);
 for ($x=1;$x<$vis_feltantal;$x++) $tmp=$tmp."\n".trim(if_isset($find[$x]));
@@ -566,6 +586,8 @@ for ($x=0;$x<$vis_feltantal;$x++) {
 		}
 	}
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 if ($udvaelg) $linjeantal=10000;
 if (strstr($sortering,'fakturanr')) {
 	if ($db_type=='mysql' or $db_type=='mysqli') { #RG_mysqli
@@ -596,6 +618,8 @@ $qtxt.=" where (ordrer.art = 'DO' or ordrer.art = 'DK' or (ordrer.art = 'PO' and
 $r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 $antal=$r['antal'];
 
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 print " </td></tr>\n<tr><td align=center valign=top>";
 #print "<table border=0 valign='top' $class><tbody>\n<tr valign=top align=center>"; 
@@ -627,6 +651,8 @@ if ($antal>$slut) {
 print "</tr>\n";
 
 #################################### Sogefelter ##########################################
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 
 print "<form name=\"sogefelter\" action=\"ordreliste.php?konto_id=$konto_id&sort=$sort\" method=\"post\">\n";
@@ -689,6 +715,8 @@ if ($menu=='T') {
 } else {
 	print "<tr><td colspan=11><hr></td></tr>\n";
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 ######################################################################################################################
 #if ($genfakt) $checked=array();
@@ -701,6 +729,9 @@ if ($vis_lagerstatus) {
 		$x++;
 	}
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
+
 #>>>>>
 print "<form name=ordreliste action=ordreliste.php?valg=$valg$hreftext&start=$start&sort=$sort method=post>\n";
 if (strstr($udvaelg,'adresser')) $qtxt="select ordrer.*,adresser.gruppe as kundegruppe from ordrer,adresser ";
@@ -943,6 +974,8 @@ if (!$l && $udvaelg) {
  	print "<b><big>Ingen ordrer matcher de angivne søgekriterier<big></b>";
 	print "</tr>";
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 if ($menu=='T') {
 	print "</tbody><tfoot>\n";
 } else {
@@ -1000,6 +1033,8 @@ if ($valg) {
 	}
 	print "</tr>\n";
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 if ($valg=="$ordrer1") {
 #	if ($vis_projekt) $colspan++;
@@ -1048,6 +1083,8 @@ if ($menu=='T') {
 } else {
 	print "<tr><td colspan=11><hr></td></tr>\n";
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 #$cols=$cols-4;
 $dk_db=dkdecimal($ialt-$totalkost,2);		
@@ -1090,6 +1127,8 @@ if ($r['box1'] && $ialt!="0,00") {
 	}
 }	
 #cho "select box4 from grupper where art='API'<br>";
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 if ($r=db_fetch_array(db_select("select box4 from grupper where art='API' and box4 != ''",__FILE__ . " linje " . __LINE__))) {
 $api_fil=trim($r['box4']);
@@ -1109,11 +1148,13 @@ $api_fil=trim($r['box4']);
 		if ($api_encode) $api_txt.="&encode=$api_encode";
 		if ($shop_ordre_id && is_numeric($shop_ordre_id)) $api_txt.="&order_id=$shop_ordre_id";
 		elseif ($shop_faktura) $api_txt.="&invoice=$shop_faktura";
-echo "$api_txt<br>";
 		exec ("nohup /usr/bin/wget  -O - -q  --no-check-certificate --header='$header' '$api_txt' > /dev/null 2>&1 &\n");
 	} elseif ($hent_nu) alert("vent 30 sekunder");
 	print "<tr><td><a href=\"$_SERVER[PHP_SELF]?sort=$sort&hent_nu=1\">".findtekst(879,$sprog_id)."</td></tr>";
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
+
 $r=db_fetch_array(db_select("select box2 from grupper where art='DIV' and kodenr='5'",__FILE__ . " linje " . __LINE__));
 
 if (isset($r['box2']) && $apifil=$r['box2']) { //checks if $r$r['box2'] exists before using it
@@ -1168,6 +1209,8 @@ if (isset($r['box2']) && $apifil=$r['box2']) { //checks if $r$r['box2'] exists b
 		} else print "<tr><td colspan=\"3\"><span title='".findtekst(1441, $sprog_id)."' onclick=\"JavaScript:window.open('$apifil','hent:ordrer','width=10,height=10,top=1024,left=1280')\">SHOP import</span></td></tr>";	
 }
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 #print "<body onload=\"javascript:window.open('$url','opdat:beholdning');\">";
 function genberegn($id) {
@@ -1199,6 +1242,8 @@ function genberegn($id) {
 	db_modify("update ordrer set kostpris=$kostpris where id = $id",__FILE__ . " linje " . __LINE__);#xit;
 	return $kostpris;
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 function bidrag ($feltnavn,$sum,$moms,$sum_m_moms,$kostpris,$udlignet){
 	global $genberegn,$ialt,$totalkost,$sprog_id;
@@ -1221,6 +1266,8 @@ function bidrag ($feltnavn,$sum,$moms,$sum_m_moms,$kostpris,$udlignet){
 		print "<span $span>$tmp<br></span>";
 	}
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
 
 if ($valg=="$ordrer1") {
 	if ($menu=='T') {
@@ -1258,6 +1305,9 @@ if ($menu=='T') {
 } else {
 	include_once '../includes/oldDesign/footer.php';
 }
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
+
 function select_valg( $valg, $box ){  #20210623
 #cho __line__."  $valg, $box <br>";
 	global $bruger_id, $sprog_id, $firmanavn1, $ordrer1, $faktura1,$tilbud1,$tilbud1;
@@ -1334,6 +1384,8 @@ function select_valg( $valg, $box ){  #20210623
 		}
 	}
 }
-
+$time = microtime(true) - $time_start;
+fwrite($oLog, __line__." $time\n");
+fclose($oLog);
 
 ?>

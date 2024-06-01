@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/diverseIncludes/posOptions.php --- ver 4.0.5 -- 2022-04-12 ---
+// --- systemdata/diverseIncludes/posOptions.php --- ver 4.1.0 -- 2023-12-30 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,14 +20,15 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 Saldi.DK ApS
+// Copyright (c) 2003-2023 Saldi.DK ApS
 // -----------------------------------------------------------------------
 // Kaldes fra systemdata/diverse.php
+// 20131230 PHR addad fiscal year to groups.
 
 function posOptions () {
+	global $bgcolor,$bgcolor5;
+	global $regnaar;
 	global $sprog_id;
-	global $bgcolor;
-	global $bgcolor5;
 	$postEachSale = $change_cardvalue = $deactivateBonprint = null ;         #20211022
 	$kassekonti=array();
 	$afd=array();
@@ -35,7 +36,8 @@ function posOptions () {
 	$id=$kasseantal=$kortantal=$rabatvareid=$timeout=0;
 	$rabatvarenr=$straksbogfor=$udskriv_bon=$vis_hurtigknap=$vis_indbetaling=$vis_kontoopslag=0;
 	$afd=$bord=$kassekonti=$kortkonti=$korttyper=$moms=$ValutaKode=array();
-	if ($r=db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '1'",__FILE__ . " linje " . __LINE__))) {
+	$qtxt = "select * from grupper where art = 'POS' and kodenr = '1' and fiscal_year = '$regnaar'";
+	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 		$id1         = $r['id'];
 		$kasseantal  = $r['box1'];
 		$kassekonti  = explode(chr(9),$r['box2']);
@@ -55,15 +57,16 @@ function posOptions () {
 		if (!$rabatvareid) $rabatvareid = 0; 
 		if (!$timeout)     $timeout     = 0;
 	}
-	$qtxt = "select * from grupper where art = 'POS' and kodenr = '2'";
+	$qtxt = "select * from grupper where art = 'POS' and kodenr = '2' and fiscal_year = '$regnaar'";
 	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 		$id2=$r['id'];
 	} else {
-		$qtxt = "insert into grupper ";
-		$qtxt.= "(beskrivelse,kode,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14) ";
-		$qtxt.= "values ('Pos valg','','2','POS','0','','','','','','','','','','','','','')";
+		$qtxt = "insert into grupper (beskrivelse,kode,kodenr,art,box1,box2,box3,box4,box5,box6,box7,";
+		$qtxt.= "box8,box9,box10,box11,box12,box13,box14,fiscal_year) ";
+		$qtxt.= "values ('Pos valg','','2','POS','0','','','','','','','','','','','','','','$regnaar')";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-		$r=db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '2'",__FILE__ . " linje " . __LINE__));
+		$qtxt = "select * from grupper where art = 'POS' and kodenr = '2'";
+		$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 		$id2=$r['id'];
 	}
 	$kasseprimo=dkdecimal($r['box1']);
@@ -83,9 +86,9 @@ function posOptions () {
 	if ($r=db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '3'",__FILE__ . " linje " . __LINE__))) {
 		$id3=$r['id'];
 	} else {
-		$qtxt="insert into grupper(beskrivelse,kode,kodenr,art,box1,box2,box3,box4,box5,box6,box7,box8,box9,box10,box11,box12,box13,box14)";
-		$qtxt.="values";
-		$qtxt.="('Pos valg','','3','POS','0','10','','','','','','','','','','','','')";
+		$qtxt = "insert into grupper(beskrivelse,kode,kodenr,art,box1,box2,box3,box4,box5,box6,box7";
+		$qtxt.= ",box8,box9,box10,box11,box12,box13,box14,fiscal_year)";
+		$qtxt.= "values ('Pos valg','','3','POS','0','10','','','','','','','','','','','','','$regnaar')";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$r=db_fetch_array(db_select("select * from grupper where art = 'POS' and kodenr = '3'",__FILE__ . " linje " . __LINE__));
 		$id3=$r['id'];
@@ -112,7 +115,7 @@ function posOptions () {
 	$voucherItemId=explode(chr(9),$r['var_value']);
     
 		for($x=0;$x<count($voucherItemId);$x++) {
-			$voucherItemId[$x]*=1;
+			$voucherItemId[$x] = (int)$voucherItemId[$x];
 			if ($voucherItemId[$x]) {
 				$qtxt="select varenr from varer where id = '$voucherItemId[$x]'";
 				$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
