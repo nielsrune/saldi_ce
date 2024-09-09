@@ -49,7 +49,7 @@ $provision=if_isset($_POST['provision']);
 $kundedel=100-usdecimal($provision);
 
 $x=0;
-$q=db_select("select * from grupper where art = 'VG' order by kodenr",__FILE__ . " linje " . __LINE__);
+$q=db_select("select * from grupper where art = 'VG' and fiscal_year = '$regnaar' order by kodenr",__FILE__ . " linje " . __LINE__);
 while ($r=db_fetch_array($q)) {
 	$v_gr[$x]=$r['kodenr'];
 	$vg_bskr[$x]=$r['beskrivelse'];
@@ -58,7 +58,7 @@ while ($r=db_fetch_array($q)) {
 }
 
 #echo "$kladde_id && $modkonto && $fra && $til && $vareprefix && $provision<br>";
-if ($kladde_id && $fra && $til && $provision && $vareprefix) {
+if ($kladde_id && $fra && $til && $vareprefix) {
 	$qtxt = "select varer.varenr, varer.gruppe, batch_salg.pris, batch_salg.antal, ";
 	$qtxt.= "ordrelinjer.momssats, ordrelinjer.momsfri, ordrelinjer.kostpris ";
 	$qtxt.="from batch_salg,varer,ordrelinjer ";

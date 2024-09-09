@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// ---includes/formfunk.php ------patch 4.0.8 ----2024-01-19--------------
+// ---includes/formfunk.php ------patch 4.1.1 ----2024-07-30--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -87,6 +87,7 @@
 // 2021.10.28 PHR ordrer.notes will now linebreak if line length > 5 chars  
 // 20230421 PHR Function modulus10 - cuts beginning of customer no instead of end, if too long
 // 20230712 PHR Added $creditedinvoice;
+// 20240729 PHR Various translations
 
 if (!function_exists('skriv')) {
 function skriv($id,$str, $fed, $italic, $color, $tekst, $tekstinfo, $x, $y, $format, $form_font,$formular,$line) {
@@ -916,7 +917,7 @@ mkdir("$mappe", 0775);
 if ($ordre_antal>1) {
 	$printfilnavn='udskrift';
 	if ($formular<=1) $printfilnavn="tilbud";
-	if ($formular==2) $printfilnavn="ordrebek";
+		if ($formular==2) if ($formular==2) $printfilnavn = findtekst('3099|Ordrebek',$sprog_id);
 	if ($formular==3) $printfilnavn="flg_seddel";
 	if ($formular==4) $printfilnavn="faktura";
 	if ($formular==9) $printfilnavn="plukliste";
@@ -1092,7 +1093,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 	if ($mail_fakt && $formular!=3 && $udskriv_til=='email') {
 		$mailantal++;
 		if ($formular<=1) $printfilnavn="tilbud".$ordrenr;
-		if ($formular==2) $printfilnavn="ordrebek".$ordrenr;
+		if ($formular==2) if ($formular==2) $printfilnavn = findtekst('3099|Ordrebek',$sprog_id).'_'.$ordrenr;
 		if ($formular==4) $printfilnavn="fakt".$fakturanr;
 		if ($formular==5) $printfilnavn="kn".$fakturanr;
 		if ($formular==9) $printfilnavn="plukliste".$ordrenr;
@@ -1112,7 +1113,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 		$nomailantal++;
 #		if ($ordre_antal<=1) { #mere sigeende navn til udskrifter.
 			if ($formular<=1) $printfilnavn="tilbud".$ordrenr;
-			if ($formular==2) $printfilnavn="ordrebek".$ordrenr;
+			if ($formular==2) if ($formular==2) $printfilnavn = findtekst('3099|Ordrebek',$sprog_id).'_'.$ordrenr;
 			if ($formular==3) $printfilnavn="flgs".$ordrenr."_".$lev_nr;
 			if ($formular==3 && $fakturanr) $printfilnavn="flgs".$fakturanr."_".$lev_nr;
 			if ($formular==4) $printfilnavn="fakt".$fakturanr;
@@ -1475,7 +1476,13 @@ for ($o=0; $o<$ordre_antal; $o++) {
 						elseif ($variabel[$z]=="pris") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$pris[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 						elseif ($variabel[$z]=="enhed") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$enhed[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 						elseif ($variabel[$z]=="momssats") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$varemomssats[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
-						elseif ($variabel[$z]=="rabat") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$rabat[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
+						elseif ($variabel[$z]=="rabat") { 
+							$rabattxt = "";
+							if ($rabat[$x] != "0,00") {
+								$rabattxt = $rabat[$x];
+							}
+							$svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$rabattxt", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
+						}
 						elseif ($variabel[$z]=="procent") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$procent[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 						elseif ($variabel[$z]=="linjemoms") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$linjemoms[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 #						elseif ($variabel[$z]=="lokation") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$lokation[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
@@ -1955,18 +1962,19 @@ function rykkerprint($konto_id,$rykker_id,$rykkernr,$maaned_fra,$maaned_til,$reg
 						$z_faktnr=$z;
 						skriv($id,$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$faktnr", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 					}
-					if (strtolower($variabel[$z]) == "beskrivelse")
-						$z_beskrivelse=$z;
-					($laengde[$z])?$beskr=(substr($r1['beskrivelse'],0,$laengde[$z])):$beskr=$r1['beskrivelse']; #20190430
-						skriv($id,$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$beskr", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
-					}
 					if (strstr($variabel[$z],"bel") && $belob) {
 						$z_belob=$z;
 						skriv($id,$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", $belob, "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 					}
+						if (strtolower($variabel[$z]) == "beskrivelse") {
+							$z_beskrivelse=$z;
+							($laengde[$z])?$beskr=(substr($r1['beskrivelse'],0,$laengde[$z])):$beskr=$r1['beskrivelse']; #20190430
+							skriv($id,$str[$z], "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$beskr", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
+						}
 				}	
 				$y=$y-4;
 			}
+		}
 		}
 		$ialt=dkdecimal($forfalden,2);
 			formulartekst($rykker_id[$q],$formular,$formularsprog); 		 

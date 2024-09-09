@@ -54,7 +54,7 @@
 			if (db_fetch_array(db_select("select id from grupper where art = 'DIV' and kodenr = '2' and box10 >= 'on'", __FILE__ . " linje " . __LINE__))) {
 				$tekst1 = findtekst(531, $sprog_id);
 				$tekst2 = findtekst(532, $sprog_id);
-				print "<td align=center><span onClick='javascript:location.href='../debitor/betalingsliste.php''><input title='$tekst1' style=\"$butStyle\" type='button' value='$tekst2'></span></td>\n";
+				print "<td align=center><span onClick=\"javascript:location.href='../debitor/betalingsliste.php'\"><input title='$tekst1' style=\"$butStyle\" type='button' value='$tekst2'></span></td>\n";
 #			} elseif (file_exists("../debitor/multiroute.php")) {
 #				print "<td><span onclick='javascript:location.href='../debitor/multiroute.php''><input title='Multiroute' style=\"$butStyle\" type='button' value='" . findtekst(923, $sprog_id) . "'></span></td>\n";
 			}

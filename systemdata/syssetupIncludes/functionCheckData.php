@@ -42,7 +42,7 @@ function tjek ($id,$beskrivelse,$kodenr,$kode,$art,$box1,$box2,$box3,$box4,$box5
 #cho __line__."<br>";
 		if (!$fejl && ($art=='DG'||$art=='KG')) $fejl=sprogtjek($box4);
 #cho __line__."<br>";
-		if (!$fejl && ($art=='LG')) $fejl=afdelingstjek($box1);
+		if (!$fejl && $art=='LG' && $box1) $fejl=afdelingstjek($box1);
 #cho __line__."<br>";
 		return $fejl;
 	}
