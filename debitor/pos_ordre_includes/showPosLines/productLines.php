@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.0.8 --- 2023.10.09 ---
+// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.1.1 --- 2024.07.30 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2019-2023 saldi.dk aps
+// Copyright (c) 2019-2024 saldi.dk aps
 // ----------------------------------------------------------------------
 //
 // 20190508	LN Move function vis-pos_linjer here
@@ -40,6 +40,7 @@
 // 20230421 PHR Added ImachimeCustomDisplay
 // 20230531 PHR Added Discount to ImachimeCustomDisplay
 // 20231009 PHR Groupdiscount was handled as always as amount
+// 20240729 PHR Various translations
 
 	print "<!-- ---------- start productLines.php ---------- -->\n";
 	$customerDisplay = NULL;
@@ -142,8 +143,9 @@
 				}
 				print "</select>";
 			} elseif ($status<'3' && !$varenr_ny && !$saet[$x]) {
+				$txt = findtekst('3098|Ret',$sprog_id);
 				$href="pos_ordre.php?id=$id&ret=$linje_id[$x]&antal=$antal[$x]&leveret=$leveret[$x]"; #20210320 Added antal
-				print "<input type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"Ret\">\n";
+				print "<input type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"$txt\">\n";
 			}
 			print "</td></tr>\n";
 		}
@@ -192,8 +194,9 @@
 			$lev_vnr*=$r2['antal'];
 			print "<tr bgcolor=\"$linjebg\"><td></td><td></td><td></td><td>$r2[beskrivelse]</td><td></td><td title=$srbt\" align=\"right\">".dkdecimal($lev_vnr,2)."</td>\n";
 			if ($r2['varenr']!=$svnr) {
+				$txt = findtekst('3098|Ret',$sprog_id);
 				$href="pos_ordre.php?id=$id&ret=$r2[id]&saet=$saet[$x]&leveret=$leveret[$x]";
-				print "<td><!--<input type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"Ret\">--></td></tr>\n";
+				print "<td><!--<input type=\"button\" onclick=\"window.location.href='$href'\" $stil value=\"$txt\">--></td></tr>\n";
 			}
 		}
 		if ($status < 3) {   #|| $tilfravalg[$x] fjernet 20190424

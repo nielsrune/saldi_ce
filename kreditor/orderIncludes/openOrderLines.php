@@ -5,7 +5,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- kreditor/ordreIncludes/openOrerLines.php --- lap 4.0.7 --- 2023.02.15 ---
+// --- kreditor/ordreIncludes/openOrerLines.php --- patch 4.1.0 --- 2024-06-28 ----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,12 +20,20 @@
 // The program is published with the hope that it will be beneficial,
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
+// http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2023 saldi.dk aps
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------
 // 20221106 PHR - Various changes to fit php8 / MySQLi
+// 20230111 MSC - Implementing new design
 // 20230215 PHR - Added '&& $ialt';
+// 20230421 LOE - Fixed some bugs 
+// 20230718 LOE - Minor modification.
+// 20240626 PHR Added 'fiscal_year' in queries
+// 20240628 PHR 'recieve' is not shown if $bogfor == 1
 
+
+$kreditmax=NULL;
 for ($x=1; $x<=$linjeantal; $x++)	{
 	if ($varenr[$x]) {
 		$ialt=($pris[$x]-($pris[$x]/100*$rabat[$x]))*$antal[$x];
@@ -47,7 +55,7 @@ for ($x=1; $x<=$linjeantal; $x++)	{
 	print "<input type='hidden' name='vare_id[$x]' value='$vare_id[$x]'>";
 	print "<input type='hidden' name='kred_linje_id[$x]' value='$kred_linje_id[$x]'>";
 	print "<input type='hidden' name='serienr[$x]' value='$serienr[$x]'>";
-	print "<input type='hidden' name='omvbet[$x]' value='$omvbet[$x]'>";
+#  print "<input type='hidden' name='omvbet[$x]' value='$omvbet[$x]'>";
 	print "<tr>";
 	print "<td><input class='inputbox' type='text' style='text-align:right' size=3 name=posn$x value='$x' onchange='javascript:docChange = true;'></td>";
 	print "<td title='".findtekst(1513, $sprog_id)."'><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=7 name=vare$x onfocus='document.forms[0].fokus.value=this.name;' value='".htmlentities($varenr[$x])."'></td>"; #20180305
@@ -146,6 +154,12 @@ if ($status>=1) {
 	print "<td>($dk_tidl_lev[$x])</td>";
 }
 	}
+#cho "LP $labelprint";
+if ($omlev) {
+  $txt = "<input class='inputbox' type='checkbox' style='background: none repeat scroll 0 0 #e4e4ee' ";
+  $txt.= "name='omvbet[$x]' onchange='javascript:docChange = true;' $omvbet[$x]>";
+  print "<td valign='top'>$txt</td>\n";
+}
 	if ($labelprint) {
 if ($varenr[$x]) {
 	$txt = "<a href='../lager/labelprint.php?id=$vare_id[$x]&beskrivelse=".urlencode($beskrivelse[$x]);
@@ -158,14 +172,10 @@ print "<td>$txt</td>";
 $txt = "<input type=button value='Serienr.' name='vis_snr$x' onchange='javascript:docChange = true;'>";
 print "<td onClick='serienummer($linje_id[$x])'>$txt</td>";
 	}
+  $box9[$x] = if_isset($box9[$x],NULL);
 	if ($antal[$x]<0 && $art!='KK' && $box9[$x]=='on') {
 $txt = "<span title= '".findtekst(1496, $sprog_id)."'><img alt='".findtekst(1515, $sprog_id)."' src=../ikoner/serienr.png>";
 print "<td align=center onClick='batch($linje_id[$x])'>$txt</td>";
-	}
-	if ($omlev) {
-$txt = "<input class='inputbox' type='checkbox' style='background: none repeat scroll 0 0 #e4e4ee' ";
-$txt.= "name='omvbet[$x]' onchange='javascript:docChange = true;' $omvbet[$x]>";
-print "<td valign='top'>$txt</td>\n";
 	}
 	print "</tr>\n";
 }
@@ -183,15 +193,18 @@ else {
 	print "<td><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=2></td>";
 	print "<td><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=3></td>";
 }
-if ($konto_id) print "<td><input class='inputbox' type='text' size=58 name=beskrivelse0 onfocus='document.forms[0].fokus.value=this.name;'></td>";
-else print "<td><input class='inputbox' type='text' size=58 name=beskrivelse0 onfocus='document.forms[0].fokus.value=this.name;'></td>";
+if ($konto_id) {
+	print "<td><input class='inputbox' type='text' size=58 name=beskrivelse0 onfocus='document.forms[0].fokus.value=this.name;'></td>";
+} else {
+	print "<td><input class='inputbox' type='text' size=58 name=beskrivelse0    onfocus='document.forms[0].fokus.value=this.name;'></td>";
+}
 print "<td><input class='inputbox' type='text' style='text-align:right' size=10 name=pris0></td>";
 print "<td><input class='inputbox' type='text' style='text-align:right' size=4 name=raba0></td>";
 print "<td><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=10></td>";
 #if ($status==1) {print "<td><input class='inputbox' type='text' style='text-align:right' size=2 name=modt0></td>";}
 print "</tr>\n";
 print "<input type='hidden' name='sum' value='$sum'>";
-($momssats)?$moms = $momssum/100*$momssats:$moms = 0;
+$moms=floatval($momssum)/100*floatval($momssats);
 if ($art=='KK') $moms=$moms-0.0001; #Ellers runder den op istedet for ned?
 else $moms=$moms+0.0001; #Ellers runder den ned istedet for op?
 $moms=afrund($moms,3);
@@ -217,6 +230,11 @@ print "<td align='center'><input type='submit' style = 'width:120px;' accesskey=
 print "value='Gem' name='save' onclick='javascript:docChange = false;'></td>";
 print "<td align='center'><input type=submit style = 'width:120px;' accesskey='o' ";
 print "value='Opslag' name='lookup' onclick='javascript:docChange = false;'></td>";
+
+if ($status > 1 && $bogfor==1){
+  print "<td align=center><input type=submit style = 'width:120px;'accesskey='b' value='".findtekst(1065, $sprog_id)."' ";
+  print "name='postNow' onclick='javascript:docChange = false;'></td>";
+} else {
 if ($art=='KK') {
 	print "<td align='center'>";
 	print "<!--Returnér --><input type='submit' style = 'width:120px;' accesskey='m' ";
@@ -227,13 +245,11 @@ if ($art=='KK') {
 	print "accesskey='m' value='".findtekst(1485, $sprog_id)."' ";
 	print "name='receive' onclick='javascript:docChange = false;'></td>";
 }
-if ($status > 1 && $bogfor==1){
-	print "<td align=center><input type=submit style = 'width:120px;'accesskey='b' value='".findtekst(1065, $sprog_id)."' ";
-	print "name='postNow' onclick='javascript:docChange = false;'></td>";
 }
-if (count($posnr) == 0 && $id) {
+if(!count($posnr) && $id) {
 	print "<td align=center><input type='submit' style = 'width:120px;' value='".findtekst(1099, $sprog_id)."' ";
 	print "name='delete' onclick='javascript:docChange = false;'></td>";
+
 }	elseif ($id && $art=='KO') {
 	if ($udskriv_til == 'email') {
 		$spantxt = str_replace('$email',$email,findtekst(3009, $sprog_id));
@@ -270,7 +286,7 @@ if (!$r['valutakurs']) $r['valutakurs']=100;
 if ($valuta=='DKK' && $r['valuta']!='DKK') $opp_amount=$r['amount']*$r['valutakurs']/100;
 elseif ($valuta!='DKK' && $r['valuta']=='DKK') {
 	$qtxt = "select kurs from grupper, valuta where grupper.art='VK' and grupper.box1='$valuta' and ";
-	$qtxt.= "valuta.gruppe = grupper.kodenr and valuta.valdate <= '$r[transdate]' order by valuta.valdate desc";
+  $qtxt.= "valuta.gruppe = ".nr_cast("grupper.kodenr")." and valuta.valdate <= '$r[transdate]' order by valuta.valdate desc";
 	if ($r3=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 $opp_amount=$r['amount']*100/$r3['kurs'];
 	} else alert("Ingen valutakurs for faktura $r[faktnr]");

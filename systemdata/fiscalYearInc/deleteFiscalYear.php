@@ -5,7 +5,7 @@
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
 //
-// --- systemdata/financialYearInc/deleteFinancialYear.php --- ver 4.0.4 --- 2022-05-01 --
+// --- systemdata/financialYearInc/deleteFinancialYear.php --- ver 4.0.4 --- 2024-05-24 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -53,7 +53,7 @@ function deleteFinancialYear($year) {
 		exit;
 	}
 	$a = $endY . $endM;
-	$b = date('Y')-6 . date('m');
+	$b = date('Y')-5 . date('m');
 	if ($a > $b) {
 		alert("Regnskabsår kan først slettes efter 5 år");
 		print "<meta http-equiv=\"refresh\" content=\"0;URL=../systemdata/regnskabsaar.php\">";
@@ -90,19 +90,19 @@ function deleteFinancialYear($year) {
 */
 	transaktion('begin');
 	$doDelete=1;
-echo __line__." ".count($accountId)."<br>";	
+#cho __line__." ".count($accountId)."<br>";
 	for ($i=0;$i<count($accountId);$i++) {
 		$accountBalance[$i] = getAccountBalance($accountId[$i],$yearBegin,$yearEnd);
-echo __line__." $accountId[$i] -> $accountBalance[$i]<br>";
+#cho __line__." $accountId[$i] -> $accountBalance[$i]<br>";
 		if ($accountBalance[$i] == 0) {  
 			$qtxt = "delete from openpost where konto_id = '$accountId[$i]' and transdate <= '$yearEnd'";
-echo __line__." $qtxt<br>";
+#cho __line__." $qtxt<br>";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		} else {
 			if (!function_exists('createAccountPrimo')) include ('createAccountPrimo.php');
-			echo __line__." $i createAccountPrimo($accountId[$i],$yearBegin,$yearEnd,$nextYearBegin)<br>";			
+			#cho __line__." $i createAccountPrimo($accountId[$i],$yearBegin,$yearEnd,$nextYearBegin)<br>";
 			createAccountPrimo($accountId[$i],$yearBegin,$yearEnd,$nextYearBegin);
-			echo __line__." $i ".count($accountId)."<br>";			
+			#cho __line__." $i ".count($accountId)."<br>";
 ##cho __line__." sletter ikke $accountId[$i]<br>";	
 #			$doDelete = 0;
 		}
@@ -233,7 +233,7 @@ echo __line__." $qtxt<br>";
 			} 
 	}
 #		}
-		echo __line__." $i ".count($accountId)."<br>";			
+		#cho __line__." $i ".count($accountId)."<br>";
 	}
 	$i=0;
 	$deleteLedgerId = array();
@@ -273,7 +273,7 @@ echo __line__." $qtxt<br>";
 #cho __line__." $qtxt<br>";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "delete from grupper where fiscal_year = '$year'";
-echo __line__." $qtxt<br>";
+#cho __line__." $qtxt<br>";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	transaktion('commit');
 

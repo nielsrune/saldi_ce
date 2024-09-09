@@ -5,7 +5,7 @@
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
 //
-// --- systemdata/regnskabsaar.php --- ver 4.0.4 --- 2022-05-01 --
+// --- systemdata/regnskabsaar.php --- ver 4.0.4 --- 2024-05-24 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -21,7 +21,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 Saldi.dk ApS
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------------
 // 20150327 CA  Topmenudesign tilføjet                             søg 20150327
 // 20161202 PHR Små designændringer
@@ -31,6 +31,7 @@
 // 20210805 LOE - Updated the title texts
 // 20220103 PHR - "Set all" now updates online.php.
 // 20220501 PHR - Corrected error in set all.
+// 20240524 PHR - Fiscal year can now be deleted.
 
 @session_start();
 $s_id=session_id();
@@ -64,8 +65,11 @@ if ($aktiver) {
 	if (!$revisor) db_modify("update brugere set regnskabsaar = '$aktiver' where id = '$bruger_id'",__FILE__ . " linje " . __LINE__);
 }
 if ($deleteYear) {
+ echo "Sletter";
+	print "<script>javascript:document.body.style.cursor = 'wait'</script>";
 	include_once("fiscalYearInc/deleteFiscalYear.php");
 	deleteFinancialYear($deleteYear);
+	print "<script>javascript:document.body.style.cursor = 'default'</script>";
 }
 
 if ($menu=='T') {  # 20150327 start
@@ -132,10 +136,12 @@ while ($row = db_fetch_array($query)) {
 	elseif ($row['kodenr']!=$regnaar) {
 		print "<td>".findtekst(387,$sprog_id)."</td><td>";
 		if (($x==1 || $deleted[$x-1] == '1') && $row['box5']!='on') {
-			$txt1="Slet";
-			$txt2="slet";
+			$txt1 = "Sletter transaktioner med tilhørende bilag, ordrer og fakturaer fra regnskabsåret, ";
+			$txt1.= "varer er oprettet i regnskabsåret og ikke har været handlet siden ";
+			$txt1.= "samt kunder og leverandører som er urørte i efterfølgende år";
+			$txt2 = "Vil du slette dette regnskabsår ?";
 			print "<a href='regnskabsaar.php?deleteYear=$row[kodenr]' title='$txt1' onclick=\"return confirm('$txt2')\">";
-			print "$txt1</a>";
+			print findtekst(3064,$sprog_id)."</a>";
 		}
 		print "</td>";
 	} else {

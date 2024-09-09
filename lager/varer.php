@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/varer.php ---patch 4.0.8 ----2023-09-05--------------
+// --- lager/varer.php ---patch 4.1.1 ----2024-08-15--------------
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -21,7 +21,7 @@
 // See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 //
-// Copyright (c) 2003-2023 Saldi.dk ApS
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------
 
 // 2013.01.15 Wildcard forsvinder efter søgning - tak til Henrik Thomsen fra Basslab for rettelse - søg 20130115
@@ -58,6 +58,8 @@
 // 2023.04.14 LOE - Minor modifications
 // 2023.06.03 PHR - php8
 // 2023.09.05	PHR - cookie for saldiProductListStart & saldiProductListLines 
+// 202408?? MMK - Improved paging funcion  	
+// 20240815 PHR - Translations 
 
 @session_start();
 $s_id=session_id();
@@ -81,12 +83,13 @@ $title="Varer";
 $modulnr=9;
 $css="../css/std.css";
 
-$beskrivelse=$linjeantal=$slut=$start=$udvalg=$vis_lev=$vis_lev_felt=NULL;
+$beskrivelse = $fokus = $linjeantal = $slut = $start = $udvalg = $vis_lev = $vis_lev_felt = NULL;
 #$linjeantal=100;
 
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+include("../includes/pagination.php");
 	
 if ($popup) $returside="../includes/luk.php";
 else $returside=(if_isset($_GET['returside']));
@@ -289,7 +292,7 @@ if ($beskrivelse) { #20161206
 		$find=str_replace("*","",$find);
 		$ord=array();
 		$ord=explode("+",$find);
-		$find=NULL;
+#		$find=NULL;
 		for($b=0;$b<count($ord);$b++){
 			$udvalg.="and lower(beskrivelse) like '%$ord[$b]%'";
 		}
@@ -317,7 +320,55 @@ if ($beskrivelse) { #20161206
 */
 }
  
-$next=udskriv($start, $slut, $sort, '', '');
+#$udvalg="";
+if ($varenummer) {
+	if (strstr($varenummer, "*")) {
+		if (substr($varenummer,0,1)=='*'){
+			$varenummer="%".substr($varenummer,1);
+#			$v_startstjerne=1;
+		}
+		if (substr($varenummer,-1,1)=='*') {
+			$varenummer=substr($varenummer,0,strlen($varenummer)-1)."%";
+#			$v_slutstjerne=1;
+		}
+	$v_strlen=strlen($varenummer);
+#	$udvalg=$udvalg." and varenr LIKE '$varenummer'";
+#	else $udvalg=$udvalg." and (varenr ~ '$varenummer' or stregkode ~ '$varenummer')"; 
+	} else { # 20180112
+		$qtxt="select vare_id from variant_varer where upper(variant_stregkode)='".strtoupper($varenummer)."'";
+		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+			$qtxt="select varenr from varer where id='$r[vare_id]'";
+			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $varenummer=$r['varenr']; 
+		}
+	}
+	$low=strtolower($varenummer);
+	$upp=strtoupper($varenummer);
+	$udvalg.=" and ((varenr LIKE '$varenummer' or lower(varenr) LIKE '$low' or upper(varenr) LIKE '$upp' or stregkode = '$varenummer')";
+	if (!strstr($varenummer,'%')) {
+		$udvalg.=" or lower(beskrivelse) like '%".strtolower($varenummer)."%'"; #20190612
+		$udvalg.=" or lower(trademark) like '%".strtolower($varenummer)."%')"; #20210211	
+	}
+	else $udvalg.=")";
+} 
+
+if ($makeSuggestion) $udvalg=NULL;
+
+include("../includes/topline_settings.php");
+
+$txt30   = findtekst(30,$sprog_id); #Tilbage
+$txt39   = findtekst(39,$sprog_id); # Ny
+$txt159  = findtekst(159,$sprog_id); //Fortryd
+$txt813  = findtekst(813,$sprog_id); # Visning
+$txt953  = findtekst(953,$sprog_id); # Ordrebeholdning
+$txt955  = findtekst(955,$sprog_id); # Alle varer fra lev.
+$txt957  = findtekst(957,$sprog_id); #Vareliste
+$txt954  = findtekst(954,$sprog_id); #Indkøbsforslag
+$txt2110 = findtekst(2110,$sprog_id); #Viser status for tilbud.....
+$txt2113 = findtekst(2113,$sprog_id); // Tilbage til varelisten uden at bestille
+$txt3102 = findtekst(3102,$sprog_id); # Opret en ny vare
+$txt3103 = findtekst(3103,$sprog_id); #Luk varelisten....
+$txt3105 = findtekst(3105,$sprog_id); #Opret indkøbsforslag /....
+$txt3101 = findtekst(3101,$sprog_id); #Vælg hvilke varegrupper.....
 
 if ($menu=='T') {
 #	print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">";
@@ -333,32 +384,91 @@ if ($menu=='T') {
 	print "</div><!-- end of leftmenuholder -->\n";
 	print "<div class=\"maincontent\">\n";
 	print "<table border=\"0\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable\"><tbody>"; # -> 1
+
+} elseif ($menu == 'S') {
+	print "<table style='width:100%;height:100%;' border='0' cellspacing='0' cellpadding='0'><tbody>\n";
+	print "<tr><td height = '25' align='center' valign='top'>\n";
+	print "<table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>\n";
+	print "<tr><td width='10%'><a href='$returside' accesskey=L>
+		   <button style='$butUpStyle; width:100%' title='$backTitle' onMouseOver=\"this.style.cursor='pointer'\">
+		   $txt30</button></a></td>\n";
+	if ($start<$linjeantal) {
+		if ($makeSuggestion) {
+			print "<td width='15%'><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal'>";
+			print "<button style='$butUpStyle; width:100%' title='$txt2113' onMouseOver=\"this.style.cursor='pointer'\">";
+			print "$txt159</button></a></td>\n";
+		} else {
+			print "<td width='15%'>
+				   <a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse&find=$find'>
+				   <button style='$butUpStyle; width:100%' title='$txt3105'
+				   onMouseOver=\"this.style.cursor='pointer'\">
+				  $txt954</button></a></td>\n";
+		}
+	}
+	print "<td width='50%' style='$topStyle' align='center'> $txt957</td>\n";
+	if ($start<$linjeantal) {
+		if ($stock && !$makeSuggestion) {
+			print "<td width='10%'><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal'>
+				   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">$txt30</button></a></td>\n";
+		} elseif ($stock && $makeSuggestion && !$alle_varer) {
+			print "<td width='15%'>
+				   <a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse&amp;alle_varer=ja'>
+				   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\" title='Medtager alle varer fra valgte leverand&amp;oslash;rer, uanset ordrestatus'>$txt955</button></a></td>\n";
+		} elseif ($stock && $makeSuggestion && $alle_varer) {
+			print "<td width='10%'>
+				   <a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse'>
+				   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\" title='Medtager kun varer fra valgte leverand&amp;oslash;rer, som vil komme under minimum udfra ordrer & tilbud'>Kun mangler</button></a></td>\n";
+		} else {
+			print "<td width='10%'><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;beholdning=ja'>
+				   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\" title='Viser status for tilbud, salgsordrer og indk&oslash;bsordrer'>$txt953</button></a></td>\n";
+		}
+	} #else print "<td width='80%' $top_bund> Visning</td>\n";
+
+	print "<td width='5%'><a href='varevisning.php'>
+		   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\" title='$txt3101'>$txt813</button></a></td>";
+	print "<td width='5%'><a href='varekort.php?returside=varer.php'>
+		   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\" title='Opret en ny vare'>Ny</button></a></td>";
+
+	print "</tr>\n";
+	print "</tbody></table>\n";
+
 } else {
 	print "<table style=\"width:100%;height:100%;\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n";
 	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">\n";
 	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>\n";
-	print "<tr><td width=\"10%\" $top_bund><a href=\"$returside\" accesskey=L><span title='Luk varelisten og g&aring; tilbage til hovedmenuen'>Luk</span></a></td>\n";
+	print "<tr><td width=\"10%\" $top_bund><a href=\"$returside\" accesskey=L><span title='$backTitle'>$txt30</span></a></td>\n";
 	if ($start<$linjeantal) {
-		if ($makeSuggestion) print "<td width=\"10%\" $top_bund><a href=\"varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal\"><span title='Tilbage til varelisten uden at bestille'>Fortryd</span></a></td>\n";
-		else print "<td width=\"10%\" $top_bund><a href=\"varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse\"><span title='Opret indk&oslash;bsforslag udfra igangv&aelig;rende tilbud og ordrebeholdning'>Indk&oslash;bsforslag</span></a></td>\n";
+		if ($makeSuggestion) {
+			print "<td width=\"15%\" $top_bund><a href=\"varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal\"><span title='$txt2113'>$txt159</span></a></td>\n";
+		} else {
+			print "<td width=\"15%\" $top_bund><a href=\"varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse&find=$find\"><span title='$txt3105'>$txt954</span></a></td>\n";
+		}
 	}	
-	print "<td width=\"60%\" $top_bund> Vareliste</td>\n";
+	print "<td width=\"50%\" $top_bund>$txt957</td>\n";
 	if ($start<$linjeantal) {
-		if ($stock && !$makeSuggestion) print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal'>Tilbage</a></td>\n";
-		elseif ($stock && $makeSuggestion && !$alle_varer) print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse&amp;alle_varer=ja'><span title='Medtager alle varer fra valgte leverand&amp;oslash;rer, uanset ordrestatus'>Alle varer fra lev.</span></a></td>\n"; 
-		elseif ($stock && $makeSuggestion && $alle_varer) print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse'><span title='Medtager kun varer fra valgte leverand&amp;oslash;rer, som vil komme under minimum udfra ordrer & tilbud'>Kun mangler</span></a></td>\n"; 
-		else print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;beholdning=ja'><span title='Viser status for tilbud, salgsordrer og indk&oslash;bsordrer'>Ordrebeholdning</span></a></td>\n";
+		if ($stock && !$makeSuggestion) {
+			print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal'>$txt30</a></td>\n";
+		} elseif ($stock && $makeSuggestion && !$alle_varer) {
+			$titletxt = 'Medtager alle varer fra valgte leverand&amp;oslash;rer, uanset ordrestatus';
+			print "<td width=\"15%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse&amp;alle_varer=ja'><span title=$titletxt>$txt955</span></a></td>\n";
+		} elseif ($stock && $makeSuggestion && $alle_varer) {
+			$titletxt = 'Medtager kun varer fra valgte leverand&amp;oslash;rer, som vil komme under minimum udfra ordrer & tilbud';
+			print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;forslag=ja&amp;beskrivelse=$beskrivelse'><span title='$titletxt'>$txt</span></a></td>\n";
+		} else {
+			print "<td width=\"10%\" $top_bund><a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;beholdning=ja'><span title='$txt2110'>$txt953</span></a></td>\n";
+		}
 	} #else print "<td width=\"80%\" $top_bund> Visning</td>\n";
 	if ($popup) {
-		print "<td width=\"5%\"$top_bund onclick=\"javascript:vare_vis=window.open('varevisning.php','vare_vis','scrollbars=1,resizable=1');vare_vis.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"> <span title='V&aelig;lg hvilke varegrupper og kreditorer som som vises i varelisten'><u>Visning</u></span></td>";
+		print "<td width=\"5%\"$top_bund onclick=\"javascript:vare_vis=window.open('varevisning.php','vare_vis','scrollbars=1,resizable=1');vare_vis.focus();\" onmouseover=\"this.style.cursor = 'pointer'\"> <span title='$txt3101'><u>$txt3101</u></span></td>";
 		print "<td width=\"5%\" $top_bund onmouseover=\"this.style.cursor = 'pointer'\"; onclick=\"javascript:window.open('varekort.php?opener=varer.php&amp;returside=../includes/luk.php','varekort','scrollbars=1,resizable=1');ordre.focus();\"><span style=\"text-decoration: underline;\" title='Opret en ny vare'>Ny</a></span></td>";
 	} else {
-		print "<td width=\"5%\" $top_bund><a href=\"varevisning.php\"> <span title='V&aelig;lg hvilke varegrupper og kreditorer som som vises i varelisten'><u>Visning</u></span></a></td>";
-		print "<td width=\"5%\" $top_bund><a href=\"varekort.php?returside=varer.php\"><span title='Opret en ny vare'>Ny</span></a></td>";
+		print "<td width=\"5%\" $top_bund><a href=\"varevisning.php\"> <span title='$txt3101'><u>$txt813</u></span></a></td>";
+		print "<td width=\"5%\" $top_bund><a href=\"varekort.php?returside=varer.php\"><span title='$txt3102'>$txt39</span></a></td>";
 	}
 	print "</tr>\n";
 	print "</tbody></table>\n";
 }
+
 print "<tr><td valign=\"top\">\n";
 if (!$makeSuggestion) {
 	print "<form name=\"vareliste\" action=\"varer.php?sort=$sort&amp;beholdning=$stock&amp;forslag=$makeSuggestion&lev_kto_navn=$lev_kto_navn\" method=\"post\">";
@@ -378,17 +488,18 @@ if (!$lagerantal) {
 	$lagerantal=1;
 }
 
-if (!$makeSuggestion) {
+#if (!$makeSuggestion) {
 	if ($csv) {
 		if (file_exists("../temp/$db/vareliste.csv")) unlink("../temp/$db/vareliste.csv"); 
 		$csvfil=fopen("../temp/$db/vareliste.csv","w");
 	} else {
-	print "<tr><td colspan='2' width='20%'>";
-	if ($start>=$linjeantal) {
+		print "<tr><td colspan='2' width='15%'>";
+		/*if ($start>=$linjeantal) {
 		$tmp=$start-$linjeantal;
 		print "<a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$stock'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a>&nbsp;";
-	}
+		 }*/
 	if ($vis_lev_felt) {
+	
 #		print "<div class=\"ui-widget\">";
 		(strlen($lev_kto_navn)>125)?$width=strlen($lev_kto_navn)*7:$width=125;
 		$width.='px';
@@ -398,18 +509,26 @@ if (!$makeSuggestion) {
 	}
 	print "</td>";
 	print "<td align=center colspan='2'>";
-	print "<input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px\" name=\"start\" title= \"1 linje\" value=\"$start\"> - ";
-	print "<input class=\"inputbox\" type=\"text\" style=\"text-align:left;width:40px\" name=\"linjeantal\" title= \"Antal linjer pr side\" value=\"$linjeantal\"></td>";
 	$tmp=$start+$linjeantal;
-	$colspan=$lagerantal;
-	print "<td colspan='$colspan'></td>";
-	if ($next>=$slut) {
-		print "<td align=right><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;beholdning=$stock'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
-	}
-	else print  "<td colspan=2></td>";
+		$colspan=$lagerantal+2;
 	print "</tr>\n";
+
+		$res=udskriv($start, $slut, $sort, '', $udvalg);
+		$next = $res[0];
+		$itemCount = $res[1];
+		if (!$makeSuggestion) {
+			print "<tr>";
+			if ($start>=$linjeantal){
+				$tmp=$start-$linjeantal;
+				print "<td><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$stock'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+			}
+			print "<td colspan='100' align=right>";
+			pagination($start, $linjeantal, $itemCount);
+			print  "</td></tr>"; 
 }
 }
+#}
+
 if ($csv) fwrite($csvfil,"\"Varenr\";\"Enhed\";\"Varemrk.\";\"Beskrivelse\";");
 else {
 print "<tr>";
@@ -439,7 +558,7 @@ if (!$vis_lev){
 			print "<td align=right><b> I ordre</b></td>\n";
 			print "<td align=right><b> Bestilt</b></td>\n";
 		}
-		print "<td align=right><b><a href=\"varer.php?sort=beholdning&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">".findtekst(948,$sprog_id)."</a></b></td>\n";
+		print "<td align=right><b><a href=\"varer.php?sort=beholdning&amp;vis_lev=$vis_lev&amp;linjeantal=$linjeantal\">".findtekst(948,$sprog_id)."</a></b></td></td></td>\n";
 	}
 }
 if ($makeSuggestion) {
@@ -480,58 +599,27 @@ if (!$makeSuggestion && !$csv) {
 	if ($showTrademark) print "<td></td>";
 	print "<td colspan=5 align=right></td></tr>\n";
 }
-#$udvalg="";
-if ($varenummer) {
-	if (strstr($varenummer, "*")) {
-		if (substr($varenummer,0,1)=='*'){
-			$varenummer="%".substr($varenummer,1);
-#			$v_startstjerne=1;
-		}
-		if (substr($varenummer,-1,1)=='*') {
-			$varenummer=substr($varenummer,0,strlen($varenummer)-1)."%";
-#			$v_slutstjerne=1;
-		}
-	$v_strlen=strlen($varenummer);
-#	$udvalg=$udvalg." and varenr LIKE '$varenummer'";
-#	else $udvalg=$udvalg." and (varenr ~ '$varenummer' or stregkode ~ '$varenummer')"; 
-	} else { # 20180112
-		$qtxt="select vare_id from variant_varer where upper(variant_stregkode)='".strtoupper($varenummer)."'";
-		if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-			$qtxt="select varenr from varer where id='$r[vare_id]'";
-			if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $varenummer=$r['varenr']; 
-		}
-	} 
-	$low=strtolower($varenummer);
-	$upp=strtoupper($varenummer);
-	$udvalg.=" and ((varenr LIKE '$varenummer' or lower(varenr) LIKE '$low' or upper(varenr) LIKE '$upp' or stregkode = '$varenummer')";
-	if (!strstr($varenummer,'%')) {
-		$udvalg.=" or lower(beskrivelse) like '%".strtolower($varenummer)."%'"; #20190612
-		$udvalg.=" or lower(trademark) like '%".strtolower($varenummer)."%')"; #20210211	
-	}
-	else $udvalg.=")";
-}
 if ($csv) {
 	udskriv(0, 1000000, $sort, '1', $udvalg);
 		fclose($csvfil);
 		print "<a href=\"../temp/$db/vareliste.csv\">csvfil</a>";
 } else {
-$next = udskriv($start, $slut, $sort, '1', $udvalg);
-# if ($next<$slut) lukkede_varer();
-if ($next > 25 && $linjeantal > 25) {
+	udskriv($start, $slut, $sort, '1', $udvalg);
+
+	print "<tr>";
 	if ($start>=$linjeantal){
 		$tmp=$start-$linjeantal;
-			print "<tr><td><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$stock'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+		print "<td><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$stock'><img src=../ikoner/left.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
 	}
 	else print  "<td></td>";
-	print "<td colspan=3></td>";
-	$tmp=$start+$linjeantal;
-		if ($showTrademark) $colspan++;
-		if ($next>=$slut && !$makeSuggestion) {
-			print "<td colspan='$colspan' align=right><a href='varer.php?sort=$sort&amp;start=$tmp&amp;linjeantal=$linjeantal&amp;beholdning=$stock'><img src=../ikoner/right.png style=\"border: 0px solid; width: 15px; height: 15px;\"></a></td>";
+	if (!$makeSuggestion) {
+		print "<td colspan='100' align=right>";
+		$q=db_select("select count(*) as c from varer",__FILE__ . " linje " . __LINE__);
+		$r=db_fetch_array($q);
+		pagination($start, $linjeantal, $itemCount);
+		print  "</td>"; 
 	}
-	else print  "<td></td>"; 
 	print "</tr>\n";
-}
 print "<tr><td colspan='3'>";
 	print "<a href='varer.php?sort=$sort&amp;start=$start&amp;linjeantal=$linjeantal&amp;varenummer=$varenummer&amp;beskrivelse=$beskrivelse&amp;beholdning=$stock&amp;csv=1'>csv</a>";
 }
@@ -542,12 +630,15 @@ print "</form>";
 
 	
 function udskriv($start, $slut, $sort, $udskriv, $udvalg) {
+	# This function prints the items if $udskriv is set
+	# Returns array of the count items printed and total items
 
+	global $linjeantal;
 global $alle_varer;
 global $b_startstjerne,$b_slutstjerne,$b_strlen,$beholdning,$beskrivelse,$bestilt,$bgcolor,$bgcolor5,$brugernavn;
 global $charset,$csv,$csvfil;
 global $lagerantal,$lev_kto,$lev_navn;
-global $forslag;
+	global $find,$forslag;
 global $href_vnr;
 global $i_forslag,$i_ordre,$i_tilbud,$itemGroup;
 global $jsvars;
@@ -563,7 +654,7 @@ if (!isset ($lukket)) $lukket = NULL;
 if (!isset ($id)) $id = NULL;
 if (!isset ($enhed)) $enhed = NULL;
 if (!isset ($notes)) $notes = NULL;
-if (!isset ($description)) $description = NULL;
+	if (!isset ($productName)) $productName = NULL;
 if (!isset ($gruppe)) $gruppe = NULL;
 if (!isset ($vatPrice)) $vatPrice = NULL;
 
@@ -630,6 +721,7 @@ if (!$vis_K[0]) {
 		}	
 	}  
 	$y=0;
+		$lev_vare_liste = array();
 	$qtxt="select distinct vare_id from vare_lev $tmp";
 	$q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r = db_fetch_array($q)) {
@@ -648,18 +740,21 @@ if (!$vis_K[0]) {
 
 if (($stock||$makeSuggestion)&&!$udskriv) $varer_i_ordre=find_varer_i_ordre(); 
 if (!$slut) $slut=$start+50; 
-if ($beskrivelse||$varenummer||$makeSuggestion) $slut=999999;
+	#if ($beskrivelse||$varenummer||$makeSuggestion) $slut=999999;
+	if ($makeSuggestion) $slut=999999;
 $v=0;
 $varenr = array();
 $qtxt = "select * from varer ";
-if ($udvalg) $qtxt.= "where id > 0 $udvalg ";
+	if ($udvalg && !$makeSuggestion) $qtxt.= "where id > 0 $udvalg ";
 if ($sort) $qtxt.= "order by $sort";
+	$diff = if_isset($_GET["linjeantal"], 100);
+	#if (!$makeSuggestion) $qtxt.= " limit $diff offset $start ";
 $q = db_select($qtxt,__FILE__ . " linje " . __LINE__);
 while ($r = db_fetch_array($q)) {
 	$id[$v]=$r['id'];
 	$varenr[$v]=$r['varenr'];
 	$enhed[$v]=$r['enhed'];
-	$description[$v]=$r['beskrivelse'];
+		$productName[$v] = $r['beskrivelse'];
 	$tradeMark[$v]=$r['trademark'];
 	$salgspris[$v]=$r['salgspris'];
 	$kostpris[$v]=$r['kostpris'];
@@ -669,10 +764,20 @@ while ($r = db_fetch_array($q)) {
 	$gruppe[$v]=$r['gruppe'];
 	$notes[$v]=$r['notes'];
 	$lukket[$v]=$r['lukket'];
+		$isParent[$v]=$r['samlevare'];
 	$vatPrice[$v]=$salgspris[$v];
 	$v++;
 }
+	$vareAntal = $v;
+	if ($udskriv && $slut < 999998) {
+	}
+
 if(isset($varenr)){// 20230414
+		/*if ($makeSuggestion) {
+			echo $udvalg ."<br>";	
+			echo $find ."<br>";
+		}*/
+
 for ($v=0;$v<count($varenr);$v++) {
 	$z++;	# $z bruges som taeller til at kontrollere hvor mange linjer der indgaar i listen.
 $vis1=1;
@@ -682,17 +787,29 @@ $vis2=1;
 			$vis1=1; $vis2=1;
 		} else $vis1=0;
 	}
+
 // Her frasorteres varer som ikke kommer fra den valgte lev.	
-	if ((isset($vis_K[1]) && $vis1==1 && isset($lev_vare_liste) && in_array($id[$v],$lev_vare_liste)) || $vis_K[0]); #gor intet
-	elseif (!isset($vis_K[1]) && $vis1==1 && isset($lev_vare_liste) && !in_array($id[$v],$lev_vare_liste)); #gor intet
-	elseif(!$makeSuggestion) {$vis1=0; $z--;}
-	if ((isset($vis_K[1]) && $vis2==1 && isset($lev_vare_liste) && in_array($id[$v],$lev_vare_liste)) || $vis_K[0]); #gor intet
-	elseif (!isset($vis_K[1]) && $vis2==1 && isset($lev_vare_liste) && !in_array($id[$v],$lev_vare_liste)); #gor intet
-	else $vis2=0;
+			if ((isset($vis_K[1]) && $vis1==1 && isset($lev_vare_liste) && in_array($id[$v],$lev_vare_liste)) || $vis_K[0]){
+
+			}
+			elseif (!isset($vis_K[1]) && $vis1==1 && isset($lev_vare_liste) && !in_array($id[$v],$lev_vare_liste)){
+				
+			} elseif(!$makeSuggestion) {
+				$vis1=0; $z--;
+			}
+			if ((isset($vis_K[1]) && $vis2==1 && isset($lev_vare_liste) && in_array($id[$v],$lev_vare_liste)) || $vis_K[0]){
+				
+			}	elseif (!isset($vis_K[1]) && $vis2==1 && isset($lev_vare_liste) && !in_array($id[$v],$lev_vare_liste)){
+					
+			}else $vis2=0;
 	// Her frasorteres varer i bestillingsforslag som ikke lagerfoerte - skal staa nederst i frasortering.	
-	if ($makeSuggestion && !in_array($gruppe[$v],$lagergrupper)) {$vis1=0;$vis2=0;}	
+			if ($makeSuggestion && !in_array($gruppe[$v],$lagergrupper)) {
+				$vis1=0;
+				$vis2=0;
+			}
 // frasortering slut	
 	if ((($z>=$start&&$z<$slut)||$makeSuggestion)&&$vis1==1&&$vis2==1){
+			#if (((TRUE)||$makeSuggestion)&&$vis1==1&&$vis2==1){
 	$z1++;
 	if ($udskriv) {
 			$y=0;
@@ -707,7 +824,7 @@ $vis2=1;
 #			if ($popup) print "<td </td>";
 #			else print "<td><a href=\"varekort.php?id=$id[$v]&amp;returside=varer.php\"><FONT style=\"COLOR:$color;\">".htmlentities(stripslashes($varenr),ENT_COMPAT,$charset)."</font></a></td>";	
 			if ($csv) {
-				fwrite($csvfil,"\"".utf8_decode($varenr[$v])."\";\"".utf8_decode($enhed[$v])."\";\"".utf8_decode($description[$v])."\";");
+						fwrite($csvfil,"\"".utf8_decode($varenr[$v])."\";\"".utf8_decode($enhed[$v])."\";\"".utf8_decode($productName[$v])."\";");
 			} else {
 				print "<td $js><FONT style=\"COLOR:$color;\">";
 				if ($href_vnr) print "<a href='varekort.php?id=$id[$v]'>";
@@ -716,7 +833,7 @@ $vis2=1;
 				print "</font></td>";
 				print "<td $js><FONT style=\"color:$color\">".htmlentities(stripslashes($enhed[$v]),ENT_COMPAT,$charset)."</font><br></td>";
 				print "<td $js title='".$notes[$v]."'><FONT style=\"color:$color\">";
-				print htmlentities(stripslashes($description[$v]),ENT_COMPAT,$charset);
+						print htmlentities(stripslashes($productName[$v]),ENT_COMPAT,$charset);
 				print "</font><br></td>";
 				if ($showTrademark) print "<td>".htmlentities(stripslashes($tradeMark[$v]),ENT_COMPAT,$charset)."</td>";
 			}
@@ -725,16 +842,25 @@ $vis2=1;
 					$r2=db_fetch_array(db_select("select sum(beholdning) as lagersum from lagerstatus where vare_id = $id[$v]",__FILE__ . " linje " . __LINE__));
 					$diff=$beholdning[$v]-$r2['lagersum'];
 					for ($x=1;$x<=$lagerantal; $x++) {
-						$qtxt="select id, lager,lok1,beholdning from lagerstatus where vare_id = $id[$v] and lager = $x";
-						$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-						$y=$r2['beholdning'];
+								$qtxt = "select id, lager,lok1,beholdning from lagerstatus where vare_id = '$id[$v]' and lager = '$x'";
+								if ($r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+									$y = (float)$r2['beholdning'];
 						$lok=trim(utf8_decode($r2['lok1']));
-						if ($csv) fwrite($csvfil,"\"".dkdecimal($y,2)."\";\"$lok\";");
-						else {
+								} else {
+									$y=0;
+									$lok='';
+								}
+								if ($csv) {
+									(in_array($gruppe[$v],$lagergrupper))?$tmp = dkdecimal($y,2) : $tmp = '';
+									fwrite($csvfil,"\"$tmp\";\"$lok\";");
+								}	else {
 						print "<td align=center>";
 							if (in_array($gruppe[$v],$lagergrupper)) {
 								if ($y >= 1) print "<span title= 'Flyt til andet lager'><a href='lagerflyt.php?lager=$x&vare_id=$id[$v]'>".dkdecimal($y,2)."</a>";
 							else print dkdecimal($y,2);
+#									} elseif ($isParent[$v]) {
+#										include_once('productCardIncludes/getParentStock.php');
+#										echo getParentStock($id[$v],$x);
 						}
 						print "</td>";
 					}
@@ -766,6 +892,10 @@ $vis2=1;
 					print "<td align=\"right\" $title>$bestilt[$z]</td>";
 				}
 					print "<td align=right>".dkdecimal($beholdning[$v],2)."</td>";
+							# Beregn varer der er reserveret
+							/*$q = db_select("SELECT SUM(OL.antal) AS items FROM ordrelinjer OL JOIN ordrer O ON OL.ordre_id = O.id WHERE OL.vare_id = $id[$v] AND O.status = 2 AND O.art = 'DO'",__FILE__ . " linje " . __LINE__);
+							$r = db_fetch_array($q);
+							print "<td align=right>".dkdecimal($r["items"],2)."</td>";*/
 				}
 				if ($makeSuggestion){
 					$tmp=$beholdning[$v]-$i_ordre[$z];
@@ -783,11 +913,9 @@ $vis2=1;
 			if ($vatOnItemCard) {
 				for($x=0;$x<count($itemGroup);$x++){
 					if ($gruppe[$v]==$itemGroup[$x]) $vatPrice[$v]=$salgspris[$v]+=$salgspris[$v]/100*$vatRate[$x];
-#if ($varenr[$v] == '2219') echo "$salgspris[$v]<br>";
 				}
 			}
 			if (!$makeSuggestion) {
-#				$salgspris[$v]=dkdecimal($salgspris[$v]*(100+$incl_moms)/100,2);
 				if ($csv) fwrite($csvfil,"\"".dkdecimal($kostpris[$v],2)."\";\"".dkdecimal($vatPrice[$v],2)."\"\n");
 				else {
 					print "<td align=right>".dkdecimal($vatPrice[$v],2)."<br></td>";
@@ -873,7 +1001,7 @@ $vis2=1;
 		break;
 	}
 }
-return($z);
+	return array($z, $vareAntal);
 }
 }# endfunc udskriv
 ##############################################

@@ -152,7 +152,7 @@ if ((isset($_POST['regnskab']))||($_GET['login']=='test')) {
 		if ($timezone=$r['var_value']) {
 			date_default_timezone_set($timezone);
 			#setcookie("saldi_timezone",$timezone,time(+60*60*24*365*10));
-			setcookie("saldi_timezone",$timezone,time() + (60*60*24*7*365));#20211007
+			setcookie("saldi_timezone",$timezone,time() + (60*60*24*7*10*365));#20211007
 		} else {
 			date_default_timezone_set('Europe/Copenhagen');
         }
