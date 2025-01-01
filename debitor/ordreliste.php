@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/ordreliste.php -----patch 4.1.0 ----2024-08-28--------------
+// --- debitor/ordreliste.php -----patch 4.1.0 ----2024-09-06--------------
 //                           LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -88,6 +88,7 @@
 // 20240528 PHR Added $_SESSION['debitorId']
 // 20240815 PHR- $title 
 // 20250828 PHR error in translation of 'tilbud'
+// 20240906 phr Moved $debitorId to settings as 20240528 didnt work with open orders ??
 #ob_start();
 @session_start();
 $s_id=session_id();
@@ -108,16 +109,11 @@ function MasseFakt(tekst)
 </script>
 ";
 print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/overlib.js\"></script>";
-# >> Date picker scripts <<
-print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/jquery-3.6.4.min.js\"></script>";
-print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/moment.min.js\"></script>";
-print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/daterangepicker.min.js\" defer></script>";
-print '<link rel="stylesheet" type="text/css" href="../css/daterangepicker.css" />';
 
 
 $css="../css/std.css";
 #$text = findtekst(534,$sprog_id);
-#$customAlertText =$text;
+#$customAlertText =$text;debitor/ordreliste.php?konto_id=1094&valg=faktura&returside=../debitor/debitorkort.php?id=1094
 global $sprog_id;
 $modulnr=5;
 $title='txt1201';
@@ -145,6 +141,11 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
+# >> Date picker scripts <<
+print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/jquery-3.6.4.min.js\"></script>";
+print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/moment.min.js\"></script>";
+print "<script LANGUAGE=\"JavaScript\" SRC=\"../javascript/daterangepicker.min.js\" defer></script>";
+print '<link rel="stylesheet" type="text/css" href="../css/daterangepicker.css" />';
 include("../includes/datepkr.php");
 	
 global $color;
@@ -184,8 +185,15 @@ $nextfakt1 = strtolower(str_replace(' ','_', $kk));
 
 $id = if_isset($_GET['id']);
 $konto_id = if_isset($_GET['konto_id']);
-if ($konto_id) $_SESSION['debitorId'] = $konto_id;
-elseif (isset($_SESSION['debitorId']) && $_SESSION['debitorId']) $konto_id  = $_SESSION['debitorId'];
+if ($konto_id) {
+	$qtxt = "update settings set var_value = '$konto_id' where ";
+	$qtxt.= "var_name = 'debitorId' and var_grp = 'debitor' and user_id = '$bruger_id'";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+} else {
+	$qtxt = "select var_value from settings where var_name = 'debitorId' and var_grp = 'debitor' and user_id = '$bruger_id'";
+	if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__)))$konto_id  = $r['var_value'];  
+#	(isset($_SESSION['debitorId']) && $_SESSION['debitorId']) $konto_id  = $_SESSION['debitorId'];
+}
 if ($konto_id) $returside = "../debitor/debitorkort.php?id=$konto_id";
 else $returside=if_isset($_GET['returside']);
 if (!$returside) $returside = '../index/menu.php';
@@ -255,12 +263,12 @@ if (!$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
 			if(!in_array(trim("$firmanavn1"), $c)){
 				$qtxt = "update grupper set beskrivelse='$beskrivelse',kode='$valg',kodenr='$bruger_id',box2='$returside',";
 				$qtxt.= "box3='$box3',box4='$box4',box5='$box5',box6='$box6',box7='100' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'";
-#echo __line__."$qtxt<br>";
+#cho __line__."$qtxt<br>";
 #				db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	}
 } else {
 			$qtxt ="update grupper set box3='$box3',box6='$box6' where art = 'OLV' and kode='$valg' and kodenr = '$bruger_id'";
-#echo __line__."$qtxt<br>";
+#cho __line__."$qtxt<br>";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 #cho __line__."$qtxt<br>";
@@ -366,8 +374,11 @@ if ($submit==findtekst(880, $sprog_id) || $submit=="Send mails"){ #20210817 Adde
 		}
 	}
 	if ($y>0) {
-		if ($submit==findtekst(880, $sprog_id)) print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=PDF&returside=../includes/luk.php' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
-		elseif ($submit=="Send mails") print "<BODY onLoad=\"JavaScript:window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=email' , '' , ',statusbar=no,menubar=no,titlebar=no,toolbar=no,scrollbars=yes, location=1');\">";
+		if ($submit==findtekst(880, $sprog_id)) {
+			print "<script>window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=PDF&returside=../includes/luk.php')</script>";
+		} elseif ($submit=="Send mails") {
+			print "<script>window.open('formularprint.php?id=-1&ordre_antal=$y&skriv=$udskriv&formular=4&udskriv_til=email');\"></script>";
+		}
 	}
 	
 	else print "<BODY onLoad=\"javascript:alert('$alert1')\">";
@@ -686,16 +697,17 @@ while ($r0=db_fetch_array($q0)) {
 		$id=$r0['id']; 
 		if ($valg=="faktura") {
 			$udlignet=0;
-			$qtxt="select udlignet from openpost where faktnr = '$r0[fakturanr]' and konto_id='$r0[konto_id]' and 	amount='$sum_m_moms'";
+			$qtxt = "select udlignet from openpost where faktnr = '$r0[fakturanr]' and ";
+			$qtxt.= "konto_id='$r0[konto_id]' and 	amount='$sum_m_moms'";
 			if ($r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-				$udlignet=$r1['udlignet']*1;
+				$udlignet=(int)$r1['udlignet'];
 			} else { # 20101220 Denne del er indsat grundet enkelte forekomster med manglende faktnr  
 				$tmp1="Faktura - ".$r0['fakturanr'];
 				$tmp2="Faktura - ".$r0['fakturanr']." - ".$r0['fakturadate'];
 				$qtxt="select id,udlignet from openpost where (beskrivelse = '$tmp1' or beskrivelse = '$tmp2') ";
 				$qtxt.="and konto_id='$r0[konto_id]' and amount='$sum_m_moms'";
-				if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
-					$udlignet=$r1['udlignet']*1;
+				if ($r1=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+					$udlignet=(int)$r1['udlignet'];
 					db_modify("update openpost set faktnr='$r0[fakturanr]' where id = '$r1[id]'",__FILE__ . " linje " . __LINE__);
 					$message=$db." | ".$tmp2." | ".$brugernavn." ".date("Y-m-d H:i:s")." | $fejltekst";
 					$headers = 'From: fejl@saldi.dk'."\r\n".'Reply-To: fejl@saldi.dk'."\r\n".'X-Mailer: PHP/' . phpversion();
@@ -703,7 +715,7 @@ while ($r0=db_fetch_array($q0)) {
 				} else $udlignet=1;
 				}
 			}
-		$href="ordre.php?tjek=$id&id=$id&returside=ordreliste.php";
+		$href="ordre.php?tjek=$id&id=$id&returside=".urlencode($_SERVER["REQUEST_URI"]);
 		$tle1 = findtekst(1421, $sprog_id);
 		$tle2 = findtekst(1522, $sprog_id);
 		if ($valg == 'faktura' || $tidspkt-($timestamp)>3600 || $who==$brugernavn || $who=='' ) { #20220301
@@ -814,6 +826,8 @@ while ($r0=db_fetch_array($q0)) {
 #cho __line__." $ordreliste<br>";		
 		if ($r0['art']=='DK') {
 			print "<td align=$justering[0] $javascript style='color:$color'>(KN)&nbsp;$linjetext $understreg $r0[ordrenr]</div><br></td>";
+		} else if ($r0['restordre']=='1') {
+			print "<td align=$justering[0] $javascript style='color:$color'>(R)&nbsp;$linjetext $understreg $r0[ordrenr]</div><br></td>";
 		} else {
 			print "<td align=$justering[0] ";
 			if ($popup) print " $javascript";
@@ -883,8 +897,51 @@ while ($r0=db_fetch_array($q0)) {
 			
 		} else {
 			if ($checked[$id]=='on' || $check_all) $checked[$id]='checked';
-			print "<td><label class='checkContainerOrdreliste'><input class=\"inputbox\" type=\"checkbox\" name=\"checked[$id]\" $checked[$id]><span class='checkmarkOrdreliste'></span></label></td>";
+			print "<td>
+				<label class='checkContainerOrdreliste'>
+					<input class=\"inputbox\" type=\"checkbox\" name=\"checked[$id]\" $checked[$id]>
+					<span class='checkmarkOrdreliste'></span>
+				</label>";
+			print "</td>";
 		}
+		
+		if ($valg == "ordrer") {
+			?>
+			<td>
+				<div style="display:flex;gap:5px;">
+					<a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=9&udskriv_til=PDF" target="_blank" title="Klik for at printe plukliste"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M216-96q-29.7 0-50.85-21.15Q144-138.3 144-168v-412q-21-8-34.5-26.5T96-648v-144q0-29.7 21.15-50.85Q138.3-864 168-864h624q29.7 0 50.85 21.15Q864-821.7 864-792v144q0 23-13.5 41.5T816-580v411.86Q816-138 794.85-117T744-96H216Zm0-480v408h528v-408H216Zm-48-72h624v-144H168v144Zm216 240h192v-72H384v72Zm96 36Z"/></svg></a>
+					<a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=2&udskriv_til=PDF" target="_blank" title="Klik for at printe ordrebekræftigelse"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M336-240h288v-72H336v72Zm0-144h288v-72H336v72ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v189-189 624-624Z"/></svg></a>
+					<?php if ($row['email']) {
+						?> <a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=2&udskriv_til=email" target="_blank" title="Klik for at sende ordrebekræftigelse via email" onclick="return confirm('Er du sikker på, at du vil sende ordrebekræftigelse?\nKundens mail: <?php print $r0['email']; ?>')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M168-192q-29.7 0-50.85-21.16Q96-234.32 96-264.04v-432.24Q96-726 117.15-747T168-768h624q29.7 0 50.85 21.16Q864-725.68 864-695.96v432.24Q864-234 842.85-213T792-192H168Zm312-240L168-611v347h624v-347L480-432Zm0-85 312-179H168l312 179Zm-312-94v-85 432-347Z"/></svg></a> <?php
+					} ?>
+				</div>
+			</td>
+			<?php
+		} else if ($valg == "faktura") {
+			?>
+			<td>
+				<div style="display:flex;gap:5px;">
+					<a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=3&udskriv_til=PDF" target="_blank" title="Klik for at printe følgeseddel"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M216-96q-29.7 0-50.85-21.15Q144-138.3 144-168v-412q-21-8-34.5-26.5T96-648v-144q0-29.7 21.15-50.85Q138.3-864 168-864h624q29.7 0 50.85 21.15Q864-821.7 864-792v144q0 23-13.5 41.5T816-580v411.86Q816-138 794.85-117T744-96H216Zm0-480v408h528v-408H216Zm-48-72h624v-144H168v144Zm216 240h192v-72H384v72Zm96 36Z"/></svg></a>
+					<a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=4&udskriv_til=PDF" target="_blank" title="Klik for at printe faktura"><svg  xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M336-240h288v-72H336v72Zm0-144h288v-72H336v72ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v189-189 624-624Z"/></svg></a>
+					<?php if ($row['email']) {
+						?> <a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=4&udskriv_til=email" target="_blank" title="Klik for at sende faktura via email" onclick="return confirm('Er du sikker på, at du vil sende fakturaen?\nKundens mail: <?php print $r0['email']; ?>')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M168-192q-29.7 0-50.85-21.16Q96-234.32 96-264.04v-432.24Q96-726 117.15-747T168-768h624q29.7 0 50.85 21.16Q864-725.68 864-695.96v432.24Q864-234 842.85-213T792-192H168Zm312-240L168-611v347h624v-347L480-432Zm0-85 312-179H168l312 179Zm-312-94v-85 432-347Z"/></svg></a> <?php
+					} ?>
+				</div>
+			</td>
+			<?php
+		} else if ($valg == "tilbud") {
+			?>
+			<td>
+				<div style="display:flex;gap:5px;">
+					<a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=1&udskriv_til=PDF" target="_blank" title="Klik for at printe tilbud"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M336-240h288v-72H336v72Zm0-144h288v-72H336v72ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v189-189 624-624Z"/></svg></a>
+					<?php if ($row['email']) {
+						?> <a href="formularprint.php?id=<?php print $r0["id"]; ?>&formular=1&udskriv_til=email" target="_blank" title="Klik for at sende tilbud via email"  onclick="return confirm('Er du sikker på, at du vil sende fakturaen?\nKundens mail: <?php print $r0['email']; ?>')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M168-192q-29.7 0-50.85-21.16Q96-234.32 96-264.04v-432.24Q96-726 117.15-747T168-768h624q29.7 0 50.85 21.16Q864-725.68 864-695.96v432.24Q864-234 842.85-213T792-192H168Zm312-240L168-611v347h624v-347L480-432Zm0-85 312-179H168l312 179Zm-312-94v-85 432-347Z"/></svg></a> <?php
+					} ?>
+				</div>
+			</td>
+			<?php
+		}
+
 		print "<input type=hidden name=ordre_id[$l] value=$id>"; #20210818
 		$ialt+=$sum;	
 		$ialt_m_moms+=$sum_m_moms;	
@@ -1225,18 +1282,14 @@ function select_valg( $valg, $box ){  #20210623
 			switch($box){
 				case "box3":
 					return "ordrenr,ordredate,kontonr,firmanavn,ref,sum";
-					break;
 				case "box5":
 					return "right,left,left,left,left,right";
-					break;
 				case "box4":
 					return "50,100,100,150,100,100";
-					break;
 				case "box6":
 					return "".findtekst(888,$sprog_id).".,".findtekst(888,$sprog_id).",".findtekst(804,$sprog_id).".,".findtekst(360,$sprog_id).",".findtekst(884,$sprog_id).",".findtekst(890,$sprog_id).""; #20210318
 				default :
 				return "choose a box";
-				break;
 			}
 		}
 	} elseif ($valg=="ordrer") {
@@ -1248,19 +1301,14 @@ function select_valg( $valg, $box ){  #20210623
 			switch ($box) {
 				case "box3":
 					return "ordrenr,ordredate,levdate,kontonr,firmanavn,ref,sum";
-					break;  
 				case "box5":
 					return "right,left,left,left,left,left,right";
-					break;
 				case "box4":
 					return "50,100,100,100,150,100,100";
-					break;
 				case "box6":
 					return "".findtekst(500,$sprog_id).".,".findtekst(881,$sprog_id).",".findtekst(886,$sprog_id).",".findtekst(804,$sprog_id).".,".findtekst(360,$sprog_id).",".findtekst(884,$sprog_id).",".findtekst(887,$sprog_id)."";
-					break;
 				default:
 				return "choose a box";
-				break;
 			}
 	  }
   } elseif ($valg=="faktura") {
@@ -1271,19 +1319,14 @@ function select_valg( $valg, $box ){  #20210623
 			switch($box){
 				case "box3":
 					return "ordrenr,ordredate,fakturanr,fakturadate,nextfakt,kontonr,firmanavn,ref,sum";
-					break;
 				case "box5":    
 					return "right,left,right,left,left,left,left,left,right";
-					break;
 				case "box4":    
 					return "50,100,100,100,100,150,100,100,100";
-					break;
 				case "box6":    
 					return "".findtekst(500,$sprog_id).",".findtekst(881,$sprog_id).",".findtekst(882,$sprog_id).",".findtekst(883,$sprog_id).",Genfakt.,".findtekst(804,$sprog_id).",".findtekst(360,$sprog_id).",".findtekst(884,$sprog_id).",".findtekst(885,$sprog_id)."";
-					break;
 				default:
 				return "choose a box";
-				break;    
 			}
 		}
 	}

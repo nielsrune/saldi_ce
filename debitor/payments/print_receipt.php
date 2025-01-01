@@ -39,7 +39,7 @@ if ($printserver=='box' || $printserver=='saldibox') {
 	$printserver=file_get_contents($filnavn);
 }
 */
-$kasse = 1;
+$kasse = $_COOKIE["saldi_pos"];
 $printserver = "localhost";
 $bon = '';
 if ($type == 'flatpay') {
@@ -57,6 +57,29 @@ if ($type == 'flatpay') {
     $data[$i]=str_replace('\u00d8','Ø',$data[$i]);
     $data[$i]=str_replace('\u00C5','Å',$data[$i]);
     if ($data[$i]) $bon.= $data[$i]."\n\r";
+  }
+} else if ($type == 'move3500') {
+  $data=file_get_contents($filename);
+  # Fix unicode seq
+  $data=str_replace('\u00E6','æ',$data);
+  $data=str_replace('\u00e6','æ',$data);
+  $data=str_replace('\u00F8','ø',$data);
+  $data=str_replace('\u00E5','å',$data);
+  $data=str_replace('\u00C6','Æ',$data);
+  $data=str_replace('\u00d8','Ø',$data);
+  $data=str_replace('\u00C5','Å',$data);
+  $data=str_replace('\u00c3\u0098','Ø',$data);
+  $data=str_replace('\u000e','',$data);
+
+  $bon = $data;
+  # Strip escape charecters
+  $bon = str_replace('\n', "\n", $bon);
+  $bon = str_replace('\r', "", $bon);
+  $bon = str_replace('\f', "", $bon);
+
+  # Strip first and last char
+  if (strlen($bon) > 2) {
+          $bon = substr($bon, 1, -1);
   }
 } else {
   unlink("$directory/check.txt");

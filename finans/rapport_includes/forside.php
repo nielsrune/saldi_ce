@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- finans/rapport_includes/forside.php --- patch 4.1.0 --- 2024-05-22 ---
+// --- finans/rapport_includes/forside.php --- patch 4.1.1 --- 2024-11-20 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -37,6 +37,8 @@
 // 20240128 PHR Fixed an error in 'dato_fra' ($action)
 // 20240403 PHR Some design changes.
 // 20240424 PHR Some issues regarding staggered financial years
+// 20241018 LOE Ensured some variables are set first like: $_POST['submit'] and $konto_beskrivelse etc.
+// 20241120 PHR	Rermoved  "target='	'" from <form ...
 
 function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_fra, $dato_til, $konto_fra, $konto_til, $rapportart, $ansat_fra, $ansat_til, $afd, $projekt_fra, $projekt_til, $simulering, $lagerbev) {
 
@@ -86,7 +88,7 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 	$antal_regnaar=$x;
 	
 	#	print_r($_POST);
-	if ($_POST['submit']) {
+	if (isset($_POST['submit']) && $_POST['submit']) {
 		if (!is_numeric($maaned_fra)) $maaned_fra = NULL; 
 		if (!$maaned_fra) $maaned_fra = $aktivStartMd;
 		if (!is_numeric($maaned_til)) $maaned_til = NULL; 
@@ -143,18 +145,6 @@ function forside($regnaar, $maaned_fra, $maaned_til, $aar_fra, $aar_til, $dato_f
 #	} elseif (is_numeric($maaned_til)) {
 #		$maaned_til = $md[$maaned_til];
 	}
-
-/*
-	echo __line__." KF $konto_fra KT $konto_til<br>";
-	if ($rapportart == 'balance' && $konto_fra <= $minBalance) {
-		$konto_fra = $minBalance;
-	}
-echo __line__." KF $konto_fra KT $konto_til<br>";
-	if (($rapportart == 'resultat' || $rapportart == 'budget')  && $konto_til >= $maxResult) {
-		$konto_til = $maxResult;
-	}
-echo __line__." KF $konto_fra KT $konto_til<br>";
-*/
 
 	$query = db_select("select * from grupper where art='AFD' order by kodenr",__FILE__ . " linje " . __LINE__);
 	$x=0;
@@ -220,10 +210,10 @@ echo __line__." KF $konto_fra KT $konto_til<br>";
 		print "<td width='10%'>";
 		if ($popup)
 			print "<a href=../includes/luk.php accesskey=L>
-			<button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">".findtekst(30, $sprog_id)."</button></a></td>";
+			<button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">".findtekst(30, $sprog_id)."</button></a></td>";
 		else
 			print "<a href=../index/menu.php accesskey=L>
-				   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+				   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 				   .findtekst(30, $sprog_id)."</button></a></td>";
 
 		print "<td width='80%' align='center' style='$topStyle'> " . findtekst(897, $sprog_id) . " </td>";
@@ -480,7 +470,10 @@ echo __line__." KF $konto_fra KT $konto_til<br>";
 	print "<option value = '$konto_fra'>$konto_fra : $ktoNameFrom</option>\n";
 	
 	for ($x = 1; $x <= $antal_konti; $x++)
-		print "<option value = '$kontonr[$x]'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n";
+		//print "<option value = '$kontonr[$x]'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n"; //20241018
+		if (isset($kontonr[$x]) && isset($konto_beskrivelse[$x])) {
+			print "<option value='" . htmlspecialchars($kontonr[$x], ENT_QUOTES) . "'>" . htmlspecialchars($kontonr[$x], ENT_QUOTES) . " : " . htmlspecialchars($konto_beskrivelse[$x], ENT_QUOTES) . "</option>\n";
+		}
 	#for ($x=1; $x<=$antal_konti; $x++) print "<option value='konto_fra'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n";
 	print "</td>";
 #	print "<td><input type='tekst' name='$konto_fra2' value='$konto_fra2'></td>";
@@ -489,7 +482,10 @@ echo __line__." KF $konto_fra KT $konto_til<br>";
 	print "<tr><td>  " . findtekst(901, $sprog_id) . ":</td><td colspan=2><select name=konto_til>\n";
 	print "<option value = '$konto_til'>$konto_til : $ktoNameTo</option>\n";
 	for ($x = 1; $x <= $antal_konti; $x++)
-		print "<option value = '$kontonr[$x]'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n";
+		//print "<option value = '$kontonr[$x]'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n";
+		if (isset($kontonr[$x]) && isset($konto_beskrivelse[$x])) { #20241018
+			print "<option value='" . htmlspecialchars($kontonr[$x], ENT_QUOTES) . "'>" . htmlspecialchars($kontonr[$x], ENT_QUOTES) . " : " . htmlspecialchars($konto_beskrivelse[$x], ENT_QUOTES) . "</option>\n";
+		}
 	#for ($x=1; $x<=$antal_konti; $x++)  print "<option value='konto_til'>$kontonr[$x] : $konto_beskrivelse[$x]</option>\n"; 
 	print "</td></tr>\n";
 	print "<input type=hidden name=regnaar value=$regnaar>\n";
@@ -510,12 +506,12 @@ echo __line__." KF $konto_fra KT $konto_til<br>";
 	} else {
 			print "<tr><td colspan=3 ALIGN=center><br><hr><br>
 			<span title='Afstem bank efter kontoudtog (csv)'>
-			<input  style = 'width:150px;' class='button orange medium' type=submit value = 'Afstem bank' name='bankReconcile'>
+			<input  style = 'width:150px;' class='button orange medium' type=submit value ='" . findtekst('2171|Afstem bank', $sprog_id) . "' name='bankReconcile'>
 			</span>
 			</td></tr>";
 			print "<tr><td colspan=3 ALIGN=center><br>
 			<span title='Vilk&aring;rlig s&oslash;gning i transaktioner'>
-			<input  style = 'width:150px;' class='button orange medium' type=submit value=" . findtekst(905, $sprog_id) . " name='kontrolspor'>
+			<input  style = 'width:150px;' class='button orange medium' type=submit value='" . findtekst('905|Kontrolspor', $sprog_id) . "' name='kontrolspor'>
 			</span>
 			</td></tr>";
 			#		print "<tr><td colspan=3 ALIGN=center><span title='Rapport over medarbejdernes provisionsindtjening'>  <input class='button blue medium' type=submit value=".findtekst(906,$sprog_id)." name='provisionsrapport'></span></td></tr>";
@@ -540,3 +536,4 @@ echo __line__." KF $konto_fra KT $konto_til<br>";
 }
 # endfunc forside
 ?>
+

@@ -416,7 +416,7 @@ for ($x=0;$x<$vis_feltantal;$x++) {
 		$find[$x]=trim($find[$x]);
 	$tmp=$vis_felt[$x];
 		if ($tmp) {
-			if ($find[$x] && $tmp=='invoiced') {
+			if ($find[$x] && in_array($tmp, array('invoiced', 'kontaktet', 'kontaktes'))) {
 				$tmp2="adresser.".$tmp;
 				$udvaelg.=udvaelg($find[$x],$tmp2, 'DATO');
 			} elseif ($find[$x] && !in_array($tmp,$numfelter)) {

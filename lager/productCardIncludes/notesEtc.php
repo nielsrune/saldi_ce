@@ -30,8 +30,12 @@ print "\n<!-- productCardIncludes/notesEtc.php start -->\n";
 
 print "<tr><td valign='top' colspan='3'><table border='0' width='100%'><tbody>\n"; # Notetabel ->
 print "<tr><td valign='top'>".findtekst(391,$sprog_id)."</td>\n";
-print "<td colspan='6'><textarea name='notes' rows='4' cols='100'>$notes</textarea></td>\n";
+print "<td colspan='6'><textarea name='notes' rows=".($notes != "" ? 4 : 2)." cols='100'>$notes</textarea></td>\n";
+print "<td align='left'><button type='button' onclick='document.location.href = \"../systemdata/add_to_pos.php?id=$_GET[id]\"'>Tilføj til POS menu</button></td>";
 print "<td><button type='button' id='rentItem'>".findtekst(2050,$sprog_id)."</button></td>\n";
+print "</tr>\n";
+print "<tr><td valign='top'>".findtekst(2144,$sprog_id)."</td>\n";
+print "<td colspan='6'><textarea name='notesInternal' rows='".($notesInternal != "" ? 4 : 2)."' cols='100'>$notesInternal</textarea></td>\n";
 print "</tr><tr>\n";
 ($serienr == 'on')?$checked = 'checked':$checked = null;
 if  ($stockItem == 'on') print "<td></td><td>Serienr.&nbsp;<input class='inputbox' type='checkbox' name='serienr' $checked></td>\n";

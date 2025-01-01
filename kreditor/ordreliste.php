@@ -26,6 +26,7 @@
 // 20230317 LOE - Applied some translated texts, and Also fixed some undefined variable errors and some more.
 // 20230525 PHR - php8
 // 20231017 PHR Fixed an error in account selection ($firma);
+// 13-11-2024 MMK added hotkeys for printing
 
 ob_start();
 @session_start();
@@ -41,6 +42,7 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/udvaelg.php");
+include("../includes/topline_settings.php");
 	
 global $menu;
 
@@ -172,6 +174,64 @@ if ($menu=='T') {
 	print "<div class=\"headerbtnRght headLink\"><a accesskey=N href='ordre.php?returside=ordreliste.php' title='Opret ny ordre'><i class='fa fa-plus-square fa-lg'></i></a></div>";     
 	print "</div>";
 	print "<div class='content-noside'>";
+
+} elseif ($menu=='S') {
+	print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody>";
+	print "<tr><td height = 25 align=center valign=top>";
+	print "<table width=100% align=center border=0 cellspacing=2 cellpadding=0><tbody>";
+	print "<td width=10% style='$buttonStyle'><a href=$returside accesskey=L>
+		   <button style='$buttonStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">Luk</button></a></td>";
+
+	print "<td width=80% style='$topStyle' align=center><table border=0 cellspacing=2 cellpadding=0><tbody>";
+
+	if (!$hurtigfakt) {
+		print "<td width = 20% align=center ";
+		if ($valg=='forslag') {
+			print "<td width = '100px' align=center>
+				   <button style='$butDownStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">&nbsp;Forslag&nbsp;</button></td>";
+		} else {
+			print "<td width = 20% align=center><a href='ordreliste.php?sort=$sort&valg=forslag$hreftext'>
+				   <button style='$butUpStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">
+				   &nbsp;Forslag&nbsp;</button></a></td>";
+		}
+	}
+	print "<td width = 20% align=center ";
+	if ($valg=='ordrer') {
+		print "<td width = '100px' align=center>
+			   <button style='$butDownStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">&nbsp;Ordrer&nbsp;</button></td>";
+	} else {
+		print "<td width = 20% align=center><a href='ordreliste.php?sort=$sort&valg=ordrer$hreftext'>
+			   <button style='$butUpStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">
+			   &nbsp;Ordrer&nbsp;</button></a></td>";
+	}
+	print "</td><td width = 20% align=center ";
+
+	if ($valg=='faktura') {
+		print "<td width = '100px' align=center>
+			   <button style='$butDownStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">&nbsp;Faktura&nbsp;</button></td>";
+	} else {
+		print "<td width = 20% align=center><a href='ordreliste.php?sort=$sort&valg=faktura$hreftext'>
+			   <button style='$butUpStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">
+			   &nbsp;Faktura&nbsp;</button></a></td>";
+	}
+
+	if ($paperflow) {
+	print "</td><td width = 20% align=center ";
+		if ($valg=='skanBilag') {
+			print "<td width = '100px' align=center>
+				   <button style='$butDownStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">&nbsp;Skan bilag&nbsp;</button></td>";
+		} else {
+			print "<td width = 20% align=center><a href='ordreliste.php?sort=$sort&valg=faktura$hreftext'>
+				   <button style='$butUpStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">
+				   &nbsp;Skan bilag&nbsp;</button></a></td>";
+		}
+	print "</td>";
+	}
+	print "</tbody></table></td>";
+	print "<td width=10% style='$buttonStyle'><a href=ordre.php?returside=ordreliste.php>
+		   <button style='$buttonStyle; width: 100%' onMouseOver=\"this.style.cursor = 'pointer'\">Ny</button></a></td>";
+	print "</tbody></table>";
+
 } else {
 print "<table width=100% height=100% border=0 cellspacing=0 cellpadding=0><tbody>";
 print "<tr><td height = 25 align=center valign=top>";
@@ -413,7 +473,19 @@ if ($valg=="forslag") {
 			$sum=$sum*$valutakurs/100;
 		} 
 		$ialt=$ialt+$sum;
-		print "<td align=right>".dkdecimal($sum)."<br></td><td></td></tr>\n";
+		print "<td align=right>".dkdecimal($sum)."<br></td>\n";
+		?>
+		<td>
+			<div style="display:flex;gap:5px;">
+					<a href="formularprint.php?id=<?php print $row["id"]; ?>&formular=12&udskriv_til=PDF" target="_blank" title="Klik for at printe tilbud"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M336-240h288v-72H336v72Zm0-144h288v-72H336v72ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v189-189 624-624Z"/></svg></a>
+					<?php 
+						if ($row['email']) {
+							?> <a href="formularprint.php?id=<?php print $row["id"]; ?>&formular=12&udskriv_til=email" target="_blank" title="Klik for at sende tilbud via email"  onclick="return confirm('Er du sikker på, at du vil sende fakturaen?\nKundens mail: <?php print $row['email']; ?>')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M168-192q-29.7 0-50.85-21.16Q96-234.32 96-264.04v-432.24Q96-726 117.15-747T168-768h624q29.7 0 50.85 21.16Q864-725.68 864-695.96v432.24Q864-234 842.85-213T792-192H168Zm312-240L168-611v347h624v-347L480-432Zm0-85 312-179H168l312 179Zm-312-94v-85 432-347Z"/></svg></a><?php
+						}
+					?>
+			</div>
+		</td></tr>
+		<?php
 	}
 } elseif ($valg=='ordrer') {
 	$ialt=0;
@@ -519,7 +591,19 @@ if ($valg=="forslag") {
 			$sum=$sum*$valutakurs/100;
 		} 
 		$ialt=$ialt+$sum;
-		print "<td align=right>".dkdecimal($sum)."<br></td><td></td></tr>\n";
+		print "<td align=right>".dkdecimal($sum)." <br></td>\n";
+		?>
+		<td>
+			<div style="display:flex;gap:5px;">
+					<a href="formularprint.php?id=<?php print $row["id"]; ?>&formular=13&udskriv_til=PDF" target="_blank" title="Klik for at printe tilbud"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M336-240h288v-72H336v72Zm0-144h288v-72H336v72ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v189-189 624-624Z"/></svg></a>
+					<?php 
+						if ($row['email']) {
+							?> <a href="formularprint.php?id=<?php print $row["id"]; ?>&formular=13&udskriv_til=email" target="_blank" title="Klik for at sende tilbud via email"  onclick="return confirm('Er du sikker på, at du vil sende fakturaen?\nKundens mail: <?php print $row['email']; ?>')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M168-192q-29.7 0-50.85-21.16Q96-234.32 96-264.04v-432.24Q96-726 117.15-747T168-768h624q29.7 0 50.85 21.16Q864-725.68 864-695.96v432.24Q864-234 842.85-213T792-192H168Zm312-240L168-611v347h624v-347L480-432Zm0-85 312-179H168l312 179Zm-312-94v-85 432-347Z"/></svg></a><?php
+						}
+					?>
+			</div>
+		</td></tr>
+		<?php
 	}
 } else {
 	$x=0;
@@ -573,7 +657,18 @@ if ($valg=="forslag") {
 		} 
 		$ialt=$ialt+$sum;
 		print "<td align=right>".dkdecimal($sum)." <br></td>";
-		print "<td></td></tr>\n";
+		?>
+		<td>
+			<div style="display:flex;gap:5px;">
+					<a href="formularprint.php?id=<?php print $row["id"]; ?>&formular=14&udskriv_til=PDF" target="_blank" title="Klik for at printe tilbud"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M336-240h288v-72H336v72Zm0-144h288v-72H336v72ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v189-189 624-624Z"/></svg></a>
+					<?php 
+						if ($row['email']) {
+							?> <a href="formularprint.php?id=<?php print $row["id"]; ?>&formular=14&udskriv_til=email" target="_blank" title="Klik for at sende tilbud via email"  onclick="return confirm('Er du sikker på, at du vil sende fakturaen?\nKundens mail: <?php print $row['email']; ?>')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M168-192q-29.7 0-50.85-21.16Q96-234.32 96-264.04v-432.24Q96-726 117.15-747T168-768h624q29.7 0 50.85 21.16Q864-725.68 864-695.96v432.24Q864-234 842.85-213T792-192H168Zm312-240L168-611v347h624v-347L480-432Zm0-85 312-179H168l312 179Zm-312-94v-85 432-347Z"/></svg></a><?php
+						}
+					?>
+			</div>
+		</td></tr>
+		<?php
 	}
 	$colspan=12;
 	if ($vis_projekt) $colspan++;

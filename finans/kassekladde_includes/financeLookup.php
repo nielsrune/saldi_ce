@@ -11,6 +11,8 @@ function financeLookup($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato
 	global $sprog_id;
 	global $top_bund;
 
+	include("../includes/topline_settings.php");
+
 	$linjebg=NULL;
 	$spantekst=NULL;
 
@@ -37,6 +39,14 @@ function financeLookup($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato
 		print "</div><!-- end of header -->
 			<div class=\"maincontentLargeHolder\">\n";
 			print  "<table class='dataTable2' border='0' cellspacing='1' align='center';>";
+	} elseif ($menu=='S') {
+	print"<table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>";
+	print"<td width='10%'><a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id' accesskey=L>
+		  <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">".findtekst(30, $sprog_id)."</button></a></td>\n";
+	print"<td width='80%' style=$topStyle align=center>Finansopslag</td>\n";
+	print"<td width='10%' style=$topStyle align='right'><br></td>\n";
+	print"</tbody></table>";
+	print"</td></tr>\n";
 	} else {
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 	print"<td width=\"10%\" $top_bund><a href='kassekladde.php?fokus=$fokus&kladde_id=$kladde_id' accesskey=L>".findtekst(30, $sprog_id)."</a></td>\n";

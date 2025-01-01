@@ -47,6 +47,7 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/settings.php");
 include("../includes/std_func.php");
+include("../includes/topline_settings.php");
 
 # ini_set('display_errors', 1);
 
@@ -89,6 +90,21 @@ if(($_GET)||($_POST)) {
 		print "</div><!-- end of header -->
 			<div class=\"maincontentLargeHolder\">\n";
 		print  "<center><table border='0' cellspacing='1' width='75%'>";
+	} elseif ($menu=='S') {
+		print "<table width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'><tbody>";
+		print "<tr><td height = '25' align='center' valign='top'>";
+		print "<table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>";
+
+		print "<td width='10%'><a href=kassekladde.php?kladde_id=$kladde_id accesskey=L>
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">"
+			   .findtekst(30, $sprog_id)."</button></a></td>";
+
+		print "<td width='80%' style='$topStyle' align='center'>".findtekst(1074, $sprog_id)." ".findtekst(904, $sprog_id)." ".lcfirst(findtekst(105, $sprog_id))." (".lcfirst(findtekst(105, $sprog_id))." $kladde_id)</td>";
+
+		print "<td width='10%' style='$topStyle' align='center'></td>";
+
+		print "</tbody></table>";
+		print "</td></tr>";
 	} else {
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";

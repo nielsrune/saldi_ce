@@ -1,5 +1,5 @@
 <?php
-// --- debitor/saetpris.php ---patch 4.1.1 ----2024-08-15----
+// --- debitor/saetpris.php ---patch 4.1.1 ----2024-09-25----
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -24,6 +24,7 @@
 // 20230829 MSC - Copy pasted new design into code
 // 20231002 MSC - Copy pasted new design into code
 // 20240815	PHR	Translations
+// 20240925	PHR	Translations
 
 @session_start();
 $s_id=session_id();
@@ -113,7 +114,7 @@ if ($saet=$_POST['saetvalg']) {
 	if ($ny_saetpris) {
 		if (!db_fetch_array(db_select("select id from ordrelinjer where ordre_id='$id' and varenr='$svnr' and saet='$saet'",__FILE__ . " linje " . __LINE__))){
 			$r=db_fetch_array(db_select("select * from varer where varenr='$svnr'",__FILE__ . " linje " . __LINE__));
-			opret_ordrelinje($id,$r['id'],$r['varenr'],1,$r['beskrivelse'],0,0,100,'$art','','','0','on','','','',$saet);
+			opret_ordrelinje($id,$r['id'],$r['varenr'],1,$r['beskrivelse'],0,0,100,'$art','','','0','on','','','',$saet,'','','',__line__);
 			db_modify("update ordrelinjer set posnr='99',samlevare='on',lev_varenr='$ny_saetpris' where ordre_id='$id' and saet='$saet' and varenr='$svnr'",__FILE__ . " linje " . __LINE__);
 		}
 		$ny_rabat=$normalsum-$ny_saetpris;
@@ -199,10 +200,12 @@ $kostsum=0;
 $txt914  = findtekst(914,$sprog_id); //Beskrivelse
 $txt915  = findtekst(915,$sprog_id); //Pris
 $txt916  = findtekst(916,$sprog_id); //Antal
+$txt950  = findtekst(950,$sprog_id); //Kostpris	
 $txt1091 = findtekst(1091,$sprog_id); //Opdater
 $txt2114 = findtekst(2114,$sprog_id); //Medtag
+$txt2127 = findtekst(2127,$sprog_id); //Normalpris	
+$txt2128 = findtekst(2128,$sprog_id); //Sætpris	
 $txt3074 = findtekst(30774,$sprog_id); //Sæt
-
 
 print "<tr><td width=\"100%\" align=\"center\" colspan=\"3\"><big><b>$txt30774 $saet</b></big></td></tr>";
 print "<tr><td width=\"50%\" align=\"right\" valign=\"top\"><table cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tbody>";
@@ -240,15 +243,16 @@ for ($x=0;$x<count($linje_id);$x++) {
 print "<tr><td colspan=\"4\"><hr></td></tr>";
 $saetpris=afrund($saetpris,2);
 # $saetpris=pos_afrund($saetpris,$difkto);
+
 print "<tr><td>
 	<input type=\"hidden\" name=\"kostsum\" value=\"$kostsum\">
 	<input type=\"hidden\" name=\"normalsum\" value=\"$normalsum\">
 	<input type=\"hidden\" name=\"saetpris\" value=\"$saetpris\">
 	<input type=\"hidden\" name=\"saet\" value=\"$saet\">
-	<!--Kostpris</td><td colspan=\"2\" align=\"right\">".dkdecimal($kostsum)."--></td></tr>";
-print "<tr><td>Normalpris</td><td title=\"Kostpris: ".dkdecimal($kostsum)."\" colspan=\"2\" align=\"right\">".dkdecimal($normalsum)."</td></tr>";
+	<!--$txt2127</td><td colspan=\"2\" align=\"right\">".dkdecimal($kostsum)."--></td></tr>";
+print "<tr><td>$txt2127</td><td title=\"$txt950: ".dkdecimal($kostsum)."\" colspan=\"2\" align=\"right\">".dkdecimal($normalsum)."</td></tr>";
 if (in_array("checked",$medtag)) {
-	print "<tr><td>Sætpris</td><td  title=\"Kostpris: ".dkdecimal($kostsum)."\" colspan=\"2\" align=\"right\">
+	print "<tr><td>$txt2128</td><td  title=\"$txt950: ".dkdecimal($kostsum)."\" colspan=\"2\" align=\"right\">
 	<input type=\"text\" style=\"text-align:right\" value=\"".dkdecimal($saetpris)."\" name=\"ny_saetpris\"></td></tr>";
 }
 print "<tr><td colspan=\"4\"><hr></td></tr>";

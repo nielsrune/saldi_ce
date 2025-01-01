@@ -93,7 +93,7 @@
 ini_set('display_errors','0');
 
 function kontoindstillinger($regnskab,$skiftnavn) {
-	global $bgcolor,$bgcolor5,$db,$sprog_id,$timezone;
+	global $baseCurrency,$bgcolor,$bgcolor5,$db,$sprog_id,$timezone;
 #	if (isset($_COOKIE['timezone'])) $timezone=$_COOKIE['timezone'];
 #	else {
 	$qtxt = "select id,var_name,var_value from settings where var_name='timezone' or var_name='baseCurrency'";
@@ -1236,6 +1236,20 @@ function div_valg() {
   }
 </script>
 ";
+
+$move_username = get_settings_value("username", "move3500", "");
+$move_password = get_settings_value("password", "move3500", "");
+
+print "<tr>\n<td title='Move3500 username'>Move3500 username</td>\n";
+print "<td title='Move3500'>\n";
+print "<input name='move_username' class='inputbox' type='text' style='width:150px;' value='$move_username'>\n";
+print "</td></tr>\n";  
+
+print "<tr>\n<td title='Move3500 password'>Move3500 password</td>\n";
+print "<td title='Move3500'>\n";
+print "<input name='move_password' class='inputbox' type='text' style='width:150px;' value='$move_password'>\n";
+print "</td></tr>\n";  
+
 # #########################################################
 #
 # Mobilepay
@@ -1596,6 +1610,8 @@ function ordre_valg() {
 		$debitoripad = "checked";
 	}
 
+	$rabatdecimal = get_settings_value("rabatdecimal", "ordre", 2);
+
 	$rabatvarenr=NULL;
 	if ($rabatvareid) {
 		$qtxt = "select varenr from varer where id = '$rabatvareid'";
@@ -1655,6 +1671,7 @@ function ordre_valg() {
 	print "<tr><td title='".findtekst(690,$sprog_id)."'>".findtekst(689,$sprog_id)."</td><td><INPUT title='".findtekst(690,$sprog_id)."' class='inputbox' type='text' style='width:70px;text-align:right;' name='box10' value='$kortkonto'></td></tr>";
 	print "<tr><td title='".findtekst(1711,$sprog_id)."'>".findtekst(1714,$sprog_id)."</td><td><INPUT title='".findtekst(1712,$sprog_id)."' class='inputbox' type='checkbox' name='orderNoteEnabled' $orderNoteEnabled></td></tr>";
 	print "<tr><td title='".findtekst(3069,$sprog_id)."'>".findtekst(3068,$sprog_id)."</td><td><INPUT title='".findtekst(3069,$sprog_id)."' class='inputbox' type='checkbox' name='debitoripad' $debitoripad></td></tr>";
+	print "<tr><td title='".findtekst(3117,$sprog_id)."'>".findtekst(3116,$sprog_id)."</td><td><INPUT title='".findtekst(3117,$sprog_id)."' class='inputbox' type='text' style='width:70px;text-align:right;' name='rabatdecimal' value='$rabatdecimal'></td></tr>";
 
 	print "<tr><td><br></td></tr>";
 	print "<tr><td><br></td></tr>";
@@ -1952,255 +1969,6 @@ function labels($valg) {
 		print "<input type='button' style='width:100px' value='".findtekst(1049,$sprog_id)."'></a></td></tr>";
 	}
 } # endfunc labels
-
-function prislister()
-{
-	global $sprog_id;
-	global $bgcolor;
-	global $bgcolor5;
-
-	$filtyper = $filtypebeskrivelse = $lev_id = $prislister = array();
-	$antal=0;
-	$q=db_select("select * from grupper where art = 'PL' order by beskrivelse",__FILE__ . " linje " . __LINE__);
-	while ($r = db_fetch_array($q)) {
-		$antal++;
-		$id[$antal]=$r['id'];
-		$beskrivelse[$antal]=$r['beskrivelse'];
-		$lev_id[$antal]=$r['box1'];
-		$prisfil[$antal]=$r['box2'];
-		$opdateret[$antal]=$r['box3'];
-		$aktiv[$antal]=$r['box4'];
-		$rabat[$antal]=$r['box6'];
-		$gruppe[$antal]=$r['box8'];
-		$filtype[$antal]=$r['box9'];
-	}
-
-	$vgrpantal=0;
-	$q=db_select("select * from grupper where art = 'VG' order by kodenr",__FILE__ . " linje " . __LINE__);
-	while ($r = db_fetch_array($q)) {
-		$vgrpantal++;
-		$vgrp[$vgrpantal]=$r['kodenr'];
-		$vgbesk[$vgrpantal]=$r['beskrivelse'];
-	}
-
-	$filtyperantal=0;
-/*
-	$q=db_select("select * from grupper where art = 'FT' order by kodenr",__FILE__ . " linje " . __LINE__);
-	if ( db_fetch_array($q) ) {
-		while ($r = db_fetch_array($q)) {
-			$filtyperantal++;
-			$filtyper[$filtyperantal]=$r['kodenr'];
-			$filtyperbesk[$filtyperantal]=$r['beskrivelse'];
-		}
-	} else {
-*/
-		$filtyperantal++;
-		$filtyper[$filtyperantal]="csv";
-		$filtypebeskrivelse[$filtyperantal]="Kommasepareret";
-		$filtyperantal++;
-		$filtyper[$filtyperantal]="tab";
-		$filtypebeskrivelse[$filtyperantal]="Tabulator";
-		$filtyperantal++;
-		$filtyper[$filtyperantal]="sql";
-		$filtypebeskrivelse[$filtyperantal]="Databasefil (SQL-dump)";
-		$filtyperantal++;
-		$filtyper[$filtyperantal]="html";
-		$filtypebeskrivelse[$filtyperantal]="HTML-celler (td)";
-#	}
-
-#	if (!in_array('Solar',$beskrivelse)) { 
-#		$antal++;
-#		$beskrivelse[$antal]='Solar';
-#		$prisfil[$antal]="../prislister/solar.txt";
-#	}
-
-        print "<tr bgcolor='$bgcolor5'><td colspan='10'><b><u>".findtekst(792,$sprog_id)."</u></b></td></tr>\n";
-        print "<tr><td colspan='10'>\n";
-#cho $q;
-	print "<p>".findtekst(1318,$sprog_id)."</p>\n";
-	print "</td></tr>\n";
-
-	print "<form name='diverse' action='diverse.php?sektion=prislister' method='post'>\n";
-	print "<input type='hidden' name='antal' value='$antal'>\n";
-	print "<tr><td colspan='10'><hr></td></tr>\n";
-	print "<tr bgcolor='$bgcolor5'>\n";
-	print "<td><b>".str_replace('er','e',findtekst(427,$sprog_id))."<!--tekst 427--></b></td>\n";
-	print "<td><b></b>".findtekst(988,$sprog_id)."</td>\n";
-	print "<td><b></b>".findtekst(1319,$sprog_id)."</td>\n";
-	print "<td><b></b>".findtekst(1320,$sprog_id)."</td>\n";
-	print "<td><b>".findtekst(428,$sprog_id)."<!--tekst 428--></b></td>\n";
-	print "<td><b>".findtekst(429,$sprog_id)."<!--tekst 429--></b></td>\n";
-	print "<td><b>".findtekst(1321,$sprog_id)."</b></td>\n";
-	print "<td><b>".findtekst(430,$sprog_id)."<!--tekst 430--></b></td>\n"; # 20160226c start
-	$slet = findtekst(1099,$sprog_id);
-	print "<td><b>$slet</b></td>\n";
-	print "</tr>\n"; # 20160226c slut
-	for ($x=1;$x<=$antal;$x++) {
-		print "<input type='hidden' name='beskrivelse[$x]' value='$beskrivelse[$x]'>\n";
-		print "<input type='hidden' name='prisfil[$x]' value='$prisfil[$x]'>\n";
-		print "<input type='hidden' name='id[$x]' value='$id[$x]'>\n";
-		print "<tr>\n";
-		$title="".findtekst(1331,$sprog_id)." ".lcfirst(findtekst(646,$sprog_id)).".";
-		print "<td title='$title'><input class='inputbox' type='text' size='18' name='beskrivelse[$x]' value='".$beskrivelse[$x]."' /></td>\n";
-		$title="".findtekst(1331,$sprog_id)." ".findtekst(988,$sprog_id).".";
-		print "<td title='$title'><select class='inputbox' type='text' name='lev_id[$x]' />\n"; # 20120226d start
-		$levvalg="";
-		$q1 = db_select("select id, kontonr, firmanavn from adresser where art = 'K' order by firmanavn",__FILE__ . " linje " . __LINE__);
-		while ($levrk = db_fetch_array($q1))
-		{
-			if ( $levrk['id'] == $lev_id[$x] ) {
-				$levvalg.="    <option value='".$levrk['id']."' title='".$levrk['firmanavn']."'>";
-				if ( strlen($levrk['firmanavn'])>20 ) {
-					$levvalg.=substr($levrk['firmanavn'],0,20)."...";
-				} else {
-					$levvalg.=$levrk['firmanavn'];
-				}
-				$levvalg.="</option>\n";
-			}
-		}
-
-		$q2 = db_select("select id, kontonr, firmanavn from adresser where art = 'K' order by firmanavn",__FILE__ . " linje " . __LINE__);
-		while ($levrk = db_fetch_array($q2))
-		{
-			if ( strlen($levvalg) == 0 ) $levvalg="     <option value='0'>Ingen valgt - vælg en</option>\n";
-			if ( $levrk['id'] != $lev_id[$x] ) {
-				$levvalg.="    <option value='".$levrk['id']."' title='".$levrk['firmanavn']."'>";
-				if ( strlen($levrk['firmanavn'])>20 ) {
-					$levvalg.=substr($levrk['firmanavn'],0,20)."...";
-				} else {
-					$levvalg.=$levrk['firmanavn'];
-				}
-				$levvalg.="</option>\n";
-			}
-		}
-
-		if ( strlen($levvalg) == 0 ) {
-			$levvalg="     <option disabled='disabled'>Ingen at vælge</option>\n";
-			$lev_findes=0;
-		} else {
-			$lev_findes=1;
-		}
-		print $levvalg;
-		print "</select></td>\n"; # 20160226d
-
-		$title=findtekst(1322,$sprog_id);
-		print "<td title='$title'><input class='inputbox' type='text' size='24' name='prisfil[$x]' value='".$prisfil[$x]."' /></td>\n";
-		$title=findtekst(1323,$sprog_id);;
-		print "<td title='$title'><!--tekst 432--><select class='inputbox' name='filtype[$x]'>\n";
-		$filtypevalg="";
-		for ($y=1;$y<=$filtyperantal;$y++) { # 20150529
-			if ($filtyper[$y]==$filtype[$x]) {
-				$filtypevalg.="<option value='$filtyper[$y]' title='$filtypebeskrivelse[$y]'>$filtyper[$y]</option>\n";
-			}
-		}
-		for ($y=1;$y<=$filtyperantal;$y++) {
-			if ($filtyper[$y]!=$filtype[$x]) {
-				$filtypevalg.="<option value='$filtyper[$y]' title='$filtypebeskrivelse[$y]'>$filtyper[$y]</option>\n";
-			}
-		}
-		print $filtypevalg;
-		print "</select></td>\n"; 
-		$title=str_replace('$beskrivelse',$beskrivelse[$x],findtekst(431,$sprog_id));
-		print "<td title='$title'><!--tekst 431--><input class='inputbox' style='width:25px;text-align:right' type='text' name='rabat[$x]' value='$rabat[$x]'>%</td>\n";
-		$title=str_replace('$beskrivelse',$beskrivelse[$x],findtekst(432,$sprog_id));
-		print "<td title='$title'><!--tekst 432--><select class='inputbox' name='gruppe[$x]'>\n";
-		for ($y=1;$y<=$vgrpantal;$y++) {
-			if ($vgrp[$y]==$gruppe[$x]) print "<option value='$vgrp[$y]'>$vgrp[$y]: $vgbesk[$y]</option>\n";
-		}
-		for ($y=1;$y<=$vgrpantal;$y++) {
-			if ($vgrp[$y]!=$gruppe[$x]) print "<option value='$vgrp[$y]'>$vgrp[$y]: $vgbesk[$y]</option>\n";
-		}
-		print "</select></td>\n"; 
-		if ($aktiv[$x]) {
-			if ( $lev_findes ) { # 20160226b start
-			$aktiv[$x]="checked";
-			} else {
-				$aktiv[$x]="disabled='disabled' ";
-			}
-			$slet[$x]="disabled";
-			$title=findtekst(426,$sprog_id);
-			print "<td title='$title'><!--tekst 426--><a href='lev_rabat.php?id=$id[$x]&amp;lev_id=$lev_id[$x]&amp;prisliste=$beskrivelse[$x]'>".findtekst(1321,$sprog_id)."</a></td>\n";
-			print "<td>\n";
-			print "    <input class='inputbox' type='checkbox' name='aktiv[$x]' $aktiv[$x] \n"; # 20150424
-			print "        title='".str_replace('$beskrivelse',$beskrivelse[$x],findtekst(425,$sprog_id))."'><!--tekst 425-->&nbsp;\n";
-			print "</td>\n<td><input type='checkbox' value='0' name='slet[$x]' $slet[$x] \n";
-			print "        title='".findtekst(1324,$sprog_id)."'>\n";
-		} else {
-			print "<td>-</td>\n";
-			print "<td>\n";
-			print "    <input class='inputbox' type='checkbox' name='aktiv[$x]' "; # 20150424 20160226
-			if ( $lev_findes && $lev_id[$x] ) { # 20160226e start
-				print "\n        title='".str_replace('$beskrivelse',$beskrivelse[$x],findtekst(425,$sprog_id))."'><!--tekst 425-->&nbsp;\n"; # 20160226e slut 
-			} else {
-				print "disabled='disabled' \n";
-				print "\n        title='".findtekst(1325,$sprog_id)."'>\n"; # 20160226b slut
-			}
-			print "</td>\n<td><input type='checkbox' value='Slet' name='slet[$x]' \n";
-			print "        title='".findtekst(1326,$sprog_id)."'>\n";
-		}
-		print "</td>\n</tr>\n";
-	}
-#	print "<input type='hidden' name='aktiv[$x]' value='on'>\n"; # 20160226f
-	print "<input type='hidden' name='antal' value='$x'>\n";
-	print "<tr>\n";
-	print "<td><input class='inputbox' type='text' size='20' name='beskrivelse[$x]' title='Nummer $x'></td>\n";
-	$title="".findtekst(1327,$sprog_id)."";
-	print "<td title='$title'><select class='inputbox' type='text' name='lev_id[$x]' />\n";
-	$levvalg="";
-	$q3 = db_select("select id, kontonr, firmanavn from adresser where art = 'K' order by firmanavn",__FILE__ . " linje " . __LINE__);
-	while ($levrk = db_fetch_array($q3)) {
-#		if ( $levrk['id'] != $lev_id[$x] ) {
-			$levvalg.="    <option value='".$levrk['id']."' title='".$levrk['firmanavn']."'>";
-			if ( strlen($levrk['firmanavn'])>20 ) {
-				$levvalg.=substr($levrk['firmanavn'],0,20)."...";
-			} else {
-				$levvalg.=$levrk['firmanavn'];
-			}
-			$levvalg.="</option>\n";
-#		}
-	}
-
-	if ( strlen($levvalg) == 0 ) {
-		$levvalg="     <option disabled='disabled' title='".findtekst(1328,$sprog_id)."</option>\n";
-		$lev_findes=0;
-	} else {
-		$lev_findes=1;
-	}
-	print $levvalg;
-	print "</select></td>\n";
-
-	print "<td><input class='inputbox' type='text' size='24' name='prisfil[$x]'></td>\n";
-	$title="".findtekst(1323,$sprog_id)."";
-	print "<td title='$title'><!--tekst 432--><select class='inputbox' name='filtype[$x]'>\n";
-	$filtypevalg="";
-	for ($y=1;$y<=$filtyperantal;$y++) { # 20150529
-		if (isset($filtype[$x]) && $filtyper[$y] == $filtype[$x]) {
-			$filtypevalg.="<option value='$filtyper[$y]' title='$filtypebeskrivelse[$y]'>$filtyper[$y]</option>\n";
-		}
-	}
-	for ($y=1;$y<=$filtyperantal;$y++) {
-		if (!isset($filtype[$y]) || $filtyper[$y] != $filtype[$x]) {
-			$filtypevalg.="<option value='$filtyper[$y]' title='$filtypebeskrivelse[$y]'>$filtyper[$y]</option>\n";
-		}
-	}
-	print $filtypevalg;
-	print "</select></td>\n"; 
-	print "<td title='".str_replace(' $beskrivelse','', findtekst(431,$sprog_id))." ".findtekst(1329,$sprog_id)."'><!--tekst 431-->\n";
-	print "    <input class='inputbox' style='width:25px;text-align:right' type='text' name='rabat[$x]' min='0' max='100' value='0'>%</td>\n";
-	print "<td title='".str_replace(' $beskrivelse','', findtekst(432,$sprog_id))." ".findtekst(1329,$sprog_id)."'><!--tekst 432-->\n";
-	print "    <select class='inputbox' name='gruppe[$x]'>\n";
-	for ($y=1;$y<=$vgrpantal;$y++) {
-		print "    <option value='$vgrp[$y]'";
-		if ( $y == 1 ) print " selected='selected'";
-		print ">$vgrp[$y]: $vgbesk[$y]</option>\n";
-	}
-	print "<td \n";
-	print "    title='".findtekst(1330,$sprog_id)."'>\n";
-	print "    &nbsp;\n</td>\n";
-	print "</tr>\n";
-	print "<tr><td><br></td><td><br></td><td><br></td><td align='center'><input class='button green medium' type='submit' accesskey='g' value='".findtekst(471, $sprog_id)."' name='submit'></td></tr>\n";
-	print "</form>\n\n";
-} # endfunc prislister
 
 function rykker_valg()
 {

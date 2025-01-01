@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- systemdata/formularkort --- patch 4.0.8 --- 2023-10-03 ---
+// --- systemdata/formularkort --- patch 4.1.1 --- 2024-09-03 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -21,7 +21,7 @@
 // See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
 // 
-// Copyright (c) 2003-2023 Saldi.dk ApS
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------------
 
 // 20120906 Tilføjet mulighed for at vise momssats på ordrelinjer.
@@ -51,6 +51,7 @@
 // 20230719 PHR Cleanup in 'mailtext
 // 20230828 PHR Fixed error in above
 // 20231003 PHR Added ordre_valuta
+// 20240903  PHR Ecxluded copy all options from all but first line.
 
 @session_start();
 $s_id=session_id();
@@ -61,6 +62,7 @@ $css="../css/standard.css";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+include("../includes/topline_settings.php");
 	
 $art=$art_nr=$form_nr=$linjeantal=$nyt_sprog=$submit=$x=NULL;
 $id=$db_id;
@@ -282,6 +284,32 @@ if ($menu=='T') {  # 20150331 start
         print "</div><!-- end of leftmenuholder -->\n";
 				print "<div class=\"maincontentLargeHolder\">\n";
         print "<table border=\"1\" cellspacing=\"0\" id=\"dataTable\" class=\"dataTable2\"><tbody>";
+} elseif ($menu=='S') {
+  print "<html>\n";
+  print "<head>\n";
+  print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n";
+  print "<meta name=\"viewport\" content=\"width=1024\">\n";
+  print "</head>\n";
+  print "<body>\n";
+  print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>\n";
+  print "<tr><td width=\"\" height=\"1%\" align=\"center\" valign=\"top\" collspan=\"2\">\n";
+  print "<table width=\"100%\" height=\"1%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>\n";
+
+  print "<td width=\"10%\"><a href=$returside accesskey=\"l\">
+       <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">".findtekst(30, $sprog_id)."</button></a></td>\n";
+
+  print "<td width=\"80%\" align='center' style='$topStyle'>".findtekst(573,$sprog_id)."</td>\n";
+
+  print "<td><a href=formularkort.php?nyt_sprog=yes accesskey=\"s\">
+       <button style='$butUpStyle; width:100%' title='".findtekst(1779, $sprog_id)."' onMouseOver=\"this.style.cursor='pointer'\">"
+       .findtekst(801, $sprog_id)."</button></a></td>\n";
+
+  print "<td><a href=logoupload.php?upload=yes accesskey=\"u\">
+       <button style='$butUpStyle; width:100%' title='".findtekst(1781, $sprog_id)."'onMouseOver=\"this.style.cursor='pointer'\">
+        Upload</button></a></td>\n";
+
+  print "</tbody></table></td></tr>\n";
+
 } else {
 	# 2013.11.21 Tilføjet meta så ÆØÅ vises rigtigt. Også viewport til bedre visning på tablet
 	//print "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n";
@@ -477,7 +505,7 @@ $tmp = db_escape_string($formularsprog);
 		for ($x=1;$x<=2;$x++) {
 			$qtxt = "insert into formularer (xa, formular, art, sprog) values ('$x', '$form_nr',$art_nr,'$formularsprog')";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			$qtxt = "select max id as id from formularer where ";
+      $qtxt = "select max(id) as id from formularer where ";
 			$qtxt.= "xa = '$x' and  formular =  '$form_nr', and art = $art_nr and  sprog = '$formularsprog'";
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 			print "<input type=\"hidden\" name='id[$x]' value='$r[id]'>\n";
@@ -638,7 +666,8 @@ function drop_down($x,$form_nr,$art_nr,$formularsprog,$id,$beskrivelse,$xa,$xb,$
 		print "<option>ordre_lev_addr2</option>";
 		print "<option>ordre_lev_postnr</option>";
 		print "<option>ordre_lev_bynavn</option>";
-		print "<option>ordre_lev_kontakt</option>";
+    print "<option>ordre_lev_bynavn</option>";
+    print "<option>ordre_lev_land</option>";
 		print "<option>ordre_levdate</option>";
 		print "<option>ordre_momssats</option>";
 		print "<option>ordre_notes</option>";
@@ -672,14 +701,29 @@ function drop_down($x,$form_nr,$art_nr,$formularsprog,$id,$beskrivelse,$xa,$xb,$
 		print "<option>forfalden_sum</option>";
 		print "<option>rykker_gebyr</option>";
 	}	
-	if (($form_nr>1 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|1\">Kopier alt fra tilbud</option>";
-	if (($form_nr!=2 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|2\">Kopier alt fra ordrebrkræftelse</option>";
-	if (($form_nr!=4 && $form_nr<6) || $form_nr>11) print "<option value = \"kopier_alt|4\">Kopier alt fra faktura</option>";
-	if ($form_nr<5) print "<option value = \"kopier_alt|5\">Kopier alt fra kreditnota</option>";
-	if ($form_nr>12) print "<option value = \"kopier_alt|12\">Kopier alt fra indkøbsforslag</option>";
-	if ($form_nr>11 && $form_nr!=13) print "<option value = \"kopier_alt|13\">Kopier alt fra rekvisition</option>";
-	if ($form_nr>11 && $form_nr!=14) print "<option value = \"kopier_alt|14\">Kopier alt fra indkøbsfaktura</option>";
-	
+  if ($x == 0) { #20240903
+    if (($form_nr>1 && $form_nr<6) || $form_nr>11) {
+      print "<option value = \"kopier_alt|1\">Kopier alt fra tilbud</option>";
+    } 
+    if (($form_nr!=2 && $form_nr<6) || $form_nr>11) {
+      print "<option value = \"kopier_alt|2\">Kopier alt fra ordrebrkræftelse</option>";
+    } 
+    if (($form_nr!=4 && $form_nr<6) || $form_nr>11) {
+      print "<option value = \"kopier_alt|4\">Kopier alt fra faktura</option>";
+    } 
+    if ($form_nr<5) {
+      print "<option value = \"kopier_alt|5\">Kopier alt fra kreditnota</option>";
+    } 
+    if ($form_nr>12) {
+      print "<option value = \"kopier_alt|12\">Kopier alt fra indkøbsforslag</option>";
+    } 
+    if ($form_nr>11 && $form_nr!=13) {
+      print "<option value = \"kopier_alt|13\">Kopier alt fra rekvisition</option>";
+    } 
+    if ($form_nr>11 && $form_nr!=14) {
+      print "<option value = \"kopier_alt|14\">Kopier alt fra indkøbsfaktura</option>";
+    }
+  }
 	print "</SELECT></td>";
 	$beskrivelse = str_replace('$formular_grossWeight','$formular_bruttovægt',$beskrivelse);
 	$beskrivelse = str_replace('$formular_netWeight','$formular_nettovægt',$beskrivelse);
@@ -1099,6 +1143,25 @@ function kopier_alt($form_nr,$art_nr,$formularsprog,$kilde) {
 
 if ($menu=='T') {
 	print "";
+
+} elseif ($menu=='S') {
+  print "<tr><td width='100%' height='2.5%' align='center' valign='bottom'>\n";
+  print " <table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>\n";
+
+  print "<td width='40%' align='center' style='$topStyle'>&nbsp;</td>\n";
+
+  print "<td width='20%' align='center'><a href=\"formular_indlaes_std.php\">
+    <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">".findtekst(572, $sprog_id)."</button></a></td>\n";
+
+  print "<td width='20%' style='$topStyle'>&nbsp;</td>\n";
+
+  print "<td width=\"10%\"><a href=formularkort.php?nyt_sprog=yes accesskey=\"s\">
+       <button style='$butUpStyle; width:100%' title=\"".findtekst(1779, $sprog_id)."\" onMouseOver=\"this.style.cursor='pointer'\">"
+       .findtekst(801, $sprog_id)."</button></a></td>\n";
+
+  print "<td width=\"10%\"><a href=logoupload.php?upload=yes accesskey=\"u\">
+       <button style='$butUpStyle; width:100%' title=\"".findtekst(1780, $sprog_id)."\" onMouseOver=\"this.style.cursor='pointer'\">"
+       .findtekst(571, $sprog_id)."</button></a></td>\n";
 } else {
 print "<tr><td width='100%' height='2.5%' align='center' valign='bottom'>\n";		
 print "  <table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>\n";

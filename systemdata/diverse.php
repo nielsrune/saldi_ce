@@ -80,6 +80,8 @@
 // 20221231 PHR	sektion 'bilag' box3 (ftp passwd) is now urlencoded as it failed with special characters in password. 
 // 20231228 PBLM Added mobilePay (diverse valg)
 // 20240126 PBLM Added nemhandel (diverse valg)
+// 20240827 LOE 'personlige_valg' readujsted to use userSettings.
+
 
 @session_start();
 $s_id=session_id();
@@ -113,23 +115,6 @@ include("../includes/online.php");
 include("../includes/std_func.php");
 include("sys_div_func.php"); # 20150424a
 include("skriv_formtabel.inc.php"); # 20150424c
-
-function update_settings_value($var_name, $var_grp, $var_value, $var_description) {
-	# Expect a posted ID
-	$qtxt = "SELECT var_value FROM settings WHERE var_name='$var_name' AND var_grp = '$var_grp'";
-	$r = db_fetch_array(db_select($qtxt, __FILE__ . " linje " . __LINE__));
-
-	# If the row already exsists
-	if ($r) {
-		$qtxt = "UPDATE settings SET var_value='$var_value' WHERE var_name='$var_name' AND var_grp = '$var_grp'";
-		db_modify($qtxt, __FILE__ . " linje " . __LINE__);
-	# If the row needs to be created in the database
-	} else {
-		$qtxt = "INSERT INTO settings(var_name, var_grp, var_value, var_description) VALUES ('$var_name', '$var_grp', '$var_value', '$var_description')";
-		db_modify($qtxt, __FILE__ . " linje " . __LINE__);
-	}
-}
-
 
 $defaultProvision=$sqlstreng=NULL;
 if ($menu=='T') {
@@ -167,11 +152,11 @@ if ($menu=='T') {
 } 
 
 if (!isset($exec_path)) $exec_path="/usr/bin";
-
 $sektion=if_isset($_GET['sektion']);
-#if ($sektion == 'personlige_valg') $sektion = 'userSettings';
+$pricelists = if_isset($_POST['pricelists'],NULL);
+if ($sektion == 'personlige_valg') $sektion = 'userSettings';
 $skiftnavn=if_isset($_GET['skiftnavn']);
-if ($_POST) {
+if ($_POST && $_SERVER['REQUEST_METHOD'] == "POST") {
 	if ($sektion=='provision') {
 		$id=$_POST['id'];
 		$box1=$_POST['box1'];
@@ -333,6 +318,12 @@ if ($_POST) {
 
     $copay_api          = if_isset($_POST['copay_id']);
 		$nemhandel			= if_isset($_POST['nemhandel']);
+    
+		$move_username            = if_isset($_POST['move_username']);
+		$move_password            = if_isset($_POST['move_password']);
+
+		update_settings_value("username", "move3500", $move_username, "The username for the move3500 terminal");
+		update_settings_value("password", "move3500", $move_password, "The username for the move3500 terminal");
     
     # Vibrant API save
     if ($vibrant_api) {
@@ -622,6 +613,7 @@ if ($_POST) {
 		$saetvarenr =if_isset($_POST['saetvarenr']); #20150907
 		$orderNoteEnabled = if_isset($_POST['orderNoteEnabled']);
 		$debitoripad      = if_isset($_POST['debitoripad']);
+		$rabatdecimal     = if_isset($_POST['rabatdecimal']);
 
 		if ($box2 && $r=db_fetch_array(db_select("select id from varer WHERE varenr = '$box2'",__FILE__ . " linje " . __LINE__))) {
 			$box2=$r['id'];
@@ -684,6 +676,7 @@ if ($_POST) {
 		}
 
 		update_settings_value("debitoripad", "ordre", $debitoripad, "Weather or not to include the debitor ipad system");
+		update_settings_value("rabatdecimal", "ordre", $rabatdecimal, "The amount of decimals in the order system for discounts");
 	#######################################################################################
 	} elseif ($sektion=='productOptions') {
 
@@ -1082,7 +1075,7 @@ if ($_POST) {
 			print "<meta http-equiv=\"refresh\" content=\"0;URL='diverse.php?sektion=labels&valg=$valg'\">";
 		} 
 	#######################################################################################
-	} elseif ($sektion=='prislister') {
+	} elseif ($pricelists) {
 		$id=$_POST['id'];
 		$beskrivelse=$_POST['beskrivelse'];
 		$box1=$_POST['lev_id'];
@@ -1097,24 +1090,29 @@ if ($_POST) {
 		$slet=$_POST['slet'];
 		$antal=$_POST['antal'];
 
-		for($x=1;$x<=$antal;$x++) {
+		for($x=0;$x < count($id);$x++) {
 #			if (!$box4[$x]) $box1[$x]=''; # 20160225
 
-			$id[$x]*=1;
 			$qtxt = NULL;
+/*`
 			$q_txt = "select id from grupper WHERE art='PL' and beskrivelse='$beskrivelse[$x]'";
+	echo "$q_txt<br>";
 			if ($id[$x]==0 && $box4[$x] && $r = db_fetch_array(db_select($q_txt,__FILE__ . " linje " . __LINE__))) {
 				$id[$x]=$r['id'];
-			} elseif ( $id[$x]==0 && $box4[$x] && $beskrivelse[$x] ) {
+			} 
+*/			
+echo "$id[$x]==0 	 && $beskrivelse[$x]<br>";
+			if ( $id[$x]==0  && $beskrivelse[$x] ) {
 				$box4[$x]=0; # 20150612
 				$qtxt = "insert into grupper (beskrivelse,kodenr,art,box2,box4,box6,box8,box9) values ";
-				$qtxt.= "('$beskrivelse[$x]','0','PL','$box2[$x]','$box4[$x]','$box6[$x]','$box8[$x]','$box9[$x]')";
+				$qtxt.= "('$beskrivelse[$x]','0','PL','$box2[$x]','on','$box6[$x]','$box8[$x]','$box9[$x]')";
 			} elseif ( $id[$x] && $slet[$x]=="Slet" ) {
 				$slet[$x]=$slet[$x];
 			} elseif ($id[$x] > 0) {
 				$qtxt = "update grupper set beskrivelse='$beskrivelse[$x]',box1='$box1[$x]',box2='$box2[$x]',box4='$box4[$x]',";
 				$qtxt.= "box6='$box6[$x]',box8='$box8[$x]',box9='$box9[$x]' WHERE id='$id[$x]'";
 			}
+	echo "$qtxt<br>";
 			if ($qtxt) db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		}
 	#######################################################################################
@@ -1202,8 +1200,10 @@ if ($_POST) {
 
 		$box14_2=if_isset($_POST['udtag0']);
 
-		$kdscolorindex      = if_isset($_POST['kdscolorindex']);
+		$kdscolorindex      = if_isset($_POST['kdscolorindex'],array());
 		$kdscolor           = if_isset($_POST['kdscolor']);
+
+		
 
 		update_settings_value("show_big_sum", "POS", if_isset($_POST['show_big_sum'], "off"), "Shows a big sum ");
 		update_settings_value("show_stock", "POS", if_isset($_POST['lagerbeh'], "0"), "Weather or not to show the stock level on sale in the POS system");
@@ -1241,6 +1241,11 @@ if ($_POST) {
       }
     # If it has less plans
     } else if ($planamount < $plans-1) {
+		echo $plans;
+		echo " - ";
+		echo $planamount;
+		print_r( $_POST);
+		echo $_SERVER['REQUEST_METHOD'];
 			db_modify("DELETE FROM table_pages WHERE id > $planamount",__FILE__ . " linje " . __LINE__);
     }
     # Save the created fields
@@ -1275,6 +1280,9 @@ if ($_POST) {
 		$pfs=if_isset($_POST['pfs']);
 		$box3_3=if_isset($_POST['kundedisplay']);
 		$postEachSale=if_isset($_POST['postEachSale']);
+		$mobilpos=if_isset($_POST['mobilpos']);
+		$mobilwidth=if_isset($_POST['mobilwidth']);
+		$mobilzoom=if_isset($_POST['mobilzoom']);
 		$box2=NULL;
 		$box3=NULL;
 		$box7=NULL;
@@ -1285,6 +1293,9 @@ if ($_POST) {
 		for ($x=0;$x<$box1;$x++) {
 			if (!isset($bordvalg[$x]))     $bordvalg[$x]     = NULL;
 			if (!isset($postEachSale[$x])) $postEachSale[$x] = NULL;
+			if (!isset($mobilpos[$x])) $mobilpos[$x] = NULL;
+			if (!isset($mobilwidth[$x])) $mobilwidth[$x] = NULL;
+			if (!isset($mobilzoom[$x])) $mobilzoom[$x] = NULL;
 		
 			$qtxt="select id from kontoplan WHERE kontonr = '$kassekonti[$x]'";
 			if (($kassekonti[$x] && is_numeric($kassekonti[$x]) && db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))));
@@ -1328,6 +1339,16 @@ if ($_POST) {
 			  db_modify($qtxt,__FILE__ . " linje " . __LINE__);
       }
        
+
+	  	# ################
+	  	# Mobilpos gem
+	  	# ################
+		update_settings_value("mobilepos", "POS", $mobilpos[$x], "Use the mobile pos system?", null, $x+1);
+	  	if ($mobilpos[$x] == "on") {
+			update_settings_value("mobilwidth", "POS", $mobilwidth[$x], "The width of the mobile device", null, $x+1);
+			update_settings_value("mobilzoom", "POS", $mobilzoom[$x], "The zoom of the mobile device", null, $x+1);
+		}
+
 
 			if ($box2) {
 				$box2.=chr(9).$kassekonti[$x];
@@ -1851,89 +1872,89 @@ if ($menu != 'T') {
 	print "<td width=\"170px\" valign=\"top\">";
 	print "<table cellpadding=\"2\" cellspacing=\"2\" border=\"0\" width=\"100%\"><tbody>";
 	if ($menu == 'S') {
-		print "<tr><td align=left>&nbsp;<a href=syssetup.php><button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\"><b>&#9668; Tilbage</b></button></a></td></tr>\n"; // 200240428
+		print "<tr><td align=left>&nbsp;<a href=syssetup.php><button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\"><b>&#9668; Tilbage</b></button></a></td></tr>\n"; // 200240428
 
 		print "<tr><td align=left><a href=diverse.php?sektion=kontoindstillinger>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(783,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=provision>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(784,$sprog_id)."</button></a></td></tr>\n";
 
 /*
  		print "<tr><td align=left><a href=diverse.php?sektion=userSettings>
-				<button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+				<button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 				.findtekst(785,$sprog_id)."</button></a></td></tr>\n";
 */
  		print "<tr><td align=left><a href=diverse.php?sektion=userSettings>
-				<button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+				<button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 				.findtekst(785,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=ordre_valg>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(786,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=productOptions>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(787,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=variant_valg>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(788,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=shop_valg>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(789,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=api_valg>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">
 			   API</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=labels>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(791,$sprog_id)."</button></a></td></tr>\n";
 
-		print "<tr><td align=left><a href=diverse.php?sektion=prislister>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+		print "<tr><td align=left><a href=diverse.php?sektion=pricelists>
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(792,$sprog_id)."</button></a><!--tekst 427--></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=rykker_valg>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(793,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=div_valg>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(794,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=tjekliste>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(796,$sprog_id)."</button></a></td></tr>\n";
 
 		if ($docubizz) print "<tr><td align=left><a href=diverse.php?sektion=docubizz>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(796,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=bilag>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(797,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=orediff>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(170,$sprog_id)."</button></a><!--tekst 170--></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=massefakt>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(200,$sprog_id)."</button></a><!--tekst 200--></td></tr>\n";
 
-		if (file_exists("../debitor/pos_ordre.php")) print "<tr><td align=left><a href=diverse.php?sektion=posOptions><button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">".findtekst(271,$sprog_id)."</button></a></td></tr>\n";
+		if (file_exists("../debitor/pos_ordre.php")) print "<tr><td align=left><a href=diverse.php?sektion=posOptions><button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">".findtekst(271,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=sprog>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(801,$sprog_id)."</button></a></td></tr>\n";
 
 		print "<tr><td align=left><a href=diverse.php?sektion=div_io>
-			   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
 			   .findtekst(802,$sprog_id)."</button></a></td></tr>\n";
 
 		print "</tbody></table></td><td valign=\"top\" align=\"left\"><table align=\"left\" valign=\"top\" border=\"0\" width=\"90%\"><tbody>\n";
@@ -1951,10 +1972,10 @@ if ($menu != 'T') {
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=shop_valg>".findtekst(789,$sprog_id)."</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=api_valg>API</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=labels>".findtekst(791,$sprog_id)."</a></td></tr>\n";
-	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=prislister>".findtekst(792,$sprog_id)."</a><!--tekst 427--></td></tr>\n";
+		print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=pricelists>".findtekst(792,$sprog_id)."</a><!--tekst 427--></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=rykker_valg>".findtekst(793,$sprog_id)."</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=div_valg>".findtekst(794,$sprog_id)."</a></td></tr>\n";
-	# print "<tr><td align=left $top_bund>&nbsp;<a href=..\paperpdf/activatepaperflow.php>".findtekst(795,$sprog_id)."</a></td></tr>\n";
+		print "<tr><td align=left $top_bund>&nbsp;<a href=..\barcodescan.php>App Barcode</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=tjekliste>".findtekst(796,$sprog_id)."</a></td></tr>\n";
 	if ($docubizz) print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=docubizz>".findtekst(796,$sprog_id)."</a></td></tr>\n";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=bilag>".findtekst(797,$sprog_id)."</a></td></tr>\n";
@@ -1966,17 +1987,19 @@ if ($menu != 'T') {
 	# print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=kontoplan_io>Indl&aelig;s  / udl&aelig;s kontoplan</a></td></tr>";
 	print "<tr><td align=left $top_bund>&nbsp;<a href=diverse.php?sektion=div_io>".findtekst(802,$sprog_id)."</a></td></tr>\n";
 	print "</tbody></table></td><td valign=\"top\" align=\"left\"><table align=\"left\" valign=\"top\" border=\"0\" width=\"90%\"><tbody>\n";
+	
 }
 } 
 #cho "SWK $sektion<br>";
 if (!$sektion) print "<td><br></td>";
 if ($sektion=="kontoindstillinger") kontoindstillinger($regnskab,$skiftnavn);
 if ($sektion=="provision") provision();
-if ($sektion=="personlige_valg") personlige_valg();
-if ($sektion == 'userSettings') {
+// if ($sektion=="personlige_valg") personlige_valg();
+if ($sektion == 'userSettings' || $sektion == 'personlige_valg') {
 	include_once('syssetupIncludes/userSettings.php');
 	userSettings();
 }
+if ($sektion == 'personlige_valg') $sektion = 'userSettings';
 if ($sektion=="ordre_valg") ordre_valg();
 if ($sektion=="productOptions" || $sektion=="label") {
 	include ("diverseIncludes/productOptions.php");
@@ -1986,12 +2009,15 @@ if ($sektion=="variant_valg") variant_valg();
 if ($sektion=="shop_valg") shop_valg();
 if ($sektion=="api_valg") api_valg();
 if ($sektion=="labels") labels($valg);
-if ($sektion=="prislister") prislister();
+if ($sektion=="pricelists") {
+	include ("diverseIncludes/pricelists.php");
+	pricelists();
+}
 if ($sektion=="rykker_valg") rykker_valg();
 if ($sektion=="div_valg") div_valg(); # Kalder sys_div_valg.php
 if ($sektion=="docubizz") docubizz();
 if ($sektion=="bilag") bilag();
-//if ($sektion=="paperflow") activatePaperflow();
+//if ($sektion=="barcodescan") barcodescan();
 if ($sektion=="orediff") orediff($diffkto);
 if ($sektion=="massefakt") massefakt();
 if ($sektion=="posOptions") {

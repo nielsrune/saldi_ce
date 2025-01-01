@@ -4,8 +4,8 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------------/admin/slet_regnskab.php-----patch 3.8.9------2020.02.27--------
-// LICENS
+// --- admin/slet_regnskab.php --- patch 4.1.1 --- 2024.12.05---
+// LICENSE
 // 
 // This program is free software. You can redistribute it and / or
 // modify it under the terms of the GNU General Public License (GPL)
@@ -20,9 +20,10 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
 // GNU General Public License for more details.
 //
-// Copyright (c) 2003-2022 saldi.dk aps
+// Copyright (c) 2003-2024 saldi.dk aps
 // ----------------------------------------------------------------------
 // 2020.02.27 PHR Check if db exist before dropping 20200227 
+// 20241205 PHR Cleanup.
 
 @session_start();
 $s_id=session_id();
@@ -32,13 +33,13 @@ $css="../css/standard.css";
 
 include("../includes/connect.php");
 include("../includes/online.php");
+include("../includes/std_func.php");
 if ($db != $sqdb) {
 	print "<BODY onLoad=\"javascript:alert('Hmm du har vist ikke noget at g&oslash;re her! Dit IP nummer, brugernavn og regnskab er registreret!')\">";
 	print "<meta http-equiv=\"refresh\" content=\"1;URL=../index/logud.php\">";
 	exit;
 }
 $modulnr=103;
-$db_id = array();
 
 ?>
 <script LANGUAGE="JavaScript">
@@ -72,34 +73,37 @@ if (!$top_bund) $top_bund="style=\"border: 1px solid rgb(0, 0, 0); padding: 0pt 
 <?php
 $id=array();$db_navn=array();$regnskab=array();$slet=array();
 if (isset($_POST['regnskabsantal']) && $_POST['regnskabsantal']) {
-	$regnskabsantal=$_POST['regnskabsantal'];
-	$id=$_POST['id'];
-	$db_navn=$_POST['db_navn'];
-	$regnskab=$_POST['regnskab'];
-	$slet=$_POST['slet'];
+	$regnskabsantal=if_isset($_POST['regnskabsantal'],0);
+	$id       = if_isset($_POST['id'],array());
+	$db_navn  = if_isset($_POST['db_navn'],array());
+	$regnskab = if_isset($_POST['regnskab'],array());
+	$slet     = if_isset($_POST['slet'],array());
 
-	if (count($db_id)) {
+	if (count($db_navn)) {
 		$slet_antal=0;
-		for ($x=1; $x<=count($db_id); $x++) {
-			if ($slet[$x]=='on'){
+		for ($x=1; $x<=count($db_navn); $x++) {
+			if (isset($slet[$x]) && $slet[$x]=='on'){
 			 	$slet_antal++;
 				$mappe='../nedlagte_regnskaber/';
 				$tmpmappe='../nedlagte_regnskaber/'.$db_navn[$x];
 				if (!file_exists($mappe)) mkdir("$mappe", 0777);
-				mkdir("$tmpmappe", 0777);
+				if (!file_exists($tmpmappe)) mkdir("$tmpmappe", 0777);
 				if (file_exists($tmpmappe)) {
-					$logofil="../logolib/logo_".$db_id[$x].".eps";
+					if (file_exists("../logolib/logo_".$id[$x].".eps")) $logofil = "../logolib/logo_".$id[$x].".eps";
+					if (file_exists("../logolib/$id[$x]/bg.pdf")) $bg = "../logolib/$id[$x]/bg.pdf";
 					$dump_filnavn=$tmpmappe."/".trim($db_navn[$x].".sql");
 					$info_filnavn=$tmpmappe."/backup.info";
 					$tgz_filnavn=trim($db_navn[$x]."_".date("Ymd-Hi")).".tgz";
-					$tgz_filnavn=trim($db_navn[$x]."_".date("Ymd-Hi")).".sdat";
+					$dat_filnavn=trim($db_navn[$x]."_".date("Ymd-Hi")).".sdat";
 					$tidspkt= date("d-m-Y H:i");
 					$infotekst="$regnskab[$x] slettet $tidspkt af $brugernavn";$fp=fopen($info_filnavn,"w");
 					$fp=fopen($info_filnavn,"w");
 					if ($fp) {
-						fwrite($fp,"$timestamp".chr(9)."$db".chr(9)."$dbver".chr(9)."$regnskab".chr(9)."$db_encode".chr(9)."$db_type".chr(9)."$infotekst");
-					} 
+						$string = date("YmdHis").chr(9)."$db_navn[$x]".chr(9)."$db_ver".chr(9)."$regnskab[$x]".chr(9);
+						$string.= "$charset".chr(9)."$db_type".chr(9)."$infotekst";
+						fwrite($fp,$string."\n");					
 					fclose($fp);
+					}
 					if ($db_type=='mysql') system ("mysqldump -h $sqhost -u $squser --password=$sqpass -n $db_navn[$x] > $dump_filnavn");
 					else system ("export PGPASSWORD=$sqpass\npg_dump -h $sqhost -U $squser -f $dump_filnavn $db_navn[$x]");
 #					system("export PGPASSWORD=$sqpass\npg_dump -h $sqhost -U $squser -f $dump_filnavn $db_navn[$x]");

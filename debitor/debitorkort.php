@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/debitorkort.php --- lap 4.1.0 --- 2024-05-28 ---
+// --- debitor/debitorkort.php --- lap 4.1.0 --- 2024-09-06 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -41,7 +41,7 @@
 // 20230223 PHR repaired 'anonymize' after translalation error and renamed kategori to katString where is string
 // 20230925 PHR php8
 // 20240528 PHR Added $_SESSION['debitorId']
-
+// 20240906 phr Moved $debitorId to settings as 20240528 didnt work with open orders ??
 
 @session_start();
 $s_id=session_id();
@@ -60,7 +60,17 @@ $css="../css/standard.css";
  include("../includes/std_func.php");
  include("../includes/topline_settings.php");
 
- if (isset($_SESSION['debitorId'])) $_SESSION['debitorId'] = NULL;
+ $qtxt = "select id from settings where var_name = 'debitorId' and var_grp = 'debitor' and user_id = '$bruger_id'";
+ if ($r = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) {
+  $qtxt = "update settings set var_value = '' where id = '$r[id]'";
+ } else {
+	 $qtxt = "insert into settings (var_name, var_grp, user_id, var_description) ";
+	 $qtxt.= "values ";
+	 $qtxt.= "('debitorId','debitor', '$bruger_id','Used to track debitor Id when orderlist is called from debitor card')";
+ }
+ db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+ 
+ #if (isset($_SESSION['debitorId'])) $_SESSION['debitorId'] = NULL;
  print "<script language=\"javascript\" type=\"text/javascript\" src=\"../javascript/confirmclose.js\"></script>\n";
 
  $id = if_isset($_GET['id']);

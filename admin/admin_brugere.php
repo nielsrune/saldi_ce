@@ -34,10 +34,9 @@ $modulnr=104;
 $css="../css/standard.css";
 
 include("../includes/std_func.php");
-$title=findtekst("Brugere", $sprog_id);
 include("../includes/connect.php");
 include("../includes/online.php");
-
+$title=findtekst("Brugere", $sprog_id);
 print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 print "<tr><td align=\"center\" valign=\"top\" height=\"25\">";
 print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";

@@ -56,10 +56,11 @@ for ($x=1; $x<=$linjeantal; $x++)	{
 	print "<input type='hidden' name='kred_linje_id[$x]' value='$kred_linje_id[$x]'>";
 	print "<input type='hidden' name='serienr[$x]' value='$serienr[$x]'>";
 #  print "<input type='hidden' name='omvbet[$x]' value='$omvbet[$x]'>";
-	print "<tr>";
+  print "<tr class='ordrelinje'>";
 	print "<td><input class='inputbox' type='text' style='text-align:right' size=3 name=posn$x value='$x' onchange='javascript:docChange = true;'></td>";
-	print "<td title='".findtekst(1513, $sprog_id)."'><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=7 name=vare$x onfocus='document.forms[0].fokus.value=this.name;' value='".htmlentities($varenr[$x])."'></td>"; #20180305
-	print "<td><input class='inputbox' type='text' size=7 name=lev_varenr$x value=\"".htmlentities($lev_varenr[$x])."\" ";
+  print "<td title='".findtekst(1513, $sprog_id)."'>";
+  print "<input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=7 name=vare$x onfocus='document.forms[0].fokus.value=this.name;' value='".htmlentities($varenr[$x])."'></td>"; #20180305
+  print "<td><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=7 name=lev_varenr$x value=\"".htmlentities($lev_varenr[$x])."\" ";
 	print "onchange='javascript:docChange = true;'></td>";
 	print "<td><input class='inputbox' type='text' style='text-align:right' size=4 name=anta$x value='$dkantal[$x]' "; print "onchange='javascript:docChange = true;'></td>";
 	print "<td><input class='inputbox' type='text' style='background: none repeat scroll 0 0 #e4e4ee' readonly=readonly size=3 value='$enhed[$x]'></td>";
@@ -179,7 +180,7 @@ print "<td align=center onClick='batch($linje_id[$x])'>$txt</td>";
 	}
 	print "</tr>\n";
 }
-print "<tr>";
+print "<tr class='ordrelinje'>";
 print "<td><input class='inputbox' type='text' style='text-align:right' size=3 name=posn0 value=$x></td>";
 if ($art!='KK') {
 	print "<td><input class='inputbox' type='text' size=7 name=vare0 onfocus='document.forms[0].fokus.value=this.name;'></td>";
@@ -217,7 +218,7 @@ $ialt=$sum+$moms;
 #$sum=dkdecimal($sum,2);
 #$moms=dkdecimal($moms,2);
 print "<tr><td colspan='9'><table border='1' bordercolor='#ffffff' cellspacing='0' cellpadding='0' width='100%'><tbody>";
-print "<tr>";
+print "<tr class='ordrelinje'>";
 print "<td align=center>".findtekst(887,$sprog_id)."</td><td align=center>".dkdecimal($sum,2)."</td>";
 print "<td align=center>".findtekst(770,$sprog_id)."</td><td align=center>".dkdecimal($moms,2)."</td>";
 print "<td align=center>I alt</td><td align=right>".dkdecimal($ialt,2)."</td>";

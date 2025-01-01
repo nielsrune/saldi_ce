@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.1.1 -- 2024.07.29 --
+// -------- debitor/func/pos_ordre_itemscan.php ---- lap 4.1.1 -- 2024.10.22 --
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -67,12 +67,13 @@
 // 20231220 PHR added htmlentities to #20210829
 // 20240112 PHR Set $myDe to '-' if empty 
 // 20240729 PHR Various translations
-
+// 20241022 PHR price and name ect. now written into "../temp/$db/pos$id.txt to avoid reset of these";
+//              when scanning barcode in qty field.
 
 function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$rabat_ny,$lager_ny) {
 	print "\n<!-- Function varescan (start)-->\n";
 	global $afd_navn,$afslut;
-	global $barcode,$baseCurrency,$beskrivelse_old,$betalingsbet,$betvaluta,$bordnr,$brugernavn;
+	global $barcode,$barcodeNew,$baseCurrency,$beskrivelse_old,$betalingsbet,$betvaluta,$bordnr,$brugernavn;
 	global $db,$difkto;
 	global $credit_type; #20210813
 	global $fokus;
@@ -89,8 +90,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
   if (($fokus == 'rabat_ny' || $fokus == 'pris_ny') && $_POST['barcodeNew']) {
 		$varenr_ny = $_POST['barcodeNew'];
 	}
-	
- 	$beskrivelse[0]=$betaling2=$konto_id=$myAc=$myDe=$myPr=$vare_id=NULL;
+ 	$beskrivelse[0] = $betaling2 = $konto_id = $myA = $myDe = $myPr = $vare_id = NULL;
 	$pris[0]=0;
 	#($fokus == 'textNew')?$textNew = 1:$textNew = 0;
 	($fokus == 'beskrivelse_ny')?$textNew = 1:$textNew = 0; #20210810
@@ -98,11 +98,9 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 		$l=strlen($varenr_ny)-1;
 		$varenr_ny=substr($varenr_ny,0,$l);
 	}
-	
 	for ($l=0;$l<count($lagernr);$l++){
 		if ($lager_ny==$lagernr[$l] && strlen($lagernavn[$l])==1) $lager_ny=$lagernavn[$l];
 	}
-	
 	if ($id) {
 		$r=db_fetch_array(db_select("select * from ordrer where id = '$id'",__FILE__ . " linje " . __LINE__));
 		$konto_id=$r['konto_id'];
@@ -185,7 +183,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 			$variant_type='';
 		}
 		# 20140704 ->
-		$prisIkode=$lotPris=0;
+		$prisIkode=$lotPris=0; #Lotto
 		if (!$vare_id && is_numeric($varenr_ny) && strlen($varenr_ny)=='13') {
 			$tmp=substr($varenr_ny,0,7)."XXXXXX";
 
@@ -198,9 +196,12 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 			if ($r=db_fetch_array(db_select("$qtxt",__FILE__ . " linje " . __LINE__))) {
 				$prisIkode=1;
 			}
-			if (!$prisIkode && substr($varenr_ny,0,4) == 2141) {
-				$varenr_ny = 'LOT'.substr($varenr_ny,0,6);
+			if (!$prisIkode && substr($varenr_ny,0,4) == 2141) { #Lotto
 				$lotPris = substr($varenr_ny,6,6)/100;
+				$lotKode = substr($varenr_ny,4,2);
+				if ($lotKode == '95') $lotPris *= -1;
+				elseif ($lotKode == '96') $lotPris *= -1;
+				$varenr_ny = 'LOT'.substr($varenr_ny,0,6);
 			}
 		}	
 		if (strlen($varenr_ny)==12 && ctype_xdigit(substr($varenr_ny,-6)) && is_numeric(substr($varenr_ny,0,6))) {
@@ -240,6 +241,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 				} else $myAc=$myDe=$myPr=NULL;
 			} 
 		}
+		$_SESSION['barcodeNew'] = $barcodeNew;
 		if ((substr($varenr_ny,0,2) == 'kb' || substr($varenr_ny,0,2) == 'kn') && is_numeric(substr($varenr_ny,5,4))) {
 			$qtxt = "select salgspris,kostpris from varer where varenr = '$varenr_ny'";
 			$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
@@ -347,7 +349,9 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 	}
 	print "<tr><td style='width:20%;height:25px;' valign='bottom'>". findtekst('320|Varenummer',$sprog_id) ."</td>";
 	print "<td style='width:7%' valign='bottom'>". findtekst('916|Antal',$sprog_id) ."</td>";
+	if ($lagerantal) {
 	print "<td style='width:7%'valign='bottom'>". findtekst('608|Lager',$sprog_id) ."</td>";
+	}
 	print "<td valign='bottom'>". findtekst('967|Varenavn',$sprog_id) ."</td>";
 	print "<td style='width:10%' align='right' valign='bottom'>". findtekst('915|Pris',$sprog_id) ."</td>";
 	print "<td style='width:10%' align='right' valign='bottom'>Sum</td><td style='width:50px'><br></td></tr>";
@@ -384,6 +388,7 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 				$r2=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 				$varenr_ny=$r2['variant_stregkode'];
 			}
+			$qtxt =
 			db_modify("delete from ordrelinjer where id = '$ret'",__FILE__ . " linje " . __LINE__);
 			if (isset($_GET['saet']) && $saetnr=$_GET['saet']) {
 				db_modify("delete from ordrelinjer where ordre_id='$id' and saet = '$saetnr'",__FILE__ . " linje " . __LINE__);
@@ -406,12 +411,16 @@ function varescan($id,$momssats,$varenr_ny,$antal_ny,$pris_ny,$beskrivelse_ny,$r
 		print "<input type=\"hidden\" name = \"momssats\" value=\"$momssats\">\n";
 		print "<input type='hidden' name = 'beskrivelse_old' value=\"". htmlentities($beskrivelse[0]) ."\">\n"; #20210829
 		print "<input type='hidden' name = 'pris_old' value=\"$pris[0]\">\n"; #20210829
-		if ($myDe) print "<input type='hidden' name = 'beskrivelse_ny' value=\"$myDe\">\n"; #20210829
+		if ($myDe) {
+			print "<input type='hidden' name = 'beskrivelse_ny' value=\"$myDe\">\n"; #20210829
+			file_put_contents("../temp/$db/pos$id.txt","$barcodeNew|$beskrivelse[0]|$myPr");
+		}
 		print "<input type='hidden' name = 'barcodeNew' value=\"$barcodeNew\">\n"; #20210829
 		print "<input type=\"hidden\" name = \"leveret\" value=\"$leveret[0]\">\n";
 		print "<input type=\"hidden\" name = \"antal\" value=\"$antal_old\">\n";
 		print "<input type=\"hidden\" name = \"lager\" value=\"$lager_ny\">\n";
 		print "<input type=\"hidden\" name = \"tilfravalgNy\" value=\"$tilfravalgNy\">\n"; # 20220614
+		print "<input type=\"hidden\" name = \"timestamp\" value=".date("i:s").">\n"; # 20220614
 		if ($fokus=='pris_ny') print "<input type=\"hidden\" name = \"pris\" value=\"$pris_old\">\n";
 		if ($fokus=='pris_ny' || $fokus=='rabat_ny') { #20210902
 #			print "<input type='hidden' name = 'beskrivelse_ny' value=\"$beskrivelse_ny\">\n"; #20210829

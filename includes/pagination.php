@@ -18,13 +18,15 @@ function build_url($page, $step) {
 }
 
 function pagination($start, $step, $max) {
+
+	global $db,$sprog_id;
 	/*echo "start".$start;
 	echo "<br>";
 	echo "step".$step;
 	echo "<br>";
 	echo "max".$max;
 	echo "<br>";*/
-
+echo "S $sprog_id<br>";
 	#######
 
 	$pages = ceil($max / $step);
@@ -39,17 +41,17 @@ function pagination($start, $step, $max) {
 	$plainstyle = "padding: 6px 12px; border: 0; background-color: #ddd; cursor: pointer; width: 31px;";
 	$minpage = build_url(0, $step);
 	$maxpage = build_url($pages-1, $step);
+	$txt2125 = findtekst('2125|linjer pr side',$sprog_id);
 
 	print "<div style='display: inline-flex; gap: 4px; align-items: center; padding-bottom: 5px; '>";
-	print "<span>Rækker per side:</span>";
+	print "<span>$txt2125:</span>";
 	print "<select class='pagination-selector'>";
 
-	if ($step != 100) print "<option>100</option>";
-	else print "<option selected>100</option>";
-	if ($step != 50) print "<option>50</option>";
-	else print "<option selected>50</option>";
-	if ($step != 20) print "<option>20</option>";
-	else print "<option selected>20</option>";
+	print "<option".($step == 100?" selected":"").">100</option>";
+	print "<option".($step == 50?" selected":"").">50</option>";
+	print "<option".($step == 20?" selected":"").">20</option>";
+	print "<option".($step == 500?" selected":"").">500</option>";
+	print "<option".($step == 999999999?" selected":"")." value=999999999>1000+</option>";
 
 	print "</select>";
 	$diff = $start + $step-1;

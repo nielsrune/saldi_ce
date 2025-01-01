@@ -1,4 +1,29 @@
 <?php
+//                ___   _   _   ___  _     ___  _ _
+//               / __| / \ | | |   \| |   |   \| / /
+//               \__ \/ _ \| |_| |) | | _ | |) |  <
+//               |___/_/ \_|___|___/|_||_||___/|_\_\
+//
+// --- lager/productCardIncludes/showPrices.php --- lap 4.1.1 --- 2024-10-28 ---
+// LICENS
+//
+// This program is free software. You can redistribute it and / or
+// modify it under the terms of the GNU General Public License (GPL)
+// which is published by The Free Software Foundation; either in version 2
+// of this license or later version of your choice.
+// However, respect the following:
+//
+// It is forbidden to use this program in competition with Saldi.DK ApS
+// or other proprietor of the program without prior written agreement.
+//
+// The program is published with the hope that it will be beneficial,
+// but WITHOUT ANY KIND OF CLAIM OR WARRANTY. See
+// GNU General Public License for more details.
+//
+// Copyright (c) 2024-2024 saldi.dk aps
+// ----------------------------------------------------------------------
+// 20241028 PHR Added call to getChildRetailPrice.php
+
     print "<tr><td height=\"20%\"><b>".findtekst(2017,$sprog_id)."</b></td><td width=\"33%\" align=\"center\">$enhed</td><td width=\"33%\" align=\"center\">$enhed2</td></tr>";
     if ($p_grp_salgspris) $type="readonly=readonly";
     else $type="type=text";
@@ -31,7 +56,10 @@
     print "</tr>";
 
     // retail price
-    if ($p_grp_retail_price) $type="readonly=readonly";
+		if ($samlevare) {
+			include_once ("productCardIncludes/getChildRetailPrice.php");
+		}	
+    if ($p_grp_retail_price || $samlevare) $type="readonly=readonly";
     else $type="type=text";
     $tmp=dkdecimal($retail_price,2);
     print "<tr><td>Vejl.pris</td><td><input $type style=text-align:right size=8 name=retail_price value=\"$tmp\" onchange=\"javascript:docChange = true;\"></td>";
