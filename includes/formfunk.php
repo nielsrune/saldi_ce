@@ -1447,7 +1447,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 				($varenr[$x])?$linjesum[$x]=dkdecimal($linjesum[$x],2):$linjesum[$x]=NULL;
 				$linjemoms[$x]=dkdecimal($linjemoms[$x],2);
 				$pris[$x]=dkdecimal($pris[$x],2);
-				$rabat[$x]=dkdecimal($rabat[$x],2);
+				$rabat[$x]=dkdecimal($rabat[$x],get_settings_value("rabatdecimal", "ordre", 2));
 				$procent[$x]=dkdecimal($procent[$x],2);
 #			}
 				if ($x>1) $transportsum=$transportsum+$l_sum[$x-1];
@@ -1478,7 +1478,7 @@ for ($o=0; $o<$ordre_antal; $o++) {
 						elseif ($variabel[$z]=="momssats") $svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$varemomssats[$x]", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );
 						elseif ($variabel[$z]=="rabat") { 
 							$rabattxt = "";
-							if ($rabat[$x] != "0,00") {
+							if (usdecimal($rabat[$x]) != 0) {
 								$rabattxt = $rabat[$x];
 							}
 							$svar=skriv($id,"$str[$z]", "$fed[$z]", "$kursiv[$z]", "$color[$z]", "$rabattxt", "ordrelinjer_".$Opkt, "$xa[$z]", "$y", "$justering[$z]", "$form_font[$z]","$formular",__line__ );

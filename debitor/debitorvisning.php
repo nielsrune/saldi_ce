@@ -30,7 +30,7 @@
 // 20220824 MSC - Implementing new design
 // 20220813 MSC - Implementing new design
 // 20231128 MSC - Copy pasted new design into code
-// 20240216 PHR - Addad fiscal_year to sellect where art = 'DG'
+// 20240216 PHR - Added fiscal_year to sellect where art = 'DG'
 	
 @session_start();
 $s_id=session_id();
@@ -45,6 +45,7 @@ $css="../css/standard.css";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+
 if ($valg=="debitor") $title=findtekst(911,$sprog_id);
 else $title=findtekst(1129,$sprog_id);
 $sort=trim(if_isset($_GET['sort']));
@@ -171,6 +172,8 @@ global $title;
 global $valg;
 global $menu;
 	
+include("../includes/topline_settings.php");
+
 if ($menu=='T') {
 	include_once '../includes/top_header.php';
 	include_once '../includes/top_menu.php';
@@ -180,11 +183,15 @@ if ($menu=='T') {
 	print "<div class='headerbtnRght headLink'>&nbsp;&nbsp;&nbsp;</div>";
 	print "</div>";
 	print "<div class='content-noside'>";
+} elseif ($menu=='S') {
+	print "<td width='10%' align=center><a href=debitor.php?valg=$valg&sort=$sort accesskey=L>
+		   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">".findtekst(30,$sprog_id)."</button></a></td>
+		   <td width='80%' align=center style=$topStyle>$title</td>
+		   <td width='10%' align=center style=$topStyle><br></td></tr>";
 } else {	
 print "<td width='10%' align=center><div class='top_bund'><a href=debitor.php?valg=$valg&sort=$sort accesskey=L>".findtekst(30,$sprog_id)."</a></div></td>
 			<td width='80%' align=center><div class='top_bund'>$title</a></div></td>
-			<td width='10%' align=center><div class='top_bund'><br></div></td>
-			 </tr>";
+		   <td width='10%' align=center><div class='top_bund'><br></div></td></tr>";
 }
 
 }

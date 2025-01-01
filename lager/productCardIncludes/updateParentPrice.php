@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- lager/varekort_includes/updateParentPrice.php --- lap 4.1.0 --- 2024-06-18 ---
+// --- lager/varekort_includes/updateParentPrice.php --- lap 4.1.1 --- 2024-10-25 ---
 // LICENS
 //
 // This program is free software. You can redistribute it and / or
@@ -22,7 +22,9 @@
 //
 // Copyright (c) 2003-2024 saldi.dk aps
 // ----------------------------------------------------------------------
-function updateParentPrice($id, $diff) {
+// 2021025 PHR Added retail_price
+
+function updateParentPrice($id, $costDiff, $retailDiff) {
     $x=0;
     $y=0;
 #cho "select * from styklister where vare_id =$id<br>";
@@ -30,9 +32,17 @@ function updateParentPrice($id, $diff) {
     while ($r1 = db_fetch_array($q1)) {
         $x++;
         $indgaar_i[$x]=$r1['indgaar_i'];
-        $belob=$r1['antal']*$diff;
-#cho "update varer set kostpris=kostpris+$belob where id=$indgaar_i[$x]<br>";
-        db_modify("update varer set kostpris=kostpris+$belob where id= $indgaar_i[$x]",__FILE__ . " linje " . __LINE__);
+      $costAmount=$r1['antal']*$costDiff;
+      $retailAmount=$r1['antal']*$retailDiff;
+#cho "update varer set kostpris=kostpris+$costAmount where id=$indgaar_i[$x]<br>";
+      if ($costAmount) {
+        $qtxt = "update varer set kostpris=kostpris+$costAmount where id= $indgaar_i[$x]";
+        db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      }
+      if ($retailAmount) {
+        $qtxt = "update varer set retail_price=retail_price	+$retailAmount where id= $indgaar_i[$x]";
+        db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+      }
     }
     $y=$x;
     for ($y=1; $y<=$x; $y++) {
@@ -44,8 +54,14 @@ function updateParentPrice($id, $diff) {
                 $vare_id[$x]=$r1['id'];
                 $indgaar_i[$x]=$r1['indgaar_i'];
                 $antal[$x]=$r1['antal'];
-#cho "update varer set kostpris=kostpris+$diff*$antal[$x] where id=$vare_id[$x]<br>";
-                db_modify("update varer set kostpris=kostpris+$diff*$antal[$x] where id=$vare_id[$x]",__FILE__ . " linje " . __LINE__);
+              if ($costAmount) {
+                $qtxt = "update varer set kostpris=kostpris+$costAmount where id= $indgaar_i[$x]";
+                db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+              }
+              if ($retailAmount) {
+                $qtxt = "update varer set retail_price=retail_price+$retailAmount where id= $indgaar_i[$x]";
+                db_modify($qtxt,__FILE__ . " linje " . __LINE__);
+              }
             } else {
                 $r2 = db_fetch_array(db_select("select varenr from varer where id=$vare_id[$y]",__FILE__ . " linje " . __LINE__));
                 db_modify("delete from styklister where id=$r1[id]",__FILE__ . " linje " . __LINE__);

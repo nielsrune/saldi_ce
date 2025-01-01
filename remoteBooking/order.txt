@@ -1,0 +1,1262 @@
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-07-14
+    [end_date] => 2024-07-21
+    [weeks] => 1
+    [price] => 20.000
+    [item_id] => 353
+    [cust_id] => 5494
+    [booking_id] => 25093
+    [days] => 7
+    [fromDate] => 2024-07-14
+    [toDate] => 2024-07-21
+)
+
+order_id: 105515
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-07-06
+    [end_date] => 2024-07-13
+    [weeks] => 1
+    [price] => 20.000
+    [item_id] => 353
+    [cust_id] => 5495
+    [booking_id] => 25094
+    [days] => 7
+    [fromDate] => 2024-07-06
+    [toDate] => 2024-07-13
+)
+
+order_id: 105516
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-07-14
+    [end_date] => 2024-07-21
+    [weeks] => 1
+    [price] => 20.000
+    [item_id] => 353
+    [cust_id] => 5495
+    [booking_id] => 25095
+    [days] => 7
+    [fromDate] => 2024-07-14
+    [toDate] => 2024-07-21
+)
+
+order_id: 105517
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-07-22
+    [end_date] => 2024-07-29
+    [weeks] => 1
+    [price] => 20.000
+    [item_id] => 353
+    [cust_id] => 5495
+    [booking_id] => 25096
+    [days] => 7
+    [fromDate] => 2024-07-22
+    [toDate] => 2024-07-29
+)
+
+customer: Array
+(
+    [id] => 5495
+    [name] => Patrick Madsen
+    [account_number] => 6380
+    [phone] => 30239528
+    [email] => Patrickmadsen23@gmail.com
+    [address] => Borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5495
+)
+
+order_id: 105519
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-07-27
+    [end_date] => 2024-08-10
+    [weeks] => 2
+    [price] => 40
+    [item_id] => 354
+    [cust_id] => 5495
+    [booking_id] => 25097
+    [days] => 14
+    [fromDate] => 2024-07-27
+    [toDate] => 2024-08-10
+)
+
+customer: Array
+(
+    [id] => 5495
+    [name] => Patrick Madsen
+    [account_number] => 6380
+    [phone] => 30239528
+    [email] => Patrickmadsen23@gmail.com
+    [address] => Borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5495
+)
+
+order_id: 118060
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 40
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-07-30
+    [end_date] => 2024-08-13
+    [weeks] => 2
+    [price] => 40
+    [item_id] => 353
+    [cust_id] => 5496
+    [booking_id] => 25098
+    [days] => 14
+    [fromDate] => 2024-07-30
+    [toDate] => 2024-08-13
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118061
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 40
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-08-11
+    [end_date] => 2024-08-25
+    [weeks] => 2
+    [price] => 40
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25099
+    [days] => 14
+    [fromDate] => 2024-08-11
+    [toDate] => 2024-08-25
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118062
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 40
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-08-14
+    [end_date] => 2024-08-21
+    [weeks] => 1
+    [price] => 16
+    [item_id] => 353
+    [cust_id] => 5496
+    [booking_id] => 25100
+    [days] => 7
+    [fromDate] => 2024-08-14
+    [toDate] => 2024-08-21
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118063
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-08-22
+    [end_date] => 2024-09-05
+    [weeks] => 2
+    [price] => 40
+    [item_id] => 353
+    [cust_id] => 5496
+    [booking_id] => 25101
+    [days] => 14
+    [fromDate] => 2024-08-22
+    [toDate] => 2024-09-05
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118064
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 40
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-08-26
+    [end_date] => 2024-09-02
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5495
+    [booking_id] => 25102
+    [days] => 7
+    [fromDate] => 2024-08-26
+    [toDate] => 2024-09-02
+)
+
+customer: Array
+(
+    [id] => 5495
+    [name] => Patrick Madsen
+    [account_number] => 6380
+    [phone] => 30239528
+    [email] => Patrickmadsen23@gmail.com
+    [address] => Borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5495
+)
+
+order_id: 118065
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-03
+    [end_date] => 2024-09-10
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25103
+    [days] => 7
+    [fromDate] => 2024-09-03
+    [toDate] => 2024-09-10
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118066
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-03
+    [end_date] => 2024-09-10
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25103
+    [days] => 7
+    [fromDate] => 2024-09-03
+    [toDate] => 2024-09-10
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118067
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-03
+    [end_date] => 2024-09-10
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25105
+    [days] => 7
+    [fromDate] => 2024-09-03
+    [toDate] => 2024-09-10
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118068
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-03
+    [end_date] => 2024-09-10
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25105
+    [days] => 7
+    [fromDate] => 2024-09-03
+    [toDate] => 2024-09-10
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118069
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-06
+    [end_date] => 2024-09-13
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 353
+    [cust_id] => 5496
+    [booking_id] => 25107
+    [days] => 7
+    [fromDate] => 2024-09-06
+    [toDate] => 2024-09-13
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118070
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-11
+    [end_date] => 2024-09-18
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25108
+    [days] => 7
+    [fromDate] => 2024-09-11
+    [toDate] => 2024-09-18
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118071
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-14
+    [end_date] => 2024-09-21
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 353
+    [cust_id] => 5496
+    [booking_id] => 25109
+    [days] => 7
+    [fromDate] => 2024-09-14
+    [toDate] => 2024-09-21
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118072
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-19
+    [end_date] => 2024-09-26
+    [weeks] => 1
+    [price] => 16
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25110
+    [days] => 7
+    [fromDate] => 2024-09-19
+    [toDate] => 2024-09-26
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118073
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-22
+    [end_date] => 2024-09-29
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 353
+    [cust_id] => 5496
+    [booking_id] => 25111
+    [days] => 7
+    [fromDate] => 2024-09-22
+    [toDate] => 2024-09-29
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118074
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-09-27
+    [end_date] => 2024-10-04
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25112
+    [days] => 7
+    [fromDate] => 2024-09-27
+    [toDate] => 2024-10-04
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118075
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-05
+    [end_date] => 2024-10-12
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 353
+    [cust_id] => 5496
+    [booking_id] => 25113
+    [days] => 7
+    [fromDate] => 2024-10-05
+    [toDate] => 2024-10-12
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118076
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-05
+    [end_date] => 2024-10-12
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25114
+    [days] => 7
+    [fromDate] => 2024-10-05
+    [toDate] => 2024-10-12
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118077
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-05
+    [end_date] => 2024-10-12
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25115
+    [days] => 7
+    [fromDate] => 2024-10-05
+    [toDate] => 2024-10-12
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118078
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-05
+    [end_date] => 2024-10-12
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 5496
+    [booking_id] => 25116
+    [days] => 7
+    [fromDate] => 2024-10-05
+    [toDate] => 2024-10-12
+)
+
+customer: Array
+(
+    [id] => 5496
+    [name] => Patrick
+    [account_number] => 6381
+    [phone] => 30239528
+    [email] => patrickmadsen23@gmail.com
+    [address] => borupvej 4
+    [zip] => 3320
+    [city] => Skævinge
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 5496
+)
+
+order_id: 118079
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-05
+    [end_date] => 2024-10-12
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 3923
+    [booking_id] => 25117
+    [days] => 7
+    [fromDate] => 2024-10-05
+    [toDate] => 2024-10-12
+)
+
+customer: Array
+(
+    [id] => 3923
+    [name] => Birgit Andersen
+    [account_number] => 4855
+    [phone] => 60623427
+    [email] => 
+    [address] => Louis Pios Gade 11, 1. tv
+    [zip] => 2450
+    [city] => København Sv.
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 3923
+)
+
+order_id: 118080
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-13
+    [end_date] => 2024-10-20
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 353
+    [cust_id] => 3923
+    [booking_id] => 25118
+    [days] => 7
+    [fromDate] => 2024-10-13
+    [toDate] => 2024-10-20
+)
+
+customer: Array
+(
+    [id] => 3923
+    [name] => Birgit Andersen
+    [account_number] => 4855
+    [phone] => 60623427
+    [email] => 
+    [address] => Louis Pios Gade 11, 1. tv
+    [zip] => 2450
+    [city] => København Sv.
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 3923
+)
+
+order_id: 118081
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine A (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-13
+    [end_date] => 2024-10-20
+    [weeks] => 1
+    [price] => 16
+    [item_id] => 354
+    [cust_id] => 3923
+    [booking_id] => 25119
+    [days] => 7
+    [fromDate] => 2024-10-13
+    [toDate] => 2024-10-20
+)
+
+customer: Array
+(
+    [id] => 3923
+    [name] => Birgit Andersen
+    [account_number] => 4855
+    [phone] => 60623427
+    [email] => 
+    [address] => Louis Pios Gade 11, 1. tv
+    [zip] => 2450
+    [city] => København Sv.
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 3923
+)
+
+order_id: 118082
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-05
+    [end_date] => 2024-10-12
+    [weeks] => 1
+    [price] => 16
+    [item_id] => 354
+    [cust_id] => 3923
+    [booking_id] => 25120
+    [days] => 7
+    [fromDate] => 2024-10-05
+    [toDate] => 2024-10-12
+)
+
+customer: Array
+(
+    [id] => 3923
+    [name] => Birgit Andersen
+    [account_number] => 4855
+    [phone] => 60623427
+    [email] => 
+    [address] => Louis Pios Gade 11, 1. tv
+    [zip] => 2450
+    [city] => København Sv.
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 3923
+)
+
+order_id: 118083
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22089
+    [start_date] => 2024-10-05
+    [end_date] => 2024-10-12
+    [weeks] => 1
+    [price] => 20
+    [item_id] => 354
+    [cust_id] => 3923
+    [booking_id] => 25121
+    [days] => 7
+    [fromDate] => 2024-10-05
+    [toDate] => 2024-10-12
+)
+
+customer: Array
+(
+    [id] => 3923
+    [name] => Birgit Andersen
+    [account_number] => 4855
+    [phone] => 60623427
+    [email] => 
+    [address] => Louis Pios Gade 11, 1. tv
+    [zip] => 2450
+    [city] => København Sv.
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 3923
+)
+
+order_id: 118084
+product: Array
+(
+    [product_id] => 22089
+    [name] => Gine B (Max 2)
+    [description] => Gine
+    [product_number] => v50
+    [disc_type] => percent
+    [price] => 20
+)
+
+data: Array
+(
+    [product_id] => 22087
+    [start_date] => 2024-07-30
+    [end_date] => 2024-08-06
+    [weeks] => 1
+    [price] => 180
+    [item_id] => 8
+    [cust_id] => 3923
+    [booking_id] => 25122
+    [days] => 7
+    [fromDate] => 2024-07-30
+    [toDate] => 2024-08-06
+)
+
+customer: Array
+(
+    [id] => 3923
+    [name] => Birgit Andersen
+    [account_number] => 4855
+    [phone] => 60623427
+    [email] => 
+    [address] => Louis Pios Gade 11, 1. tv
+    [zip] => 2450
+    [city] => København Sv.
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 3923
+)
+
+order_id: 118085
+product: Array
+(
+    [product_id] => 22087
+    [name] => 217
+    [description] => Reol høj 1. sal
+    [product_number] => s2
+    [disc_type] => amount
+    [price] => 180
+)
+
+data: Array
+(
+    [product_id] => 22087
+    [start_date] => 2024-07-30
+    [end_date] => 2024-08-06
+    [weeks] => 1
+    [price] => 144
+    [item_id] => 8
+    [cust_id] => 3923
+    [booking_id] => 25123
+    [days] => 7
+    [fromDate] => 2024-07-30
+    [toDate] => 2024-08-06
+)
+
+customer: Array
+(
+    [id] => 3923
+    [name] => Birgit Andersen
+    [account_number] => 4855
+    [phone] => 60623427
+    [email] => 
+    [address] => Louis Pios Gade 11, 1. tv
+    [zip] => 2450
+    [city] => København Sv.
+    [art] => DO
+    [valuta] => DKK
+    [payment_condition] => netto
+    [payment_days] => 1
+    [konto_id] => 3923
+)
+
+order_id: 118086
+product: Array
+(
+    [product_id] => 22087
+    [name] => 217
+    [description] => Reol høj 1. sal
+    [product_number] => s2
+    [disc_type] => amount
+    [price] => 180
+)
+

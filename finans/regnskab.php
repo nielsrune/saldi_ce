@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// -- ---------finans/regnskab.php ----------- patch 4.0.7 --- 2023.03.04 ---
+// -- ---------finans/regnskab.php ----------- patch 4.1.0 --- 2024.05.01 ---
 //                           LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,7 +20,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY. 
 // See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
-// Copyright (c) 2003-2023 Saldi.dk ApS
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // --------------------------------------------------------------------------
 
 // 20121011 Indsat "and (lukket != 'on' or saldo != 0)" søg 20121011
@@ -56,6 +56,7 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
 include("../includes/finansfunk.php");
+include("../includes/topline_settings.php");
 	
 $beregn_lager=if_isset($_POST['beregn_lager']);
 if ($menu=='T') {
@@ -67,6 +68,20 @@ print "<div id=\"header\">";
 	print "<div class=\"headerbtnRght headLink\">&nbsp;&nbsp;&nbsp;</div>";     
 	print "</div>";
 	print "<div class='content-noside'>";
+} elseif ($menu=='S') {
+		print "<center>";
+		print "<table width='100%' height='20' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>";
+	
+		print "<td width='10%' align='center'><a href='../index/menu.php' accesskey='L'>";
+		print "<button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">".findtekst(30,$sprog_id)."</button></a></td>";
+	
+		print "<td width='80%' align='center' style='$topStyle'>".findtekst(849,$sprog_id)."</td>";
+	
+		print "<td width='10%' align='center'><a href=\"budget.php\" accesskey=\"B\">";
+		print "<button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">Budget</button></a></td>";
+	
+		print "</tbody></table> ";
+		print "</td></tr> ";
 } else {
 	print "<center>";
 #	print "<table width=100% border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
@@ -321,7 +336,9 @@ fwrite($csv,";Primo");
 $tmp=periodeoverskrifter($maanedantal, $startaar, $startmaaned, 1, "regnskabsmaaned", $regnskabsaar);
 fwrite($csv,";". str_replace('"','',$tmp) ."I alt\n");
 #$cols+=count(explode(";",$tmp));
-print "<td align=right><b> I alt</a></b></td> ";
+
+$txt3072 = findtekst('3072|I alt', $sprog_id);
+print "<td align=right><b>$txt3072</a></b></td> ";
 print "</tr>";
 $y='';
 for ($x=1; $x<=$kontoantal; $x++){

@@ -65,7 +65,8 @@ function openpost($find,$sort,$fokus,$opslag_id,$id,$kladde_id,$bilag,$dato,$bes
 		$kredit  = $r['kredit'];
 		$belob   = dkdecimal($r['amount'],2);
 	} else $alignThis = array();
-	
+print "<center>";
+include("../includes/topline_settings.php");
 #	print"<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 #	print"<tr><td height = \"25\" align=\"center\" valign=\"top\">";
 	$lnktxt = "&funktion=openpost&x=$x&fokus=$fokus&kladde_id=$kladde_id&id=$id&bilag=$bilag&dato=$dato&";
@@ -80,6 +81,18 @@ if ($menu=='T') {
 	print "<div class=\"headerbtnRght\"></div>";       
 		print "</div><!-- end of header --><div class=\"maincontentLargeHolder\">\n";
 		print  "<table class='dataTable2' border='0' cellspacing='1' align='center';>";
+	} elseif ($menu=='S') {
+		print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
+
+		print "<td width=\"10%\"><a href='../finans/kassekladde.php?$lnktxt' accesskey=L>
+			   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">Luk</button></a></td>";
+		print "<td width=\"80%\" style=$topStyle align='center'>&Aring;benposter</td>";
+		print "<td width=\"10%\" style=$topStyle align='center' align='right'><br></td>";
+
+		print "</tbody></table>";
+		print "</td></tr>\n";
+		print "<tr><td valign=\"top\">";
+		print "<table cellpadding=\"1\" cellspacing=\"1\" border=\"0	\" width=\"800px\" valign = \"top\">";
 } else {
 	print"<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
 		print "<td width=\"10%\" $top_bund><a href='../finans/kassekladde.php?$lnktxt' accesskey=L>Luk</a></td>";

@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/kassespor.php --- lap 4.0.7 --- 2023-02-06 ---
+// --- debitor/kassespor.php --- lap 4.1.1 --- 2024-11-27 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -20,14 +20,16 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 //
-// Copyright (c) 2008-2023 Saldi.dk ApS
+// Copyright (c) 2008-2024 Saldi.dk ApS
 // ----------------------------------------------------------------------
 //
 // 20230118 PHR Added '$mSQt[$x] !=	 0 && ' as orders with some qty less than 0 could not split. 
 // 20230206 PHR id_seq id now updated after inserting new orderlines.
+// 20241127 PHR modified to work with mysql & mysqli
 
 print "<!-- BEGIN orderIncludes/moveOrderLines.php -->";
 #print "moveOrderLines.php<br>";
+global $db_type;
 
 $mQt    = $_POST['mQt'];  
 $mSQt   = $_POST['mSQt'];
@@ -57,7 +59,8 @@ else {
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$qtxt = "INSERT INTO ordrer SELECT * FROM temp_table";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-		$qtxt = "SELECT setval('ordrer_id_seq', $newId)";
+		if ($db_type == "mysql" || $db_type == "mysqli") $qtxt = "ALTER TABLE ordrer AUTO_INCREMENT = $newId";
+		else $qtxt = "SELECT setval('ordrer_id_seq', $newId)";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 		$qtxt = "DROP TABLE temp_table";
 		db_modify($qtxt,__FILE__ . " linje " . __LINE__);
@@ -78,7 +81,8 @@ else {
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			$qtxt = "INSERT INTO ordrelinjer SELECT * FROM temp_table WHERE id='$newLineId'";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			$qtxt = "SELECT setval('ordrelinjer_id_seq', $newLineId)";
+			if ($db_type == "mysql" || $db_type == "mysqli") $qtxt = "ALTER TABLE ordrelinjer AUTO_INCREMENT = $newLineId";
+			else $qtxt = "SELECT setval('ordrelinjer_id_seq', $newLineId)";
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 			if (!$antal[$x]) $antal[$x] = 0; 
 			if ($mQt[$x]) $antal[$x] = $antal[$x] - $mQt[$x];

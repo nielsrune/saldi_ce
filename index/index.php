@@ -36,7 +36,7 @@
 // 20230726 LOE Minor modification
 
 $regnskab=''; $brugernavn=''; $kode=''; $languageId=''; 
-$css="../css/login.css";
+$css="../css/login.css?cssver=1";
 if(file_exists("../includes/connect.php")){
 if (filesize("../includes/connect.php") < 10) unlink ("../includes/connect.php"); 
 }
@@ -58,12 +58,10 @@ include("../includes/db_query.php");
 include("../includes/std_func.php");
 $hm=$rs=$bn=null; #20211007
 
-
 print "
 <script>
 if(window.self !== window.top) {
 //run this code if in an iframe
-// alert('in frame');
 parent.location.href = \"../index/index.php\";
 } 
 </script>";
@@ -160,12 +158,15 @@ elseif (!file_exists("../sager/sager.php")) $host="SALDI";
 if (file_exists("bg.php")) include ("bg.php");
 
 else $style=''; 
-print "<body $style>\n";
-print "	<div id=\"main\">\n";
+print "<body>\n";
+print "	<div id=\"main\">\n";    				
 print "		<div class=\"loginHolder\">\n";
 print "			<div class=\"loginBox\">\n";
 print "				<div class=\"loginForm\">\n";    
+print "				<a href='https://saldi.dk'><img class=\"logoimg\" src='../img/Saldi_Main_Logo.png' width='100px'></a>\n";    
 print "				<form method=\"POST\" action=\"index.php\">\n";
+print "				<div class='loginAction'>\n";    
+print "					<h2>Login</h2>\n";    
 print "				<select id=\"languageId\" name=\"languageId\" onchange=\"this.form.submit();\" >\n";
 
 
@@ -185,6 +186,7 @@ print "<option value=\"$x\">". findtekst(1,$x) ."</option>\n";
 }
 }
 print "</select>\n";
+print "				</div>\n";    
 print "</form>\n";
 
 print "					<form name=\"login1\" METHOD=\"POST\" ACTION=\"index.php\" onSubmit=\"return handleLogin(this);\">\n";
@@ -198,11 +200,11 @@ if ($fejltxt) {
 }
 
 print " <input type=\"hidden\" value=\"$languageId\" name=\"languageId\" >";
-print "						<label for=\"Regnskab\">". findtekst(115,$languageId) .":</label>\n";
+print "						<label for=\"Regnskab\">". findtekst(115,$languageId) ."</label>\n";
 print "						<input class=\"textinput\" type=\"text\" id=\"regnskab\" name=\"regnskab\" value=\"$regnskab\" tabindex=\"1\">\n";
-print "						<label for=\"login\">". findtekst(225,$languageId) .":</label>\n";
+print "						<label for=\"login\">". findtekst(225,$languageId) ."</label>\n";
 print "						<input class=\"textinput\" type=\"text\" id=\"login\" name=\"brugernavn\" value=\"$brugernavn\" tabindex=\"2\">\n";
-print "						<label for=\"password\">". findtekst(324,$languageId) .":</label>\n";
+print "						<label for=\"password\">". findtekst(324,$languageId) ."</label>\n";
 print "						<input class=\"textinput\" type=\"password\" id=\"password\" name=\"password\"  value=\"$kode\" tabindex=\"3\">\n";
 print "						<div class=\"loginAction\">\n";
 print "							<div class=\"flleft\">\n";
@@ -212,7 +214,7 @@ print "								". findtekst(2006,$languageId) ."</label>\n";
 print "								<a class=\"forgotpass\" href=\"glemt_kode.php\" tabindex=\"5\">". findtekst(2007,$languageId) ."</a>\n";
 print "							</div><!-- end of flleft -->\n";
 print "							<input class=\"button blue flright\" type=\"submit\" value=\"Login\" alt=\"Login\" title=\"Login\" tabindex=\"6\">\n";
-print "							<div class=\"clearfix\"></div>\n";
+# print "							<div class=\"clearfix\"></div>\n"; #25042024
 print "						</div><!-- end of loginAction -->\n";        
 if (strtolower($sqdb)=='rotary') {
 	print "<label style=\"text-align:center;font-size:12px;\">".findtekst(325,$sprog_id)."</label>\n";
@@ -220,11 +222,11 @@ if (strtolower($sqdb)=='rotary') {
 
 print "					</form>\n";
 print "				</div><!-- end of loginForm -->\n";
+print "	<div id=\"footer\"><p>Copyright&nbsp;&copy;&nbsp; - $copyright</p></div>\n";
 print "			</div><!-- end of loginBox -->\n";
 print	"		</div><!-- end of loginHolder -->\n";
 print "	</div><!-- end of main -->\n";
 include ("../includes/version.php");
-print "	<div id=\"footer\"><p>Copyright&nbsp;&copy;&nbsp; - $copyright</p></div>\n";
 
 if (!isset($_COOKIE['saldi_std'])) {
 	print "<script language=\"javascript\" type=\"text/javascript\">\n";

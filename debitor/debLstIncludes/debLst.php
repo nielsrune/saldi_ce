@@ -177,9 +177,6 @@ for($i=0;$i<$dgcount;$i++) {
 	} 
 }
 
-echo $start;
-echo " - ";
-echo $linjeantal;
 print "<td colspan='100' align=right>";
 $start = if_isset($start, 0);
 $linjeantal = if_isset($linjeantal, 100);

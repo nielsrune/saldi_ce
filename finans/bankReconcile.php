@@ -38,6 +38,7 @@ include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/settings.php");
 include("../includes/std_func.php");
+include("../includes/topline_settings.php");
 
 global $menu;
 global $fokus;
@@ -58,7 +59,19 @@ if ($menu == 'T') {
 	print "</div>";
 	print "<div class='content-noside'><center>";
 } elseif ($menu == 'S') {
-	include("../includes/sidemenu.php");
+	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
+	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";
+	print "<table width=\"100%\" align=\"center\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";
+
+	print "<td width=\"10%\"><a href=rapport.php accesskey=L>
+		   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor='pointer'\">"
+		   .findtekst(30, $sprog_id)."</button></a></td>";
+
+	print "<td width=\"80%\" align='center' style='$topStyle'>Bankafstemning</td>";
+	print "<td width=\"10%\" align='center' style='$buttonStyle'><br></td>";
+
+	print "</tbody></table>";
+	print "</td></tr>";
 } else {
 	print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tbody>";
 	print "<tr><td height = \"25\" align=\"center\" valign=\"top\">";

@@ -1040,13 +1040,13 @@ if (!$simuler) {
 			print "<td width='10%'>";
 			$tekst = findtekst(154, $sprog_id);
 			print "<a href=\"javascript:confirmClose('../finans/kladdeliste.php?exitDraft=$kladde_id','$tekst')\" accesskey='L'>
-			<button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">"
+			<button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">"
 			.findtekst(30, $sprog_id)."</button></a></td>";
 
 			print "<td width='80%' style='$topStyle' align='center'> " . findtekst(1072, $sprog_id) . "  $kladde_id</td>";
 
 			print "<td width='10%'><a href=\"javascript:confirmClose('../finans/kassekladde.php?exitDraft=$kladde_id','$tekst')\" accesskey='N'>
-				   <button style='$butUpStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">
+				   <button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">
 				   $ny</button></a></td></tr>";
 		} else {
 			print "<tr><td height='1%' align='center' valign='top'>";
@@ -1198,8 +1198,8 @@ if ($kladde_id) {
 		$forfaldsdato[$x]=NULL;
 		if ($fejl) {
 			$transdate[$x] = usdate($row['transdate']);
-			$dato[$x] = dkdato($row['transdate']);
-			#cho __line__." transdate[$x] $transdate[$x] | dato[$x] $dato[$x]<br>";
+			$dato[$x] = dkdato($transdate[$x]);
+#			echo __line__." $row[transdate] | transdate[$x] $transdate[$x] | dato[$x] $dato[$x]<br>";
 			if ($row['forfaldsdate']) {
 				$forfaldsdate[$x]=usdate($row['forfaldsdate']);
 				$forfaldsdato[$x]=$row['forfaldsdate'];
@@ -1519,9 +1519,6 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 			print "<a href=\"javascript:confirmClose('../includes/documents.php?source=kassekladde&&ny=ja&sourceId=$id[$y]&kladde_id=$kladde_id&bilag=$bilag[$y]&bilag_id=$id[$y]&fokus=bila$y&dokument=$dokument[$y]','$txt')\" accesskey='L'>";
 #			print "<a href='../includes/documents.php?source=kassekladde&&ny=ja&sourceId=$id[$y]&kladde_id=$kladde_id&bilag=$bilag[$y]&bilag_id=$id[$y]&fokus=bila$y'>";
 			print "<img src='../ikoner/$clip' style='width:20px;height:20px;'></a></td>\n";
-
-
-
 		}
 		if (!isset($dub_bilag[$y]))
 			$dub_bilag[$y] = 0;
@@ -1595,10 +1592,10 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 			$titletxt .= findtekst(", fordi der blev bogført på kontrolkontoen denne dato!", $sprog_id); # " because there was transactions on the control account this date!"
 			print "<td style='text-align:right;font-weight:bold' title='" . $titletxt . "'>" . dkdecimal($kontrolsaldo, 2) . "</td>\n";
 			$control_bal_fetched = FALSE;
-		} elseif ($kontrolsaldo) {
+		} elseif ($kontrolkonto && $kontrolsaldo) {
 			print "<td align=right>" . dkdecimal($kontrolsaldo, 2) . "</td>\n";
 		}
-		if (abs($saldo[$y]) > 0) {
+		if ($kontrolkonto && abs($saldo[$y]) > 0) {
 			$saldoDiff = afrund($saldo[$y], 2) - afrund($kontrolsaldo, 2);
 			($saldoDiff) ? $color = "style='color:red'" : $color = "style='color:black'";
 			print "<td>&nbsp;</td><td align='right'><div $color>" . dkdecimal($saldo[$y]) . "</div></td>\n";
@@ -2228,9 +2225,9 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 			$alert3=findtekst(1588,$sprog_id);
 			$alert4=findtekst(1586,$sprog_id);
 						#'Dato ('.$dato.') udenfor regnskabs&aring;r (Bilag nr '.$bilag.') Kladden er IKKE gemt!';
-				$alerttekst = $alert1 . " (" . $dato . ") " . $alert2 . " " . $alert3 . " " . $bilag . $alert4;
-#				alert($alerttekst);
-#				$fejl = 1;
+				$alerttekst = $alert1 . " (" . $dato . ") " . $alert2 . " " . $alert3 . " " . $bilag .")";
+				alert($alerttekst);
+				$fejl = 1;
 #			$transdate=date("Y-m-d");
 		}
 			if (!isset($afd) || !$afd)

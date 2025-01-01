@@ -1,5 +1,5 @@
 <?php
-// --- finans/kladdeliste.php -------- patch 4.0.7 --- 2023.03.04 --- 
+// --- finans/kladdeliste.php -------- patch 4.1.0 --- 2024.05.01 --- 
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -15,7 +15,7 @@
 // but WITHOUT ANY KIND OF CLAIM OR WARRANTY.
 // See GNU General Public License for more details.
 // http://www.saldi.dk/dok/GNU_GPL_v2.html
-// Copyright (c) 2003-2023 Saldi.dk ApS
+// Copyright (c) 2003-2024 Saldi.dk ApS
 // -----------------------------------------------------------------------------------
 // 20150722 PHR Vis alle/egne gemmes nu som cookie. 
 // 20181220 MSC - Rettet ny kladde knap til Ny
@@ -36,6 +36,7 @@ $title="kladdeliste";
 include("../includes/connect.php");
 include("../includes/online.php");
 include("../includes/std_func.php");
+include("../includes/topline_settings.php");
 
 if (!isset ($_COOKIE['saldi_kladdeliste'])) $_COOKIE['saldi_kladdeliste'] = NULL;
 
@@ -56,6 +57,7 @@ if (strpos(findtekst(639,$sprog_id),'undtrykke')) {
 	$qtxt = "update tekster set tekst = '' where tekst_id >= '600'";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 }
+
 if ($menu=='T') {
 			include_once '../includes/top_header.php';
 			include_once '../includes/top_menu.php';
@@ -66,6 +68,19 @@ if ($menu=='T') {
 	print "</div>";
 	print "<div class='content-noside'>";
 	print  "<table class='dataTable' border='0' cellspacing='1' width='100%'>";
+} elseif ($menu=='S') {
+	print "<table width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'><tbody>
+		   <tr><td height = '25' align='center' valign='top'>
+		   <table width='100%' align='center' border='0' cellspacing='2' cellpadding='0'><tbody>";
+
+	print "<td width='10%'  title='".findtekst(1599, $sprog_id)."'>"; #20210721
+	print "<a href='../index/menu.php' accesskey='L'><button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">".findtekst(30,$sprog_id)."</button></a></td>";
+
+	print "<td width=80% style=$topStyle align=center>".findtekst(639,$sprog_id)."</td>";
+
+	print "<td width='10%' title='".findtekst(1600, $sprog_id)."'>";
+	print "<a href=kassekladde.php?returside=kladdeliste.php&tjek=-1 accesskey=N><button style='$buttonStyle; width:100%' onMouseOver=\"this.style.cursor = 'pointer'\">".findtekst(39,$sprog_id)."</button></a></td>";
+	print "</tbody></table></td></tr><tr><td valign='top'><table cellpadding='1' cellspacing='1' border='0' width='100%' valign = 'top'>";
 } else {
 #	if ($menu=='S') {
 #		print "<table width=\"100%\" height=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"0\"><tbody>";

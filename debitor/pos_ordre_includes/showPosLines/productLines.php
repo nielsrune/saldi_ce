@@ -4,7 +4,7 @@
 //               \__ \/ _ \| |_| |) | | _ | |) |  <
 //               |___/_/ \_|___|___/|_||_||___/|_\_\
 //
-// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.1.1 --- 2024.07.30 ---
+// --- debitor/pos_ordre_includes/showPosLines/productLines.php -- lap 4.1.1 --- 2024.09.09 ---
 // LICENSE
 //
 // This program is free software. You can redistribute it and / or
@@ -41,12 +41,18 @@
 // 20230531 PHR Added Discount to ImachimeCustomDisplay
 // 20231009 PHR Groupdiscount was handled as always as amount
 // 20240729 PHR Various translations
+// 20240909 PHR Added m_rabat to customerDisplay;
 
 	print "<!-- ---------- start productLines.php ---------- -->\n";
 	$customerDisplay = NULL;
+	$qtxt = "update settings set pos_id = '0' where var_name = 'customerDisplay' and pos_id is NULL";
+	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "select var_value from settings where var_name = 'customerDisplay'";
+	$qtxt.= "and (pos_id = '$kasse' or pos_id = '0')";
 	if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $customerDisplay=$r['var_value'];
+	if (file_exists("../temp/$db/customerDisplay.txt")) {
 	unlink("../temp/$db/customerDisplay.txt");
+	}
 	file_put_contents("../temp/$db/customerDisplay.txt",date("H-i-s")."\n",FILE_APPEND);
 	$displayTxt = $displayQty = $displayPrice = array();
 	$dx=0;
@@ -74,7 +80,7 @@
 
 	$s=0;
 	$stockGrp = array();
-	$qtxt = "select kodenr from grupper where art = 'VG' and box8 = 'on'";
+	$qtxt = "select kodenr from grupper where art = 'VG' and box8 = 'on' and fiscal_year = '$regnaar'";
 	$q=db_select($qtxt,__FILE__ . " linje " . __LINE__);
 	while ($r=db_fetch_array($q)) {
 		$stockGrp[$s]=$r['kodenr'];
@@ -110,11 +116,25 @@
 				print dkdecimal($pris[$x],2);
 				print "</td>";
 				file_put_contents("../temp/$db/customerDisplay.txt",$antal[$x]."\t".$beskrivelse[$x]."\t".$pris[$x]."\n",FILE_APPEND);
-				if ($rabat[$x]) {
+				# Get the information for customer display, first check if the discount is % based or kr based
+				if (abs($rabat[$x])) {
 					$displayLine[$dx]  = $linje_id[$x];
 					$displayTxt[$dx]   = 'Rabat '.$rabat[$x];
+					if ($rabatart[$x] != 'amount') $displayTxt[$dx].= '%';
 					$displayQty[$dx]   = $antal[$x];
-					$displayPrice[$dx] = -$pris[$x]/100*$rabat[$x]*$antal[$x];
+					if ($rabatart[$x] == 'amount') $displayPrice[$dx] = -$m_rabat[$x]*$antal[$x];
+					else $displayPrice[$dx] = -$pris[$x]/100*$rabat[$x]*$antal[$x];
+					$dx++;
+				} elseif (abs($m_rabat[$x])) {
+					# The amount that the discount is in %
+					$rabat_procent = abs(round($m_rabat[$x] / $pris[$x]*100));
+					$displayLine[$dx]  = $linje_id[$x];
+					$displayTxt[$dx]   = 'Rabat '.$rabat_procent;
+					if ($rabatart[$x] != 'amount') $displayTxt[$dx].= '%';
+					$displayQty[$dx]   = $antal[$x];
+					if ($rabatart[$x] == 'amount') {
+						$displayPrice[$dx] = -$m_rabat[$x]*$antal[$x];
+					} else $displayPrice[$dx] = $m_rabat[$x]*$antal[$x];
 					$dx++;
 				}
 				$displayLine[$dx]  = $linje_id[$x];
@@ -208,7 +228,7 @@
 					if ($tfvare[$fv]>0 && $show) {
 						$qtxt="select varenr,beskrivelse,salgspris,gruppe from varer where id = '$tfvare[$fv]'";
 						$r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
-						$qtxt="select box4, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]'";
+						$qtxt="select box4, box7 from grupper where art = 'VG' and kodenr = '$r[gruppe]' and fiscal_year = '$regnaar'";
 						$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 						$f_bogfkto=$r2['box4'];
 						$f_momsfri=$r2['box7'];
@@ -219,7 +239,7 @@
 						$qtxt="select moms from kontoplan where kontonr = '$f_bogfkto' and regnskabsaar = '$regnaar'";
 						$r2 = db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__));
 						$kodenr=substr($r2['moms'],1);
-						$r2 = db_fetch_array(db_select("select box2 from grupper where kodenr = '$kodenr' and art = 'SM'",__FILE__ . " linje " . __LINE__));
+						$r2 = db_fetch_array(db_select("select box2 from grupper where kodenr = '$kodenr' and art = 'SM' and fiscal_year = '$regnaar' ",__FILE__ . " linje " . __LINE__));
 						$f_momssats=$r2['box2']*1;
 						$f_pris=$r['salgspris']+$r['salgspris']*$f_momssats/100;
 					}
