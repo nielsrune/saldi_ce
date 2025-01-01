@@ -337,4 +337,9 @@ if ($id > 0) {
 	else {
 		include_once("fiscalYearInc/yearX.php");
 echo __line__."<br>";
+		yearX($id, $x, $beskrivelse, $startmd, $startaar, $slutmd, $slutaar, $aaben,$aut_lager);
+	}
+}
 
+######################################################################################################################
+?>
