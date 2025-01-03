@@ -9,4 +9,4 @@ $query = db_select("SELECT var_value, var_name FROM settings WHERE var_grp = 'pe
             }
         }
     }
-$apiKey = $tenantId . "&" . $key;
+$apiKey = (isset($tenantId) && isset($key)) ? $tenantId . "&" . $key : null; 

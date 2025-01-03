@@ -107,7 +107,7 @@ include("../includes/connect.php");
          }
      }
  }
- $apiKey = $tenantId . "&" . $key;
+ $apiKey = (isset($tenantId) && isset($key)) ? $tenantId . "&" . $key : null;
 ////////////////// nemhandel end ///////////////////////
 
 
