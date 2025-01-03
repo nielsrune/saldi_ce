@@ -197,7 +197,7 @@ if (!isset ($b)) $b = null;
 			print "<input type = \"hidden\" name=id[$i] value='$id[$i]'><input type = \"hidden\" name=\"art[$i]\" value=\"$art[$i]\"><input type = \"hidden\" name=\"kode[$i]\" value=\"$k\">\n";
 		}
 	}
-	if (($k!='R')||(!$momsrapport)) {
+	if (($k!='R')||(!isset($momsrapport))) {
 		$y++;
 		if (!isset($art[$y])) $art[$y]=NULL; 
 		print "<tr>";
