@@ -1,3 +1,10 @@
+includes/connect.php
+
+phpmailer/*
+includes/vendor/
+
+bordplaner/bordplan_*
+
 #Nedenstående ser ud til at være gamle filer, der er blandet ind i /seneste ved en fejl
 #===
 
