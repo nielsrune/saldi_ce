@@ -17,7 +17,7 @@
 
     // put company id and document id in the database
     $sql = "INSERT INTO `?` (`companyID`, `ublDocumentId`) VALUES ('$companyID', '$ublDocumentId')";
-    $res = db_modify($sql, __FILE__ . " linje " . __LINE__)
+    $res = db_modify($sql, __FILE__ . " linje " . __LINE__);
 
     // send data to other server
     $url = '?';

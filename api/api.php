@@ -87,12 +87,12 @@ if (!$result) {
 if ($method == 'GET') {
   if (!$key) echo '[';
 		
-  while($i=0;$i<db_num_rows($result);$i++) {
+  for($i=0;$i<db_num_rows($result);$i++) {
     echo ($i>0?',':'').json_encode(db_fetch_object($result));
   }
   if (!$key) echo ']';
 } elseif ($method == 'POST') {
-	$insert_id = SELECT nextval('foo_seq'); INSERT INTO table (foo...) values ($link)
+	$insert_id = "SELECT nextval('foo_seq'); INSERT INTO table (foo...) values ($link)";
 echo  pg_insert_id($link);
 } else {
   echo pg_affected_rows($link);

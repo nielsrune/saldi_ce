@@ -28,7 +28,7 @@
 # include("header.php");
 
 ($_SERVER['HTTPS'])?$callback_url = 'HTTPS://':$callback_url = 'HTTP://';
-$request.= $_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF']);
+$request.= $_SERVER['SERVER_NAME'].$_SERVER['PHP_SELF'];
 
 // $request = "http://ssl8.saldi.dk/saldi/paperpdf/paper_api_call.php"; //27290the 378users id to be used in implementing this?
 

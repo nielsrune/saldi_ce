@@ -25,7 +25,7 @@
 // ----------------------------------------------------------------------
 
 $itemName = '';
-$editItemId = if_isset($_GET['editItemId'])
+$editItemId = if_isset($_GET['editItemId']);
 $varname = 'rental_'.$rtItemId;
 $qtxt = "select var_value from settings where var_name = '$varname' and var_grp ='rental'";
 if ($r=db_fetch_array(db_select($qtxt,__FILE__ . " linje " . __LINE__))) $itemName = $r['var_value'];
