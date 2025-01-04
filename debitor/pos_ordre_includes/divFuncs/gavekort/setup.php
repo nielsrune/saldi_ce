@@ -29,8 +29,6 @@
 // 2018-12-10 CA  De første gavekortfunktioner til håndtering i PoS
 // 2019-17-10 LN  Posen må ikke loades mere end to gange efter køb
 
-use \Datetime;
-
 function gavekortSetup()
 {
     $temp = false;

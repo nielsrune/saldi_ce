@@ -29,7 +29,7 @@ include ("../../includes/connect.php");
 include ("../../includes/online.php");
 include ("../../includes/std_func.php");
 
-use ErrorException;
+// use ErrorException;
 
 $post = json_decode(file_get_contents('php://input'));
 $pos_id = $post->{'id'} + 1;
