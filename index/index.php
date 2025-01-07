@@ -230,11 +230,11 @@ include ("../includes/version.php");
 
 if (!isset($_COOKIE['saldi_std'])) {
 	print "<script language=\"javascript\" type=\"text/javascript\">\n";
-	print "document.login.regnskab.focus();\n";
+	print "document.login1.regnskab.focus();\n";
 	print "</script>\n";
 } else {
 	print "<script language=\"javascript\" type=\"text/javascript\">\n";
-	print "document.login.login.focus();\n";
+	print "document.login1.login.focus();\n";
 	print "</script>\n";
 }
 ?>
