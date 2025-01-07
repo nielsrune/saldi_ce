@@ -85,12 +85,12 @@ if (!isset($_POST['fejltxt']) && isset($_POST['regnskab']) && isset($_POST['brug
 	if (file_exists("redirect.php")) include ("redirect.php"); 
 	else $action="login.php";
 	if(isset($_POST['huskmig'])){ #20211007
-	$cookievalue = $huskmig . chr(9) . $_POST['regnskab'] . chr(9) . $_POST['brugernavn'];
+	$cookievalue = "huskmig" . chr(9) . $_POST['regnskab'] . chr(9) . $_POST['brugernavn'];
 	}
 	if (isset($_POST['huskmig'])){ setcookie ('saldi_huskmig', $cookievalue, time() + (86400 * 30));} #20211007
 	#elseif ($rs == $_POST['regnskab'] && $bn == $_POST['brugernavn']) {
 	elseif ($rs == $regnskab && $bn == $brugernavn) {	
-		setcookie ('saldi_huskmig', $cookievalue, time() - 3600);
+		setcookie ('saldi_huskmig', "", time() - 3600);
 	}
 	print "<form name=\"login\" METHOD=\"POST\" ACTION=\"$action\" onsubmit=\"return handleLogin(this);\">\n";
 	print "<input type=\"hidden\" name=\"regnskab\" value=\"$_POST[regnskab]\">\n";
