@@ -294,7 +294,7 @@ if($_GET) {
 				$qtxt.= "betal_id='$betal_id[$x]' where lobenr='$x' and kladde_id='$kladde_id'";
 			}
 			db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-			kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kontonr[$x],$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x);
+			kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x);
 		}
 		if ($fejl)
 			$submit = 'save';
@@ -853,9 +853,9 @@ if ($_POST) {
 						if (!isset($afd[$x]))
 							$afd[$x] = NULL;
 						if ((!$fejl)&&($x!=$opslag_id)&&(($beskrivelse[$x])||($debet[$x])||($kredit[$x]))) {
-							kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kontonr,$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x);
+							kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x);
 						} elseif ((!$fejl) && ($x != $opslag_id) && ($bilag[$x] == "-")) {
-							kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kontonr,$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x );
+							kontroller($id[$x],$bilag[$x],$dato[$x],$beskrivelse[$x],$d_type[$x],$debet[$x],$k_type[$x],$kredit[$x],$faktura[$x],$belob[$x],$momsfri[$x],$kladde_id,$afd[$x],$projekt[$x],$ansat[$x],$valuta[$x],$forfaldsdato[$x],$betal_id[$x],$x );
 						}
 					}
 					#cho __line__." $submit $debet[$x] $fokus $x<br>";
@@ -1917,7 +1917,7 @@ if (($bogfort && $bogfort!='-') || $udskriv) {
 
 	}
 	#############################################################################################################################
-	function kontroller($id, $bilag, $dato, $beskrivelse, $d_type, $debet, $k_type, $kredit, $faktura, $belob, $momsfri, $kontonr, $kladde_id, $afd, $projekt, $ansat, $valuta, $forfaldsdato, $betal_id, $lobenr) {
+	function kontroller($id, $bilag, $dato, $beskrivelse, $d_type, $debet, $k_type, $kredit, $faktura, $belob, $momsfri, $kladde_id, $afd, $projekt, $ansat, $valuta, $forfaldsdato, $betal_id, $lobenr) {
 		global $baseCurrency,$bilagscount,$bilagsrenum;
 	global $connection;
 	global $debitornr;
