@@ -1,4 +1,4 @@
-includes/connect.php
+includes/*connect*.php
 
 phpmailer/*
 includes/vendor/
@@ -14,6 +14,9 @@ bordplaner/bordplan_*
 
 # .svn mapper
 .svn/
+
+# Patch filer
+*.patch
 
 # Specifikke
 debitor/udlign_openpost.php
