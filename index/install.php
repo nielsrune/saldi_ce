@@ -216,7 +216,7 @@ if (isset($_POST['opret'])){
 	$qtxt = "INSERT INTO regnskab (regnskab, dbhost, dbuser, db, version,bilag) values ";
 	$qtxt.= "('$db_navn' ,'$host', '$db_bruger', '$db_navn', '$version','0')";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
-	$qtxt = "CREATE TABLE online (session_id varchar(30), brugernavn text, db varchar(30), dbuser varchar(30), rettigheder varchar(30), ";
+	$qtxt = "CREATE TABLE online (session_id varchar(32), brugernavn text, db varchar(30), dbuser varchar(30), rettigheder varchar(30), ";
 	$qtxt.= "regnskabsaar integer, logtime varchar(30), revisor boolean, language_id int)";
 	db_modify($qtxt,__FILE__ . " linje " . __LINE__);
 	$qtxt = "CREATE TABLE kundedata (id serial NOT NULL, firmanavn text, addr1 text, addr2 text, postnr varchar(10), ";
