@@ -81,9 +81,9 @@ include("../includes/std_func.php");
 $timezone = system("timedatectl | grep \"Time zone\"", $errcode);
 #print "-->";
 if ($errcode === 0) {
-list($tmp,$timezone) = explode(":",$timezone);
-list($timezone,$tmp) = explode("(",$timezone);
-$timezone = trim($timezone);
+	list($tmp,$timezone) = explode(":",$timezone);
+	list($timezone,$tmp) = explode("(",$timezone);
+	$timezone = trim($timezone);
 } else {
 	$timezone = 'Europe/Copenhagen';
 }

@@ -58,6 +58,8 @@ include("../includes/db_query.php");
 include("../includes/std_func.php");
 $hm=$rs=$bn=null; #20211007
 
+/* <-- Headers (cookies) cannot be set if text/whitespace is already sent
+		Author should move this part to proper location if necessary
 print "
 <script>
 if(window.self !== window.top) {
@@ -65,7 +67,7 @@ if(window.self !== window.top) {
 parent.location.href = \"../index/index.php\";
 } 
 </script>";
-
+*/
 
 
 if(isset($_POST['languageId'])){
