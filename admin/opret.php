@@ -600,23 +600,23 @@ function opret ($sqhost,$squser,$sqpass,$db,$brugernavn,$passwd,$std_kto_plan) {
 		$qtxt.= "RETURN NEW; ";
 		$qtxt.= "END; ";
 		$qtxt.= "$$ language 'plpgsql';";
-		pg_query($qtxt);
+		pg_query($connection, $qtxt);
 		$qtxt = "CREATE TRIGGER update_adresser_modtime BEFORE UPDATE ";
 		$qtxt.= "ON adresser FOR EACH ROW EXECUTE PROCEDURE ";
 		$qtxt.= "update_modtime_column(); ";
-		pg_query($qtxt);
+		pg_query($connection, $qtxt);
 		$qtxt = "CREATE TRIGGER update_batch_kob_modtime BEFORE UPDATE ";
 		$qtxt.= "ON batch_kob FOR EACH ROW EXECUTE PROCEDURE ";
 		$qtxt.= "update_modtime_column(); ";
-		pg_query($qtxt);
+		pg_query($connection, $qtxt);
 		$qtxt = "CREATE TRIGGER update_batch_salg_modtime BEFORE UPDATE ";
 		$qtxt.= "ON batch_salg FOR EACH ROW EXECUTE PROCEDURE ";
 		$qtxt.= "update_modtime_column(); ";
-		pg_query($qtxt);
+		pg_query($connection, $qtxt);
 		$qtxt = "CREATE TRIGGER update_varer_modtime BEFORE UPDATE ";
 		$qtxt.= "ON varer FOR EACH ROW EXECUTE PROCEDURE ";
 		$qtxt.= "update_modtime_column(); ";
-		pg_query($qtxt);
+		pg_query($connection, $qtxt);
 	}
 	$qtxt = file_get_contents('../importfiler/saf_t_codes.sql');
 	db_modify($qtxt, __FILE__ . " linje " . __LINE__);
